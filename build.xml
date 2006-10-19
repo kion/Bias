@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!-- ====================================================================== 
+     Oct 15, 2006 01:01:55 AM                                                        
+
+     Bias    
+     Bias OpenSource Personal Information Manager
+                   
+     author: kion                                                                
+     ====================================================================== -->
+	<project name="Bias" default="ExecuteJarPackage">
+    <description>
+    	Bias OpenSource Personal Information Manager Project
+    </description>
+	
+	<!-- =================================
+		  properties
+		 ================================= -->
+	<property name="libDir" value="lib"/>
+
+    <!-- ================================= 
+          target: ExecuteJarPackage              
+         ================================= -->
+    <target name="ExecuteJarPackage" depends="BuildJarPackage">
+    	<exec command="java -jar build/bias.jar"/>
+    </target>
+
+    <!-- ================================= 
+          target: BuildJarPackage              
+         ================================= -->
+    <target name="BuildJarPackage" depends="clean" description="Bias OpenSource Personal Information Manager Project">
+        <jar basedir="./bin" destfile="build/bias.jar" includes="bias/**" index="true">
+        	<fileset dir=".">
+			    <include name="data/**"/>
+			    <include name="res/**"/>
+			</fileset>
+        	<manifest>
+        		<attribute name="Main-Class" value="bias.core.Bias"/>
+        	</manifest>
+        </jar>
+    </target>
+
+    <!-- ================================= 
+          target: clean                      
+         ================================= -->
+    <target name="clean">
+		<delete>
+			<fileset dir="build">
+	    		<include name="bias.jar"/>
+			</fileset>
+		</delete>
+    </target>
+
+</project>
+
