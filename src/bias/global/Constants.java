@@ -1,7 +1,7 @@
 /**
  * Created on Oct 19, 2006
  */
-package bias.core;
+package bias.global;
 
 import javax.swing.ImageIcon;
 
@@ -13,6 +13,8 @@ public interface Constants {
     public static final String PATH_SEPARATOR = System.getProperty("file.separator");
 
     public static final String EMPTY_STR = "";
+    public static final String NULL_STR = "NULL";
+    public static final String EMPTY_STR_PATTERN = "\\s*";
     
     public static final String DATA_FILE_PATTERN = "data" + PATH_SEPARATOR + "\\d+\\.data";
     public static final String DATA_FILE_ENDING_PATTERN = "\\.data";

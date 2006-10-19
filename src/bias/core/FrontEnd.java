@@ -22,9 +22,11 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
-import javax.swing.UIManager;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLEditorKit;
+
+import bias.global.Constants;
+import bias.utils.Validator;
 
 /**
  * @author kion
@@ -56,15 +58,6 @@ public class FrontEnd extends JFrame {
     private JButton jButton6 = null;
 
     private JButton jButton7 = null;
-
-    static {
-        // setup application's Look&Feel
-        try {
-            UIManager.setLookAndFeel("net.sourceforge.napkinlaf.NapkinLookAndFeel");
-        } catch (Exception e) {
-            // do nothing - default Look&Feel will be set automatically
-        }
-    }
 
     /**
      * This is the default constructor
@@ -148,6 +141,9 @@ public class FrontEnd extends JFrame {
             }
             if (getJTabbedPane().getTabCount() > 0) {
                 getJTabbedPane().setSelectedIndex(lstiValue);
+                setNotesManagementToolbalEnabledState(true);
+            } else {
+                setNotesManagementToolbalEnabledState(false);
             }
             
             this.setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -175,12 +171,12 @@ public class FrontEnd extends JFrame {
                         BackEnd.setNotes(notes);
                         BackEnd.store();
                     } catch (Exception ex) {
-                        ex.printStackTrace();
+                        displayErrorMessage(ex);
                     }
                 }
             });
         } catch (Exception ex) {
-            ex.printStackTrace();
+            displayErrorMessage(ex);
         }
     }
 
@@ -242,25 +238,69 @@ public class FrontEnd extends JFrame {
             jButton.setIcon(Constants.ICON_ADD);
             jButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    JTextPane textPane = new JTextPane();
-                    textPane.setEditorKit(new HTMLEditorKit());
-                    textPane.setEditable(false);
-                    String noteCaption = JOptionPane.showInputDialog("Note caption:");
-                    if (!notesCaptions.contains(noteCaption)) {
-                        getJTabbedPane().addTab(noteCaption, new JScrollPane(textPane));
-                        getJTabbedPane().setSelectedIndex(getJTabbedPane().getTabCount()-1);
-                        getJTabbedPane().setTitleAt(getJTabbedPane().getSelectedIndex(), noteCaption);
-                        notesCaptions.add(noteCaption);
-                        if (getJTabbedPane().getTabCount() == 1) {
-                            getJButton1().setEnabled(true);
+                    try {
+                        JTextPane textPane = new JTextPane();
+                        textPane.setEditorKit(new HTMLEditorKit());
+                        textPane.setEditable(false);
+                        String noteCaption = JOptionPane.showInputDialog("Note caption:");
+                        if (!Validator.isNullOrBlank(noteCaption)) {
+                            if (!notesCaptions.contains(noteCaption)) {
+                                getJTabbedPane().addTab(noteCaption, new JScrollPane(textPane));
+                                getJTabbedPane().setSelectedIndex(getJTabbedPane().getTabCount()-1);
+                                getJTabbedPane().setTitleAt(getJTabbedPane().getSelectedIndex(), noteCaption);
+                                notesCaptions.add(noteCaption);
+                                if (getJTabbedPane().getTabCount() == 1) {
+                                    setNotesManagementToolbalEnabledState(true);
+                                }
+                            } else {
+                                displayErrorMessage("Note caption must be unique!");
+                            }
+                        } else {
+                            displayErrorMessage("Note caption can not be empty!");
                         }
-                    } else {
-                        JOptionPane.showMessageDialog(FrontEnd.this, "Note caption must be unique!", "Error", JOptionPane.ERROR_MESSAGE);
+                    } catch (Exception ex) {
+                        displayErrorMessage(ex);
                     }
                 }
             });
         }
         return jButton;
+    }
+
+    /**
+     * This method initializes jButton3 
+     *  
+     * @return javax.swing.JButton  
+     */
+    private JButton getJButton3() {
+        if (jButton3 == null) {
+            jButton3 = new JButton();
+            jButton3.setToolTipText("rename note");  // Generated
+            jButton3.setIcon(Constants.ICON_RENAME);
+            jButton3.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    try {
+                        int index = getJTabbedPane().getSelectedIndex();
+                        String currentNoteCaption = getJTabbedPane().getTitleAt(index);
+                        String noteCaption = JOptionPane.showInputDialog("Note caption:");
+                        if (!Validator.isNullOrBlank(noteCaption)) {
+                            if (!currentNoteCaption.equals(noteCaption) && !notesCaptions.contains(noteCaption)) {
+                                notesCaptions.remove(currentNoteCaption);
+                                getJTabbedPane().setTitleAt(index, noteCaption);
+                                notesCaptions.add(noteCaption);
+                            } else {
+                                displayErrorMessage("Note caption must be unique!");
+                            }
+                        } else {
+                            displayErrorMessage("Note caption can not be empty!");
+                        }
+                    } catch (Exception ex) {
+                        displayErrorMessage(ex);
+                    }
+                }
+            });
+        }
+        return jButton3;
     }
 
     /**
@@ -275,45 +315,21 @@ public class FrontEnd extends JFrame {
             jButton1.setIcon(Constants.ICON_DELETE);
             jButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    int index = getJTabbedPane().getSelectedIndex();
-                    String noteCaption = getJTabbedPane().getTitleAt(index);
-                    notesCaptions.remove(noteCaption);
-                    getJTabbedPane().remove(index);
-                    if (getJTabbedPane().getTabCount() == 0) {
-                        getJButton1().setEnabled(false);
+                    try {
+                        int index = getJTabbedPane().getSelectedIndex();
+                        String noteCaption = getJTabbedPane().getTitleAt(index);
+                        notesCaptions.remove(noteCaption);
+                        getJTabbedPane().remove(index);
+                        if (getJTabbedPane().getTabCount() == 0) {
+                            setNotesManagementToolbalEnabledState(false);
+                        }
+                    } catch (Exception ex) {
+                        displayErrorMessage(ex);
                     }
                 }
             });
         }
         return jButton1;
-    }
-
-    /**
-     * This method initializes jButton3	
-     * 	
-     * @return javax.swing.JButton	
-     */
-    private JButton getJButton3() {
-        if (jButton3 == null) {
-            jButton3 = new JButton();
-            jButton3.setToolTipText("rename note");  // Generated
-            jButton3.setIcon(Constants.ICON_RENAME);
-            jButton3.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent e) {
-                    int index = getJTabbedPane().getSelectedIndex();
-                    String currentNoteCaption = getJTabbedPane().getTitleAt(index);
-                    String noteCaption = JOptionPane.showInputDialog("Note caption:");
-                    if (!currentNoteCaption.equals(noteCaption) && !notesCaptions.contains(noteCaption)) {
-                        notesCaptions.remove(currentNoteCaption);
-                        getJTabbedPane().setTitleAt(index, noteCaption);
-                        notesCaptions.add(noteCaption);
-                    } else {
-                        JOptionPane.showMessageDialog(FrontEnd.this, "Note caption must be unique!", "Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-            });
-        }
-        return jButton3;
     }
 
     /**
@@ -328,13 +344,17 @@ public class FrontEnd extends JFrame {
             jButton4.setIcon(Constants.ICON_SWITCH_MODE);
             jButton4.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    JTextPane textPane = (JTextPane) 
-                    ((JViewport) 
-                         ((JScrollPane) 
-                                 getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
-                                 .getComponent(0)).getComponent(0);
-                    textPane.setEditable(!textPane.isEditable());
-                    switchToolbalEnabledState();
+                    try {
+                        JTextPane textPane = (JTextPane) 
+                        ((JViewport) 
+                             ((JScrollPane) 
+                                     getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
+                                     .getComponent(0)).getComponent(0);
+                        textPane.setEditable(!textPane.isEditable());
+                        switchNoteEditToolbalEnabledState();
+                    } catch (Exception ex) {
+                        displayErrorMessage(ex);
+                    }
                 }
             });
         }
@@ -370,7 +390,11 @@ public class FrontEnd extends JFrame {
             jButton5.setEnabled(false);  // Generated
             jButton5.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    new StyledEditorKit.BoldAction().actionPerformed(e);
+                    try {
+                        new StyledEditorKit.BoldAction().actionPerformed(e);
+                    } catch (Exception ex) {
+                        displayErrorMessage(ex);
+                    }
                 }
             });
         }
@@ -390,7 +414,11 @@ public class FrontEnd extends JFrame {
             jButton6.setEnabled(false);  // Generated
             jButton6.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    new StyledEditorKit.ItalicAction().actionPerformed(e);
+                    try {
+                        new StyledEditorKit.ItalicAction().actionPerformed(e);
+                    } catch (Exception ex) {
+                        displayErrorMessage(ex);
+                    }
                 }
             });
         }
@@ -410,17 +438,37 @@ public class FrontEnd extends JFrame {
             jButton7.setEnabled(false);  // Generated
             jButton7.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    new StyledEditorKit.UnderlineAction().actionPerformed(e);
+                    try {
+                        new StyledEditorKit.UnderlineAction().actionPerformed(e);
+                    } catch (Exception ex) {
+                        displayErrorMessage(ex);
+                    }
                 }
             });
         }
         return jButton7;
     }
     
-    private void switchToolbalEnabledState() {
+    private void setNotesManagementToolbalEnabledState(boolean enabled) {
+        for (Component button : getJToolBar().getComponents()) {
+            if (!button.equals(jButton)) {
+                button.setEnabled(enabled);
+            }
+        }
+    }
+
+    private void switchNoteEditToolbalEnabledState() {
         for (Component button : getJToolBar1().getComponents()) {
             button.setEnabled(!button.isEnabled());
         }
+    }
+    
+    private void displayErrorMessage(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void displayErrorMessage(Exception ex) {
+        JOptionPane.showMessageDialog(this, "StackTrace: " + ex.getStackTrace(), "Error", JOptionPane.ERROR_MESSAGE);
     }
 
 }  //  @jve:decl-index=0:visual-constraint="10,10"
