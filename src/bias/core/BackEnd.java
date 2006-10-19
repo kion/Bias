@@ -26,8 +26,6 @@ public class BackEnd {
     
     private static final String PATH_SEPARATOR = System.getProperty("file.separator");
     
-    private static final String EMPTY_STR = "";
-    
     private static final String dataFilePattern = "data" + PATH_SEPARATOR + "\\d+\\.data";
     
     private static final String dataFileEndingPattern = "\\.data";
@@ -65,8 +63,8 @@ public class BackEnd {
             }
             if (ze.getName().matches(dataFilePattern)) {
                 notes.put(ze.getName()
-                        .replaceFirst(dataDirPattern, EMPTY_STR)
-                        .replaceFirst(dataFileEndingPattern, EMPTY_STR), sw.getBuffer().toString());
+                        .replaceFirst(dataDirPattern, GenericConstants.EMPTY_STR)
+                        .replaceFirst(dataFileEndingPattern, GenericConstants.EMPTY_STR), sw.getBuffer().toString());
             } else if (ze.getName().equals(configFilePath)) {
                 properties.load(new ByteArrayInputStream(sw.getBuffer().toString().getBytes()));
             } else {
