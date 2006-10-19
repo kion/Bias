@@ -24,20 +24,6 @@ import java.util.zip.ZipOutputStream;
  */
 public class BackEnd {
     
-    private static final String PATH_SEPARATOR = System.getProperty("file.separator");
-    
-    private static final String dataFilePattern = "data" + PATH_SEPARATOR + "\\d+\\.data";
-    
-    private static final String dataFileEndingPattern = "\\.data";
-    
-    private static final String dataFileEnding = ".data";
-    
-    private static final String configFilePath = "res" + PATH_SEPARATOR + "config.properties";
-    
-    private static final String dataDirPattern = "data" + PATH_SEPARATOR;
-    
-    private static final String dataDir = "data" + PATH_SEPARATOR;
-    
     private static File jarFile = null;
 
     private static Map<String, String> zipEntries;
@@ -61,11 +47,11 @@ public class BackEnd {
             while ((c = zis.read()) != -1) {
                 sw.write(c);
             }
-            if (ze.getName().matches(dataFilePattern)) {
+            if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
                 notes.put(ze.getName()
-                        .replaceFirst(dataDirPattern, GenericConstants.EMPTY_STR)
-                        .replaceFirst(dataFileEndingPattern, GenericConstants.EMPTY_STR), sw.getBuffer().toString());
-            } else if (ze.getName().equals(configFilePath)) {
+                        .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
+                        .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR), sw.getBuffer().toString());
+            } else if (ze.getName().equals(Constants.CONFIG_FILE_PATH)) {
                 properties.load(new ByteArrayInputStream(sw.getBuffer().toString().getBytes()));
             } else {
                 zipEntries.put(ze.getName(), sw.getBuffer().toString());
@@ -79,13 +65,13 @@ public class BackEnd {
             init();
         }
         for (Entry<String, String> note : notes.entrySet()) {
-            String key = dataDir + note.getKey() + dataFileEnding;
+            String key = Constants.DATA_DIR + note.getKey() + Constants.DATA_FILE_ENDING;
             String value = note.getValue();
             zipEntries.put(key, value);
         }
         StringWriter sw = new StringWriter();
         properties.list(new PrintWriter(sw));
-        zipEntries.put(configFilePath, sw.getBuffer().toString());
+        zipEntries.put(Constants.CONFIG_FILE_PATH, sw.getBuffer().toString());
         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(jarFile));
         for (Entry<String, String> entry : zipEntries.entrySet()) {
             String entryName = entry.getKey();
@@ -105,7 +91,7 @@ public class BackEnd {
     
     private static void init() {
         URL url = BackEnd.class.getResource(BackEnd.class.getSimpleName()+".class");
-        String jarFilePath = url.getFile().substring(0, url.getFile().indexOf(BackEnd.class.getName().replaceAll("\\.", PATH_SEPARATOR)) - 2);
+        String jarFilePath = url.getFile().substring(0, url.getFile().indexOf(BackEnd.class.getName().replaceAll("\\.", Constants.PATH_SEPARATOR)) - 2);
         jarFilePath = jarFilePath.substring("file:".length(), jarFilePath.length());
         jarFile = new File(jarFilePath);
         // TODO: remove debug code

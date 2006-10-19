@@ -30,16 +30,6 @@ public class FrontEnd extends JFrame {
 
     private static final long serialVersionUID = 1L;
     
-    private static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
-
-    private static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";
-
-    private static final String PROPERTY_WINDOW_WIDTH = "WINDOW_WIDTH";
-
-    private static final String PROPERTY_WINDOW_HEIGHT = "WINDOW_HEIGHT";
-    
-    private static final String PROPERTY_LAST_SELECTED_TAB_INDEX = "LAST_SELECTED_TAB_INDEX";
-
     private Map<String, String> notes;  //  @jve:decl-index=0:
     
     private JPanel jContentPane = null;
@@ -52,8 +42,6 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton1 = null;
     
-    private JButton jButton2 = null;
-
     private JButton jButton3 = null;
 
     private JButton jButton4 = null;
@@ -98,31 +86,31 @@ public class FrontEnd extends JFrame {
             int wpyValue;
             int wwValue;
             int whValue;
-            String wpx = properties.getProperty(PROPERTY_WINDOW_COORDINATE_X);
+            String wpx = properties.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_X);
             if (wpx == null) {
                 wpxValue = getToolkit().getScreenSize().width/4;
             } else {
                 getToolkit().getScreenSize().getWidth();
                 Double.valueOf(wpx);
-                wpxValue = Math.round(Float.valueOf(GenericConstants.EMPTY_STR + (getToolkit().getScreenSize().getWidth() * Double.valueOf(wpx))));
+                wpxValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getWidth() * Double.valueOf(wpx))));
             }
-            String wpy = properties.getProperty(PROPERTY_WINDOW_COORDINATE_Y);
+            String wpy = properties.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_Y);
             if (wpy == null) {
                 wpyValue = getToolkit().getScreenSize().height/4;
             } else {
-                wpyValue = Math.round(Float.valueOf(GenericConstants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wpy))));
+                wpyValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wpy))));
             }
-            String ww = properties.getProperty(PROPERTY_WINDOW_WIDTH);
+            String ww = properties.getProperty(Constants.PROPERTY_WINDOW_WIDTH);
             if (ww == null) {
                 wwValue = (getToolkit().getScreenSize().width/4)*2;
             } else {
-                wwValue = Math.round(Float.valueOf(GenericConstants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(ww))));
+                wwValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(ww))));
             }
-            String wh = properties.getProperty(PROPERTY_WINDOW_HEIGHT);
+            String wh = properties.getProperty(Constants.PROPERTY_WINDOW_HEIGHT);
             if (wh == null) {
                 whValue = (getToolkit().getScreenSize().height/4)*2;
             } else {
-                whValue = Math.round(Float.valueOf(GenericConstants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wh))));
+                whValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wh))));
             }
 
             this.setLocation(wpxValue, wpyValue);
@@ -145,7 +133,7 @@ public class FrontEnd extends JFrame {
             }
             
             int lstiValue;
-            String lstiStr = properties.getProperty(PROPERTY_LAST_SELECTED_TAB_INDEX);
+            String lstiStr = properties.getProperty(Constants.PROPERTY_LAST_SELECTED_TAB_INDEX);
             if (lstiStr == null) {
                 lstiValue = 0;
             } else {
@@ -160,11 +148,11 @@ public class FrontEnd extends JFrame {
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
                         Properties properties = new Properties();
-                        properties.put(PROPERTY_WINDOW_COORDINATE_X, GenericConstants.EMPTY_STR+getLocation().getX()/getToolkit().getScreenSize().getWidth());
-                        properties.put(PROPERTY_WINDOW_COORDINATE_Y, GenericConstants.EMPTY_STR+getLocation().getY()/getToolkit().getScreenSize().getHeight());
-                        properties.put(PROPERTY_WINDOW_WIDTH, GenericConstants.EMPTY_STR+getSize().getWidth()/getToolkit().getScreenSize().getHeight());
-                        properties.put(PROPERTY_WINDOW_HEIGHT, GenericConstants.EMPTY_STR+getSize().getHeight()/getToolkit().getScreenSize().getHeight());
-                        properties.put(PROPERTY_LAST_SELECTED_TAB_INDEX, GenericConstants.EMPTY_STR+getJTabbedPane().getSelectedIndex());
+                        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR+getLocation().getX()/getToolkit().getScreenSize().getWidth());
+                        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR+getLocation().getY()/getToolkit().getScreenSize().getHeight());
+                        properties.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR+getSize().getWidth()/getToolkit().getScreenSize().getHeight());
+                        properties.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR+getSize().getHeight()/getToolkit().getScreenSize().getHeight());
+                        properties.put(Constants.PROPERTY_LAST_SELECTED_TAB_INDEX, Constants.EMPTY_STR+getJTabbedPane().getSelectedIndex());
                         for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
                             JTextPane textPane = (JTextPane) 
                                                     ((JViewport) 
@@ -172,8 +160,8 @@ public class FrontEnd extends JFrame {
                                                                  getJTabbedPane().getComponent(i)).getComponent(0)).getComponent(0);
                             String caption = getJTabbedPane().getTitleAt(i);
                             String value = textPane.getText();
-                            properties.put(GenericConstants.EMPTY_STR+(i+1), caption);
-                            notes.put(GenericConstants.EMPTY_STR+(i+1), value);
+                            properties.put(Constants.EMPTY_STR+(i+1), caption);
+                            notes.put(Constants.EMPTY_STR+(i+1), value);
                         }
                         BackEnd.setProperties(properties);
                         BackEnd.setNotes(notes);
@@ -229,7 +217,6 @@ public class FrontEnd extends JFrame {
             jToolBar.add(getJButton());  // Generated
             jToolBar.add(getJButton3());  // Generated
             jToolBar.add(getJButton1());  // Generated
-            jToolBar.add(getJButton2());  // Generated
             jToolBar.add(getJButton4());  // Generated
         }
         return jToolBar;
@@ -255,7 +242,6 @@ public class FrontEnd extends JFrame {
                     getJTabbedPane().setTitleAt(getJTabbedPane().getSelectedIndex(), noteCaption);
                     if (getJTabbedPane().getTabCount() == 1) {
                         getJButton1().setEnabled(true);
-                        getJButton2().setEnabled(true);
                     }
                 }
             });
@@ -279,7 +265,6 @@ public class FrontEnd extends JFrame {
                     getJTabbedPane().remove(index);
                     if (getJTabbedPane().getTabCount() == 0) {
                         getJButton1().setEnabled(false);
-                        getJButton2().setEnabled(false);
                     }
                 }
             });
@@ -307,35 +292,6 @@ public class FrontEnd extends JFrame {
     }
 
     /**
-     * This method initializes jButton2 
-     *  
-     * @return javax.swing.JButton  
-     */
-    private JButton getJButton2() {
-        if (jButton2 == null) {
-            jButton2 = new JButton();
-            jButton2.setText("switch view mode");  // Generated
-            jButton2.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent e) {
-                    JTextPane textPane = (JTextPane) 
-                                            ((JViewport) 
-                                                 ((JScrollPane) 
-                                                         getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
-                                                         .getComponent(0)).getComponent(0);
-                    String text = textPane.getText();
-                    if (textPane.getEditorKit() instanceof HTMLEditorKit) {
-                        textPane.setEditorKit(new StyledEditorKit());
-                    } else {
-                        textPane.setEditorKit(new HTMLEditorKit());
-                    }
-                    textPane.setText(text);
-                }
-            });
-        }
-        return jButton2;
-    }
-
-    /**
      * This method initializes jButton4	
      * 	
      * @return javax.swing.JButton	
@@ -343,7 +299,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton4() {
         if (jButton4 == null) {
             jButton4 = new JButton();
-            jButton4.setText("switch edit mode");  // Generated
+            jButton4.setText("switch mode");  // Generated
             jButton4.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     JTextPane textPane = (JTextPane) 
