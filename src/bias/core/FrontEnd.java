@@ -230,7 +230,8 @@ public class FrontEnd extends JFrame {
     private JButton getJButton() {
         if (jButton == null) {
             jButton = new JButton();
-            jButton.setText("add note");  // Generated
+            jButton.setToolTipText("add note");  // Generated
+            jButton.setIcon(Constants.ICON_ADD);
             jButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     JTextPane textPane = new JTextPane();
@@ -257,7 +258,8 @@ public class FrontEnd extends JFrame {
     private JButton getJButton1() {
         if (jButton1 == null) {
             jButton1 = new JButton();
-            jButton1.setText("delete note");  // Generated
+            jButton1.setToolTipText("delete note");  // Generated
+            jButton1.setIcon(Constants.ICON_DELETE);
             jButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     int index = getJTabbedPane().getSelectedIndex();
@@ -280,7 +282,8 @@ public class FrontEnd extends JFrame {
     private JButton getJButton3() {
         if (jButton3 == null) {
             jButton3 = new JButton();
-            jButton3.setText("rename note");  // Generated
+            jButton3.setToolTipText("rename note");  // Generated
+            jButton3.setIcon(Constants.ICON_RENAME);
             jButton3.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     String noteCaption = JOptionPane.showInputDialog("Note caption:");
@@ -299,7 +302,8 @@ public class FrontEnd extends JFrame {
     private JButton getJButton4() {
         if (jButton4 == null) {
             jButton4 = new JButton();
-            jButton4.setText("switch mode");  // Generated
+            jButton4.setToolTipText("switch mode");  // Generated
+            jButton4.setIcon(Constants.ICON_SWITCH_MODE);
             jButton4.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     JTextPane textPane = (JTextPane) 
@@ -339,7 +343,8 @@ public class FrontEnd extends JFrame {
     private JButton getJButton5() {
         if (jButton5 == null) {
             jButton5 = new JButton();
-            jButton5.setText("B");  // Generated
+            jButton5.setToolTipText("bold");  // Generated
+            jButton5.setIcon(Constants.ICON_TEXT_BOLD);
             jButton5.setEnabled(false);  // Generated
             jButton5.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -358,7 +363,8 @@ public class FrontEnd extends JFrame {
     private JButton getJButton6() {
         if (jButton6 == null) {
             jButton6 = new JButton();
-            jButton6.setText("I");  // Generated
+            jButton6.setToolTipText("italic");  // Generated
+            jButton6.setIcon(Constants.ICON_TEXT_ITALIC);
             jButton6.setEnabled(false);  // Generated
             jButton6.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -377,7 +383,8 @@ public class FrontEnd extends JFrame {
     private JButton getJButton7() {
         if (jButton7 == null) {
             jButton7 = new JButton();
-            jButton7.setText("U");  // Generated
+            jButton7.setToolTipText("underline");  // Generated
+            jButton7.setIcon(Constants.ICON_TEXT_UNDERLINE);
             jButton7.setEnabled(false);  // Generated
             jButton7.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {

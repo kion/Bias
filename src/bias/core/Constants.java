@@ -3,6 +3,8 @@
  */
 package bias.core;
 
+import javax.swing.ImageIcon;
+
 /**
  * @author kion
  */
@@ -25,4 +27,19 @@ public interface Constants {
     public static final String PROPERTY_WINDOW_HEIGHT = "WINDOW_HEIGHT";
     public static final String PROPERTY_LAST_SELECTED_TAB_INDEX = "LAST_SELECTED_TAB_INDEX";
 
+    public static final ImageIcon ICON_ADD = 
+        new ImageIcon(Constants.class.getResource("/bias/res/add.png"));
+    public static final ImageIcon ICON_RENAME = 
+        new ImageIcon(Constants.class.getResource("/bias/res/rename.png"));
+    public static final ImageIcon ICON_DELETE = 
+        new ImageIcon(Constants.class.getResource("/bias/res/delete.png"));
+    public static final ImageIcon ICON_SWITCH_MODE = 
+        new ImageIcon(Constants.class.getResource("/bias/res/switch_mode.png"));
+    public static final ImageIcon ICON_TEXT_BOLD = 
+        new ImageIcon(Constants.class.getResource("/bias/res/text_bold.png"));
+    public static final ImageIcon ICON_TEXT_ITALIC = 
+        new ImageIcon(Constants.class.getResource("/bias/res/text_italic.png"));
+    public static final ImageIcon ICON_TEXT_UNDERLINE = 
+        new ImageIcon(Constants.class.getResource("/bias/res/text_underlined.png"));
+    
 }
