@@ -6,6 +6,9 @@ package bias.core;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
@@ -30,7 +33,7 @@ public class FrontEnd extends JFrame {
 
     private static final long serialVersionUID = 1L;
     
-    private Map<String, String> notes;  //  @jve:decl-index=0:
+    private Collection<String> notesCaptions;
     
     private JPanel jContentPane = null;
 
@@ -80,7 +83,11 @@ public class FrontEnd extends JFrame {
         this.setSize(new Dimension(796, 558));  // Generated
         try {
             BackEnd.load();
+            notesCaptions = new ArrayList<String>();
             Properties properties = BackEnd.getProperties();
+            for (Object noteCaption : properties.values()) {
+                notesCaptions.add((String) noteCaption);
+            }
 
             int wpxValue;
             int wpyValue;
@@ -120,7 +127,7 @@ public class FrontEnd extends JFrame {
             this.setTitle("Bias");
             
             getJTabbedPane().removeAll();
-            notes = BackEnd.getNotes();
+            Map<String, String> notes = BackEnd.getNotes();
             for (Entry<String, String> note : notes.entrySet()) {
                 String key = note.getKey();
                 String caption = properties.getProperty(key);
@@ -148,6 +155,7 @@ public class FrontEnd extends JFrame {
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
                         Properties properties = new Properties();
+                        Map<String, String> notes = new LinkedHashMap<String, String>();
                         properties.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR+getLocation().getX()/getToolkit().getScreenSize().getWidth());
                         properties.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR+getLocation().getY()/getToolkit().getScreenSize().getHeight());
                         properties.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR+getSize().getWidth()/getToolkit().getScreenSize().getHeight());
@@ -238,11 +246,16 @@ public class FrontEnd extends JFrame {
                     textPane.setEditorKit(new HTMLEditorKit());
                     textPane.setEditable(false);
                     String noteCaption = JOptionPane.showInputDialog("Note caption:");
-                    getJTabbedPane().addTab(noteCaption, new JScrollPane(textPane));
-                    getJTabbedPane().setSelectedIndex(getJTabbedPane().getTabCount()-1);
-                    getJTabbedPane().setTitleAt(getJTabbedPane().getSelectedIndex(), noteCaption);
-                    if (getJTabbedPane().getTabCount() == 1) {
-                        getJButton1().setEnabled(true);
+                    if (!notesCaptions.contains(noteCaption)) {
+                        getJTabbedPane().addTab(noteCaption, new JScrollPane(textPane));
+                        getJTabbedPane().setSelectedIndex(getJTabbedPane().getTabCount()-1);
+                        getJTabbedPane().setTitleAt(getJTabbedPane().getSelectedIndex(), noteCaption);
+                        notesCaptions.add(noteCaption);
+                        if (getJTabbedPane().getTabCount() == 1) {
+                            getJButton1().setEnabled(true);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(FrontEnd.this, "Note caption must be unique!", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             });
@@ -263,7 +276,8 @@ public class FrontEnd extends JFrame {
             jButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     int index = getJTabbedPane().getSelectedIndex();
-                    notes.remove(getJTabbedPane().getTitleAt(index));
+                    String noteCaption = getJTabbedPane().getTitleAt(index);
+                    notesCaptions.remove(noteCaption);
                     getJTabbedPane().remove(index);
                     if (getJTabbedPane().getTabCount() == 0) {
                         getJButton1().setEnabled(false);
@@ -286,8 +300,16 @@ public class FrontEnd extends JFrame {
             jButton3.setIcon(Constants.ICON_RENAME);
             jButton3.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
+                    int index = getJTabbedPane().getSelectedIndex();
+                    String currentNoteCaption = getJTabbedPane().getTitleAt(index);
                     String noteCaption = JOptionPane.showInputDialog("Note caption:");
-                    getJTabbedPane().setTitleAt(getJTabbedPane().getSelectedIndex(), noteCaption);
+                    if (!currentNoteCaption.equals(noteCaption) && !notesCaptions.contains(noteCaption)) {
+                        notesCaptions.remove(currentNoteCaption);
+                        getJTabbedPane().setTitleAt(index, noteCaption);
+                        notesCaptions.add(noteCaption);
+                    } else {
+                        JOptionPane.showMessageDialog(FrontEnd.this, "Note caption must be unique!", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             });
         }
