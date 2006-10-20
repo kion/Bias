@@ -34,7 +34,7 @@
 			    <include name="res/**"/>
 			</fileset>
         	<manifest>
-        		<attribute name="Main-Class" value="bias.core.Bias"/>
+        		<attribute name="Main-Class" value="bias.Bias"/>
         	</manifest>
         </jar>
     </target>

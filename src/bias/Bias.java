@@ -1,7 +1,7 @@
 /**
  * Created on Oct 15, 2006
  */
-package bias.core;
+package bias;
 
 import bias.gui.FrontEnd;
 
