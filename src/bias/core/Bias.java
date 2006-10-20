@@ -3,6 +3,8 @@
  */
 package bias.core;
 
+import bias.gui.FrontEnd;
+
 /**
  * @author kion
  */

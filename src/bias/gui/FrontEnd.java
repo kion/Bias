@@ -1,7 +1,7 @@
 /**
  * Created on Oct 15, 2006
  */
-package bias.core;
+package bias.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -25,6 +25,7 @@ import javax.swing.JViewport;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 
+import bias.core.BackEnd;
 import bias.global.Constants;
 import bias.utils.Validator;
 
