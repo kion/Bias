@@ -35,7 +35,6 @@ import javax.swing.JToolBar;
 import javax.swing.JViewport;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.MutableAttributeSet;
@@ -82,6 +81,18 @@ public class FrontEnd extends JFrame {
 
     private JComboBox jComboBox = null;
     
+    private JComboBox jComboBox1 = null;
+
+    private JButton jButton2 = null;
+
+    private JButton jButton5 = null;
+
+    private JPanel jPanel = null;
+
+    private JToolBar jToolBar2 = null;
+
+    private JButton jButton6 = null;
+
     /**
      * This is the default constructor
      */
@@ -159,25 +170,7 @@ public class FrontEnd extends JFrame {
             this.addWindowListener(new java.awt.event.WindowAdapter() {   
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
-                        Properties properties = new Properties();
-                        Map<String, String> notes = new LinkedHashMap<String, String>();
-                        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR+getLocation().getX()/getToolkit().getScreenSize().getWidth());
-                        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR+getLocation().getY()/getToolkit().getScreenSize().getHeight());
-                        properties.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR+getSize().getWidth()/getToolkit().getScreenSize().getHeight());
-                        properties.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR+getSize().getHeight()/getToolkit().getScreenSize().getHeight());
-                        properties.put(Constants.PROPERTY_LAST_SELECTED_TAB_INDEX, Constants.EMPTY_STR+getJTabbedPane().getSelectedIndex());
-                        for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
-                            JTextPane textPane = (JTextPane) 
-                                                    ((JViewport) 
-                                                         ((JScrollPane) 
-                                                                 getJTabbedPane().getComponent(i)).getComponent(0)).getComponent(0);
-                            String caption = getJTabbedPane().getTitleAt(i);
-                            String value = textPane.getText();
-                            properties.put(Constants.EMPTY_STR+(i+1), caption);
-                            notes.put(Constants.EMPTY_STR+(i+1), value);
-                        }
-                        BackEnd.setProperties(properties);
-                        BackEnd.setNotes(notes);
+                        gatherCurrentData();
                         BackEnd.store();
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
@@ -207,6 +200,31 @@ public class FrontEnd extends JFrame {
             textPane.addCaretListener(togglesStatesListener);
             getJTabbedPane().addTab(caption, new JScrollPane(textPane));
         }
+    }
+    
+    private void gatherCurrentData() {
+
+        Properties properties = new Properties();
+        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR+getLocation().getX()/getToolkit().getScreenSize().getWidth());
+        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR+getLocation().getY()/getToolkit().getScreenSize().getHeight());
+        properties.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR+getSize().getWidth()/getToolkit().getScreenSize().getHeight());
+        properties.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR+getSize().getHeight()/getToolkit().getScreenSize().getHeight());
+        properties.put(Constants.PROPERTY_LAST_SELECTED_TAB_INDEX, Constants.EMPTY_STR+getJTabbedPane().getSelectedIndex());
+        BackEnd.setProperties(properties);
+        
+        Map<String, String> notes = new LinkedHashMap<String, String>();
+        for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
+            JTextPane textPane = (JTextPane) 
+                                    ((JViewport) 
+                                         ((JScrollPane) 
+                                                 getJTabbedPane().getComponent(i)).getComponent(0)).getComponent(0);
+            String caption = getJTabbedPane().getTitleAt(i);
+            String value = textPane.getText();
+            properties.put(Constants.EMPTY_STR+(i+1), caption);
+            notes.put(Constants.EMPTY_STR+(i+1), value);
+        }
+        BackEnd.setNotes(notes);
+        
     }
     
     private void synchronizeEditNoteControlsStates(JTextPane textPane) {
@@ -309,7 +327,7 @@ public class FrontEnd extends JFrame {
 
     private void setNotesManagementToolbalEnabledState(boolean enabled) {
         for (Component button : getJToolBar().getComponents()) {
-            if (!button.equals(getJButton())) {
+            if (!button.equals(getJButton()) && !button.equals(getJButton2())) {
                 button.setEnabled(enabled);
             }
         }
@@ -351,15 +369,19 @@ public class FrontEnd extends JFrame {
             jTabbedPane.setBackground(null);  // Generated
             jTabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
                 public void stateChanged(javax.swing.event.ChangeEvent e) {
-                    JTextPane textPane = (JTextPane) 
-                    ((JViewport) 
-                         ((JScrollPane) 
-                                 getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
-                                 .getComponent(0)).getComponent(0);
-                    if (textPane.isEditable()) {
-                        getJToolBar1().setVisible(true);
-                        textPane.requestFocusInWindow();
-                        synchronizeEditNoteControlsStates(textPane);
+                    if (jTabbedPane.getSelectedIndex() != -1) {
+                        JTextPane textPane = (JTextPane) 
+                        ((JViewport) 
+                             ((JScrollPane) 
+                                     getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
+                                     .getComponent(0)).getComponent(0);
+                        if (textPane.isEditable()) {
+                            getJToolBar1().setVisible(true);
+                            textPane.requestFocusInWindow();
+                            synchronizeEditNoteControlsStates(textPane);
+                        } else {
+                            getJToolBar1().setVisible(false);
+                        }
                     } else {
                         getJToolBar1().setVisible(false);
                     }
@@ -378,10 +400,10 @@ public class FrontEnd extends JFrame {
         if (jToolBar == null) {
             jToolBar = new JToolBar();
             jToolBar.setFloatable(false);  // Generated
+            jToolBar.add(getJButton2());  // Generated
             jToolBar.add(getJButton());  // Generated
             jToolBar.add(getJButton3());  // Generated
             jToolBar.add(getJButton1());  // Generated
-            jToolBar.add(getJButton2());  // Generated
             jToolBar.add(getJButton4());  // Generated
         }
         return jToolBar;
@@ -480,8 +502,8 @@ public class FrontEnd extends JFrame {
                     try {
                         int index = getJTabbedPane().getSelectedIndex();
                         String noteCaption = getJTabbedPane().getTitleAt(index);
-                        notesCaptions.remove(noteCaption);
                         getJTabbedPane().remove(index);
+                        notesCaptions.remove(noteCaption);
                         if (getJTabbedPane().getTabCount() == 0) {
                             setNotesManagementToolbalEnabledState(false);
                         }
@@ -645,18 +667,6 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    private JComboBox jComboBox1 = null;
-
-    private JButton jButton2 = null;
-
-    private JButton jButton5 = null;
-
-    private JPanel jPanel = null;
-
-    private JToolBar jToolBar2 = null;
-
-    private JButton jButton6 = null;
-
     /**
      * This method initializes jComboBox	
      * 	
@@ -737,7 +747,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton2() {
         if (jButton2 == null) {
             jButton2 = new JButton();
-            jButton2.setToolTipText("import data");  // Generated
+            jButton2.setToolTipText("import data from another Bias JAR");  // Generated
             jButton2.setIcon(Constants.ICON_IMPORT_DATA);
             jButton2.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -761,15 +771,9 @@ public class FrontEnd extends JFrame {
                         int rVal = jfc.showOpenDialog(FrontEnd.this);
                         if (rVal == JFileChooser.APPROVE_OPTION) {
                             jarFile = jfc.getSelectedFile();
+                            gatherCurrentData();
                             BackEnd.importData(jarFile);
-                            ChangeListener[] cls = jTabbedPane.getChangeListeners();
-                            for (ChangeListener cl : cls) {
-                                jTabbedPane.removeChangeListener(cl);
-                            }
                             initNotes(BackEnd.getProperties());
-                            for (ChangeListener cl : cls) {
-                                jTabbedPane.addChangeListener(cl);
-                            }
                         }
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
@@ -847,7 +851,7 @@ public class FrontEnd extends JFrame {
             jButton6.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     JOptionPane.showMessageDialog(FrontEnd.this, 
-                            "<html>Bias Personal Information Manager, version 0.1-alpha" +
+                            "<html>Bias Personal Information Manager, version 0.1-beta" +
                             "<br>(c) ki0n, 2006" +
                             "<br>http://bias.sourceforge.net");
                 }
