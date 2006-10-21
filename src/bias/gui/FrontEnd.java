@@ -6,23 +6,40 @@ package bias.gui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledEditorKit;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
 import bias.core.BackEnd;
@@ -54,12 +71,14 @@ public class FrontEnd extends JFrame {
 
     private JToolBar jToolBar1 = null;
 
-    private JButton jButton5 = null;
+    private JToggleButton jToggleButton = null;
 
-    private JButton jButton6 = null;
+    private JToggleButton jToggleButton1 = null;
 
-    private JButton jButton7 = null;
+    private JToggleButton jToggleButton2 = null;
 
+    private JComboBox jComboBox = null;
+    
     /**
      * This is the default constructor
      */
@@ -76,13 +95,12 @@ public class FrontEnd extends JFrame {
     private void initialize() {
         this.setSize(new Dimension(796, 558));  // Generated
         try {
-            BackEnd.load();
-            notesCaptions = new ArrayList<String>();
-            Properties properties = BackEnd.getProperties();
-            for (Object noteCaption : properties.values()) {
-                notesCaptions.add((String) noteCaption);
-            }
+            this.setTitle("Bias");
+            this.setContentPane(getJContentPane());
 
+            BackEnd.load();
+            Properties properties = BackEnd.getProperties();
+            
             int wpxValue;
             int wpyValue;
             int wwValue;
@@ -117,22 +135,8 @@ public class FrontEnd extends JFrame {
             this.setLocation(wpxValue, wpyValue);
             this.setSize(wwValue, whValue);
             
-            this.setContentPane(getJContentPane());
-            this.setTitle("Bias");
-            
-            getJTabbedPane().removeAll();
-            Map<String, String> notes = BackEnd.getNotes();
-            for (Entry<String, String> note : notes.entrySet()) {
-                String key = note.getKey();
-                String caption = properties.getProperty(key);
-                String value = note.getValue();
-                JTextPane textPane = new JTextPane();
-                textPane.setEditorKit(new HTMLEditorKit());
-                textPane.setText(value);
-                textPane.setEditable(false);
-                getJTabbedPane().addTab(caption, new JScrollPane(textPane));
-            }
-            
+            initNotes(properties);
+
             int lstiValue;
             String lstiStr = properties.getProperty(Constants.PROPERTY_LAST_SELECTED_TAB_INDEX);
             if (lstiStr == null) {
@@ -146,7 +150,7 @@ public class FrontEnd extends JFrame {
             } else {
                 setNotesManagementToolbalEnabledState(false);
             }
-            
+
             this.setDefaultCloseOperation(EXIT_ON_CLOSE);
             this.addWindowListener(new java.awt.event.WindowAdapter() {   
                 public void windowClosing(java.awt.event.WindowEvent e) {
@@ -180,6 +184,141 @@ public class FrontEnd extends JFrame {
             displayErrorMessage(ex);
         }
     }
+    
+    private void initNotes(Properties properties) {
+        notesCaptions = new ArrayList<String>();
+        for (Object noteCaption : properties.values()) {
+            notesCaptions.add((String) noteCaption);
+        }
+        getJTabbedPane().removeAll();
+        Map<String, String> notes = BackEnd.getNotes();
+        for (Entry<String, String> note : notes.entrySet()) {
+            String key = note.getKey();
+            String caption = properties.getProperty(key);
+            String value = note.getValue();
+            JTextPane textPane = new JTextPane();
+            textPane.setEditorKit(new HTMLEditorKit());
+            textPane.setText(value);
+            textPane.setEditable(false);
+            textPane.addCaretListener(togglesStatesListener);
+            getJTabbedPane().addTab(caption, new JScrollPane(textPane));
+        }
+    }
+    
+    private void synchronizeEditNoteControlsStates(JTextPane textPane) {
+        if (textPane.isEditable()) {
+            boolean boldSelected = false;
+            boolean italicSelected = false;
+            boolean underlineSelected = false;
+            Integer fontSize = null;
+            AttributeSet fontFamilyAS = new SimpleAttributeSet();
+            if (textPane.getSelectedText() == null) {
+                int pos = textPane.getCaretPosition() == 0 ? textPane.getCaretPosition() : textPane.getCaretPosition() - 1;
+                AttributeSet as = ((HTMLDocument) textPane.getDocument()).getCharacterElement(pos).getAttributes();
+                if (as.containsAttribute(StyleConstants.Bold, Boolean.TRUE)) {
+                    boldSelected = true;
+                }
+                if (as.containsAttribute(StyleConstants.Italic, Boolean.TRUE)) {
+                    italicSelected = true;
+                }
+                if (as.containsAttribute(StyleConstants.Underline, Boolean.TRUE)) {
+                    underlineSelected = true;
+                }
+                // get font size at current position
+                fontSize = (Integer) as.getAttribute(StyleConstants.FontSize);
+                // get font family at the current position
+                fontFamilyAS = ((HTMLDocument) textPane.getDocument()).getCharacterElement(pos).getAttributes();
+            } else {
+                AttributeSet as = null;
+                int selStart;
+                int selEnd;
+                if (textPane.getCaret().getDot() > textPane.getCaret().getMark()) {
+                    selStart = textPane.getCaret().getMark();
+                    selEnd = textPane.getCaret().getDot();
+                } else {
+                    selStart = textPane.getCaret().getDot();
+                    selEnd = textPane.getCaret().getMark();
+                }
+                for (int i = selStart; i < selEnd; i++) {
+                    as = ((HTMLDocument) textPane.getDocument()).getCharacterElement(i).getAttributes();
+                    if (!as.containsAttribute(StyleConstants.Bold, new Boolean(true))) {
+                        boldSelected = false;
+                    }
+                    if (!as.containsAttribute(StyleConstants.Italic, new Boolean(true))) {
+                        italicSelected = false;
+                    }
+                    if (!as.containsAttribute(StyleConstants.Underline, new Boolean(true))) {
+                        underlineSelected = false;
+                    }
+                    // get the biggest font size value in selected text
+                    if (as.isDefined(StyleConstants.FontSize)) {
+                        Integer fs = (Integer) as.getAttribute(StyleConstants.FontSize);
+                        if (fontSize == null || fs.intValue() > fontSize.intValue()) {
+                            fontSize = new Integer(fs.intValue());
+                        }
+                    }
+                    // get font family of last char of selected text which has font family set
+                    AttributeSet ffAS = ((HTMLDocument) textPane.getDocument()).getCharacterElement(i).getAttributes();
+                    if (ffAS.isDefined(StyleConstants.FontFamily)) {
+                        fontFamilyAS = ffAS.copyAttributes();
+                    }
+                }
+            }
+            getJToggleButton().setSelected(boldSelected);
+            getJToggleButton1().setSelected(italicSelected);
+            getJToggleButton2().setSelected(underlineSelected);
+            // set current font size in font size chooser
+            ItemListener[] ils = getJComboBox().getItemListeners();
+            for (int i = 0; i < ils.length; i++) {
+                getJComboBox().removeItemListener(ils[i]);
+            }
+            if (fontSize == null) {
+                fontSize = Constants.FONT_SIZE_MEDIUM;
+            }
+            Iterator it = Constants.FONT_SIZES.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry fontSizeEntry = (Entry) it.next();
+                Integer fontSizeValue = (Integer) fontSizeEntry.getValue();
+                if (fontSizeValue.equals(fontSize)) {
+                    getJComboBox().setSelectedItem(fontSizeEntry.getKey());
+                    break;
+                }
+            }
+            for (int i = 0; i < ils.length; i++) {
+                getJComboBox().addItemListener(ils[i]);
+            }
+            // set current font family in font family chooser
+            ils = getJComboBox1().getItemListeners();
+            for (int i = 0; i < ils.length; i++) {
+                getJComboBox1().removeItemListener(ils[i]);
+            }
+            if (fontFamilyAS.isDefined(StyleConstants.FontFamily)) {
+                getJComboBox1().setSelectedItem(fontFamilyAS.getAttribute(StyleConstants.FontFamily));
+            } else {
+                getJComboBox1().setSelectedIndex(0);
+            }
+            for (int i = 0; i < ils.length; i++) {
+                getJComboBox1().addItemListener(ils[i]);
+            }
+        }
+    }
+
+    private void setNotesManagementToolbalEnabledState(boolean enabled) {
+        for (Component button : getJToolBar().getComponents()) {
+            if (!button.equals(getJButton())) {
+                button.setEnabled(enabled);
+            }
+        }
+    }
+
+    private void displayErrorMessage(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void displayErrorMessage(Exception ex) {
+        JOptionPane.showMessageDialog(this, "Details: " + ex, "Error", JOptionPane.ERROR_MESSAGE);
+        ex.printStackTrace();
+    }
 
     /**
      * This method initializes jContentPane
@@ -191,8 +330,8 @@ public class FrontEnd extends JFrame {
             jContentPane = new JPanel();
             jContentPane.setLayout(new BorderLayout());
             jContentPane.add(getJTabbedPane(), BorderLayout.CENTER);
-            jContentPane.add(getJToolBar(), BorderLayout.SOUTH);  // Generated
-            jContentPane.add(getJToolBar1(), BorderLayout.NORTH);  // Generated
+            jContentPane.add(getJToolBar(), BorderLayout.NORTH);  // Generated
+            jContentPane.add(getJToolBar1(), BorderLayout.SOUTH);  // Generated
         }
         return jContentPane;
     }
@@ -206,6 +345,22 @@ public class FrontEnd extends JFrame {
         if (jTabbedPane == null) {
             jTabbedPane = new JTabbedPane();
             jTabbedPane.setBackground(null);  // Generated
+            jTabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
+                public void stateChanged(javax.swing.event.ChangeEvent e) {
+                    JTextPane textPane = (JTextPane) 
+                    ((JViewport) 
+                         ((JScrollPane) 
+                                 getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
+                                 .getComponent(0)).getComponent(0);
+                    if (textPane.isEditable()) {
+                        getJToolBar1().setVisible(true);
+                        textPane.requestFocusInWindow();
+                        synchronizeEditNoteControlsStates(textPane);
+                    } else {
+                        getJToolBar1().setVisible(false);
+                    }
+                }
+            });
         }
         return jTabbedPane;
     }
@@ -222,6 +377,7 @@ public class FrontEnd extends JFrame {
             jToolBar.add(getJButton());  // Generated
             jToolBar.add(getJButton3());  // Generated
             jToolBar.add(getJButton1());  // Generated
+            jToolBar.add(getJButton2());  // Generated
             jToolBar.add(getJButton4());  // Generated
         }
         return jToolBar;
@@ -243,6 +399,7 @@ public class FrontEnd extends JFrame {
                         JTextPane textPane = new JTextPane();
                         textPane.setEditorKit(new HTMLEditorKit());
                         textPane.setEditable(false);
+                        textPane.addCaretListener(togglesStatesListener);
                         String noteCaption = JOptionPane.showInputDialog("Note caption:");
                         if (!Validator.isNullOrBlank(noteCaption)) {
                             if (!notesCaptions.contains(noteCaption)) {
@@ -352,7 +509,16 @@ public class FrontEnd extends JFrame {
                                      getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
                                      .getComponent(0)).getComponent(0);
                         textPane.setEditable(!textPane.isEditable());
-                        switchNoteEditToolbalEnabledState();
+                        if (textPane.isEditable()) {
+                            textPane.requestFocusInWindow();
+                        }
+                        if (!getJToolBar1().isVisible()) {
+                            getJToolBar1().setVisible(true);
+                            textPane.requestFocusInWindow();
+                            synchronizeEditNoteControlsStates(textPane);
+                        } else {
+                            getJToolBar1().setVisible(false);
+                        }
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
                     }
@@ -371,105 +537,234 @@ public class FrontEnd extends JFrame {
         if (jToolBar1 == null) {
             jToolBar1 = new JToolBar();
             jToolBar1.setFloatable(false);  // Generated
-            jToolBar1.add(getJButton5());  // Generated
-            jToolBar1.add(getJButton6());  // Generated
-            jToolBar1.add(getJButton7());  // Generated
+            jToolBar1.add(getJToggleButton());  // Generated
+            jToolBar1.add(getJToggleButton1());  // Generated
+            jToolBar1.add(getJToggleButton2());  // Generated
+            jToolBar1.add(getJComboBox());  // Generated
+            jToolBar1.add(getJComboBox1());  // Generated
         }
         return jToolBar1;
     }
 
     /**
-     * This method initializes jButton5	
+     * This method initializes jToggleButton	
      * 	
-     * @return javax.swing.JButton	
+     * @return javax.swing.JToggleButton	
      */
-    private JButton getJButton5() {
-        if (jButton5 == null) {
-            jButton5 = new JButton();
-            jButton5.setToolTipText("bold");  // Generated
-            jButton5.setIcon(Constants.ICON_TEXT_BOLD);
-            jButton5.setEnabled(false);  // Generated
-            jButton5.addActionListener(new java.awt.event.ActionListener() {
+    private JToggleButton getJToggleButton() {
+        if (jToggleButton == null) {
+            jToggleButton = new JToggleButton();
+            jToggleButton.setToolTipText("bold");  // Generated
+            jToggleButton.setIcon(Constants.ICON_TEXT_BOLD);
+            jToggleButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
                         new StyledEditorKit.BoldAction().actionPerformed(e);
+                        JTextPane textPane = (JTextPane) 
+                        ((JViewport) 
+                             ((JScrollPane) 
+                                     getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
+                                     .getComponent(0)).getComponent(0);
+                        textPane.requestFocusInWindow();
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
                     }
                 }
             });
         }
-        return jButton5;
+        return jToggleButton;
     }
 
     /**
-     * This method initializes jButton6	
+     * This method initializes jToggleButton1	
      * 	
      * @return javax.swing.JButton	
      */
-    private JButton getJButton6() {
-        if (jButton6 == null) {
-            jButton6 = new JButton();
-            jButton6.setToolTipText("italic");  // Generated
-            jButton6.setIcon(Constants.ICON_TEXT_ITALIC);
-            jButton6.setEnabled(false);  // Generated
-            jButton6.addActionListener(new java.awt.event.ActionListener() {
+    private JToggleButton getJToggleButton1() {
+        if (jToggleButton1 == null) {
+            jToggleButton1 = new JToggleButton();
+            jToggleButton1.setToolTipText("italic");  // Generated
+            jToggleButton1.setIcon(Constants.ICON_TEXT_ITALIC);
+            jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
                         new StyledEditorKit.ItalicAction().actionPerformed(e);
+                        JTextPane textPane = (JTextPane) 
+                        ((JViewport) 
+                             ((JScrollPane) 
+                                     getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
+                                     .getComponent(0)).getComponent(0);
+                        textPane.requestFocusInWindow();
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
                     }
                 }
             });
         }
-        return jButton6;
+        return jToggleButton1;
     }
 
     /**
-     * This method initializes jButton7	
+     * This method initializes jToggleButton2	
      * 	
      * @return javax.swing.JButton	
      */
-    private JButton getJButton7() {
-        if (jButton7 == null) {
-            jButton7 = new JButton();
-            jButton7.setToolTipText("underline");  // Generated
-            jButton7.setIcon(Constants.ICON_TEXT_UNDERLINE);
-            jButton7.setEnabled(false);  // Generated
-            jButton7.addActionListener(new java.awt.event.ActionListener() {
+    private JToggleButton getJToggleButton2() {
+        if (jToggleButton2 == null) {
+            jToggleButton2 = new JToggleButton();
+            jToggleButton2.setToolTipText("underline");  // Generated
+            jToggleButton2.setIcon(Constants.ICON_TEXT_UNDERLINE);
+            jToggleButton2.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
                         new StyledEditorKit.UnderlineAction().actionPerformed(e);
+                        JTextPane textPane = (JTextPane) 
+                        ((JViewport) 
+                             ((JScrollPane) 
+                                     getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
+                                     .getComponent(0)).getComponent(0);
+                        textPane.requestFocusInWindow();
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
                     }
                 }
             });
         }
-        return jButton7;
+        return jToggleButton2;
     }
     
-    private void setNotesManagementToolbalEnabledState(boolean enabled) {
-        for (Component button : getJToolBar().getComponents()) {
-            if (!button.equals(jButton)) {
-                button.setEnabled(enabled);
+    private CaretListener togglesStatesListener = new CaretListener() {
+        public void caretUpdate(CaretEvent e) {
+            JTextPane textPane = (JTextPane) e.getSource();  //  @jve:decl-index=0:
+            synchronizeEditNoteControlsStates(textPane);
+        }
+    };
+
+    private JComboBox jComboBox1 = null;
+
+    private JButton jButton2 = null;
+
+    /**
+     * This method initializes jComboBox	
+     * 	
+     * @return javax.swing.JComboBox	
+     */
+    private JComboBox getJComboBox() {
+        if (jComboBox == null) {
+            jComboBox = new JComboBox();
+            jComboBox.setMinimumSize(new Dimension(150, 20));
+            jComboBox.setMaximumSize(new Dimension(150, 20));
+            jComboBox.setPreferredSize(new Dimension(150, 20));
+            jComboBox.setToolTipText("font size");
+            Iterator it = Constants.FONT_SIZES.keySet().iterator();
+            while (it.hasNext()) {
+                jComboBox.addItem((String) it.next());
             }
+            jComboBox.setSelectedItem(Constants.FONT_SIZES.get(Constants.FONT_SIZE_MEDIUM));
+            jComboBox.addItemListener(new java.awt.event.ItemListener() {
+                public void itemStateChanged(java.awt.event.ItemEvent e) {
+                    JTextPane textPane = (JTextPane) 
+                    ((JViewport) 
+                         ((JScrollPane) 
+                                 getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
+                                 .getComponent(0)).getComponent(0);
+                    String selectedFontSizeStr = (String) getJComboBox().getSelectedItem();
+                    int selectedFontSize = ((Integer) Constants.FONT_SIZES.get(selectedFontSizeStr)).intValue();
+                    String actionName = "font size";
+                    new StyledEditorKit.FontSizeAction(actionName, selectedFontSize).actionPerformed(
+                            new ActionEvent(e.getSource(), e.getID(), actionName));
+                    textPane.requestFocusInWindow();
+                }
+            });
         }
+        return jComboBox;
     }
 
-    private void switchNoteEditToolbalEnabledState() {
-        for (Component button : getJToolBar1().getComponents()) {
-            button.setEnabled(!button.isEnabled());
+    /**
+     * This method initializes jComboBox1	
+     * 	
+     * @return javax.swing.JComboBox	
+     */
+    private JComboBox getJComboBox1() {
+        if (jComboBox1 == null) {
+            jComboBox1 = new JComboBox();
+            jComboBox1.setMinimumSize(new Dimension(150, 20));
+            jComboBox1.setMaximumSize(new Dimension(150, 20));
+            jComboBox1.setPreferredSize(new Dimension(150, 20));
+            jComboBox1.setToolTipText("font family");
+            jComboBox1.addItem(Constants.EMPTY_STR);
+            String[] fontFamilyNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+            for (int i = 0; i < fontFamilyNames.length; i++) {
+                jComboBox1.addItem(fontFamilyNames[i]);
+            }
+            jComboBox1.setSelectedIndex(0);
+            jComboBox1.addItemListener(new java.awt.event.ItemListener() {
+                public void itemStateChanged(java.awt.event.ItemEvent e) {
+                    JTextPane textPane = (JTextPane) 
+                    ((JViewport) 
+                         ((JScrollPane) 
+                                 getJTabbedPane().getComponent(getJTabbedPane().getSelectedIndex()))
+                                 .getComponent(0)).getComponent(0);
+                    String selectedFontFamilyStr = (String) getJComboBox1().getSelectedItem();
+                    MutableAttributeSet ffAS = new SimpleAttributeSet();
+                    ffAS.addAttribute(StyleConstants.FontFamily, selectedFontFamilyStr);
+                    textPane.setCharacterAttributes(ffAS, false);
+                    textPane.requestFocusInWindow();
+                }
+            });
         }
-    }
-    
-    private void displayErrorMessage(String message) {
-        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+        return jComboBox1;
     }
 
-    private void displayErrorMessage(Exception ex) {
-        JOptionPane.showMessageDialog(this, "StackTrace: " + ex.getStackTrace(), "Error", JOptionPane.ERROR_MESSAGE);
+    /**
+     * This method initializes jButton2	
+     * 	
+     * @return javax.swing.JButton	
+     */
+    private JButton getJButton2() {
+        if (jButton2 == null) {
+            jButton2 = new JButton();
+            jButton2.setToolTipText("import data");  // Generated
+            jButton2.setIcon(Constants.ICON_IMPORT_DATA);
+            jButton2.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    try {
+                        JFileChooser jfc = new JFileChooser();
+                        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                        jfc.setFileFilter(new FileFilter(){
+                            @Override
+                            public boolean accept(File file) {
+                                if (file.getName().endsWith(".jar")) {
+                                    return true;
+                                }
+                                return false;
+                            }
+                            @Override
+                            public String getDescription() {
+                                return "Java Archive File (*.jar)";
+                            }
+                        });
+                        File jarFile = null;
+                        int rVal = jfc.showOpenDialog(FrontEnd.this);
+                        if (rVal == JFileChooser.APPROVE_OPTION) {
+                            jarFile = jfc.getSelectedFile();
+                            BackEnd.importData(jarFile);
+                            ChangeListener[] cls = jTabbedPane.getChangeListeners();
+                            for (ChangeListener cl : cls) {
+                                jTabbedPane.removeChangeListener(cl);
+                            }
+                            initNotes(BackEnd.getProperties());
+                            for (ChangeListener cl : cls) {
+                                jTabbedPane.addChangeListener(cl);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        displayErrorMessage(ex);
+                    }
+                }
+            });
+        }
+        return jButton2;
     }
 
 }  //  @jve:decl-index=0:visual-constraint="10,10"

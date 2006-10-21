@@ -62,6 +62,34 @@ public class BackEnd {
         zis.close();
     }
     
+    public static void importData(File jarFile) throws Exception {
+        ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
+        ZipEntry ze = null;
+        int nativeNotesCnt = notes.size();
+        int newNoteIdx = nativeNotesCnt;
+        while ((ze = zis.getNextEntry()) != null) {
+            StringWriter sw = new StringWriter();
+            int c;
+            while ((c = zis.read()) != -1) {
+                sw.write(c);
+            }
+            if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
+                notes.put("" + ++newNoteIdx, sw.getBuffer().toString());
+            } else if (ze.getName().equals(Constants.CONFIG_FILE_PATH)) {
+                Properties props = new Properties();
+                props.load(new ByteArrayInputStream(sw.getBuffer().toString().getBytes()));
+                for (Entry prop : props.entrySet()) {
+                    String sourceKey = (String) prop.getKey();
+                    if ((sourceKey).matches("\\d+")) {
+                        String newKey = "" + (Integer.valueOf(sourceKey) + nativeNotesCnt);
+                        properties.put(newKey, (String) prop.getValue());
+                    }
+                }
+            }    
+        }
+        zis.close();
+    }
+    
     public static void store() throws Exception {
         if (jarFile == null) {
             init();
