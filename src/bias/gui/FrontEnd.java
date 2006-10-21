@@ -99,6 +99,7 @@ public class FrontEnd extends JFrame {
         this.setSize(new Dimension(796, 558));  // Generated
         try {
             this.setTitle("Bias");
+            this.setIconImage(Constants.ICON_APP.getImage());
             this.setContentPane(getJContentPane());
 
             BackEnd.load();
@@ -845,7 +846,8 @@ public class FrontEnd extends JFrame {
             jButton6.setIcon(Constants.ICON_ABOUT);
             jButton6.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    JOptionPane.showMessageDialog(FrontEnd.this, "<html>Bias Personal Information Manager" +
+                    JOptionPane.showMessageDialog(FrontEnd.this, 
+                            "<html>Bias Personal Information Manager, version 0.1-alpha" +
                             "<br>(c) ki0n, 2006" +
                             "<br>http://bias.sourceforge.net");
                 }

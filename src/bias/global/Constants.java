@@ -54,6 +54,8 @@ public class Constants {
         return fontSizes;
     }
 
+    public static final ImageIcon ICON_APP = 
+        new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
     public static final ImageIcon ICON_ADD = 
         new ImageIcon(Constants.class.getResource("/bias/res/add.png"));
     public static final ImageIcon ICON_RENAME = 
