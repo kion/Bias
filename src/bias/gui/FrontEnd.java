@@ -4,6 +4,7 @@
 package bias.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
@@ -19,6 +20,7 @@ import java.util.Properties;
 import java.util.Map.Entry;
 
 import javax.swing.JButton;
+import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -540,6 +542,7 @@ public class FrontEnd extends JFrame {
             jToolBar1.add(getJToggleButton());  // Generated
             jToolBar1.add(getJToggleButton1());  // Generated
             jToolBar1.add(getJToggleButton2());  // Generated
+            jToolBar1.add(getJButton5());  // Generated
             jToolBar1.add(getJComboBox());  // Generated
             jToolBar1.add(getJComboBox1());  // Generated
         }
@@ -643,6 +646,8 @@ public class FrontEnd extends JFrame {
     private JComboBox jComboBox1 = null;
 
     private JButton jButton2 = null;
+
+    private JButton jButton5 = null;
 
     /**
      * This method initializes jComboBox	
@@ -765,6 +770,30 @@ public class FrontEnd extends JFrame {
             });
         }
         return jButton2;
+    }
+
+    /**
+     * This method initializes jButton5	
+     * 	
+     * @return javax.swing.JButton	
+     */
+    private JButton getJButton5() {
+        if (jButton5 == null) {
+            jButton5 = new JButton();
+            jButton5.setToolTipText("text color");  // Generated
+            jButton5.setIcon(Constants.ICON_TEXT_COLOR);
+            jButton5.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    try {
+                        Color color = JColorChooser.showDialog(FrontEnd.this, "select text color", Color.BLACK);
+                        new StyledEditorKit.ForegroundAction("Color", color).actionPerformed(e);
+                    } catch (Exception ex) {
+                        displayErrorMessage(ex);
+                    }
+                }
+            });    
+        }
+        return jButton5;
     }
 
 }  //  @jve:decl-index=0:visual-constraint="10,10"
