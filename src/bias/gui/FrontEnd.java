@@ -6,6 +6,7 @@ package bias.gui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
@@ -332,8 +333,8 @@ public class FrontEnd extends JFrame {
             jContentPane = new JPanel();
             jContentPane.setLayout(new BorderLayout());
             jContentPane.add(getJTabbedPane(), BorderLayout.CENTER);
-            jContentPane.add(getJToolBar(), BorderLayout.NORTH);  // Generated
             jContentPane.add(getJToolBar1(), BorderLayout.SOUTH);  // Generated
+            jContentPane.add(getJPanel(), BorderLayout.NORTH);  // Generated
         }
         return jContentPane;
     }
@@ -649,6 +650,12 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton5 = null;
 
+    private JPanel jPanel = null;
+
+    private JToolBar jToolBar2 = null;
+
+    private JButton jButton6 = null;
+
     /**
      * This method initializes jComboBox	
      * 	
@@ -794,6 +801,57 @@ public class FrontEnd extends JFrame {
             });    
         }
         return jButton5;
+    }
+
+    /**
+     * This method initializes jPanel	
+     * 	
+     * @return javax.swing.JPanel	
+     */
+    private JPanel getJPanel() {
+        if (jPanel == null) {
+            jPanel = new JPanel();
+            jPanel.setLayout(new BorderLayout());  // Generated
+            jPanel.add(getJToolBar(), BorderLayout.CENTER);  // Generated
+            jPanel.add(getJToolBar2(), BorderLayout.EAST);  // Generated
+        }
+        return jPanel;
+    }
+
+    /**
+     * This method initializes jToolBar2	
+     * 	
+     * @return javax.swing.JToolBar	
+     */
+    private JToolBar getJToolBar2() {
+        if (jToolBar2 == null) {
+            jToolBar2 = new JToolBar();
+            jToolBar2.setFloatable(false);  // Generated
+            jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);  // Generated
+            jToolBar2.add(getJButton6());  // Generated
+        }
+        return jToolBar2;
+    }
+
+    /**
+     * This method initializes jButton6	
+     * 	
+     * @return javax.swing.JButton	
+     */
+    private JButton getJButton6() {
+        if (jButton6 == null) {
+            jButton6 = new JButton();
+            jButton6.setToolTipText("about Bias");  // Generated
+            jButton6.setIcon(Constants.ICON_ABOUT);
+            jButton6.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    JOptionPane.showMessageDialog(FrontEnd.this, "<html>Bias Personal Information Manager" +
+                            "<br>(c) ki0n, 2006" +
+                            "<br>http://bias.sourceforge.net");
+                }
+            });
+        }
+        return jButton6;
     }
 
 }  //  @jve:decl-index=0:visual-constraint="10,10"

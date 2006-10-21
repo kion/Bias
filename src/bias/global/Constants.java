@@ -72,5 +72,7 @@ public class Constants {
         new ImageIcon(Constants.class.getResource("/bias/res/text_underlined.png"));
     public static final ImageIcon ICON_TEXT_COLOR = 
         new ImageIcon(Constants.class.getResource("/bias/res/text_color.png"));
+    public static final ImageIcon ICON_ABOUT = 
+        new ImageIcon(Constants.class.getResource("/bias/res/about.png"));
     
 }
