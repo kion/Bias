@@ -192,6 +192,9 @@ public class FrontEnd extends JFrame {
             textPane.addCaretListener(togglesStatesListener);
             getJTabbedPane().addTab(caption, new JScrollPane(textPane));
         }
+        if (getJTabbedPane().getTabCount() > 0) {
+            setNotesManagementToolbalEnabledState(true);
+        }
     }
     
     private void gatherCurrentData() {
@@ -541,6 +544,7 @@ public class FrontEnd extends JFrame {
         if (jToolBar1 == null) {
             jToolBar1 = new JToolBar();
             jToolBar1.setFloatable(false);  // Generated
+            jToolBar1.setVisible(false);  // Generated
             jToolBar1.add(getJToggleButton());  // Generated
             jToolBar1.add(getJToggleButton1());  // Generated
             jToolBar1.add(getJToggleButton2());  // Generated
