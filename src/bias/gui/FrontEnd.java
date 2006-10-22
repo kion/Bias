@@ -12,8 +12,6 @@ import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -54,8 +52,6 @@ import bias.utils.Validator;
 public class FrontEnd extends JFrame {
 
     private static final long serialVersionUID = 1L;
-    
-    private Collection<String> notesCaptions;
     
     private JPanel jContentPane = null;
 
@@ -183,10 +179,6 @@ public class FrontEnd extends JFrame {
     }
     
     private void initNotes(Properties properties) {
-        notesCaptions = new ArrayList<String>();
-        for (Object noteCaption : properties.values()) {
-            notesCaptions.add((String) noteCaption);
-        }
         getJTabbedPane().removeAll();
         Map<String, String> notes = BackEnd.getNotes();
         for (Entry<String, String> note : notes.entrySet()) {
@@ -428,16 +420,11 @@ public class FrontEnd extends JFrame {
                         textPane.addCaretListener(togglesStatesListener);
                         String noteCaption = JOptionPane.showInputDialog("Note caption:");
                         if (!Validator.isNullOrBlank(noteCaption)) {
-                            if (!notesCaptions.contains(noteCaption)) {
-                                getJTabbedPane().addTab(noteCaption, new JScrollPane(textPane));
-                                getJTabbedPane().setSelectedIndex(getJTabbedPane().getTabCount()-1);
-                                getJTabbedPane().setTitleAt(getJTabbedPane().getSelectedIndex(), noteCaption);
-                                notesCaptions.add(noteCaption);
-                                if (getJTabbedPane().getTabCount() == 1) {
-                                    setNotesManagementToolbalEnabledState(true);
-                                }
-                            } else {
-                                displayErrorMessage("Note caption must be unique!");
+                            getJTabbedPane().addTab(noteCaption, new JScrollPane(textPane));
+                            getJTabbedPane().setSelectedIndex(getJTabbedPane().getTabCount()-1);
+                            getJTabbedPane().setTitleAt(getJTabbedPane().getSelectedIndex(), noteCaption);
+                            if (getJTabbedPane().getTabCount() == 1) {
+                                setNotesManagementToolbalEnabledState(true);
                             }
                         } else {
                             displayErrorMessage("Note caption can not be empty!");
@@ -465,16 +452,9 @@ public class FrontEnd extends JFrame {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
                         int index = getJTabbedPane().getSelectedIndex();
-                        String currentNoteCaption = getJTabbedPane().getTitleAt(index);
                         String noteCaption = JOptionPane.showInputDialog("Note caption:");
                         if (!Validator.isNullOrBlank(noteCaption)) {
-                            if (!currentNoteCaption.equals(noteCaption) && !notesCaptions.contains(noteCaption)) {
-                                notesCaptions.remove(currentNoteCaption);
-                                getJTabbedPane().setTitleAt(index, noteCaption);
-                                notesCaptions.add(noteCaption);
-                            } else {
-                                displayErrorMessage("Note caption must be unique!");
-                            }
+                            getJTabbedPane().setTitleAt(index, noteCaption);
                         } else {
                             displayErrorMessage("Note caption can not be empty!");
                         }
@@ -501,9 +481,7 @@ public class FrontEnd extends JFrame {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
                         int index = getJTabbedPane().getSelectedIndex();
-                        String noteCaption = getJTabbedPane().getTitleAt(index);
                         getJTabbedPane().remove(index);
-                        notesCaptions.remove(noteCaption);
                         if (getJTabbedPane().getTabCount() == 0) {
                             setNotesManagementToolbalEnabledState(false);
                         }
