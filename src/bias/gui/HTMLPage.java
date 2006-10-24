@@ -14,7 +14,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
@@ -437,7 +436,6 @@ public class HTMLPage extends VisualEntry {
         if (jPanel == null) {
             jPanel = new JPanel();
             jPanel.setLayout(new BorderLayout());  // Generated
-            jPanel.setBorder(BorderFactory.createLineBorder(Color.black, 1));  // Generated
             jPanel.add(getJToolBar1(), BorderLayout.CENTER);  // Generated
             jPanel.add(getJToolBar(), BorderLayout.WEST);  // Generated
         }
