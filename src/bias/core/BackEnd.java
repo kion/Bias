@@ -11,6 +11,8 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -70,7 +72,8 @@ public class BackEnd {
                         .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
                         .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR));
                 DataEntry de = new DataEntry();
-                de.setData(sw.getBuffer().toString());
+                String decodedValue = URLDecoder.decode(sw.getBuffer().toString(), Constants.UNICODE_ENCODING);
+                de.setData(decodedValue);
                 numberedDataEntries.put(number, de);
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
                 metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
@@ -93,7 +96,8 @@ public class BackEnd {
             Node attType = attributes.getNamedItem("type");
             String type = attType.getNodeValue();
             DataEntry dataEntry = numberedDataEntries.get(number);
-            dataEntry.setCaption(caption);
+            String decodedCaption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+            dataEntry.setCaption(decodedCaption);
             dataEntry.setType(type);
         }
         data = numberedDataEntries.values();
@@ -116,7 +120,8 @@ public class BackEnd {
                         .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
                         .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR));
                 DataEntry de = new DataEntry();
-                de.setData(sw.getBuffer().toString());
+                String decodedValue = URLDecoder.decode(sw.getBuffer().toString(), Constants.UNICODE_ENCODING);
+                de.setData(decodedValue);
                 importedDataEntries.add(de);
                 numberedDataEntries.put(number, de);
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
@@ -137,7 +142,8 @@ public class BackEnd {
                 Node attType = attributes.getNamedItem("type");
                 String type = attType.getNodeValue();
                 DataEntry dataEntry = numberedDataEntries.get(number);
-                dataEntry.setCaption(caption);
+                String decodedCaption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+                dataEntry.setCaption(decodedCaption);
                 dataEntry.setType(type);
             }
         }
@@ -155,10 +161,12 @@ public class BackEnd {
         for (DataEntry dataEntry : data) {
             String key = Constants.DATA_DIR + ++number + Constants.DATA_FILE_ENDING;
             String value = dataEntry.getData();
-            zipEntries.put(key, value);
+            String encodedValue = URLEncoder.encode(value, Constants.UNICODE_ENCODING);
+            zipEntries.put(key, encodedValue);
             Element entryNode = metadata.createElement("entry");
             entryNode.setAttribute("number", ""+number);
-            entryNode.setAttribute("caption", dataEntry.getCaption());
+            String encodedCaption = URLEncoder.encode(dataEntry.getCaption(), Constants.UNICODE_ENCODING);
+            entryNode.setAttribute("caption", encodedCaption);
             entryNode.setAttribute("type", dataEntry.getType());
             rootNode.appendChild(entryNode);
         }

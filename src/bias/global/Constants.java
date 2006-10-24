@@ -13,6 +13,8 @@ import javax.swing.ImageIcon;
 public class Constants {
 
     public static final String PATH_SEPARATOR = System.getProperty("file.separator");
+    
+    public static final String UNICODE_ENCODING = "UTF-8";
 
     public static final String EMPTY_STR = "";
     public static final String NULL_STR = "NULL";
