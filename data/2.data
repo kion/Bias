@@ -1,7 +1,7 @@
 <html>
 	<body>
 		<p style="margin-top: 0">
-		<u>some <font face="Courier" color="#0000cc">data</font> goes here...</u>
+		<u>some <font face="Courier" color="#0000cc">HTML data</font> goes here...</u>
 		</p>
 	</body>
 </html>
