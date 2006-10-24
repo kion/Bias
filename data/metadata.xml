@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<metadata>
+	<entry number="1" caption="My data 1" type="PlainText"/>
+	<entry number="2" caption="My data 2" type="HTMLPage"/>
+</metadata>

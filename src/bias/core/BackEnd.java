@@ -11,7 +11,9 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
@@ -19,7 +21,17 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import bias.global.Constants;
+
+import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
+import com.sun.org.apache.xml.internal.serialize.OutputFormat;
+import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
 /**
  * @author kion
@@ -30,7 +42,11 @@ public class BackEnd {
 
     private static Map<String, String> zipEntries;
     
-    private static Map<String, String> notes;
+    private static Map<Integer, DataEntry> numberedDataEntries;
+    
+    private static Collection<DataEntry> data;
+    
+    private static Document metadata;
     
     private static Properties properties;
     
@@ -39,7 +55,7 @@ public class BackEnd {
             init();
         }
         zipEntries = new LinkedHashMap<String, String>();
-        notes = new LinkedHashMap<String, String>();
+        numberedDataEntries = new LinkedHashMap<Integer, DataEntry>();
         properties = new Properties();
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
         ZipEntry ze = null;
@@ -50,9 +66,15 @@ public class BackEnd {
                 sw.write(c);
             }
             if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
-                notes.put(ze.getName()
+                Integer number = Integer.valueOf(ze.getName()
                         .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
-                        .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR), sw.getBuffer().toString());
+                        .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR));
+                DataEntry de = new DataEntry();
+                de.setData(sw.getBuffer().toString());
+                numberedDataEntries.put(number, de);
+            } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
+                metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
+                        new ByteArrayInputStream(sw.getBuffer().toString().getBytes()));
             } else if (ze.getName().equals(Constants.CONFIG_FILE_PATH)) {
                 properties.load(new ByteArrayInputStream(sw.getBuffer().toString().getBytes()));
             } else {
@@ -60,13 +82,29 @@ public class BackEnd {
             }
         }
         zis.close();
+        NodeList entries = metadata.getElementsByTagName("entry");
+        for (int i = 0; i < entries.getLength(); i++){
+            Node entry = entries.item(i);
+            NamedNodeMap attributes = entry.getAttributes();
+            Node attNumber = attributes.getNamedItem("number");
+            Integer number = Integer.valueOf(attNumber.getNodeValue());
+            Node attCaption = attributes.getNamedItem("caption");
+            String caption = attCaption.getNodeValue();
+            Node attType = attributes.getNamedItem("type");
+            String type = attType.getNodeValue();
+            DataEntry dataEntry = numberedDataEntries.get(number);
+            dataEntry.setCaption(caption);
+            dataEntry.setType(type);
+        }
+        data = numberedDataEntries.values();
     }
     
-    public static void importData(File jarFile) throws Exception {
+    public static Collection<DataEntry> importData(File jarFile) throws Exception {
+        Collection<DataEntry> importedDataEntries = new LinkedList<DataEntry>();
+        Document metadata = null;
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
         ZipEntry ze = null;
-        int nativeNotesCnt = notes.size();
-        int newNoteIdx = nativeNotesCnt;
+        int nativeNotesCnt = numberedDataEntries.size();
         while ((ze = zis.getNextEntry()) != null) {
             StringWriter sw = new StringWriter();
             int c;
@@ -74,34 +112,63 @@ public class BackEnd {
                 sw.write(c);
             }
             if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
-                notes.put("" + ++newNoteIdx, sw.getBuffer().toString());
-            } else if (ze.getName().equals(Constants.CONFIG_FILE_PATH)) {
-                Properties props = new Properties();
-                props.load(new ByteArrayInputStream(sw.getBuffer().toString().getBytes()));
-                for (Entry prop : props.entrySet()) {
-                    String sourceKey = (String) prop.getKey();
-                    if ((sourceKey).matches("\\d+")) {
-                        String newKey = "" + (Integer.valueOf(sourceKey) + nativeNotesCnt);
-                        properties.put(newKey, (String) prop.getValue());
-                    }
-                }
+                Integer number = nativeNotesCnt + Integer.valueOf(ze.getName()
+                        .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
+                        .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR));
+                DataEntry de = new DataEntry();
+                de.setData(sw.getBuffer().toString());
+                importedDataEntries.add(de);
+                numberedDataEntries.put(number, de);
+            } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
+                metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
+                        new ByteArrayInputStream(sw.getBuffer().toString().getBytes()));
             }    
         }
         zis.close();
+        if (metadata != null) {
+            NodeList entries = metadata.getElementsByTagName("entry");
+            for (int i = 0; i < entries.getLength(); i++){
+                Node entry = entries.item(i);
+                NamedNodeMap attributes = entry.getAttributes();
+                Node attNumber = attributes.getNamedItem("number");
+                Integer number = nativeNotesCnt + Integer.valueOf(attNumber.getNodeValue());
+                Node attCaption = attributes.getNamedItem("caption");
+                String caption = attCaption.getNodeValue();
+                Node attType = attributes.getNamedItem("type");
+                String type = attType.getNodeValue();
+                DataEntry dataEntry = numberedDataEntries.get(number);
+                dataEntry.setCaption(caption);
+                dataEntry.setType(type);
+            }
+        }
+        data = numberedDataEntries.values();
+        return importedDataEntries;
     }
     
     public static void store() throws Exception {
         if (jarFile == null) {
             init();
         }
-        for (Entry<String, String> note : notes.entrySet()) {
-            String key = Constants.DATA_DIR + note.getKey() + Constants.DATA_FILE_ENDING;
-            String value = note.getValue();
+        metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
+        Node rootNode = metadata.createElement("metadata");
+        int number = 0;
+        for (DataEntry dataEntry : data) {
+            String key = Constants.DATA_DIR + ++number + Constants.DATA_FILE_ENDING;
+            String value = dataEntry.getData();
             zipEntries.put(key, value);
+            Element entryNode = metadata.createElement("entry");
+            entryNode.setAttribute("number", ""+number);
+            entryNode.setAttribute("caption", dataEntry.getCaption());
+            entryNode.setAttribute("type", dataEntry.getType());
+            rootNode.appendChild(entryNode);
         }
+        metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
         properties.list(new PrintWriter(sw));
         zipEntries.put(Constants.CONFIG_FILE_PATH, sw.getBuffer().toString());
+        sw = new StringWriter();
+        new XMLSerializer(sw, new OutputFormat()).serialize(metadata);
+        zipEntries.put(Constants.METADATA_FILE_PATH, sw.getBuffer().toString());
         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(jarFile));
         for (Entry<String, String> entry : zipEntries.entrySet()) {
             String entryName = entry.getKey();
@@ -128,12 +195,12 @@ public class BackEnd {
 //        jarFile = new File("/mnt/stor/devel/Bias/build/bias.jar");
     }
 
-    public static Map<String, String> getNotes() {
-        return notes;
+    public static Collection<DataEntry> getData() {
+        return data;
     }
 
-    public static void setNotes(Map<String, String> notes) {
-        BackEnd.notes = notes;
+    public static void setData(Collection<DataEntry> data) {
+        BackEnd.data = data;
     }
 
     public static Properties getProperties() {
