@@ -289,6 +289,7 @@ public class FrontEnd extends JFrame {
                             Class entryClass = getEntryTypes().get(entryTypeDescription);
                             VisualEntry visualEntry = buildVisualEntry(entryClass, Constants.EMPTY_STR);
                             getJTabbedPane().addTab(caption, visualEntry);
+                            getJTabbedPane().setSelectedComponent(visualEntry);
                             if (getJTabbedPane().getTabCount() == 1) {
                                 setNotesManagementToolbalEnabledState(true);
                             }
