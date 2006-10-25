@@ -10,21 +10,21 @@ import javax.swing.JPanel;
  */
 public abstract class VisualEntry extends JPanel {
     
-    private String data;
+    private byte[] data;
     
     public VisualEntry() {
         // default constructor
     }
     
-    public VisualEntry(String data) {
+    public VisualEntry(byte[] data) {
         this.data = data;
     }
 
-    public String getData() {
+    public byte[] getData() {
         return data;
     }
 
-    public void setData(String data) {
+    public void setData(byte[] data) {
         this.data = data;
     }
 

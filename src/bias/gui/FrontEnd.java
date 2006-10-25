@@ -157,7 +157,7 @@ public class FrontEnd extends JFrame {
                             VisualEntry visualEntry = (VisualEntry) getJTabbedPane().getComponent(i);
                             String serializedData = visualEntry.serialize();
                             String caption = getJTabbedPane().getTitleAt(i);
-                            data.add(new DataEntry(caption, serializedData, visualEntry.getClass().getSimpleName()));
+                            data.add(new DataEntry(caption, visualEntry.getClass().getSimpleName(), serializedData.getBytes()));
                         }
                         
                         BackEnd.setData(data);
@@ -173,9 +173,9 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private VisualEntry buildVisualEntry(Class entryClass, String data) throws Exception {
+    private VisualEntry buildVisualEntry(Class entryClass, byte[] data) throws Exception {
         VisualEntry visualEntry = (VisualEntry) entryClass.getConstructor(
-                new Class[]{String.class}).newInstance(new Object[]{data});
+                new Class[]{byte[].class}).newInstance(new Object[]{data});
         return visualEntry;
     }
     
@@ -287,7 +287,7 @@ public class FrontEnd extends JFrame {
                                     options, 
                                     options[0]);
                             Class entryClass = getEntryTypes().get(entryTypeDescription);
-                            VisualEntry visualEntry = buildVisualEntry(entryClass, Constants.EMPTY_STR);
+                            VisualEntry visualEntry = buildVisualEntry(entryClass, new byte[]{});
                             getJTabbedPane().addTab(caption, visualEntry);
                             getJTabbedPane().setSelectedComponent(visualEntry);
                             if (getJTabbedPane().getTabCount() == 1) {

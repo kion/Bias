@@ -10,18 +10,18 @@ public class DataEntry {
     
     private String caption;
     
-    private String data;
-    
     private String type;
+    
+    private byte[] data;
     
     public DataEntry() {
         // default constructor
     }
     
-    public DataEntry(String caption, String data, String type) {
+    public DataEntry(String caption, String type, byte[] data) {
         this.caption = caption;
-        this.data = data;
         this.type = type;
+        this.data = data;
     }
 
     public String getCaption() {
@@ -32,14 +32,6 @@ public class DataEntry {
         this.caption = caption;
     }
 
-    public String getData() {
-        return data;
-    }
-
-    public void setData(String data) {
-        this.data = data;
-    }
-    
     public String getType() {
         return type;
     }
@@ -48,4 +40,12 @@ public class DataEntry {
         this.type = type;
     }
 
+    public byte[] getData() {
+        return data;
+    }
+
+    public void setData(byte[] data) {
+        this.data = data;
+    }
+    
 }

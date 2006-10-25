@@ -4,11 +4,11 @@
 package bias.core;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -42,7 +42,7 @@ public class BackEnd {
     
     private static File jarFile = null;
 
-    private static Map<String, String> zipEntries;
+    private static Map<String, byte[]> zipEntries;
     
     private static Map<Integer, DataEntry> numberedDataEntries;
     
@@ -56,32 +56,32 @@ public class BackEnd {
         if (jarFile == null) {
             init();
         }
-        zipEntries = new LinkedHashMap<String, String>();
+        zipEntries = new LinkedHashMap<String, byte[]>();
         numberedDataEntries = new LinkedHashMap<Integer, DataEntry>();
         properties = new Properties();
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
         ZipEntry ze = null;
         while ((ze = zis.getNextEntry()) != null) {
-            StringWriter sw = new StringWriter();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
             int c;
             while ((c = zis.read()) != -1) {
-                sw.write(c);
+                out.write(c);
             }
             if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
                 Integer number = Integer.valueOf(ze.getName()
                         .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
                         .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR));
                 DataEntry de = new DataEntry();
-                String decodedValue = URLDecoder.decode(sw.getBuffer().toString(), Constants.UNICODE_ENCODING);
-                de.setData(decodedValue);
+                de.setData(out.toByteArray());
                 numberedDataEntries.put(number, de);
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
                 metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
-                        new ByteArrayInputStream(sw.getBuffer().toString().getBytes()));
+                        new ByteArrayInputStream(out.toByteArray()));
             } else if (ze.getName().equals(Constants.CONFIG_FILE_PATH)) {
-                properties.load(new ByteArrayInputStream(sw.getBuffer().toString().getBytes()));
+                properties.load(
+                        new ByteArrayInputStream(out.toByteArray()));
             } else {
-                zipEntries.put(ze.getName(), sw.getBuffer().toString());
+                zipEntries.put(ze.getName(), out.toByteArray());
             }
         }
         zis.close();
@@ -96,6 +96,7 @@ public class BackEnd {
             Node attType = attributes.getNamedItem("type");
             String type = attType.getNodeValue();
             DataEntry dataEntry = numberedDataEntries.get(number);
+            // TODO: there should be some nicer way to decode string from UTF-8
             String decodedCaption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
             dataEntry.setCaption(decodedCaption);
             dataEntry.setType(type);
@@ -110,23 +111,22 @@ public class BackEnd {
         ZipEntry ze = null;
         int nativeNotesCnt = numberedDataEntries.size();
         while ((ze = zis.getNextEntry()) != null) {
-            StringWriter sw = new StringWriter();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
             int c;
             while ((c = zis.read()) != -1) {
-                sw.write(c);
+                out.write(c);
             }
             if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
                 Integer number = nativeNotesCnt + Integer.valueOf(ze.getName()
                         .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
                         .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR));
                 DataEntry de = new DataEntry();
-                String decodedValue = URLDecoder.decode(sw.getBuffer().toString(), Constants.UNICODE_ENCODING);
-                de.setData(decodedValue);
+                de.setData(out.toByteArray());
                 importedDataEntries.add(de);
                 numberedDataEntries.put(number, de);
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
                 metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
-                        new ByteArrayInputStream(sw.getBuffer().toString().getBytes()));
+                        new ByteArrayInputStream(out.toByteArray()));
             }    
         }
         zis.close();
@@ -142,6 +142,7 @@ public class BackEnd {
                 Node attType = attributes.getNamedItem("type");
                 String type = attType.getNodeValue();
                 DataEntry dataEntry = numberedDataEntries.get(number);
+                // TODO: there should be some nicer way to decode string from UTF-8
                 String decodedCaption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
                 dataEntry.setCaption(decodedCaption);
                 dataEntry.setType(type);
@@ -160,11 +161,11 @@ public class BackEnd {
         int number = 0;
         for (DataEntry dataEntry : data) {
             String key = Constants.DATA_DIR + ++number + Constants.DATA_FILE_ENDING;
-            String value = dataEntry.getData();
-            String encodedValue = URLEncoder.encode(value, Constants.UNICODE_ENCODING);
-            zipEntries.put(key, encodedValue);
+            byte[] value = dataEntry.getData();
+            zipEntries.put(key, value);
             Element entryNode = metadata.createElement("entry");
             entryNode.setAttribute("number", ""+number);
+            // TODO: there should be some nicer way to encode string into UTF-8
             String encodedCaption = URLEncoder.encode(dataEntry.getCaption(), Constants.UNICODE_ENCODING);
             entryNode.setAttribute("caption", encodedCaption);
             entryNode.setAttribute("type", dataEntry.getType());
@@ -173,20 +174,18 @@ public class BackEnd {
         metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
         properties.list(new PrintWriter(sw));
-        zipEntries.put(Constants.CONFIG_FILE_PATH, sw.getBuffer().toString());
+        zipEntries.put(Constants.CONFIG_FILE_PATH, sw.getBuffer().toString().getBytes());
         sw = new StringWriter();
         new XMLSerializer(sw, new OutputFormat()).serialize(metadata);
-        zipEntries.put(Constants.METADATA_FILE_PATH, sw.getBuffer().toString());
+        zipEntries.put(Constants.METADATA_FILE_PATH, sw.getBuffer().toString().getBytes());
         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(jarFile));
-        for (Entry<String, String> entry : zipEntries.entrySet()) {
+        for (Entry<String, byte[]> entry : zipEntries.entrySet()) {
             String entryName = entry.getKey();
             ZipEntry zipEntry = new ZipEntry(entryName);
-            String entryData = entry.getValue();
+            byte[] entryData = entry.getValue();
             zos.putNextEntry(zipEntry);
-            StringReader sr = new StringReader(entryData);
-            int c;
-            while ((c = sr.read()) != -1) {
-                zos.write(c);
+            for (byte b : entryData) {
+                zos.write(b);
             }
             zos.closeEntry();
         }

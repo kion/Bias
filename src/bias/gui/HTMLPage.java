@@ -93,7 +93,7 @@ public class HTMLPage extends VisualEntry {
     /**
      * This is the default constructor
      */
-    public HTMLPage(String data) {
+    public HTMLPage(byte[] data) {
         super(data);
         initialize();
     }
@@ -214,7 +214,7 @@ public class HTMLPage extends VisualEntry {
         this.setLayout(new BorderLayout());
         this.add(getJScrollPane(), BorderLayout.CENTER);  // Generated
         this.add(getJPanel(), BorderLayout.SOUTH);  // Generated
-        getJTextPane().setText(getData());
+        getJTextPane().setText(new String(getData()));
     }
 
     /**

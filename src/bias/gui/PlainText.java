@@ -29,7 +29,7 @@ public class PlainText extends VisualEntry {
     /**
      * This is the default constructor
      */
-    public PlainText(String data) {
+    public PlainText(byte[] data) {
         super(data);
         initialize();
     }
@@ -52,7 +52,7 @@ public class PlainText extends VisualEntry {
         this.setLayout(new BorderLayout());
         this.add(getJScrollPane(), BorderLayout.CENTER);  // Generated
         this.add(getJToolBar(), BorderLayout.SOUTH);  // Generated
-        getJTextArea().setText(getData());
+        getJTextArea().setText(new String(getData()));
     }
 
     /**
