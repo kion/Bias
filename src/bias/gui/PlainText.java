@@ -38,8 +38,8 @@ public class PlainText extends VisualEntry {
      * @see bias.gui.VisualEntry#serialize()
      */
     @Override
-    public String serialize() {
-        return getJTextArea().getText();
+    public byte[] serialize() {
+        return getJTextArea().getText().getBytes();
     }
 
     /**

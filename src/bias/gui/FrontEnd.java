@@ -155,9 +155,9 @@ public class FrontEnd extends JFrame {
                         Collection<DataEntry> data = new LinkedList<DataEntry>();
                         for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
                             VisualEntry visualEntry = (VisualEntry) getJTabbedPane().getComponent(i);
-                            String serializedData = visualEntry.serialize();
+                            byte[] serializedData = visualEntry.serialize();
                             String caption = getJTabbedPane().getTitleAt(i);
-                            data.add(new DataEntry(caption, visualEntry.getClass().getSimpleName(), serializedData.getBytes()));
+                            data.add(new DataEntry(caption, visualEntry.getClass().getSimpleName(), serializedData));
                         }
                         
                         BackEnd.setData(data);

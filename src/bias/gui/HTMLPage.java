@@ -102,8 +102,8 @@ public class HTMLPage extends VisualEntry {
      * @see bias.gui.VisualEntry#serialize()
      */
     @Override
-    public String serialize() {
-        return getJTextPane().getText();
+    public byte[] serialize() {
+        return getJTextPane().getText().getBytes();
     }
 
     private void synchronizeEditNoteControlsStates(JTextPane textPane) {
