@@ -12,6 +12,10 @@ public abstract class VisualEntry extends JPanel {
     
     private String data;
     
+    public VisualEntry() {
+        // default constructor
+    }
+    
     public VisualEntry(String data) {
         this.data = data;
     }
