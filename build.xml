@@ -7,7 +7,7 @@
                    
      author: kion                                                                
      ====================================================================== -->
-	<project name="Bias" default="ExecuteJarPackage">
+	<project name="Bias" default="BuildAndExecuteJarPackage">
     <description>
     	Bias OpenSource Personal Information Manager Project
     </description>
@@ -20,7 +20,14 @@
     <!-- ================================= 
           target: ExecuteJarPackage              
          ================================= -->
-    <target name="ExecuteJarPackage" depends="BuildJarPackage">
+    <target name="ExecuteJarPackage">
+    	<exec command="java -jar build/bias.jar"/>
+    </target>
+
+    <!-- ================================= 
+          target: BuildAndExecuteJarPackage              
+         ================================= -->
+    <target name="BuildAndExecuteJarPackage" depends="BuildJarPackage">
     	<exec command="java -jar build/bias.jar"/>
     </target>
 
