@@ -195,7 +195,7 @@ public class BackEnd {
     
     private static void init() {
         URL url = BackEnd.class.getResource(BackEnd.class.getSimpleName()+".class");
-        String jarFilePath = url.getFile().substring(0, url.getFile().indexOf(BackEnd.class.getName().replaceAll("\\.", Constants.PATH_SEPARATOR)) - 2);
+        String jarFilePath = url.getFile().substring(0, url.getFile().indexOf(BackEnd.class.getName().replaceAll("\\.", "/")) - 2);
         jarFilePath = jarFilePath.substring("file:".length(), jarFilePath.length());
         jarFile = new File(jarFilePath);
         // TODO: remove debug code
