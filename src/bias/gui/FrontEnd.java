@@ -26,7 +26,6 @@ import javax.swing.filechooser.FileFilter;
 import bias.core.BackEnd;
 import bias.core.DataEntry;
 import bias.global.Constants;
-import bias.utils.Validator;
 
 /**
  * @author kion
@@ -208,10 +207,6 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    private void displayErrorMessage(String message) {
-        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
-    }
-
     private void displayErrorMessage(Exception ex) {
         JOptionPane.showMessageDialog(this, "Details: " + ex, "Error", JOptionPane.ERROR_MESSAGE);
         ex.printStackTrace();
@@ -276,25 +271,21 @@ public class FrontEnd extends JFrame {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
                         String caption = JOptionPane.showInputDialog("Entry caption:");
-                        if (!Validator.isNullOrBlank(caption)) {
-                            Object[] options = getEntryTypes().keySet().toArray();
-                            String entryTypeDescription = (String) JOptionPane.showInputDialog(
-                                    FrontEnd.this, 
-                                    "Choose entry type:", 
-                                    "Entry type", 
-                                    JOptionPane.QUESTION_MESSAGE, 
-                                    null, 
-                                    options, 
-                                    options[0]);
-                            Class entryClass = getEntryTypes().get(entryTypeDescription);
-                            VisualEntry visualEntry = buildVisualEntry(entryClass, new byte[]{});
-                            getJTabbedPane().addTab(caption, visualEntry);
-                            getJTabbedPane().setSelectedComponent(visualEntry);
-                            if (getJTabbedPane().getTabCount() == 1) {
-                                setNotesManagementToolbalEnabledState(true);
-                            }
-                        } else {
-                            displayErrorMessage("Entry caption can not be empty!");
+                        Object[] options = getEntryTypes().keySet().toArray();
+                        String entryTypeDescription = (String) JOptionPane.showInputDialog(
+                                FrontEnd.this, 
+                                "Choose entry type:", 
+                                "Entry type", 
+                                JOptionPane.QUESTION_MESSAGE, 
+                                null, 
+                                options, 
+                                options[0]);
+                        Class entryClass = getEntryTypes().get(entryTypeDescription);
+                        VisualEntry visualEntry = buildVisualEntry(entryClass, new byte[]{});
+                        getJTabbedPane().addTab(caption, visualEntry);
+                        getJTabbedPane().setSelectedComponent(visualEntry);
+                        if (getJTabbedPane().getTabCount() == 1) {
+                            setNotesManagementToolbalEnabledState(true);
                         }
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
@@ -320,11 +311,7 @@ public class FrontEnd extends JFrame {
                     try {
                         int index = getJTabbedPane().getSelectedIndex();
                         String noteCaption = JOptionPane.showInputDialog("Entry caption:");
-                        if (!Validator.isNullOrBlank(noteCaption)) {
-                            getJTabbedPane().setTitleAt(index, noteCaption);
-                        } else {
-                            displayErrorMessage("Entry caption can not be empty!");
-                        }
+                        getJTabbedPane().setTitleAt(index, noteCaption);
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
                     }
