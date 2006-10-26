@@ -184,8 +184,10 @@ public class BackEnd {
             ZipEntry zipEntry = new ZipEntry(entryName);
             byte[] entryData = entry.getValue();
             zos.putNextEntry(zipEntry);
-            for (byte b : entryData) {
-                zos.write(b);
+            if (entryData != null) {
+                for (byte b : entryData) {
+                    zos.write(b);
+                }
             }
             zos.closeEntry();
         }
