@@ -42,6 +42,7 @@ public class FrontEnd extends JFrame {
         Map<String, Class> types = new LinkedHashMap<String, Class>();
         types.put("Plain text", PlainText.class);
         types.put("Free formatted text (HTML Page)", HTMLPage.class);
+        types.put("Graffiti", Graffiti.class);
         return types;
     }
     

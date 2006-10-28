@@ -75,8 +75,10 @@ public class BackEnd {
                 de.setData(out.toByteArray());
                 numberedDataEntries.put(number, de);
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
-                metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
-                        new ByteArrayInputStream(out.toByteArray()));
+                if (out.size() != 0) {
+                    metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
+                            new ByteArrayInputStream(out.toByteArray()));
+                }
             } else if (ze.getName().equals(Constants.CONFIG_FILE_PATH)) {
                 properties.load(
                         new ByteArrayInputStream(out.toByteArray()));
@@ -85,21 +87,25 @@ public class BackEnd {
             }
         }
         zis.close();
-        NodeList entries = metadata.getElementsByTagName("entry");
-        for (int i = 0; i < entries.getLength(); i++){
-            Node entry = entries.item(i);
-            NamedNodeMap attributes = entry.getAttributes();
-            Node attNumber = attributes.getNamedItem("number");
-            Integer number = Integer.valueOf(attNumber.getNodeValue());
-            Node attCaption = attributes.getNamedItem("caption");
-            String caption = attCaption.getNodeValue();
-            Node attType = attributes.getNamedItem("type");
-            String type = attType.getNodeValue();
-            DataEntry dataEntry = numberedDataEntries.get(number);
-            // TODO: there should be some nicer way to decode string from UTF-8
-            String decodedCaption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
-            dataEntry.setCaption(decodedCaption);
-            dataEntry.setType(type);
+        if (metadata == null) {
+            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
+        } else {
+            NodeList entries = metadata.getElementsByTagName("entry");
+            for (int i = 0; i < entries.getLength(); i++){
+                Node entry = entries.item(i);
+                NamedNodeMap attributes = entry.getAttributes();
+                Node attNumber = attributes.getNamedItem("number");
+                Integer number = Integer.valueOf(attNumber.getNodeValue());
+                Node attCaption = attributes.getNamedItem("caption");
+                String caption = attCaption.getNodeValue();
+                Node attType = attributes.getNamedItem("type");
+                String type = attType.getNodeValue();
+                DataEntry dataEntry = numberedDataEntries.get(number);
+                // TODO: there should be some nicer way to decode string from UTF-8
+                String decodedCaption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+                dataEntry.setCaption(decodedCaption);
+                dataEntry.setType(type);
+            }
         }
         data = numberedDataEntries.values();
     }
@@ -125,12 +131,16 @@ public class BackEnd {
                 importedDataEntries.add(de);
                 numberedDataEntries.put(number, de);
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
-                metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
-                        new ByteArrayInputStream(out.toByteArray()));
+                if (out.size() != 0) {
+                    metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
+                            new ByteArrayInputStream(out.toByteArray()));
+                }
             }    
         }
         zis.close();
-        if (metadata != null) {
+        if (metadata == null) {
+            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
+        } else {
             NodeList entries = metadata.getElementsByTagName("entry");
             for (int i = 0; i < entries.getLength(); i++){
                 Node entry = entries.item(i);

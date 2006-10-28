@@ -40,8 +40,8 @@ public class HTMLPage extends VisualEntry {
 
     private static final long serialVersionUID = 1L;
 
-    private static final ImageIcon ICON_TEXT_COLOR = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/text_color.png"));
+    private static final ImageIcon ICON_COLOR = 
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/color.png"));
 
     private static final ImageIcon ICON_TEXT_UNDERLINE = 
         new ImageIcon(HTMLPage.class.getResource("/bias/res/text_underlined.png"));
@@ -335,7 +335,7 @@ public class HTMLPage extends VisualEntry {
         if (jButton5 == null) {
             jButton5 = new JButton();
             jButton5.setToolTipText("text color");  // Generated
-            jButton5.setIcon(HTMLPage.ICON_TEXT_COLOR);  // Generated
+            jButton5.setIcon(HTMLPage.ICON_COLOR);  // Generated
             jButton5.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     Color color = JColorChooser.showDialog(HTMLPage.this, "select text color", Color.BLACK);

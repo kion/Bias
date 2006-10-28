@@ -36,6 +36,6 @@ public abstract class VisualEntry extends JPanel {
      * Serializes visual entry's data to array of bytes.
      * @return array of bytes representing serialized data
      */
-    abstract public byte[] serialize();
+    abstract public byte[] serialize() throws Exception;
 
 }
