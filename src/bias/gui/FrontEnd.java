@@ -13,8 +13,10 @@ import java.util.LinkedList;
 import java.util.Properties;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -211,6 +213,19 @@ public class FrontEnd extends JFrame {
         if (jTabbedPane == null) {
             jTabbedPane = new JTabbedPane();
             jTabbedPane.setBackground(null);  // Generated
+            jTabbedPane.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    if (e.getClickCount() == 2) {
+                        JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
+                        int index = tabbedPane.getSelectedIndex();
+                        String caption = tabbedPane.getTitleAt(index);
+                        caption = JOptionPane.showInputDialog("Entry caption:", caption);
+                        if (caption != null) { 
+                            tabbedPane.setTitleAt(index, caption);
+                        }
+                    }
+                }
+            });
         }
         return jTabbedPane;
     }
@@ -245,12 +260,30 @@ public class FrontEnd extends JFrame {
             jButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
-                        String caption = JOptionPane.showInputDialog(FrontEnd.this, "Entry caption:");
-                        VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntryDialog();
-                        getJTabbedPane().addTab(caption, visualEntry);
-                        getJTabbedPane().setSelectedComponent(visualEntry);
-                        if (getJTabbedPane().getTabCount() == 1) {
-                            setNotesManagementToolbalEnabledState(true);
+                        JLabel entryTypeLabel = new JLabel("Type:");
+                        JLabel entryNameLabel = new JLabel("Name:");
+                        JComboBox entryTypeComboBox = new JComboBox();
+                        for (String entryType : VisualEntryFactory.getEntryTypes().keySet()) {
+                            entryTypeComboBox.addItem(entryType);
+                        }
+                        entryTypeComboBox.setEditable(false);
+                        String caption = JOptionPane.showInputDialog(
+                                null, 
+                                new Component[]{
+                                        entryTypeLabel,
+                                        entryTypeComboBox,
+                                        entryNameLabel}, 
+                                "New entry:", 
+                                JOptionPane.QUESTION_MESSAGE);
+                        if (caption != null) {
+                            String typeDescription = (String) entryTypeComboBox.getSelectedItem();
+                            Class type = VisualEntryFactory.getEntryTypes().get(typeDescription);
+                            VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(type, new byte[]{});
+                            getJTabbedPane().addTab(caption, visualEntry);
+                            getJTabbedPane().setSelectedComponent(visualEntry);
+                            if (getJTabbedPane().getTabCount() == 1) {
+                                setNotesManagementToolbalEnabledState(true);
+                            }
                         }
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
@@ -276,7 +309,9 @@ public class FrontEnd extends JFrame {
                     try {
                         int index = getJTabbedPane().getSelectedIndex();
                         String noteCaption = JOptionPane.showInputDialog("Entry caption:");
-                        getJTabbedPane().setTitleAt(index, noteCaption);
+                        if (noteCaption != null) {
+                            getJTabbedPane().setTitleAt(index, noteCaption);
+                        }
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
                     }

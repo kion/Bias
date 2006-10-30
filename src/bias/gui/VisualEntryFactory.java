@@ -6,8 +6,6 @@ package bias.gui;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.swing.JOptionPane;
-
 import bias.core.DataEntry;
 
 /**
@@ -16,7 +14,7 @@ import bias.core.DataEntry;
  */
 public class VisualEntryFactory {
 	
-    private static final Map<String, Class> getEntryTypes() {
+    public static final Map<String, Class> getEntryTypes() {
         Map<String, Class> types = new LinkedHashMap<String, Class>();
         types.put("Plain text", PlainText.class);
         types.put("Free formatted text (HTML Page)", HTMLPage.class);
@@ -49,19 +47,4 @@ public class VisualEntryFactory {
         return visualEntry;
     }
     
-	public VisualEntry newVisualEntryDialog() throws Exception {
-        Object[] options = getEntryTypes().keySet().toArray();
-        String entryTypeDescription = (String) JOptionPane.showInputDialog(
-                null, 
-                "Choose entry type:", 
-                "Entry type", 
-                JOptionPane.QUESTION_MESSAGE, 
-                null, 
-                options, 
-                options[0]);
-        Class entryClass = getEntryTypes().get(entryTypeDescription);
-        VisualEntry visualEntry = newVisualEntry(entryClass, new byte[]{});
-        return visualEntry;
-	}
-	
 }
