@@ -9,9 +9,7 @@ import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import java.io.File;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.swing.JButton;
@@ -34,18 +32,6 @@ public class FrontEnd extends JFrame {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Registered entry types.
-     * @return entry-type-description-to-entry-class mapping 
-     */
-    private static final Map<String, Class> getEntryTypes() {
-        Map<String, Class> types = new LinkedHashMap<String, Class>();
-        types.put("Plain text", PlainText.class);
-        types.put("Free formatted text (HTML Page)", HTMLPage.class);
-        types.put("Graffiti", Graffiti.class);
-        return types;
-    }
-    
     private JPanel jContentPane = null;
 
     private JTabbedPane jTabbedPane = null;
@@ -173,24 +159,12 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private VisualEntry buildVisualEntry(Class entryClass, byte[] data) throws Exception {
-        VisualEntry visualEntry = (VisualEntry) entryClass.getConstructor(
-                new Class[]{byte[].class}).newInstance(new Object[]{data});
-        return visualEntry;
-    }
-    
-    private VisualEntry buildVisualEntry(DataEntry dataEntry) throws Exception {
-        Class entryClass = Class.forName(getClass().getPackage().getName() + "." + dataEntry.getType());
-        VisualEntry visualEntry = buildVisualEntry(entryClass, dataEntry.getData());
-        return visualEntry;
-    }
-    
     private void representData(Collection<DataEntry> data) {
         try {
             for (DataEntry dataEntry : data) {
                 String caption = dataEntry.getCaption();
-                    VisualEntry visualEntry = buildVisualEntry(dataEntry);
-                    getJTabbedPane().addTab(caption, visualEntry);
+                VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(dataEntry);
+                getJTabbedPane().addTab(caption, visualEntry);
             }
             if (getJTabbedPane().getTabCount() > 0) {
                 setNotesManagementToolbalEnabledState(true);
@@ -271,18 +245,8 @@ public class FrontEnd extends JFrame {
             jButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
-                        String caption = JOptionPane.showInputDialog("Entry caption:");
-                        Object[] options = getEntryTypes().keySet().toArray();
-                        String entryTypeDescription = (String) JOptionPane.showInputDialog(
-                                FrontEnd.this, 
-                                "Choose entry type:", 
-                                "Entry type", 
-                                JOptionPane.QUESTION_MESSAGE, 
-                                null, 
-                                options, 
-                                options[0]);
-                        Class entryClass = getEntryTypes().get(entryTypeDescription);
-                        VisualEntry visualEntry = buildVisualEntry(entryClass, new byte[]{});
+                        String caption = JOptionPane.showInputDialog(FrontEnd.this, "Entry caption:");
+                        VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntryDialog();
                         getJTabbedPane().addTab(caption, visualEntry);
                         getJTabbedPane().setSelectedComponent(visualEntry);
                         if (getJTabbedPane().getTabCount() == 1) {
