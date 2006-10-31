@@ -10,9 +10,7 @@ import java.awt.Dimension;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.swing.ImageIcon;
@@ -28,6 +26,7 @@ import javax.swing.JToolBar;
 import javax.swing.filechooser.FileFilter;
 
 import bias.core.BackEnd;
+import bias.core.DataCategory;
 import bias.core.DataEntry;
 import bias.global.Constants;
 
@@ -94,6 +93,7 @@ public class FrontEnd extends JFrame {
         try {
             this.setTitle("Bias");
             this.setIconImage(ICON_APP.getImage());
+            this.setDefaultCloseOperation(EXIT_ON_CLOSE);
             this.setContentPane(getJContentPane());
 
             BackEnd.load();
@@ -161,7 +161,6 @@ public class FrontEnd extends JFrame {
                 setNotesManagementToolbalEnabledState(false);
             }
 
-            this.setDefaultCloseOperation(EXIT_ON_CLOSE);
             this.addWindowListener(new java.awt.event.WindowAdapter() {   
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
@@ -182,16 +181,21 @@ public class FrontEnd extends JFrame {
 
                         BackEnd.setProperties(properties);
                         
-                        Collection<DataEntry> data = new LinkedList<DataEntry>();
+                        Collection<DataCategory> data = new LinkedList<DataCategory>();
                         for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
-                            String category = getJTabbedPane().getTitleAt(i);
+                            String caption = getJTabbedPane().getTitleAt(i);
+                            DataCategory dataCategory = new DataCategory();
+                            dataCategory.setCaption(caption);
+                            Collection<DataEntry> dataEntries = new LinkedList<DataEntry>();
                             JTabbedPane categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(i);
                             for (int j = 0; j < categoryTabPane.getTabCount(); j++) {
                                 VisualEntry visualEntry = (VisualEntry) categoryTabPane.getComponent(j);
                                 byte[] serializedData = visualEntry.serialize();
-                                String caption = categoryTabPane.getTitleAt(j);
-                                data.add(new DataEntry(caption, category, visualEntry.getClass().getSimpleName(), serializedData));
+                                caption = categoryTabPane.getTitleAt(j);
+                                dataEntries.add(new DataEntry(caption, visualEntry.getClass().getSimpleName(), serializedData));
                             }
+                            dataCategory.setDataEntries(dataEntries);
+                            data.add(dataCategory);
                         }
                         
                         BackEnd.setData(data);
@@ -207,27 +211,20 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private void representData(Collection<DataEntry> data) {
+    private void representData(Collection<DataCategory> data) {
         try {
-            Map<String, Integer> categoryIdxMapping = new HashMap<String, Integer>();
-            for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
-                categoryIdxMapping.put(getJTabbedPane().getTitleAt(i), i);
-            }
-            for (DataEntry dataEntry : data) {
-                String caption = dataEntry.getCaption();
-                VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(dataEntry);
-                String category = dataEntry.getCategory();
-                JTabbedPane categoryTabPane;
-                Integer categoryIdx = categoryIdxMapping.get(category);
-                if (categoryIdx == null) {
-                    categoryTabPane = new JTabbedPane();
-                    getJTabbedPane().add(category, categoryTabPane);
-                    categoryTabPane.addTab(caption, visualEntry);
-                    categoryTabPane.addMouseListener(tabDoubleClickListener);
-                    categoryIdxMapping.put(category, getJTabbedPane().getTabCount()-1);
-                } else {
-                    categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(categoryIdx);
-                    categoryTabPane.addTab(caption, visualEntry);
+            for (DataCategory dataCat : data) {
+                String caption = dataCat.getCaption();
+                JTabbedPane categoryTabPane = new JTabbedPane();
+                categoryTabPane.addMouseListener(tabDoubleClickListener);
+                getJTabbedPane().addTab(caption, categoryTabPane);
+                Collection<DataEntry> dataEntries = dataCat.getDataEntries();
+                if (dataEntries != null) {
+                    for (DataEntry dataEntry : dataEntries) {
+                        caption = dataEntry.getCaption();
+                        VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(dataEntry);
+                        categoryTabPane.addTab(caption, visualEntry);
+                    }
                 }
             }
             if (getJTabbedPane().getTabCount() > 0) {
@@ -247,10 +244,6 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    private void displayErrorMessage(String message) {
-        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
-    }
-    
     private void displayErrorMessage(Exception ex) {
         JOptionPane.showMessageDialog(this, "Details: " + ex, "Error", JOptionPane.ERROR_MESSAGE);
         ex.printStackTrace();
@@ -486,7 +479,7 @@ public class FrontEnd extends JFrame {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     JOptionPane.showMessageDialog(FrontEnd.this, 
                             "<html>Bias Personal Information Manager, version 0.1-beta" +
-                            "<br>(c) ki0n, 2006" +
+                            "<br>(c) kion, 2006" +
                             "<br>http://bias.sourceforge.net");
                 }
             });
@@ -508,22 +501,11 @@ public class FrontEnd extends JFrame {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     String category = JOptionPane.showInputDialog("New category:");
                     if (category != null) {
-                        boolean duplicate = false;
-                        for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
-                            if(category.equals(getJTabbedPane().getTitleAt(i))) {
-                                duplicate = true;
-                                break;
-                            }
-                        }
-                        if (!duplicate) {
-                            JTabbedPane tabbedPane = new JTabbedPane();
-                            getJTabbedPane().addTab(category, tabbedPane);
-                            getJTabbedPane().setSelectedComponent(tabbedPane);
-                            if (getJTabbedPane().getTabCount() == 1) {
-                                setNotesManagementToolbalEnabledState(true);
-                            }
-                        } else {
-                            displayErrorMessage("Category name should be unique!");
+                        JTabbedPane tabbedPane = new JTabbedPane();
+                        getJTabbedPane().addTab(category, tabbedPane);
+                        getJTabbedPane().setSelectedComponent(tabbedPane);
+                        if (getJTabbedPane().getTabCount() == 1) {
+                            setNotesManagementToolbalEnabledState(true);
                         }
                     }
                 }

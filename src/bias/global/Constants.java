@@ -18,7 +18,7 @@ public class Constants {
     public static final String NULL_STR = "NULL";
     public static final String EMPTY_STR_PATTERN = "\\s*";
     
-    public static final String DATA_FILE_PATTERN = "data/\\d+\\.data";
+    public static final String DATA_FILE_PATTERN = "data/\\d+/\\d+\\.data";
     public static final String DATA_FILE_ENDING_PATTERN = "\\.data";
     public static final String DATA_FILE_ENDING = ".data";
     public static final String CONFIG_FILE_PATH = "conf/config.properties";

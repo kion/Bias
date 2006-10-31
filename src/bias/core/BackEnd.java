@@ -15,7 +15,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
@@ -44,9 +44,9 @@ public class BackEnd {
 
     private static Map<String, byte[]> zipEntries;
     
-    private static Map<Integer, DataEntry> numberedDataEntries;
+    private static Map<Integer, Map<Integer, DataEntry>> numberedData;
     
-    private static Collection<DataEntry> data;
+    private static Collection<DataCategory> data;
     
     private static Document metadata;
     
@@ -57,7 +57,7 @@ public class BackEnd {
             init();
         }
         zipEntries = new LinkedHashMap<String, byte[]>();
-        numberedDataEntries = new LinkedHashMap<Integer, DataEntry>();
+        numberedData = new LinkedHashMap<Integer, Map<Integer,DataEntry>>();
         properties = new Properties();
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
         ZipEntry ze = null;
@@ -68,12 +68,19 @@ public class BackEnd {
                 out.write(c);
             }
             if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
-                Integer number = Integer.valueOf(ze.getName()
-                        .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
-                        .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR));
+            	String numbers[] = ze.getName()
+			            	.replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
+			            	.replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR).split("/");
+                Integer catNumber = Integer.valueOf(numbers[0]);
+                Integer entNumber = Integer.valueOf(numbers[1]);
                 DataEntry de = new DataEntry();
                 de.setData(out.toByteArray());
-                numberedDataEntries.put(number, de);
+                Map<Integer, DataEntry> numberedEntries = numberedData.get(catNumber);
+                if (numberedEntries == null) {
+                	numberedEntries = new LinkedHashMap<Integer, DataEntry>();
+                	numberedData.put(catNumber, numberedEntries);
+                }
+                numberedEntries.put(entNumber, de);
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
                 if (out.size() != 0) {
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
@@ -87,39 +94,14 @@ public class BackEnd {
             }
         }
         zis.close();
-        if (metadata == null) {
-            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
-        } else {
-            NodeList entries = metadata.getElementsByTagName("entry");
-            for (int i = 0; i < entries.getLength(); i++){
-                Node entry = entries.item(i);
-                NamedNodeMap attributes = entry.getAttributes();
-                Node attNumber = attributes.getNamedItem("number");
-                Integer number = Integer.valueOf(attNumber.getNodeValue());
-                Node attCaption = attributes.getNamedItem("caption");
-                String caption = attCaption.getNodeValue();
-                Node attCategory = attributes.getNamedItem("category");
-                String category = attCategory.getNodeValue();
-                Node attType = attributes.getNamedItem("type");
-                String type = attType.getNodeValue();
-                DataEntry dataEntry = numberedDataEntries.get(number);
-                // TODO: there should be some nicer way to decode string from UTF-8
-                String decodedCaption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
-                String decodedCategory = URLDecoder.decode(category, Constants.UNICODE_ENCODING);
-                dataEntry.setCaption(decodedCaption);
-                dataEntry.setCategory(decodedCategory);
-                dataEntry.setType(type);
-            }
-        }
-        data = numberedDataEntries.values();
+        data = parseMetadata(metadata, numberedData);
     }
     
-    public static Collection<DataEntry> importData(File jarFile) throws Exception {
-        Collection<DataEntry> importedDataEntries = new LinkedList<DataEntry>();
+    public static Collection<DataCategory> importData(File jarFile) throws Exception {
+        Map<Integer, Map<Integer,DataEntry>> importedNumberedData = new LinkedHashMap<Integer, Map<Integer,DataEntry>>();
         Document metadata = null;
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
         ZipEntry ze = null;
-        int nativeNotesCnt = numberedDataEntries.size();
         while ((ze = zis.getNextEntry()) != null) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             int c;
@@ -127,13 +109,19 @@ public class BackEnd {
                 out.write(c);
             }
             if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
-                Integer number = nativeNotesCnt + Integer.valueOf(ze.getName()
-                        .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
-                        .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR));
+            	String numbers[] = ze.getName()
+			            	.replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
+			            	.replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR).split("/");
+			    Integer catNumber = Integer.valueOf(numbers[0]);
+			    Integer entNumber = Integer.valueOf(numbers[1]);
                 DataEntry de = new DataEntry();
                 de.setData(out.toByteArray());
-                importedDataEntries.add(de);
-                numberedDataEntries.put(number, de);
+                Map<Integer, DataEntry> numberedEntries = importedNumberedData.get(catNumber);
+                if (numberedEntries == null) {
+                	numberedEntries = new LinkedHashMap<Integer, DataEntry>();
+                	importedNumberedData.put(catNumber, numberedEntries);
+                }
+                numberedEntries.put(entNumber, de);
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
                 if (out.size() != 0) {
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
@@ -142,32 +130,52 @@ public class BackEnd {
             }    
         }
         zis.close();
+        Collection<DataCategory> importedData = parseMetadata(metadata, importedNumberedData);
+        data.addAll(importedData);
+        return importedData;
+    }
+    
+    private static Collection<DataCategory> parseMetadata(Document metadata, Map<Integer, Map<Integer,DataEntry>> numberedData) throws Exception {
+        Collection<DataCategory> dataCategories = new LinkedHashSet<DataCategory>();
         if (metadata == null) {
             metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         } else {
-            NodeList entries = metadata.getElementsByTagName("entry");
-            for (int i = 0; i < entries.getLength(); i++){
-                Node entry = entries.item(i);
-                NamedNodeMap attributes = entry.getAttributes();
-                Node attNumber = attributes.getNamedItem("number");
-                Integer number = nativeNotesCnt + Integer.valueOf(attNumber.getNodeValue());
+            NodeList categories = metadata.getElementsByTagName("category");
+            for (int i = 0; i < categories.getLength(); i++){
+            	// category
+            	Node category = categories.item(i);
+                NamedNodeMap attributes = category.getAttributes();
+                Node attCatNumber = attributes.getNamedItem("number");
+                Integer catNumber = Integer.valueOf(attCatNumber.getNodeValue());
                 Node attCaption = attributes.getNamedItem("caption");
                 String caption = attCaption.getNodeValue();
-                Node attCategory = attributes.getNamedItem("category");
-                String category = attCategory.getNodeValue();
-                Node attType = attributes.getNamedItem("type");
-                String type = attType.getNodeValue();
-                DataEntry dataEntry = numberedDataEntries.get(number);
-                // TODO: there should be some nicer way to decode string from UTF-8
-                String decodedCaption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
-                String decodedCategory = URLDecoder.decode(category, Constants.UNICODE_ENCODING);
-                dataEntry.setCaption(decodedCaption);
-                dataEntry.setCategory(decodedCategory);
-                dataEntry.setType(type);
+                caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+                DataCategory dataCategory = new DataCategory();
+                dataCategory.setCaption(caption);
+                // category's entries
+                NodeList entries = category.getChildNodes();
+                for (int j = 0; j < entries.getLength(); j++){
+                    Node entry = entries.item(j);
+                    attributes = entry.getAttributes();
+                    Node attEntNumber = attributes.getNamedItem("number");
+                    Integer entNumber = Integer.valueOf(attEntNumber.getNodeValue());
+                    attCaption = attributes.getNamedItem("caption");
+                    caption = attCaption.getNodeValue();
+                    Node attType = attributes.getNamedItem("type");
+                    String type = attType.getNodeValue();
+                    DataEntry dataEntry = numberedData.get(catNumber).get(entNumber);
+                    caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+                    dataEntry.setCaption(caption);
+                    dataEntry.setType(type);
+                }
+                Map<Integer, DataEntry> numberedEntries = numberedData.get(catNumber);
+                if (numberedEntries != null) {
+                    dataCategory.setDataEntries(numberedEntries.values());
+                }
+                dataCategories.add(dataCategory);
             }
         }
-        data = numberedDataEntries.values();
-        return importedDataEntries;
+        return dataCategories;
     }
     
     public static void store() throws Exception {
@@ -176,20 +184,26 @@ public class BackEnd {
         }
         metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         Node rootNode = metadata.createElement("metadata");
-        int number = 0;
-        for (DataEntry dataEntry : data) {
-            String key = Constants.DATA_DIR + ++number + Constants.DATA_FILE_ENDING;
-            byte[] value = dataEntry.getData();
-            zipEntries.put(key, value);
-            Element entryNode = metadata.createElement("entry");
-            entryNode.setAttribute("number", ""+number);
-            // TODO: there should be some nicer way to encode string into UTF-8
-            String encodedCaption = URLEncoder.encode(dataEntry.getCaption(), Constants.UNICODE_ENCODING);
-            String encodedCategory = URLEncoder.encode(dataEntry.getCategory(), Constants.UNICODE_ENCODING);
-            entryNode.setAttribute("caption", encodedCaption);
-            entryNode.setAttribute("category", encodedCategory);
-            entryNode.setAttribute("type", dataEntry.getType());
-            rootNode.appendChild(entryNode);
+        int catNumber = 0;
+        for (DataCategory dataCategory : data) {
+            String catKey = Constants.DATA_DIR + ++catNumber + "/";
+            Element catNode = metadata.createElement("category");
+            catNode.setAttribute("number", "" + catNumber);
+            String encodedCaption = URLEncoder.encode(dataCategory.getCaption(), Constants.UNICODE_ENCODING);
+            catNode.setAttribute("caption", encodedCaption);
+            int entNumber = 0;
+            for (DataEntry dataEntry : dataCategory.getDataEntries()) {
+                String entKey = catKey + ++entNumber + Constants.DATA_FILE_ENDING;
+                byte[] value = dataEntry.getData();
+                zipEntries.put(entKey, value);
+                Element entryNode = metadata.createElement("entry");
+                entryNode.setAttribute("number", "" + entNumber);
+                encodedCaption = URLEncoder.encode(dataEntry.getCaption(), Constants.UNICODE_ENCODING);
+                entryNode.setAttribute("caption", encodedCaption);
+                entryNode.setAttribute("type", dataEntry.getType());
+                catNode.appendChild(entryNode);
+            }
+            rootNode.appendChild(catNode);
         }
         metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
@@ -224,11 +238,11 @@ public class BackEnd {
 //        jarFile = new File("/mnt/stor/devel/Bias/build/bias.jar");
     }
 
-    public static Collection<DataEntry> getData() {
+    public static Collection<DataCategory> getData() {
         return data;
     }
 
-    public static void setData(Collection<DataEntry> data) {
+    public static void setData(Collection<DataCategory> data) {
         BackEnd.data = data;
     }
 
