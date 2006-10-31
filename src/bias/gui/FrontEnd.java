@@ -7,11 +7,15 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Dimension;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Properties;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -34,6 +38,24 @@ public class FrontEnd extends JFrame {
 
     private static final long serialVersionUID = 1L;
 
+    public static final ImageIcon ICON_ABOUT = 
+        new ImageIcon(Constants.class.getResource("/bias/res/about.png"));
+
+    public static final ImageIcon ICON_IMPORT_DATA = 
+        new ImageIcon(Constants.class.getResource("/bias/res/import_data.png"));
+
+    public static final ImageIcon ICON_DELETE = 
+        new ImageIcon(Constants.class.getResource("/bias/res/delete.png"));
+
+    public static final ImageIcon ICON_ADD_ENTRY = 
+        new ImageIcon(Constants.class.getResource("/bias/res/add_entry.png"));
+
+    public static final ImageIcon ICON_ADD_CATEGORY = 
+        new ImageIcon(Constants.class.getResource("/bias/res/add_category.png"));
+
+    public static final ImageIcon ICON_APP = 
+        new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
+
     private JPanel jContentPane = null;
 
     private JTabbedPane jTabbedPane = null;
@@ -44,8 +66,6 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton1 = null;
     
-    private JButton jButton3 = null;
-
     private JButton jButton2 = null;
 
     private JPanel jPanel = null;
@@ -53,6 +73,8 @@ public class FrontEnd extends JFrame {
     private JToolBar jToolBar2 = null;
 
     private JButton jButton6 = null;
+
+    private JButton jButton3 = null;
 
     /**
      * This is the default constructor
@@ -71,7 +93,7 @@ public class FrontEnd extends JFrame {
         this.setSize(new Dimension(772, 535));  // Generated
         try {
             this.setTitle("Bias");
-            this.setIconImage(Constants.ICON_APP.getImage());
+            this.setIconImage(ICON_APP.getImage());
             this.setContentPane(getJContentPane());
 
             BackEnd.load();
@@ -113,16 +135,28 @@ public class FrontEnd extends JFrame {
             
             representData(BackEnd.getData());
 
-            int lstiValue;
-            String lstiStr = properties.getProperty(Constants.PROPERTY_LAST_SELECTED_TAB_INDEX);
-            if (lstiStr == null) {
-                lstiValue = 0;
+            int lstcValue;
+            String lstcStr = properties.getProperty(Constants.PROPERTY_LAST_SELECTED_CATEGORY_INDEX);
+            if (lstcStr == null) {
+                lstcValue = 0;
             } else {
-                lstiValue = Integer.valueOf(lstiStr);
+                lstcValue = Integer.valueOf(lstcStr);
             }
             if (getJTabbedPane().getTabCount() > 0) {
-                getJTabbedPane().setSelectedIndex(lstiValue);
+                getJTabbedPane().setSelectedIndex(lstcValue);
                 setNotesManagementToolbalEnabledState(true);
+                
+                int lsteValue;
+                String lsteStr = properties.getProperty(Constants.PROPERTY_LAST_SELECTED_ENTRY_INDEX);
+                if (lsteStr == null) {
+                    lsteValue = 0;
+                } else {
+                    lsteValue = Integer.valueOf(lsteStr);
+                }
+                JTabbedPane tabbedPane = (JTabbedPane) getJTabbedPane().getComponent(lstcValue);
+                if (tabbedPane.getTabCount() > 0) {
+                    tabbedPane.setSelectedIndex(lsteValue);
+                }
             } else {
                 setNotesManagementToolbalEnabledState(false);
             }
@@ -136,16 +170,28 @@ public class FrontEnd extends JFrame {
                         properties.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR+getLocation().getY()/getToolkit().getScreenSize().getHeight());
                         properties.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR+getSize().getWidth()/getToolkit().getScreenSize().getHeight());
                         properties.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR+getSize().getHeight()/getToolkit().getScreenSize().getHeight());
-                        properties.put(Constants.PROPERTY_LAST_SELECTED_TAB_INDEX, Constants.EMPTY_STR+getJTabbedPane().getSelectedIndex());
+                        int categoryIdx = getJTabbedPane().getSelectedIndex();
+                        if (categoryIdx != -1) {
+                            properties.put(Constants.PROPERTY_LAST_SELECTED_CATEGORY_INDEX, Constants.EMPTY_STR+categoryIdx);
+                            JTabbedPane tabbedPane = (JTabbedPane) getJTabbedPane().getComponent(categoryIdx);
+                            int entryIdx = tabbedPane.getSelectedIndex();
+                            if (entryIdx != -1) {
+                                properties.put(Constants.PROPERTY_LAST_SELECTED_ENTRY_INDEX, Constants.EMPTY_STR+entryIdx);
+                            }
+                        }
 
                         BackEnd.setProperties(properties);
                         
                         Collection<DataEntry> data = new LinkedList<DataEntry>();
                         for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
-                            VisualEntry visualEntry = (VisualEntry) getJTabbedPane().getComponent(i);
-                            byte[] serializedData = visualEntry.serialize();
-                            String caption = getJTabbedPane().getTitleAt(i);
-                            data.add(new DataEntry(caption, visualEntry.getClass().getSimpleName(), serializedData));
+                            String category = getJTabbedPane().getTitleAt(i);
+                            JTabbedPane categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(i);
+                            for (int j = 0; j < categoryTabPane.getTabCount(); j++) {
+                                VisualEntry visualEntry = (VisualEntry) categoryTabPane.getComponent(j);
+                                byte[] serializedData = visualEntry.serialize();
+                                String caption = categoryTabPane.getTitleAt(j);
+                                data.add(new DataEntry(caption, category, visualEntry.getClass().getSimpleName(), serializedData));
+                            }
                         }
                         
                         BackEnd.setData(data);
@@ -163,10 +209,26 @@ public class FrontEnd extends JFrame {
     
     private void representData(Collection<DataEntry> data) {
         try {
+            Map<String, Integer> categoryIdxMapping = new HashMap<String, Integer>();
+            for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
+                categoryIdxMapping.put(getJTabbedPane().getTitleAt(i), i);
+            }
             for (DataEntry dataEntry : data) {
                 String caption = dataEntry.getCaption();
                 VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(dataEntry);
-                getJTabbedPane().addTab(caption, visualEntry);
+                String category = dataEntry.getCategory();
+                JTabbedPane categoryTabPane;
+                Integer categoryIdx = categoryIdxMapping.get(category);
+                if (categoryIdx == null) {
+                    categoryTabPane = new JTabbedPane();
+                    getJTabbedPane().add(category, categoryTabPane);
+                    categoryTabPane.addTab(caption, visualEntry);
+                    categoryTabPane.addMouseListener(tabDoubleClickListener);
+                    categoryIdxMapping.put(category, getJTabbedPane().getTabCount()-1);
+                } else {
+                    categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(categoryIdx);
+                    categoryTabPane.addTab(caption, visualEntry);
+                }
             }
             if (getJTabbedPane().getTabCount() > 0) {
                 setNotesManagementToolbalEnabledState(true);
@@ -178,16 +240,35 @@ public class FrontEnd extends JFrame {
     
     private void setNotesManagementToolbalEnabledState(boolean enabled) {
         for (Component button : getJToolBar().getComponents()) {
-            if (!button.equals(getJButton()) && !button.equals(getJButton2())) {
+            if (!button.equals(getJButton2()) 
+                    && !button.equals(getJButton3())) {
                 button.setEnabled(enabled);
             }
         }
     }
 
+    private void displayErrorMessage(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    
     private void displayErrorMessage(Exception ex) {
         JOptionPane.showMessageDialog(this, "Details: " + ex, "Error", JOptionPane.ERROR_MESSAGE);
         ex.printStackTrace();
     }
+    
+    MouseListener tabDoubleClickListener = new java.awt.event.MouseAdapter() {
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            if (e.getClickCount() == 2) {
+                JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
+                int index = tabbedPane.getSelectedIndex();
+                String caption = tabbedPane.getTitleAt(index);
+                caption = JOptionPane.showInputDialog("Entry caption:", caption);
+                if (caption != null) { 
+                    tabbedPane.setTitleAt(index, caption);
+                }
+            }
+        }
+    };
 
     /**
      * This method initializes jContentPane
@@ -213,19 +294,8 @@ public class FrontEnd extends JFrame {
         if (jTabbedPane == null) {
             jTabbedPane = new JTabbedPane();
             jTabbedPane.setBackground(null);  // Generated
-            jTabbedPane.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseClicked(java.awt.event.MouseEvent e) {
-                    if (e.getClickCount() == 2) {
-                        JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
-                        int index = tabbedPane.getSelectedIndex();
-                        String caption = tabbedPane.getTitleAt(index);
-                        caption = JOptionPane.showInputDialog("Entry caption:", caption);
-                        if (caption != null) { 
-                            tabbedPane.setTitleAt(index, caption);
-                        }
-                    }
-                }
-            });
+            jTabbedPane.setTabPlacement(JTabbedPane.LEFT);  // Generated
+            jTabbedPane.addMouseListener(tabDoubleClickListener);
         }
         return jTabbedPane;
     }
@@ -240,8 +310,8 @@ public class FrontEnd extends JFrame {
             jToolBar = new JToolBar();
             jToolBar.setFloatable(false);  // Generated
             jToolBar.add(getJButton2());  // Generated
-            jToolBar.add(getJButton());  // Generated
             jToolBar.add(getJButton3());  // Generated
+            jToolBar.add(getJButton());  // Generated
             jToolBar.add(getJButton1());  // Generated
         }
         return jToolBar;
@@ -256,33 +326,35 @@ public class FrontEnd extends JFrame {
         if (jButton == null) {
             jButton = new JButton();
             jButton.setToolTipText("add entry");  // Generated
-            jButton.setIcon(Constants.ICON_ADD);
+            jButton.setIcon(ICON_ADD_ENTRY);
             jButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
-                        JLabel entryTypeLabel = new JLabel("Type:");
-                        JLabel entryNameLabel = new JLabel("Name:");
-                        JComboBox entryTypeComboBox = new JComboBox();
-                        for (String entryType : VisualEntryFactory.getEntryTypes().keySet()) {
-                            entryTypeComboBox.addItem(entryType);
-                        }
-                        entryTypeComboBox.setEditable(false);
-                        String caption = JOptionPane.showInputDialog(
-                                null, 
-                                new Component[]{
-                                        entryTypeLabel,
-                                        entryTypeComboBox,
-                                        entryNameLabel}, 
-                                "New entry:", 
-                                JOptionPane.QUESTION_MESSAGE);
-                        if (caption != null) {
-                            String typeDescription = (String) entryTypeComboBox.getSelectedItem();
-                            Class type = VisualEntryFactory.getEntryTypes().get(typeDescription);
-                            VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(type, new byte[]{});
-                            getJTabbedPane().addTab(caption, visualEntry);
-                            getJTabbedPane().setSelectedComponent(visualEntry);
-                            if (getJTabbedPane().getTabCount() == 1) {
-                                setNotesManagementToolbalEnabledState(true);
+                        int idx = getJTabbedPane().getSelectedIndex();
+                        if (idx != -1) {
+                            JLabel entryTypeLabel = new JLabel("Type:");
+                            JComboBox entryTypeComboBox = new JComboBox();
+                            for (String entryType : VisualEntryFactory.getInstance().getEntryTypes().keySet()) {
+                                entryTypeComboBox.addItem(entryType);
+                            }
+                            entryTypeComboBox.setEditable(false);
+                            String caption = JOptionPane.showInputDialog(
+                                    null, 
+                                    new Component[]{
+                                            entryTypeLabel,
+                                            entryTypeComboBox}, 
+                                    "New entry:", 
+                                    JOptionPane.QUESTION_MESSAGE);
+                            if (caption != null) {
+                                String typeDescription = (String) entryTypeComboBox.getSelectedItem();
+                                Class type = VisualEntryFactory.getInstance().getEntryTypes().get(typeDescription);
+                                VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(type, new byte[]{});
+                                if (visualEntry != null) {
+                                    JTabbedPane categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(idx);
+                                    categoryTabPane.addTab(caption, visualEntry);
+                                    getJTabbedPane().setSelectedComponent(categoryTabPane);
+                                    categoryTabPane.setSelectedComponent(visualEntry);
+                                }
                             }
                         }
                     } catch (Exception ex) {
@@ -295,33 +367,6 @@ public class FrontEnd extends JFrame {
     }
 
     /**
-     * This method initializes jButton3 
-     *  
-     * @return javax.swing.JButton  
-     */
-    private JButton getJButton3() {
-        if (jButton3 == null) {
-            jButton3 = new JButton();
-            jButton3.setToolTipText("rename entry");  // Generated
-            jButton3.setIcon(Constants.ICON_RENAME);
-            jButton3.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent e) {
-                    try {
-                        int index = getJTabbedPane().getSelectedIndex();
-                        String noteCaption = JOptionPane.showInputDialog("Entry caption:");
-                        if (noteCaption != null) {
-                            getJTabbedPane().setTitleAt(index, noteCaption);
-                        }
-                    } catch (Exception ex) {
-                        displayErrorMessage(ex);
-                    }
-                }
-            });
-        }
-        return jButton3;
-    }
-
-    /**
      * This method initializes jButton1	
      * 	
      * @return javax.swing.JButton	
@@ -330,12 +375,18 @@ public class FrontEnd extends JFrame {
         if (jButton1 == null) {
             jButton1 = new JButton();
             jButton1.setToolTipText("delete entry");  // Generated
-            jButton1.setIcon(Constants.ICON_DELETE);
+            jButton1.setIcon(ICON_DELETE);
             jButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
-                        int index = getJTabbedPane().getSelectedIndex();
-                        getJTabbedPane().remove(index);
+                        int categoryIndex = getJTabbedPane().getSelectedIndex();
+                        JTabbedPane categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(categoryIndex);
+                        int entryIndex = categoryTabPane.getSelectedIndex();
+                        if (entryIndex != -1) {
+                            categoryTabPane.remove(entryIndex);
+                        } else {
+                            getJTabbedPane().remove(categoryIndex);
+                        }
                         if (getJTabbedPane().getTabCount() == 0) {
                             setNotesManagementToolbalEnabledState(false);
                         }
@@ -357,7 +408,7 @@ public class FrontEnd extends JFrame {
         if (jButton2 == null) {
             jButton2 = new JButton();
             jButton2.setToolTipText("import data from another Bias JAR");  // Generated
-            jButton2.setIcon(Constants.ICON_IMPORT_DATA);
+            jButton2.setIcon(ICON_IMPORT_DATA);
             jButton2.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
@@ -430,7 +481,7 @@ public class FrontEnd extends JFrame {
         if (jButton6 == null) {
             jButton6 = new JButton();
             jButton6.setToolTipText("about Bias");  // Generated
-            jButton6.setIcon(Constants.ICON_ABOUT);
+            jButton6.setIcon(ICON_ABOUT);
             jButton6.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     JOptionPane.showMessageDialog(FrontEnd.this, 
@@ -441,6 +492,44 @@ public class FrontEnd extends JFrame {
             });
         }
         return jButton6;
+    }
+
+    /**
+     * This method initializes jButton3	
+     * 	
+     * @return javax.swing.JButton	
+     */
+    private JButton getJButton3() {
+        if (jButton3 == null) {
+            jButton3 = new JButton();
+            jButton3.setToolTipText("add category");  // Generated
+            jButton3.setIcon(ICON_ADD_CATEGORY);
+            jButton3.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    String category = JOptionPane.showInputDialog("New category:");
+                    if (category != null) {
+                        boolean duplicate = false;
+                        for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
+                            if(category.equals(getJTabbedPane().getTitleAt(i))) {
+                                duplicate = true;
+                                break;
+                            }
+                        }
+                        if (!duplicate) {
+                            JTabbedPane tabbedPane = new JTabbedPane();
+                            getJTabbedPane().addTab(category, tabbedPane);
+                            getJTabbedPane().setSelectedComponent(tabbedPane);
+                            if (getJTabbedPane().getTabCount() == 1) {
+                                setNotesManagementToolbalEnabledState(true);
+                            }
+                        } else {
+                            displayErrorMessage("Category name should be unique!");
+                        }
+                    }
+                }
+            });    
+        }
+        return jButton3;
     }
 
 }  //  @jve:decl-index=0:visual-constraint="10,10"

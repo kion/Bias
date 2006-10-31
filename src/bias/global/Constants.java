@@ -30,7 +30,8 @@ public class Constants {
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";
     public static final String PROPERTY_WINDOW_WIDTH = "WINDOW_WIDTH";
     public static final String PROPERTY_WINDOW_HEIGHT = "WINDOW_HEIGHT";
-    public static final String PROPERTY_LAST_SELECTED_TAB_INDEX = "LAST_SELECTED_TAB_INDEX";
+    public static final String PROPERTY_LAST_SELECTED_CATEGORY_INDEX = "LAST_SELECTED_CATEGORY_INDEX";
+    public static final String PROPERTY_LAST_SELECTED_ENTRY_INDEX = "LAST_SELECTED_ENTRY_INDEX";
 
     public static final ImageIcon ICON_APP = 
         new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));

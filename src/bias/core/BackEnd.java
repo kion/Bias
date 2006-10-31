@@ -98,12 +98,16 @@ public class BackEnd {
                 Integer number = Integer.valueOf(attNumber.getNodeValue());
                 Node attCaption = attributes.getNamedItem("caption");
                 String caption = attCaption.getNodeValue();
+                Node attCategory = attributes.getNamedItem("category");
+                String category = attCategory.getNodeValue();
                 Node attType = attributes.getNamedItem("type");
                 String type = attType.getNodeValue();
                 DataEntry dataEntry = numberedDataEntries.get(number);
                 // TODO: there should be some nicer way to decode string from UTF-8
                 String decodedCaption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+                String decodedCategory = URLDecoder.decode(category, Constants.UNICODE_ENCODING);
                 dataEntry.setCaption(decodedCaption);
+                dataEntry.setCategory(decodedCategory);
                 dataEntry.setType(type);
             }
         }
@@ -149,12 +153,16 @@ public class BackEnd {
                 Integer number = nativeNotesCnt + Integer.valueOf(attNumber.getNodeValue());
                 Node attCaption = attributes.getNamedItem("caption");
                 String caption = attCaption.getNodeValue();
+                Node attCategory = attributes.getNamedItem("category");
+                String category = attCategory.getNodeValue();
                 Node attType = attributes.getNamedItem("type");
                 String type = attType.getNodeValue();
                 DataEntry dataEntry = numberedDataEntries.get(number);
                 // TODO: there should be some nicer way to decode string from UTF-8
                 String decodedCaption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+                String decodedCategory = URLDecoder.decode(category, Constants.UNICODE_ENCODING);
                 dataEntry.setCaption(decodedCaption);
+                dataEntry.setCategory(decodedCategory);
                 dataEntry.setType(type);
             }
         }
@@ -177,7 +185,9 @@ public class BackEnd {
             entryNode.setAttribute("number", ""+number);
             // TODO: there should be some nicer way to encode string into UTF-8
             String encodedCaption = URLEncoder.encode(dataEntry.getCaption(), Constants.UNICODE_ENCODING);
+            String encodedCategory = URLEncoder.encode(dataEntry.getCategory(), Constants.UNICODE_ENCODING);
             entryNode.setAttribute("caption", encodedCaption);
+            entryNode.setAttribute("category", encodedCategory);
             entryNode.setAttribute("type", dataEntry.getType());
             rootNode.appendChild(entryNode);
         }

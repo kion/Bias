@@ -10,6 +10,10 @@ public class DataEntry {
     
     private String caption;
     
+    private String category;
+    
+    private String parentCategory;
+    
     private String type;
     
     private byte[] data;
@@ -18,8 +22,9 @@ public class DataEntry {
         // default constructor
     }
     
-    public DataEntry(String caption, String type, byte[] data) {
+    public DataEntry(String caption, String category, String type, byte[] data) {
         this.caption = caption;
+        this.category = category;
         this.type = type;
         this.data = data;
     }
@@ -32,6 +37,22 @@ public class DataEntry {
         this.caption = caption;
     }
 
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getParentCategory() {
+        return parentCategory;
+    }
+
+    public void setParentCategory(String parentCategory) {
+        this.parentCategory = parentCategory;
+    }
+    
     public String getType() {
         return type;
     }
@@ -47,5 +68,5 @@ public class DataEntry {
     public void setData(byte[] data) {
         this.data = data;
     }
-    
+
 }
