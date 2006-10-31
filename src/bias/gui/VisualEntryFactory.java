@@ -9,7 +9,7 @@ import java.util.Map;
 import bias.core.DataEntry;
 
 /**
- * @author rkasianenko
+ * @author kion
  *
  */
 public class VisualEntryFactory {
