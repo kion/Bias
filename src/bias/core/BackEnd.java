@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -39,20 +40,33 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  * @author kion
  */
 public class BackEnd {
+	
+	private static BackEnd instance;
+	
+	private BackEnd() {
+		// constructor without parameters is hidden for singleton
+	}
+	
+	public static BackEnd getInstance() {
+		if (instance == null) {
+			instance = new BackEnd();
+		}
+		return instance;
+	}
     
-    private static File jarFile = null;
+    private File jarFile = null;
 
-    private static Map<String, byte[]> zipEntries;
+    private Map<String, byte[]> zipEntries;
     
-    private static Map<Integer, Map<Integer, DataEntry>> numberedData;
+    private Map<Integer, Map<Integer, DataEntry>> numberedData;
     
-    private static Collection<DataCategory> data;
+    private Collection<DataCategory> data;
     
-    private static Document metadata;
+    private Document metadata;
     
-    private static Properties properties;
+    private Properties properties;
     
-    public static void load() throws Exception {
+    public void load() throws Exception {
         if (jarFile == null) {
             init();
         }
@@ -94,10 +108,10 @@ public class BackEnd {
             }
         }
         zis.close();
-        data = parseMetadata(metadata, numberedData);
+        data = parseMetadata(metadata, numberedData, true);
     }
     
-    public static Collection<DataCategory> importData(File jarFile) throws Exception {
+    public Collection<DataCategory> importData(File jarFile) throws Exception {
         Map<Integer, Map<Integer,DataEntry>> importedNumberedData = new LinkedHashMap<Integer, Map<Integer,DataEntry>>();
         Document metadata = null;
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
@@ -130,12 +144,15 @@ public class BackEnd {
             }    
         }
         zis.close();
-        Collection<DataCategory> importedData = parseMetadata(metadata, importedNumberedData);
+        Collection<DataCategory> importedData = parseMetadata(metadata, importedNumberedData, false);
         data.addAll(importedData);
         return importedData;
     }
     
-    private static Collection<DataCategory> parseMetadata(Document metadata, Map<Integer, Map<Integer,DataEntry>> numberedData) throws Exception {
+    private Collection<DataCategory> parseMetadata(
+    		Document metadata, 
+    		Map<Integer, Map<Integer,DataEntry>> numberedData,
+    		boolean parseIDs) throws Exception {
         Collection<DataCategory> dataCategories = new LinkedHashSet<DataCategory>();
         if (metadata == null) {
             metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
@@ -159,13 +176,18 @@ public class BackEnd {
                     attributes = entry.getAttributes();
                     Node attEntNumber = attributes.getNamedItem("number");
                     Integer entNumber = Integer.valueOf(attEntNumber.getNodeValue());
+                    DataEntry dataEntry = numberedData.get(catNumber).get(entNumber);
+                    if (parseIDs) {
+                        Node attID = attributes.getNamedItem("id");
+                        UUID id = UUID.fromString(attID.getNodeValue());
+                        dataEntry.setId(id);
+                    }
                     attCaption = attributes.getNamedItem("caption");
                     caption = attCaption.getNodeValue();
-                    Node attType = attributes.getNamedItem("type");
-                    String type = attType.getNodeValue();
-                    DataEntry dataEntry = numberedData.get(catNumber).get(entNumber);
                     caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
                     dataEntry.setCaption(caption);
+                    Node attType = attributes.getNamedItem("type");
+                    String type = attType.getNodeValue();
                     dataEntry.setType(type);
                 }
                 Map<Integer, DataEntry> numberedEntries = numberedData.get(catNumber);
@@ -178,7 +200,7 @@ public class BackEnd {
         return dataCategories;
     }
     
-    public static void store() throws Exception {
+    public void store() throws Exception {
         if (jarFile == null) {
             init();
         }
@@ -198,6 +220,7 @@ public class BackEnd {
                 zipEntries.put(entKey, value);
                 Element entryNode = metadata.createElement("entry");
                 entryNode.setAttribute("number", "" + entNumber);
+                entryNode.setAttribute("id", dataEntry.getId().toString());
                 encodedCaption = URLEncoder.encode(dataEntry.getCaption(), Constants.UNICODE_ENCODING);
                 entryNode.setAttribute("caption", encodedCaption);
                 entryNode.setAttribute("type", dataEntry.getType());
@@ -229,7 +252,7 @@ public class BackEnd {
         zos.close();
     }
     
-    private static void init() {
+    private void init() {
         URL url = BackEnd.class.getResource(BackEnd.class.getSimpleName()+".class");
         String jarFilePath = url.getFile().substring(0, url.getFile().indexOf(BackEnd.class.getName().replaceAll("\\.", "/")) - 2);
         jarFilePath = jarFilePath.substring("file:".length(), jarFilePath.length());
@@ -238,20 +261,20 @@ public class BackEnd {
 //        jarFile = new File("/mnt/stor/devel/Bias/build/bias.jar");
     }
 
-    public static Collection<DataCategory> getData() {
+    public Collection<DataCategory> getData() {
         return data;
     }
 
-    public static void setData(Collection<DataCategory> data) {
-        BackEnd.data = data;
+    public void setData(Collection<DataCategory> data) {
+        this.data = data;
     }
 
-    public static Properties getProperties() {
+    public Properties getProperties() {
         return properties;
     }
 
-    public static void setProperties(Properties properties) {
-        BackEnd.properties = properties;
+    public void setProperties(Properties properties) {
+        this.properties = properties;
     }
 
 }

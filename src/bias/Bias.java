@@ -11,8 +11,8 @@ import bias.gui.FrontEnd;
 public class Bias {
     
     public static void main(String[] args) {
-        FrontEnd face = new FrontEnd();
-        face.setVisible(true);
+        FrontEnd frontEnd = FrontEnd.getInstance();
+        frontEnd.setVisible(true);
     }
 
 }

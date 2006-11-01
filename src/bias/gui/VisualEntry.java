@@ -3,6 +3,8 @@
  */
 package bias.gui;
 
+import java.util.UUID;
+
 import javax.swing.JPanel;
 
 /**
@@ -10,19 +12,33 @@ import javax.swing.JPanel;
  */
 public abstract class VisualEntry extends JPanel {
     
+    private UUID id;
+    
     private byte[] data;
     
     private VisualEntry() {
-        // default constructor without parameters should not be visible
+        // default constructor without parameters is not visible
     }
     
     /**
      * The only allowed constructor that is aware of initialization data.
      * @param data data to be incapsulated by visual entry
      */
-    public VisualEntry(byte[] data) {
+    public VisualEntry(UUID id, byte[] data) {
+        if (id == null) {
+        	id = UUID.randomUUID();
+        }
+    	this.id = id;
         this.data = data;
     }
+
+	/**
+	 * Concrete visual entry instance's unique identifier getter.
+	 * @return
+	 */
+	public UUID getId() {
+		return id;
+	}
 
     /**
      * Data getter visible for extending classes only.

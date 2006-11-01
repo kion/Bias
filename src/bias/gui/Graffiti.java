@@ -15,6 +15,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.UUID;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -212,9 +213,11 @@ public class Graffiti extends VisualEntry {
      * This is the default constructor
      * @throws IOException 
      * @throws ImageFormatException 
+     * @throws IOException 
+     * @throws ImageFormatException 
      */
-    public Graffiti(byte[] data) throws ImageFormatException, IOException {
-        super(data);
+    public Graffiti(UUID id, byte[] data) throws ImageFormatException, IOException {
+        super(id, data);
         initialize();
     }
 

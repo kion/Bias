@@ -4,12 +4,13 @@
 package bias.gui;
 
 import java.awt.BorderLayout;
+import java.util.UUID;
 
 import javax.swing.ImageIcon;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JToolBar;
 import javax.swing.JToggleButton;
+import javax.swing.JToolBar;
 
 /**
  * @author kion
@@ -29,8 +30,8 @@ public class PlainText extends VisualEntry {
     /**
      * This is the default constructor
      */
-    public PlainText(byte[] data) {
-        super(data);
+    public PlainText(UUID id, byte[] data) {
+        super(id, data);
         initialize();
     }
 

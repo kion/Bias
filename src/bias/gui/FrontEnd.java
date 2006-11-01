@@ -9,9 +9,11 @@ import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Properties;
+import java.util.UUID;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -55,6 +57,23 @@ public class FrontEnd extends JFrame {
     public static final ImageIcon ICON_APP = 
         new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
 
+	private static FrontEnd instance;
+	
+    /**
+     * Default singleton's hidden constructor without parameters
+     */
+    private FrontEnd() {
+        super();
+        initialize();
+    }
+
+	public static FrontEnd getInstance() {
+		if (instance == null) {
+			instance = new FrontEnd();
+		}
+		return instance;
+	}
+    
     private JPanel jContentPane = null;
 
     private JTabbedPane jTabbedPane = null;
@@ -76,14 +95,6 @@ public class FrontEnd extends JFrame {
     private JButton jButton3 = null;
 
     /**
-     * This is the default constructor
-     */
-    public FrontEnd() {
-        super();
-        initialize();
-    }
-
-    /**
      * This method initializes this
      * 
      * @return void
@@ -96,8 +107,8 @@ public class FrontEnd extends JFrame {
             this.setDefaultCloseOperation(EXIT_ON_CLOSE);
             this.setContentPane(getJContentPane());
 
-            BackEnd.load();
-            Properties properties = BackEnd.getProperties();
+            BackEnd.getInstance().load();
+            Properties properties = BackEnd.getInstance().getProperties();
             
             int wpxValue;
             int wpyValue;
@@ -133,7 +144,7 @@ public class FrontEnd extends JFrame {
             this.setLocation(wpxValue, wpyValue);
             this.setSize(wwValue, whValue);
             
-            representData(BackEnd.getData());
+            representData(BackEnd.getInstance().getData());
 
             int lstcValue;
             String lstcStr = properties.getProperty(Constants.PROPERTY_LAST_SELECTED_CATEGORY_INDEX);
@@ -179,7 +190,7 @@ public class FrontEnd extends JFrame {
                             }
                         }
 
-                        BackEnd.setProperties(properties);
+                        BackEnd.getInstance().setProperties(properties);
                         
                         Collection<DataCategory> data = new LinkedList<DataCategory>();
                         for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
@@ -192,15 +203,15 @@ public class FrontEnd extends JFrame {
                                 VisualEntry visualEntry = (VisualEntry) categoryTabPane.getComponent(j);
                                 byte[] serializedData = visualEntry.serialize();
                                 caption = categoryTabPane.getTitleAt(j);
-                                dataEntries.add(new DataEntry(caption, visualEntry.getClass().getSimpleName(), serializedData));
+                                dataEntries.add(new DataEntry(visualEntry.getId(), caption, visualEntry.getClass().getSimpleName(), serializedData));
                             }
                             dataCategory.setDataEntries(dataEntries);
                             data.add(dataCategory);
                         }
                         
-                        BackEnd.setData(data);
+                        BackEnd.getInstance().setData(data);
                         
-                        BackEnd.store();
+                        BackEnd.getInstance().store();
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
                     }
@@ -242,6 +253,38 @@ public class FrontEnd extends JFrame {
                 button.setEnabled(enabled);
             }
         }
+    }
+    
+    public Collection<UUID> getVisualEntriesIDs() {
+    	Collection<UUID> ids = new ArrayList<UUID>();
+    	for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
+    		JTabbedPane categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(i);
+    		for (int j = 0; j < categoryTabPane.getTabCount(); j++) {
+        		VisualEntry ve = (VisualEntry) categoryTabPane.getComponent(j);
+        		if (ve.getId() != null) {
+        			ids.add(ve.getId());
+        		}
+    		}
+    	}
+    	return ids;
+    }
+    
+    public boolean switchToVisualEntry(UUID id) {
+    	boolean success = false;
+    	if (id != null) {
+        	for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
+        		JTabbedPane categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(i);
+        		for (int j = 0; j < categoryTabPane.getTabCount(); j++) {
+            		VisualEntry ve = (VisualEntry) categoryTabPane.getComponent(j);
+            		if (ve.getId().equals(id)) {
+            			getJTabbedPane().setSelectedIndex(i);
+            			categoryTabPane.setSelectedIndex(j);
+            			success = true;
+            		}
+        		}
+        	}
+    	}
+    	return success;
     }
 
     private void displayErrorMessage(Exception ex) {
@@ -341,7 +384,7 @@ public class FrontEnd extends JFrame {
                             if (caption != null) {
                                 String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                                 Class type = VisualEntryFactory.getInstance().getEntryTypes().get(typeDescription);
-                                VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(type, new byte[]{});
+                                VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(type);
                                 if (visualEntry != null) {
                                     JTabbedPane categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(idx);
                                     categoryTabPane.addTab(caption, visualEntry);
@@ -424,7 +467,7 @@ public class FrontEnd extends JFrame {
                         int rVal = jfc.showOpenDialog(FrontEnd.this);
                         if (rVal == JFileChooser.APPROVE_OPTION) {
                             jarFile = jfc.getSelectedFile();
-                            representData(BackEnd.importData(jarFile));
+                            representData(BackEnd.getInstance().importData(jarFile));
                         }
                     } catch (Exception ex) {
                         displayErrorMessage(ex);

@@ -12,6 +12,7 @@ import java.awt.event.ItemListener;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.Map.Entry;
 
 import javax.swing.ImageIcon;
@@ -93,8 +94,8 @@ public class HTMLPage extends VisualEntry {
     /**
      * This is the default constructor
      */
-    public HTMLPage(byte[] data) {
-        super(data);
+    public HTMLPage(UUID id, byte[] data) {
+        super(id, data);
         initialize();
     }
 
