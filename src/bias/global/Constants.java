@@ -4,7 +4,6 @@
 package bias.global;
 
 
-import javax.swing.ImageIcon;
 
 
 /**
@@ -33,17 +32,6 @@ public class Constants {
     public static final String PROPERTY_LAST_SELECTED_CATEGORY_INDEX = "LAST_SELECTED_CATEGORY_INDEX";
     public static final String PROPERTY_LAST_SELECTED_ENTRY_INDEX = "LAST_SELECTED_ENTRY_INDEX";
 
-    public static final ImageIcon ICON_APP = 
-        new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
-    public static final ImageIcon ICON_ADD = 
-        new ImageIcon(Constants.class.getResource("/bias/res/add.png"));
-    public static final ImageIcon ICON_RENAME = 
-        new ImageIcon(Constants.class.getResource("/bias/res/rename.png"));
-    public static final ImageIcon ICON_DELETE = 
-        new ImageIcon(Constants.class.getResource("/bias/res/delete.png"));
-    public static final ImageIcon ICON_IMPORT_DATA = 
-        new ImageIcon(Constants.class.getResource("/bias/res/import_data.png"));
-    public static final ImageIcon ICON_ABOUT = 
-        new ImageIcon(Constants.class.getResource("/bias/res/about.png"));
-    
+    public static final String ENTRY_PROTOCOL_PREFIX = "entry://";
+
 }

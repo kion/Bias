@@ -175,43 +175,7 @@ public class FrontEnd extends JFrame {
             this.addWindowListener(new java.awt.event.WindowAdapter() {   
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
-                        Properties properties = new Properties();
-                        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR+getLocation().getX()/getToolkit().getScreenSize().getWidth());
-                        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR+getLocation().getY()/getToolkit().getScreenSize().getHeight());
-                        properties.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR+getSize().getWidth()/getToolkit().getScreenSize().getHeight());
-                        properties.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR+getSize().getHeight()/getToolkit().getScreenSize().getHeight());
-                        int categoryIdx = getJTabbedPane().getSelectedIndex();
-                        if (categoryIdx != -1) {
-                            properties.put(Constants.PROPERTY_LAST_SELECTED_CATEGORY_INDEX, Constants.EMPTY_STR+categoryIdx);
-                            JTabbedPane tabbedPane = (JTabbedPane) getJTabbedPane().getComponent(categoryIdx);
-                            int entryIdx = tabbedPane.getSelectedIndex();
-                            if (entryIdx != -1) {
-                                properties.put(Constants.PROPERTY_LAST_SELECTED_ENTRY_INDEX, Constants.EMPTY_STR+entryIdx);
-                            }
-                        }
-
-                        BackEnd.getInstance().setProperties(properties);
-                        
-                        Collection<DataCategory> data = new LinkedList<DataCategory>();
-                        for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
-                            String caption = getJTabbedPane().getTitleAt(i);
-                            DataCategory dataCategory = new DataCategory();
-                            dataCategory.setCaption(caption);
-                            Collection<DataEntry> dataEntries = new LinkedList<DataEntry>();
-                            JTabbedPane categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(i);
-                            for (int j = 0; j < categoryTabPane.getTabCount(); j++) {
-                                VisualEntry visualEntry = (VisualEntry) categoryTabPane.getComponent(j);
-                                byte[] serializedData = visualEntry.serialize();
-                                caption = categoryTabPane.getTitleAt(j);
-                                dataEntries.add(new DataEntry(visualEntry.getId(), caption, visualEntry.getClass().getSimpleName(), serializedData));
-                            }
-                            dataCategory.setDataEntries(dataEntries);
-                            data.add(dataCategory);
-                        }
-                        
-                        BackEnd.getInstance().setData(data);
-                        
-                        BackEnd.getInstance().store();
+                        store();
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
                     }
@@ -246,6 +210,50 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private void store() throws Exception {
+        collectProperties();
+        collectData();
+        BackEnd.getInstance().store();
+    }
+    
+    private void collectProperties() {
+        Properties properties = new Properties();
+        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR+getLocation().getX()/getToolkit().getScreenSize().getWidth());
+        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR+getLocation().getY()/getToolkit().getScreenSize().getHeight());
+        properties.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR+getSize().getWidth()/getToolkit().getScreenSize().getHeight());
+        properties.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR+getSize().getHeight()/getToolkit().getScreenSize().getHeight());
+        int categoryIdx = getJTabbedPane().getSelectedIndex();
+        if (categoryIdx != -1) {
+            properties.put(Constants.PROPERTY_LAST_SELECTED_CATEGORY_INDEX, Constants.EMPTY_STR+categoryIdx);
+            JTabbedPane tabbedPane = (JTabbedPane) getJTabbedPane().getComponent(categoryIdx);
+            int entryIdx = tabbedPane.getSelectedIndex();
+            if (entryIdx != -1) {
+                properties.put(Constants.PROPERTY_LAST_SELECTED_ENTRY_INDEX, Constants.EMPTY_STR+entryIdx);
+            }
+        }
+        BackEnd.getInstance().setProperties(properties);
+    }
+    
+    private void collectData() throws Exception {
+        Collection<DataCategory> data = new LinkedList<DataCategory>();
+        for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
+            String caption = getJTabbedPane().getTitleAt(i);
+            DataCategory dataCategory = new DataCategory();
+            dataCategory.setCaption(caption);
+            Collection<DataEntry> dataEntries = new LinkedList<DataEntry>();
+            JTabbedPane categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(i);
+            for (int j = 0; j < categoryTabPane.getTabCount(); j++) {
+                VisualEntry visualEntry = (VisualEntry) categoryTabPane.getComponent(j);
+                byte[] serializedData = visualEntry.serialize();
+                caption = categoryTabPane.getTitleAt(j);
+                dataEntries.add(new DataEntry(visualEntry.getId(), caption, visualEntry.getClass().getSimpleName(), serializedData));
+            }
+            dataCategory.setDataEntries(dataEntries);
+            data.add(dataCategory);
+        }
+        BackEnd.getInstance().setData(data);
+    }
+    
     private void setNotesManagementToolbalEnabledState(boolean enabled) {
         for (Component button : getJToolBar().getComponents()) {
             if (!button.equals(getJButton2()) 
@@ -255,18 +263,39 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    public Collection<UUID> getVisualEntriesIDs() {
-    	Collection<UUID> ids = new ArrayList<UUID>();
+    private Collection<UUID> getVisualEntriesIDs() {
+        Collection<UUID> ids = new ArrayList<UUID>();
+        for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
+            JTabbedPane categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(i);
+            for (int j = 0; j < categoryTabPane.getTabCount(); j++) {
+                VisualEntry ve = (VisualEntry) categoryTabPane.getComponent(j);
+                if (ve.getId() != null) {
+                    ids.add(ve.getId());
+                }
+            }
+        }
+        return ids;
+    }
+    
+    public Collection<VisualEntryDescriptor> getVisualEntryDescriptors() {
+        Collection<VisualEntryDescriptor> veDescriptors = new ArrayList<VisualEntryDescriptor>();
     	for (int i = 0; i < getJTabbedPane().getTabCount(); i++) {
     		JTabbedPane categoryTabPane = (JTabbedPane) getJTabbedPane().getComponent(i);
     		for (int j = 0; j < categoryTabPane.getTabCount(); j++) {
         		VisualEntry ve = (VisualEntry) categoryTabPane.getComponent(j);
         		if (ve.getId() != null) {
-        			ids.add(ve.getId());
+                    VisualEntryDescriptor veDescriptor = 
+                        new VisualEntryDescriptor(
+                                ve.getId(), 
+                                i+1, 
+                                j+1, 
+                                getJTabbedPane().getTitleAt(i), 
+                                categoryTabPane.getTitleAt(j));
+        			veDescriptors.add(veDescriptor);
         		}
     		}
     	}
-    	return ids;
+    	return veDescriptors;
     }
     
     public boolean switchToVisualEntry(UUID id) {
@@ -287,7 +316,7 @@ public class FrontEnd extends JFrame {
     	return success;
     }
 
-    private void displayErrorMessage(Exception ex) {
+    public void displayErrorMessage(Exception ex) {
         JOptionPane.showMessageDialog(FrontEnd.this, "Details: " + ex, "Error", JOptionPane.ERROR_MESSAGE);
         ex.printStackTrace();
     }
@@ -467,7 +496,7 @@ public class FrontEnd extends JFrame {
                         int rVal = jfc.showOpenDialog(FrontEnd.this);
                         if (rVal == JFileChooser.APPROVE_OPTION) {
                             jarFile = jfc.getSelectedFile();
-                            representData(BackEnd.getInstance().importData(jarFile));
+                            representData(BackEnd.getInstance().importData(jarFile, getVisualEntriesIDs()));
                         }
                     } catch (Exception ex) {
                         displayErrorMessage(ex);

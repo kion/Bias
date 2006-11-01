@@ -1,5 +1,5 @@
 /**
- * 
+ * Created on Oct 29, 2006
  */
 package bias.gui;
 

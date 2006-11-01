@@ -108,10 +108,10 @@ public class BackEnd {
             }
         }
         zis.close();
-        data = parseMetadata(metadata, numberedData, true);
+        data = parseMetadata(metadata, numberedData, null);
     }
     
-    public Collection<DataCategory> importData(File jarFile) throws Exception {
+    public Collection<DataCategory> importData(File jarFile, Collection<UUID> existingIDs) throws Exception {
         Map<Integer, Map<Integer,DataEntry>> importedNumberedData = new LinkedHashMap<Integer, Map<Integer,DataEntry>>();
         Document metadata = null;
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
@@ -144,7 +144,7 @@ public class BackEnd {
             }    
         }
         zis.close();
-        Collection<DataCategory> importedData = parseMetadata(metadata, importedNumberedData, false);
+        Collection<DataCategory> importedData = parseMetadata(metadata, importedNumberedData, existingIDs);
         data.addAll(importedData);
         return importedData;
     }
@@ -152,7 +152,7 @@ public class BackEnd {
     private Collection<DataCategory> parseMetadata(
     		Document metadata, 
     		Map<Integer, Map<Integer,DataEntry>> numberedData,
-    		boolean parseIDs) throws Exception {
+    		Collection<UUID> existingIDs) throws Exception {
         Collection<DataCategory> dataCategories = new LinkedHashSet<DataCategory>();
         if (metadata == null) {
             metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
@@ -177,9 +177,9 @@ public class BackEnd {
                     Node attEntNumber = attributes.getNamedItem("number");
                     Integer entNumber = Integer.valueOf(attEntNumber.getNodeValue());
                     DataEntry dataEntry = numberedData.get(catNumber).get(entNumber);
-                    if (parseIDs) {
-                        Node attID = attributes.getNamedItem("id");
-                        UUID id = UUID.fromString(attID.getNodeValue());
+                    Node attID = attributes.getNamedItem("id");
+                    UUID id = UUID.fromString(attID.getNodeValue());
+                    if (existingIDs == null || !existingIDs.contains(id)) {
                         dataEntry.setId(id);
                     }
                     attCaption = attributes.getNamedItem("caption");
