@@ -24,10 +24,6 @@ public class VisualEntryDescriptor {
         // default constructor
     }
     
-    public VisualEntryDescriptor(UUID id) {
-        this.id = id;
-    }
-    
     public VisualEntryDescriptor(UUID id, Integer categoryNumber, Integer number, String categoryCaption, String caption) {
         this.id = id;
         this.categoryNumber = categoryNumber;
