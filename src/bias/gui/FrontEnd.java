@@ -288,7 +288,7 @@ public class FrontEnd extends JFrame {
     }
 
     private void displayErrorMessage(Exception ex) {
-        JOptionPane.showMessageDialog(this, "Details: " + ex, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(FrontEnd.this, "Details: " + ex, "Error", JOptionPane.ERROR_MESSAGE);
         ex.printStackTrace();
     }
     
@@ -298,7 +298,7 @@ public class FrontEnd extends JFrame {
                 JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
                 int index = tabbedPane.getSelectedIndex();
                 String caption = tabbedPane.getTitleAt(index);
-                caption = JOptionPane.showInputDialog("Entry caption:", caption);
+                caption = JOptionPane.showInputDialog(FrontEnd.this, "Entry caption:", caption);
                 if (caption != null) { 
                     tabbedPane.setTitleAt(index, caption);
                 }
@@ -375,7 +375,7 @@ public class FrontEnd extends JFrame {
                             }
                             entryTypeComboBox.setEditable(false);
                             String caption = JOptionPane.showInputDialog(
-                                    null, 
+                                    FrontEnd.this, 
                                     new Component[]{
                                             entryTypeLabel,
                                             entryTypeComboBox}, 
@@ -542,7 +542,7 @@ public class FrontEnd extends JFrame {
             jButton3.setIcon(ICON_ADD_CATEGORY);
             jButton3.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    String category = JOptionPane.showInputDialog("New category:");
+                    String category = JOptionPane.showInputDialog(FrontEnd.this, "New category:");
                     if (category != null) {
                         JTabbedPane tabbedPane = new JTabbedPane();
                         getJTabbedPane().addTab(category, tabbedPane);
