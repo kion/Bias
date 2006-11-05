@@ -10,6 +10,8 @@ import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -124,7 +126,7 @@ public class HTMLPage extends VisualEntry {
     public byte[] serialize() {
         return getJTextPane().getText().getBytes();
     }
-
+    
     private void synchronizeEditNoteControlsStates(JTextPane textPane) {
         if (textPane.isEditable()) {
             boolean boldSelected = false;
@@ -238,7 +240,7 @@ public class HTMLPage extends VisualEntry {
             public void hyperlinkUpdate(HyperlinkEvent e) {
                 if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
                     String idStr = e.getDescription().substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
-                    FrontEnd.getInstance().switchToVisualEntry(UUID.fromString(idStr));
+                    FrontEnd.getInstance().switchToVisualItem(UUID.fromString(idStr));
                 }
             }
         });
@@ -425,10 +427,10 @@ public class HTMLPage extends VisualEntry {
                     if (href != null) {
                         id = href.substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
                     }
-                    VisualEntryDescriptor currDescriptor = null;
+                    VisualItemDescriptor currDescriptor = null;
                     JLabel entryLabel = new JLabel("entry:");
                     JComboBox hrefComboBox = new JComboBox();
-                    for (VisualEntryDescriptor veDescriptor : FrontEnd.getInstance().getVisualEntryDescriptors()) {
+                    for (VisualItemDescriptor veDescriptor : FrontEnd.getInstance().getVisualItemDescriptors()) {
                         hrefComboBox.addItem(veDescriptor);
                         if (veDescriptor.getId().toString().equals(id)) {
                             currDescriptor = veDescriptor;
@@ -445,7 +447,7 @@ public class HTMLPage extends VisualEntry {
                             StringBuffer linkHTML = new StringBuffer("<a ");
                             linkHTML.append("href=\"" + Constants.ENTRY_PROTOCOL_PREFIX);
                             if (!Validator.isNullOrBlank(hrefComboBox.getSelectedItem())) {
-                                linkHTML.append(((VisualEntryDescriptor)hrefComboBox.getSelectedItem()).getId());
+                                linkHTML.append(((VisualItemDescriptor)hrefComboBox.getSelectedItem()).getId());
                             } else {
                                 linkHTML.append("#");
                             }
@@ -544,8 +546,23 @@ public class HTMLPage extends VisualEntry {
             jTextPane.setEditorKit(new HTMLEditorKit());
             jTextPane.addCaretListener(new CaretListener(){
                 public void caretUpdate(CaretEvent e) {
-                    JTextPane textPane = (JTextPane) e.getSource();  //  @jve:decl-index=0:
+                    JTextPane textPane = (JTextPane) e.getSource();
                     synchronizeEditNoteControlsStates(textPane);
+                }
+            });
+            jTextPane.addKeyListener(new KeyListener(){
+                public void keyTyped(KeyEvent e) {
+                }
+                public void keyPressed(KeyEvent e) {
+                }
+                public void keyReleased(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        try {
+                            HTMLPageEditor.insertLineBreakOnEnter(getJTextPane());
+                        } catch (Exception exception) {
+                            FrontEnd.getInstance().displayErrorMessage(exception);
+                        }
+                    }
                 }
             });
         }

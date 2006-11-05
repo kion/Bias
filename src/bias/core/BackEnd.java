@@ -15,7 +15,6 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -58,9 +57,9 @@ public class BackEnd {
 
     private Map<String, byte[]> zipEntries;
     
-    private Map<Integer, Map<Integer, DataEntry>> numberedData;
+    private Map<String, DataEntry> numberedData;
     
-    private Collection<DataCategory> data;
+    private DataCategory data;
     
     private Document metadata;
     
@@ -71,7 +70,7 @@ public class BackEnd {
             init();
         }
         zipEntries = new LinkedHashMap<String, byte[]>();
-        numberedData = new LinkedHashMap<Integer, Map<Integer,DataEntry>>();
+        numberedData = new LinkedHashMap<String, DataEntry>();
         properties = new Properties();
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
         ZipEntry ze = null;
@@ -82,19 +81,12 @@ public class BackEnd {
                 out.write(c);
             }
             if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
-            	String numbers[] = ze.getName()
+            	String entryNumericPath = ze.getName()
 			            	.replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
-			            	.replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR).split("/");
-                Integer catNumber = Integer.valueOf(numbers[0]);
-                Integer entNumber = Integer.valueOf(numbers[1]);
+			            	.replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
                 DataEntry de = new DataEntry();
                 de.setData(out.toByteArray());
-                Map<Integer, DataEntry> numberedEntries = numberedData.get(catNumber);
-                if (numberedEntries == null) {
-                	numberedEntries = new LinkedHashMap<Integer, DataEntry>();
-                	numberedData.put(catNumber, numberedEntries);
-                }
-                numberedEntries.put(entNumber, de);
+                numberedData.put(entryNumericPath, de);
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
                 if (out.size() != 0) {
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
@@ -111,8 +103,8 @@ public class BackEnd {
         data = parseMetadata(metadata, numberedData, null);
     }
     
-    public Collection<DataCategory> importData(File jarFile, Collection<UUID> existingIDs) throws Exception {
-        Map<Integer, Map<Integer,DataEntry>> importedNumberedData = new LinkedHashMap<Integer, Map<Integer,DataEntry>>();
+    public DataCategory importData(File jarFile, Collection<UUID> existingIDs) throws Exception {
+        Map<String,DataEntry> importedNumberedData = new LinkedHashMap<String, DataEntry>();
         Document metadata = null;
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
         ZipEntry ze = null;
@@ -123,19 +115,12 @@ public class BackEnd {
                 out.write(c);
             }
             if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
-            	String numbers[] = ze.getName()
-			            	.replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
-			            	.replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR).split("/");
-			    Integer catNumber = Integer.valueOf(numbers[0]);
-			    Integer entNumber = Integer.valueOf(numbers[1]);
+                String entryNumericPath = ze.getName()
+                            .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
+                            .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
                 DataEntry de = new DataEntry();
                 de.setData(out.toByteArray());
-                Map<Integer, DataEntry> numberedEntries = importedNumberedData.get(catNumber);
-                if (numberedEntries == null) {
-                	numberedEntries = new LinkedHashMap<Integer, DataEntry>();
-                	importedNumberedData.put(catNumber, numberedEntries);
-                }
-                numberedEntries.put(entNumber, de);
+                importedNumberedData.put(entryNumericPath, de);
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
                 if (out.size() != 0) {
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
@@ -144,60 +129,79 @@ public class BackEnd {
             }    
         }
         zis.close();
-        Collection<DataCategory> importedData = parseMetadata(metadata, importedNumberedData, existingIDs);
-        data.addAll(importedData);
+        DataCategory importedData = parseMetadata(metadata, importedNumberedData, existingIDs);
+        data.addDataItems(importedData.getData());
         return importedData;
     }
     
-    private Collection<DataCategory> parseMetadata(
+    private DataCategory parseMetadata(
     		Document metadata, 
-    		Map<Integer, Map<Integer,DataEntry>> numberedData,
+    		Map<String, DataEntry> numberedData,
     		Collection<UUID> existingIDs) throws Exception {
-        Collection<DataCategory> dataCategories = new LinkedHashSet<DataCategory>();
+        DataCategory data = new DataCategory();
         if (metadata == null) {
             metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         } else {
-            NodeList categories = metadata.getElementsByTagName("category");
-            for (int i = 0; i < categories.getLength(); i++){
-            	// category
-            	Node category = categories.item(i);
-                NamedNodeMap attributes = category.getAttributes();
-                Node attCatNumber = attributes.getNamedItem("number");
-                Integer catNumber = Integer.valueOf(attCatNumber.getNodeValue());
-                Node attCaption = attributes.getNamedItem("caption");
-                String caption = attCaption.getNodeValue();
-                caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
-                DataCategory dataCategory = new DataCategory();
-                dataCategory.setCaption(caption);
-                // category's entries
-                NodeList entries = category.getChildNodes();
-                for (int j = 0; j < entries.getLength(); j++){
-                    Node entry = entries.item(j);
-                    attributes = entry.getAttributes();
-                    Node attEntNumber = attributes.getNamedItem("number");
-                    Integer entNumber = Integer.valueOf(attEntNumber.getNodeValue());
-                    DataEntry dataEntry = numberedData.get(catNumber).get(entNumber);
-                    Node attID = attributes.getNamedItem("id");
-                    UUID id = UUID.fromString(attID.getNodeValue());
-                    if (existingIDs == null || !existingIDs.contains(id)) {
-                        dataEntry.setId(id);
-                    }
-                    attCaption = attributes.getNamedItem("caption");
-                    caption = attCaption.getNodeValue();
-                    caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
-                    dataEntry.setCaption(caption);
-                    Node attType = attributes.getNamedItem("type");
-                    String type = attType.getNodeValue();
-                    dataEntry.setType(type);
-                }
-                Map<Integer, DataEntry> numberedEntries = numberedData.get(catNumber);
-                if (numberedEntries != null) {
-                    dataCategory.setDataEntries(numberedEntries.values());
-                }
-                dataCategories.add(dataCategory);
-            }
+            buildData(Constants.EMPTY_STR, data, metadata.getFirstChild(), numberedData, existingIDs);
+            data.setPlacement(Integer.valueOf(metadata.getFirstChild().getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT).getNodeValue()));
         }
-        return dataCategories;
+        return data;
+    }
+    
+    private void buildData(String path, DataCategory data, Node node, Map<String, DataEntry> numberedData, Collection<UUID> existingIDs) throws Exception {
+        if (node.getNodeName().equals(Constants.XML_ELEMENT_ROOT_CONTAINER)) {
+            NodeList nodes = node.getChildNodes();
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node n = nodes.item(i);
+                buildData(path, data, n, numberedData, existingIDs);
+            }
+        } else if (node.getNodeName().equals(Constants.XML_ELEMENT_CATEGORY)) {
+            NamedNodeMap attributes = node.getAttributes();
+            Node attCatNumber = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_NUMBER);
+            Integer catNumber = Integer.valueOf(attCatNumber.getNodeValue());
+            DataCategory dc = new DataCategory();
+            Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
+            UUID id = UUID.fromString(attID.getNodeValue());
+            if (existingIDs == null || !existingIDs.contains(id)) {
+                dc.setId(id);
+            } else {
+                dc.setId(UUID.randomUUID());
+            }
+            Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
+            String caption = attCaption.getNodeValue();
+            caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+            dc.setCaption(caption);
+            Node attPlacement = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT);
+            Integer placement = Integer.valueOf(attPlacement.getNodeValue());
+            dc.setPlacement(placement);
+            data.addDataItem(dc);
+            String catPath = path + catNumber + "/";
+            NodeList nodes = node.getChildNodes();
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node n = nodes.item(i);
+                buildData(catPath, dc, n, numberedData, existingIDs);
+            }
+            path += catNumber + "/";
+        } else if (node.getNodeName().equals(Constants.XML_ELEMENT_ENTRY)) {
+            NamedNodeMap attributes = node.getAttributes();
+            Node attEntNumber = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_NUMBER);
+            Integer entNumber = Integer.valueOf(attEntNumber.getNodeValue());
+            String dePath = path + entNumber;
+            DataEntry dataEntry = numberedData.get(dePath);
+            Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
+            UUID id = UUID.fromString(attID.getNodeValue());
+            if (existingIDs == null || !existingIDs.contains(id)) {
+                dataEntry.setId(id);
+            }
+            Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
+            String caption = attCaption.getNodeValue();
+            caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+            dataEntry.setCaption(caption);
+            Node attType = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_TYPE);
+            String type = attType.getNodeValue();
+            dataEntry.setType(type);
+            data.addDataItem(dataEntry);
+        }
     }
     
     public void store() throws Exception {
@@ -205,35 +209,18 @@ public class BackEnd {
             init();
         }
         metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
-        Node rootNode = metadata.createElement("metadata");
-        int catNumber = 0;
-        for (DataCategory dataCategory : data) {
-            String catKey = Constants.DATA_DIR + ++catNumber + "/";
-            Element catNode = metadata.createElement("category");
-            catNode.setAttribute("number", "" + catNumber);
-            String encodedCaption = URLEncoder.encode(dataCategory.getCaption(), Constants.UNICODE_ENCODING);
-            catNode.setAttribute("caption", encodedCaption);
-            int entNumber = 0;
-            for (DataEntry dataEntry : dataCategory.getDataEntries()) {
-                String entKey = catKey + ++entNumber + Constants.DATA_FILE_ENDING;
-                byte[] value = dataEntry.getData();
-                zipEntries.put(entKey, value);
-                Element entryNode = metadata.createElement("entry");
-                entryNode.setAttribute("number", "" + entNumber);
-                entryNode.setAttribute("id", dataEntry.getId().toString());
-                encodedCaption = URLEncoder.encode(dataEntry.getCaption(), Constants.UNICODE_ENCODING);
-                entryNode.setAttribute("caption", encodedCaption);
-                entryNode.setAttribute("type", dataEntry.getType());
-                catNode.appendChild(entryNode);
-            }
-            rootNode.appendChild(catNode);
-        }
+        Element rootNode = metadata.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
+        rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, data.getPlacement().toString());
+        buildNode(Constants.DATA_DIR_PATTERN, rootNode, data);
         metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
         properties.list(new PrintWriter(sw));
         zipEntries.put(Constants.CONFIG_FILE_PATH, sw.getBuffer().toString().getBytes());
         sw = new StringWriter();
-        new XMLSerializer(sw, new OutputFormat()).serialize(metadata);
+        OutputFormat of = new OutputFormat();
+        of.setIndenting(true);
+        of.setIndent(4);
+        new XMLSerializer(sw, of).serialize(metadata);
         zipEntries.put(Constants.METADATA_FILE_PATH, sw.getBuffer().toString().getBytes());
         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(jarFile));
         for (Entry<String, byte[]> entry : zipEntries.entrySet()) {
@@ -252,6 +239,40 @@ public class BackEnd {
         zos.close();
     }
     
+    private void buildNode(String path, Node node, DataCategory data) throws Exception {
+        int dcNumber = 1;
+        int entNumber = 1;
+        for (Recognizable item : data.getData()) {
+            if (item instanceof DataEntry) {
+                DataEntry de = (DataEntry) item;
+                String dePath = path + entNumber + Constants.DATA_FILE_ENDING;
+                byte[] value = de.getData();
+                zipEntries.put(dePath, value);
+                Element entryNode = metadata.createElement(Constants.XML_ELEMENT_ENTRY);
+                entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_NUMBER, "" + entNumber);
+                entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, de.getId().toString());
+                String encodedCaption = URLEncoder.encode(de.getCaption(), Constants.UNICODE_ENCODING);
+                entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);
+                entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_TYPE, de.getType());
+                node.appendChild(entryNode);
+                entNumber++;
+            } else if (item instanceof DataCategory) {
+                DataCategory dc = (DataCategory) item;
+                String dataCatPath = path + dcNumber + "/";
+                Element catNode = metadata.createElement(Constants.XML_ELEMENT_CATEGORY);
+                catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_NUMBER, "" + dcNumber);
+                catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, dc.getId().toString());
+                String encodedCaption = URLEncoder.encode(dc.getCaption(), Constants.UNICODE_ENCODING);
+                catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);
+                catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, dc.getPlacement().toString());
+                buildNode(dataCatPath, catNode, dc);
+                node.appendChild(catNode);
+                dcNumber++;
+            }
+        }
+        path += dcNumber + "/";
+    }
+    
     private void init() {
         URL url = BackEnd.class.getResource(BackEnd.class.getSimpleName()+".class");
         String jarFilePath = url.getFile().substring(0, url.getFile().indexOf(BackEnd.class.getName().replaceAll("\\.", "/")) - 2);
@@ -261,11 +282,11 @@ public class BackEnd {
 //        jarFile = new File("/mnt/stor/devel/Bias/build/bias.jar");
     }
 
-    public Collection<DataCategory> getData() {
+    public DataCategory getData() {
         return data;
     }
 
-    public void setData(Collection<DataCategory> data) {
+    public void setData(DataCategory data) {
         this.data = data;
     }
 

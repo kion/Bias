@@ -8,41 +8,20 @@ import java.util.UUID;
 /**
  * @author kion
  */
-public class DataEntry {
-    
-    private UUID id;
-    
-    private String caption;
+public class DataEntry extends Recognizable {
     
     private String type;
     
     private byte[] data;
     
     public DataEntry() {
-        // default constructor
+        super();
     }
     
     public DataEntry(UUID id, String caption, String type, byte[] data) {
-        this.id = id;
-        this.caption = caption;
+        super(id, caption);
         this.type = type;
         this.data = data;
-    }
-
-	public UUID getId() {
-		return id;
-	}
-
-	public void setId(UUID id) {
-		this.id = id;
-	}
-
-    public String getCaption() {
-        return caption;
-    }
-
-    public void setCaption(String caption) {
-        this.caption = caption;
     }
 
     public String getType() {

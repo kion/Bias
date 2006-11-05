@@ -4,48 +4,56 @@
 package bias.core;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.UUID;
 
 /**
  * @author kion
  *
  */
-public class DataCategory {
+public class DataCategory extends Recognizable {
+    
+    private Integer placement;
 	
-	private String caption;
-	
-	private Collection<DataEntry> dataEntries;
-	
+    private Collection<Recognizable> data;
+    
 	public DataCategory() {
-		// default constructor
+		super();
+        this.data = new LinkedList<Recognizable>();
 	}
 
-	public DataCategory(String caption, Collection<DataEntry> dataEntries) {
-		this.caption = caption;
-		this.dataEntries = dataEntries;
+	public DataCategory(UUID id, String caption, Collection<Recognizable> data, Integer placement) {
+        super(id, caption);
+        this.data = data;
+        this.placement = placement;
 	}
 
-	public String getCaption() {
-		return caption;
-	}
+    public Integer getPlacement() {
+        return placement;
+    }
 
-	public void setCaption(String caption) {
-		this.caption = caption;
-	}
+    public void setPlacement(Integer placement) {
+        this.placement = placement;
+    }
 
-	public Collection<DataEntry> getDataEntries() {
-		return dataEntries;
-	}
+    public Collection<Recognizable> getData() {
+        return data;
+    }
 
-	public void setDataEntries(Collection<DataEntry> dataEntries) {
-		this.dataEntries = dataEntries;
-	}
+    public void setData(Collection<Recognizable> data) {
+        this.data = data;
+    }
 
-	public boolean removeFromDataEntries(DataEntry dataEntry) {
-		return dataEntries.remove(dataEntry);
-	}
+    public boolean removeDataItem(Recognizable dataItem) {
+        return data.remove(dataItem);
+    }
 
-	public boolean addToDataEntries(DataEntry dataEntry) {
-		return dataEntries.add(dataEntry);
-	}
+    public boolean addDataItem(Recognizable dataItem) {
+        return data.add(dataItem);
+    }
+
+    public boolean addDataItems(Collection<Recognizable> dataItems) {
+        return data.addAll(dataItems);
+    }
 
 }
