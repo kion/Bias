@@ -76,9 +76,9 @@ public class FrontEnd extends JFrame {
         new ImageIcon(Constants.class.getResource("/bias/res/save.png"));
 
     private static final Placement[] PLACEMENTS = new Placement[]{
+        new Placement("Top", JTabbedPane.TOP),
         new Placement("Left", JTabbedPane.LEFT),
         new Placement("Right", JTabbedPane.RIGHT),
-        new Placement("Top", JTabbedPane.TOP),
         new Placement("Bottom", JTabbedPane.BOTTOM)
     };
 
@@ -126,7 +126,9 @@ public class FrontEnd extends JFrame {
 		return instance;
 	}
     
-    private JTabbedPane currentTabPane;
+    private String lastAddedEntryType = null;
+    
+    private JTabbedPane currentTabPane = null;
     
     private JPanel jContentPane = null;
 
@@ -716,7 +718,6 @@ public class FrontEnd extends JFrame {
             categoryTabPane.addChangeListener(tabPaneChangeListener);
             getJTabbedPane().addTab(categoryCaption, categoryTabPane);
             getJTabbedPane().setSelectedComponent(categoryTabPane);
-            currentTabPane = categoryTabPane;
         }
     }
     
@@ -740,6 +741,9 @@ public class FrontEnd extends JFrame {
             for (String entryType : VisualEntryFactory.getInstance().getEntryTypes().keySet()) {
                 entryTypeComboBox.addItem(entryType);
             }
+            if (lastAddedEntryType != null) {
+                entryTypeComboBox.setSelectedItem(lastAddedEntryType);
+            }
             entryTypeComboBox.setEditable(false);
             String caption = JOptionPane.showInputDialog(
                     FrontEnd.this, 
@@ -750,6 +754,7 @@ public class FrontEnd extends JFrame {
                     JOptionPane.QUESTION_MESSAGE);
             if (caption != null) {
                 String typeDescription = (String) entryTypeComboBox.getSelectedItem();
+                lastAddedEntryType = typeDescription;
                 Class type = VisualEntryFactory.getInstance().getEntryTypes().get(typeDescription);
                 VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(type);
                 if (visualEntry != null) {
@@ -775,7 +780,10 @@ public class FrontEnd extends JFrame {
                     for (String entryType : VisualEntryFactory.getInstance().getEntryTypes().keySet()) {
                         entryTypeComboBox.addItem(entryType);
                     }
-                    entryTypeComboBox.setEditable(false);
+                    if (lastAddedEntryType != null) {
+                        entryTypeComboBox.setSelectedItem(lastAddedEntryType);
+                    }
+                entryTypeComboBox.setEditable(false);
                     String caption = JOptionPane.showInputDialog(
                             FrontEnd.this, 
                             new Component[]{
@@ -785,6 +793,7 @@ public class FrontEnd extends JFrame {
                             JOptionPane.QUESTION_MESSAGE);
                     if (caption != null) {
                         String typeDescription = (String) entryTypeComboBox.getSelectedItem();
+                        lastAddedEntryType = typeDescription;
                         Class type = VisualEntryFactory.getInstance().getEntryTypes().get(typeDescription);
                         VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(type);
                         if (visualEntry != null) {
@@ -871,13 +880,14 @@ public class FrontEnd extends JFrame {
                             JOptionPane.QUESTION_MESSAGE);
                     if (categoryCaption != null) {
                         JTabbedPane categoryTabPane = new JTabbedPane();
-                        categoryTabPane.setName(UUID.randomUUID().toString());
+                        UUID id = UUID.randomUUID();
+                        categoryTabPane.setName(id.toString());
                         categoryTabPane.setTabPlacement(((Placement)placementsChooser.getSelectedItem()).getInteger());
                         categoryTabPane.addMouseListener(tabPaneClickListener);
                         categoryTabPane.addChangeListener(tabPaneChangeListener);
                         currentTabPane.addTab(categoryCaption, categoryTabPane);
-                        currentTabPane.setSelectedComponent(categoryTabPane);
-                        currentTabPane = categoryTabPane;
+                        ((JTabbedPane)categoryTabPane.getParent()).setSelectedComponent(categoryTabPane);
+                        currentTabPane = (JTabbedPane)categoryTabPane.getParent();
                     }
                 }
             } catch (Exception ex) {
