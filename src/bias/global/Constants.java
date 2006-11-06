@@ -41,5 +41,6 @@ public class Constants {
     public static final String XML_ELEMENT_ATTRIBUTE_CAPTION = "caption";
     public static final String XML_ELEMENT_ATTRIBUTE_TYPE = "type";
     public static final String XML_ELEMENT_ATTRIBUTE_PLACEMENT = "placement";
+    public static final String XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX = "active-idx";
 
 }

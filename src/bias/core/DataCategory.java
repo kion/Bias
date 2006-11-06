@@ -15,6 +15,8 @@ public class DataCategory extends Recognizable {
     
     private Integer placement;
 	
+    private Integer activeIndex;
+    
     private Collection<Recognizable> data;
     
 	public DataCategory() {
@@ -34,6 +36,14 @@ public class DataCategory extends Recognizable {
 
     public void setPlacement(Integer placement) {
         this.placement = placement;
+    }
+
+    public Integer getActiveIndex() {
+        return activeIndex;
+    }
+
+    public void setActiveIndex(Integer activeIndex) {
+        this.activeIndex = activeIndex;
     }
 
     public Collection<Recognizable> getData() {

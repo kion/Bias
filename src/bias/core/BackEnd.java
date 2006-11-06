@@ -174,6 +174,11 @@ public class BackEnd {
             Node attPlacement = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT);
             Integer placement = Integer.valueOf(attPlacement.getNodeValue());
             dc.setPlacement(placement);
+            Node attActiveIdx = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX);
+            if (attActiveIdx != null) {
+                Integer activeIdx = Integer.valueOf(attActiveIdx.getNodeValue());
+                dc.setActiveIndex(activeIdx);
+            }
             data.addDataItem(dc);
             String catPath = path + catNumber + "/";
             NodeList nodes = node.getChildNodes();
@@ -265,6 +270,9 @@ public class BackEnd {
                 String encodedCaption = URLEncoder.encode(dc.getCaption(), Constants.UNICODE_ENCODING);
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, dc.getPlacement().toString());
+                if (dc.getActiveIndex() != null) {
+                    catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, dc.getActiveIndex().toString());
+                }
                 buildNode(dataCatPath, catNode, dc);
                 node.appendChild(catNode);
                 dcNumber++;

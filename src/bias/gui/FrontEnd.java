@@ -248,12 +248,16 @@ public class FrontEnd extends JFrame {
                     if (item.getId() != null) {
                         categoryTabPane.setName(item.getId().toString());
                     }
-                    categoryTabPane.setTabPlacement(((DataCategory) item).getPlacement());
+                    DataCategory dc = (DataCategory) item;
+                    categoryTabPane.setTabPlacement(dc.getPlacement());
                     categoryTabPane.addMouseListener(tabPaneClickListener);
                     categoryTabPane.addChangeListener(tabPaneChangeListener);
                     tabbedPane.addTab(caption, categoryTabPane);
                     currentTabPane = categoryTabPane;
-                    representData(categoryTabPane, (DataCategory) item);
+                    representData(categoryTabPane, dc);
+                    if (dc.getActiveIndex() != null) {
+                        categoryTabPane.setSelectedIndex(dc.getActiveIndex());
+                    }
                 }
             }
         } catch (Exception e) {
@@ -298,6 +302,9 @@ public class FrontEnd extends JFrame {
                 if (tp.getName() != null) {
                     dc.setId(UUID.fromString(tp.getName()));
                     data.addDataItem(dc);
+                    if (tp.getSelectedIndex() != -1) {
+                        dc.setActiveIndex(tp.getSelectedIndex());
+                    }
                 }
                 dc.setPlacement(tp.getTabPlacement());
             } else {
