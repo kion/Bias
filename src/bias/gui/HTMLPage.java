@@ -28,6 +28,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
@@ -48,6 +49,7 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
 import bias.global.Constants;
+import bias.utils.BrowserLauncher;
 import bias.utils.Validator;
 
 /**
@@ -58,7 +60,10 @@ public class HTMLPage extends VisualEntry {
     private static final long serialVersionUID = 1L;
 
     private static final ImageIcon ICON_ENTRY_LINK = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/link.png"));
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/entry_link.png"));
+
+    private static final ImageIcon ICON_URL_LINK = 
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/url_link.png"));
 
     private static final ImageIcon ICON_COLOR = 
         new ImageIcon(HTMLPage.class.getResource("/bias/res/color.png"));
@@ -103,6 +108,7 @@ public class HTMLPage extends VisualEntry {
     private JToggleButton jToggleButton2 = null;
     private JToggleButton jToggleButton3 = null;
     private JButton jButton = null;
+    private JButton jButton1 = null;
     private JButton jButton5 = null;
     private JComboBox jComboBox = null;
     private JComboBox jComboBox1 = null;
@@ -239,8 +245,16 @@ public class HTMLPage extends VisualEntry {
         getJTextPane().addHyperlinkListener(new HyperlinkListener(){
             public void hyperlinkUpdate(HyperlinkEvent e) {
                 if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
-                    String idStr = e.getDescription().substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
-                    FrontEnd.getInstance().switchToVisualItem(UUID.fromString(idStr));
+                    if (e.getDescription().startsWith(Constants.ENTRY_PROTOCOL_PREFIX)) {
+                        String idStr = e.getDescription().substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
+                        FrontEnd.getInstance().switchToVisualItem(UUID.fromString(idStr));
+                    } else {
+                        try {
+                            BrowserLauncher.openURL(e.getDescription());
+                        } catch (Exception ex) {
+                            FrontEnd.getInstance().displayErrorMessage(ex);
+                        }
+                    }
                 }
             }
         });
@@ -256,6 +270,7 @@ public class HTMLPage extends VisualEntry {
             jToolBar1 = new JToolBar();
             jToolBar1.setFloatable(false);  // Generated
             jToolBar1.setBorder(null);  // Generated
+            jToolBar1.add(getJButton1());  // Generated
             jToolBar1.add(getJButton());  // Generated
             jToolBar1.add(getJButton5());  // Generated
             jToolBar1.add(getJToggleButton());  // Generated
@@ -471,6 +486,95 @@ public class HTMLPage extends VisualEntry {
             });    
         }
         return jButton;
+    }
+
+    /**
+     * This method initializes jButton1 
+     *  
+     * @return javax.swing.JButton  
+     */
+    private JButton getJButton1() {
+        if (jButton1 == null) {
+            jButton1 = new JButton();
+            jButton1.setToolTipText("URL link");  // Generated
+            jButton1.setIcon(HTMLPage.ICON_URL_LINK);
+            jButton1.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    String text = null;
+                    String href = null;
+                    boolean replaceSel;
+                    if (getJTextPane().getSelectedText() == null) {
+                        text = null;
+                        href = null;
+                        replaceSel = false;
+                    } else {
+                        text = getJTextPane().getSelectedText();
+                        int pos;
+                        if (getJTextPane().getCaret().getDot() > getJTextPane().getCaret().getMark()) {
+                            pos = getJTextPane().getCaret().getMark();
+                        } else {
+                            pos = getJTextPane().getCaret().getDot();
+                        }
+                        HTMLDocument document = (HTMLDocument) getJTextPane().getDocument();
+                        BranchElement pEl = (BranchElement) document.getParagraphElement(pos);
+                        Element el = pEl.positionToElement(pos);
+                        AttributeSet attrs = el.getAttributes();
+                        for (Enumeration en = attrs.getAttributeNames(); en.hasMoreElements();) {
+                            Object attr = en.nextElement();
+                            if (attr.toString().equalsIgnoreCase("a")) {
+                                String[] param = attrs.getAttribute(attr).toString().split(" ");
+                                for (int i = 0; i < param.length; i++) {
+                                    if (param[i].startsWith("href=")) {
+                                        if (param[i].split("=").length == 2) {
+                                            href = param[i].split("=")[1];
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        replaceSel = true;
+                    }
+                    JLabel textLabel = new JLabel("text:");
+                    JTextField textField = new JTextField();
+                    if (text != null) {
+                        textField.setText(text);
+                    } 
+                    JLabel urlLabel = new JLabel("URL:");
+                    if (Validator.isNullOrBlank(href)) {
+                        href = text;
+                    }
+                    href = JOptionPane.showInputDialog(FrontEnd.getInstance(), 
+                            new Component[]{textLabel, textField, urlLabel}, href);
+                    if (href != null) {
+                        try {
+                            StringBuffer linkHTML = new StringBuffer("<a ");
+                            linkHTML.append("href=\"");
+                            linkHTML.append(href);
+                            linkHTML.append("\">");
+                            if (!Validator.isNullOrBlank(textField.getText())) {
+                                linkHTML.append(textField.getText());
+                            } else {
+                                linkHTML.append(href);
+                            }
+                            linkHTML.append("</a>");
+                            if (replaceSel) {
+                                getJTextPane().replaceSelection(Constants.EMPTY_STR);
+                            } else {
+                                linkHTML.append("&nbsp;");
+                            }
+                            HTMLPageEditor.insertHTML(getJTextPane(), linkHTML.toString(), HTML.Tag.A);
+                        } catch (BadLocationException exception) {
+                            FrontEnd.getInstance().displayErrorMessage(exception);
+                        } catch (IOException exception) {
+                            FrontEnd.getInstance().displayErrorMessage(exception);
+                        }
+                    }
+                    getJTextPane().requestFocusInWindow();
+                }
+            });    
+        }
+        return jButton1;
     }
 
     /**
