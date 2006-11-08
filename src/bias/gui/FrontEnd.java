@@ -4,12 +4,18 @@
 package bias.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
+import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.util.Collection;
 import java.util.Iterator;
@@ -32,14 +38,13 @@ import javax.swing.JToolBar;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.plaf.TabbedPaneUI;
 
 import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
 import bias.core.Recognizable;
 import bias.global.Constants;
-
-
 
 /**
  * @author kion
@@ -48,69 +53,65 @@ public class FrontEnd extends JFrame {
 
     private static final long serialVersionUID = 1L;
 
-    public static final ImageIcon ICON_APP = 
-        new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
-    
-    public static final ImageIcon ICON_ABOUT = 
-        new ImageIcon(Constants.class.getResource("/bias/res/about.png"));
+    public static final ImageIcon ICON_APP = new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
 
-    public static final ImageIcon ICON_IMPORT_DATA = 
-        new ImageIcon(Constants.class.getResource("/bias/res/import_data.png"));
+    public static final ImageIcon ICON_ABOUT = new ImageIcon(Constants.class.getResource("/bias/res/about.png"));
 
-    public static final ImageIcon ICON_DELETE = 
-        new ImageIcon(Constants.class.getResource("/bias/res/delete.png"));
+    public static final ImageIcon ICON_IMPORT_DATA = new ImageIcon(Constants.class.getResource("/bias/res/import_data.png"));
 
-    public static final ImageIcon ICON_ADD_CATEGORY = 
-        new ImageIcon(Constants.class.getResource("/bias/res/add_category.png"));
+    public static final ImageIcon ICON_DELETE = new ImageIcon(Constants.class.getResource("/bias/res/delete.png"));
 
-    public static final ImageIcon ICON_ADD_ROOT_CATEGORY = 
-        new ImageIcon(Constants.class.getResource("/bias/res/add_root_category.png"));
+    public static final ImageIcon ICON_ADD_CATEGORY = new ImageIcon(Constants.class.getResource("/bias/res/add_category.png"));
 
-    public static final ImageIcon ICON_ADD_ENTRY = 
-        new ImageIcon(Constants.class.getResource("/bias/res/add_entry.png"));
+    public static final ImageIcon ICON_ADD_ROOT_CATEGORY = new ImageIcon(Constants.class.getResource("/bias/res/add_root_category.png"));
 
-    public static final ImageIcon ICON_ADD_ROOT_ENTRY = 
-        new ImageIcon(Constants.class.getResource("/bias/res/add_root_entry.png"));
+    public static final ImageIcon ICON_ADD_ENTRY = new ImageIcon(Constants.class.getResource("/bias/res/add_entry.png"));
 
-    public static final ImageIcon ICON_SAVE = 
-        new ImageIcon(Constants.class.getResource("/bias/res/save.png"));
+    public static final ImageIcon ICON_ADD_ROOT_ENTRY = new ImageIcon(Constants.class.getResource("/bias/res/add_root_entry.png"));
 
-    private static final Placement[] PLACEMENTS = new Placement[]{
-        new Placement("Top", JTabbedPane.TOP),
-        new Placement("Left", JTabbedPane.LEFT),
-        new Placement("Right", JTabbedPane.RIGHT),
-        new Placement("Bottom", JTabbedPane.BOTTOM)
-    };
+    public static final ImageIcon ICON_SAVE = new ImageIcon(Constants.class.getResource("/bias/res/save.png"));
+
+    private static final Placement[] PLACEMENTS = new Placement[] { new Placement("Top", JTabbedPane.TOP),
+            new Placement("Left", JTabbedPane.LEFT), new Placement("Right", JTabbedPane.RIGHT),
+            new Placement("Bottom", JTabbedPane.BOTTOM) };
 
     private static class Placement {
         private String string;
+
         private Integer integer;
+
         public Placement() {
         }
+
         public Placement(String string, Integer integer) {
             this.string = string;
             this.integer = integer;
         }
+
         public Integer getInteger() {
             return integer;
         }
+
         public void setInteger(Integer integer) {
             this.integer = integer;
         }
+
         public String getString() {
             return string;
         }
+
         public void setString(String string) {
             this.string = string;
         }
+
         @Override
         public String toString() {
             return string;
         }
     }
-    
-	private static FrontEnd instance;
-	
+
+    private static FrontEnd instance;
+
     /**
      * Default singleton's hidden constructor without parameters
      */
@@ -119,17 +120,17 @@ public class FrontEnd extends JFrame {
         initialize();
     }
 
-	public static FrontEnd getInstance() {
-		if (instance == null) {
-			instance = new FrontEnd();
-		}
-		return instance;
-	}
-    
+    public static FrontEnd getInstance() {
+        if (instance == null) {
+            instance = new FrontEnd();
+        }
+        return instance;
+    }
+
     private String lastAddedEntryType = null;
-    
+
     private JTabbedPane currentTabPane = null;
-    
+
     private JPanel jContentPane = null;
 
     private JTabbedPane jTabbedPane = null;
@@ -139,9 +140,9 @@ public class FrontEnd extends JFrame {
     private JButton jButton = null;
 
     private JButton jButton1 = null;
-    
+
     private JButton jButton2 = null;
-    
+
     private JButton jButton4 = null;
 
     private JButton jButton5 = null;
@@ -162,7 +163,7 @@ public class FrontEnd extends JFrame {
      * @return void
      */
     private void initialize() {
-        this.setSize(new Dimension(772, 535));  // Generated
+        this.setSize(new Dimension(772, 535)); // Generated
         try {
             this.setTitle("Bias");
             this.setIconImage(ICON_APP.getImage());
@@ -171,49 +172,53 @@ public class FrontEnd extends JFrame {
 
             BackEnd.getInstance().load();
             Properties properties = BackEnd.getInstance().getProperties();
-            
+
             int wpxValue;
             int wpyValue;
             int wwValue;
             int whValue;
             String wpx = properties.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_X);
             if (wpx == null) {
-                wpxValue = getToolkit().getScreenSize().width/4;
+                wpxValue = getToolkit().getScreenSize().width / 4;
             } else {
                 getToolkit().getScreenSize().getWidth();
                 Double.valueOf(wpx);
-                wpxValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getWidth() * Double.valueOf(wpx))));
+                wpxValue = Math.round(Float
+                        .valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getWidth() * Double.valueOf(wpx))));
             }
             String wpy = properties.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_Y);
             if (wpy == null) {
-                wpyValue = getToolkit().getScreenSize().height/4;
+                wpyValue = getToolkit().getScreenSize().height / 4;
             } else {
-                wpyValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wpy))));
+                wpyValue = Math.round(Float.valueOf(Constants.EMPTY_STR
+                        + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wpy))));
             }
             String ww = properties.getProperty(Constants.PROPERTY_WINDOW_WIDTH);
             if (ww == null) {
-                wwValue = (getToolkit().getScreenSize().width/4)*2;
+                wwValue = (getToolkit().getScreenSize().width / 4) * 2;
             } else {
-                wwValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(ww))));
+                wwValue = Math
+                        .round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(ww))));
             }
             String wh = properties.getProperty(Constants.PROPERTY_WINDOW_HEIGHT);
             if (wh == null) {
-                whValue = (getToolkit().getScreenSize().height/4)*2;
+                whValue = (getToolkit().getScreenSize().height / 4) * 2;
             } else {
-                whValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wh))));
+                whValue = Math
+                        .round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wh))));
             }
-            
+
             this.setLocation(wpxValue, wpyValue);
             this.setSize(wwValue, whValue);
-            
+
             representData(BackEnd.getInstance().getData());
-            
+
             String lsid = properties.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
             if (lsid != null) {
                 switchToVisualItem(UUID.fromString(lsid));
             }
 
-            this.addWindowListener(new java.awt.event.WindowAdapter() {   
+            this.addWindowListener(new java.awt.event.WindowAdapter() {
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
                         store();
@@ -222,19 +227,19 @@ public class FrontEnd extends JFrame {
                     }
                 }
             });
-            
+
         } catch (Exception ex) {
             displayErrorMessage(ex);
         }
     }
-    
+
     private void representData(DataCategory data) {
         if (data.getPlacement() != null) {
             getJTabbedPane().setTabPlacement(data.getPlacement());
         }
         representData(getJTabbedPane(), data);
     }
-    
+
     private void representData(JTabbedPane tabbedPane, DataCategory data) {
         try {
             for (Recognizable item : data.getData()) {
@@ -250,8 +255,7 @@ public class FrontEnd extends JFrame {
                     }
                     DataCategory dc = (DataCategory) item;
                     categoryTabPane.setTabPlacement(dc.getPlacement());
-                    categoryTabPane.addMouseListener(tabPaneClickListener);
-                    categoryTabPane.addChangeListener(tabPaneChangeListener);
+                    addTabPaneListeners(categoryTabPane);
                     tabbedPane.addTab(caption, categoryTabPane);
                     currentTabPane = categoryTabPane;
                     representData(categoryTabPane, dc);
@@ -264,32 +268,36 @@ public class FrontEnd extends JFrame {
             displayErrorMessage(e);
         }
     }
-    
+
     private void store() throws Exception {
         collectProperties();
         collectData();
         BackEnd.getInstance().store();
     }
-    
+
     private void collectProperties() {
         Properties properties = new Properties();
-        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR+getLocation().getX()/getToolkit().getScreenSize().getWidth());
-        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR+getLocation().getY()/getToolkit().getScreenSize().getHeight());
-        properties.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR+getSize().getWidth()/getToolkit().getScreenSize().getHeight());
-        properties.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR+getSize().getHeight()/getToolkit().getScreenSize().getHeight());
+        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR + getLocation().getX()
+                / getToolkit().getScreenSize().getWidth());
+        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR + getLocation().getY()
+                / getToolkit().getScreenSize().getHeight());
+        properties.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR + getSize().getWidth()
+                / getToolkit().getScreenSize().getHeight());
+        properties.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR + getSize().getHeight()
+                / getToolkit().getScreenSize().getHeight());
         UUID lsid = getSelectedVisualItemID();
         if (lsid != null) {
             properties.put(Constants.PROPERTY_LAST_SELECTED_ID, lsid.toString());
         }
         BackEnd.getInstance().setProperties(properties);
     }
-    
+
     private void collectData() throws Exception {
         DataCategory data = collectData("root", getJTabbedPane());
         data.setPlacement(getJTabbedPane().getTabPlacement());
         BackEnd.getInstance().setData(data);
     }
-    
+
     private DataCategory collectData(String caption, JTabbedPane tabPane) throws Exception {
         DataCategory data = new DataCategory();
         data.setCaption(caption);
@@ -316,11 +324,11 @@ public class FrontEnd extends JFrame {
         }
         return data;
     }
-    
+
     private UUID getSelectedVisualItemID() {
         return getSelectedVisualItemID(getJTabbedPane());
     }
-    
+
     private UUID getSelectedVisualItemID(JTabbedPane tabPane) {
         if (tabPane.getTabCount() > 0) {
             if (tabPane.getSelectedIndex() != -1) {
@@ -341,11 +349,11 @@ public class FrontEnd extends JFrame {
         }
         return null;
     }
-    
+
     private Collection<UUID> getVisualItemsIDs() {
-        return getVisualItemsIDs(getJTabbedPane());        
+        return getVisualItemsIDs(getJTabbedPane());
     }
-    
+
     private Collection<UUID> getVisualItemsIDs(JTabbedPane rootTabPane) {
         Collection<UUID> ids = new LinkedList<UUID>();
         String idStr = rootTabPane.getName();
@@ -364,18 +372,18 @@ public class FrontEnd extends JFrame {
         }
         return ids;
     }
-    
+
     public Collection<VisualItemDescriptor> getVisualItemDescriptors() {
         return getVisualItemDescriptors(getJTabbedPane(), new LinkedList<String>());
     }
-    
+
     private Collection<VisualItemDescriptor> getVisualItemDescriptors(JTabbedPane rootTabPane, LinkedList<String> captionsPath) {
         Collection<VisualItemDescriptor> vDescriptors = new LinkedList<VisualItemDescriptor>();
         String idStr = rootTabPane.getName();
         if (idStr != null) {
-            vDescriptors.add(new VisualItemDescriptor(UUID.fromString(idStr), captionsPath.toArray(new String[]{})));
+            vDescriptors.add(new VisualItemDescriptor(UUID.fromString(idStr), captionsPath.toArray(new String[] {})));
         }
-    	for (int i = 0; i < rootTabPane.getTabCount(); i++) {
+        for (int i = 0; i < rootTabPane.getTabCount(); i++) {
             Component c = rootTabPane.getComponent(i);
             String caption = rootTabPane.getTitleAt(i);
             captionsPath.addLast(caption);
@@ -385,20 +393,20 @@ public class FrontEnd extends JFrame {
             } else if (c instanceof VisualEntry) {
                 VisualEntry ve = (VisualEntry) c;
                 if (ve.getId() != null) {
-                    vDescriptors.add(new VisualItemDescriptor(ve.getId(), captionsPath.toArray(new String[]{})));
+                    vDescriptors.add(new VisualItemDescriptor(ve.getId(), captionsPath.toArray(new String[] {})));
                 }
                 captionsPath.removeLast();
             }
-    	}
-    	return vDescriptors;
+        }
+        return vDescriptors;
     }
-    
+
     public boolean switchToVisualItem(UUID id) {
         return switchToVisualItem(getJTabbedPane(), id, new LinkedList<Component>());
     }
-    
+
     private boolean switchToVisualItem(JTabbedPane rootTabPane, UUID id, LinkedList<Component> path) {
-        String idStr = rootTabPane.getName(); 
+        String idStr = rootTabPane.getName();
         if (idStr != null && UUID.fromString(idStr).equals(id)) {
             switchToVisualItem(getJTabbedPane(), path.iterator());
             return true;
@@ -424,7 +432,7 @@ public class FrontEnd extends JFrame {
         }
         return false;
     }
-    
+
     private void switchToVisualItem(JTabbedPane tabPane, Iterator<Component> pathIterator) {
         if (pathIterator.hasNext()) {
             Component selComp = pathIterator.next();
@@ -434,7 +442,7 @@ public class FrontEnd extends JFrame {
             }
         }
     }
-    
+
     private JTabbedPane getActiveTabPane(JTabbedPane rootTabPane) {
         if (rootTabPane.getTabCount() > 0) {
             if (rootTabPane.getSelectedIndex() != -1) {
@@ -450,13 +458,20 @@ public class FrontEnd extends JFrame {
         }
         return rootTabPane;
     }
-    
+
     public void displayErrorMessage(Exception ex) {
         JOptionPane.showMessageDialog(FrontEnd.this, "Details: " + ex, "Error", JOptionPane.ERROR_MESSAGE);
         ex.printStackTrace();
     }
-    
-    MouseListener tabPaneClickListener = new MouseAdapter() {
+
+    private void addTabPaneListeners(JTabbedPane tabPane) {
+        tabPane.addMouseListener(tabClickListener);
+        tabPane.addChangeListener(tabChangeListener);
+        tabPane.addMouseListener(tabMoveListener);
+        tabPane.addMouseMotionListener(tabMoveListener);
+    }
+
+    private MouseListener tabClickListener = new MouseAdapter() {
         public void mouseClicked(java.awt.event.MouseEvent e) {
             currentTabPane = (JTabbedPane) e.getSource();
             if (currentTabPane.getSelectedIndex() != -1) {
@@ -469,19 +484,178 @@ public class FrontEnd extends JFrame {
                 int index = tabbedPane.getSelectedIndex();
                 String caption = tabbedPane.getTitleAt(index);
                 caption = JOptionPane.showInputDialog(FrontEnd.this, "Entry caption:", caption);
-                if (caption != null) { 
+                if (caption != null) {
                     tabbedPane.setTitleAt(index, caption);
                 }
             }
         }
     };
-    
-    ChangeListener tabPaneChangeListener = new ChangeListener() {
+
+    private ChangeListener tabChangeListener = new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
             currentTabPane = getActiveTabPane((JTabbedPane) e.getSource());
         }
     };
     
+    private TabMoveListener tabMoveListener = new TabMoveListener();
+
+    public class TabMoveListener extends MouseAdapter implements MouseMotionListener {
+
+        private int srcIndex = -1;
+
+        private int currIndex = -1;
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
+         */
+        public void mousePressed(MouseEvent e) {
+            if (!e.isPopupTrigger()) {
+                JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
+                srcIndex = tabbedPane.indexAtLocation(e.getX(), e.getY());
+            }
+            currIndex = -1;
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
+         */
+        public void mouseReleased(MouseEvent e) {
+            JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
+            if (!e.isPopupTrigger()) {
+                int dstIndex = tabbedPane.indexAtLocation(e.getX(), e.getY());
+                if (srcIndex != -1 && dstIndex != -1 && srcIndex != dstIndex) {
+                    moveTab(tabbedPane, srcIndex, dstIndex);
+                }
+            }
+            deHighLight(tabbedPane);
+            setCursor(Cursor.getDefaultCursor());
+            srcIndex = -1;
+            currIndex = -1;
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
+         */
+        public void mouseDragged(MouseEvent e) {
+            if (srcIndex != -1) {
+                JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
+                int index = tabbedPane.indexAtLocation(e.getX(), e.getY());
+                if (index != -1) {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                } else {
+                    setCursor(Cursor.getDefaultCursor());
+                }
+                if (index != -1 && index != currIndex) { // moved over another tab
+                    deHighLight(tabbedPane);
+                    currIndex = index;
+                }
+                if (currIndex != -1 && currIndex != srcIndex) {
+                    highLight(tabbedPane);
+                }
+            }
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
+         */
+        public void mouseMoved(MouseEvent e) {}
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
+         */
+        public void mouseExited(MouseEvent e) {
+            deHighLight((JTabbedPane) e.getSource());
+            currIndex = -1;
+        }
+
+        /**
+         * As far as internal structure of JTabbedPane data model does not correspond to 
+         * its visual representation, that is, component located on tab with index X 
+         * is <b>not</b> located in the internal components array using the same index, 
+         * we have to rearrange this array each time tab has been moved and 
+         * repopulate/repaint JTabbedPane instance after that.
+         * 
+         */
+        private void moveTab(JTabbedPane tabPane, int srcIndex, int dstIndex) {
+            
+            int cnt = tabPane.getTabCount();
+
+            // get tabpane's components/captions
+            Component[] components = new Component[cnt];
+            for (int i = 0; i< cnt; i++) {
+                components[i] = tabPane.getComponent(i);
+            }
+            String[] captions = new String[cnt];
+            for (int i = 0; i < cnt; i++) {
+                captions[i] = tabPane.getTitleAt(i);
+            }
+
+            // remember component/caption that has to be moved
+            Component srcComp = components[srcIndex];
+            String srcCap = captions[srcIndex];
+            
+            // rearrange components/captions using shifting
+            if (srcIndex > dstIndex) {
+                for (int i = srcIndex; i > dstIndex; i--) {
+                    components[i] = components[i-1];
+                    captions[i] = captions[i-1];
+                }
+            } else {
+                for (int i = srcIndex; i < dstIndex; i++) {
+                    components[i] = components[i+1];
+                    captions[i] = captions[i+1];
+                }
+            }
+
+            // set moved component/caption to its new position
+            components[dstIndex] = srcComp;
+            captions[dstIndex] = srcCap;
+            
+            // remove everything from tabpane before repopulating it
+            tabPane.removeAll();
+            
+            // repopulate tabpane with resulting components/captions
+            for (int i = 0; i < cnt; i++) {
+                tabPane.addTab(captions[i], components[i]);
+            }
+            
+            // set moved component as selected
+            tabPane.setSelectedIndex(dstIndex);
+            
+            // repaint tabpane
+            tabPane.repaint();
+            
+        }
+
+        private void deHighLight(JTabbedPane tabbedPane) {
+            if (currIndex == -1) {
+                return;
+            }
+            TabbedPaneUI ui = tabbedPane.getUI();
+            Rectangle rect = ui.getTabBounds(tabbedPane, currIndex);
+            tabbedPane.repaint(rect);
+        }
+
+        private void highLight(JTabbedPane tabbedPane) {
+            TabbedPaneUI ui = tabbedPane.getUI();
+            Rectangle rect = ui.getTabBounds(tabbedPane, currIndex);
+            Graphics graphics = tabbedPane.getGraphics();
+            graphics.setColor(Color.WHITE);
+            graphics.drawRect(rect.x, rect.y, rect.width - 1, rect.height - 1);
+        }
+
+    };
+
     /**
      * This method initializes jContentPane
      * 
@@ -492,175 +666,174 @@ public class FrontEnd extends JFrame {
             jContentPane = new JPanel();
             jContentPane.setLayout(new BorderLayout());
             jContentPane.add(getJTabbedPane(), BorderLayout.CENTER);
-            jContentPane.add(getJPanel(), BorderLayout.NORTH);  // Generated
+            jContentPane.add(getJPanel(), BorderLayout.NORTH); // Generated
         }
         return jContentPane;
     }
 
     /**
-     * This method initializes jTabbedPane	
-     * 	
-     * @return javax.swing.JTabbedPane	
+     * This method initializes jTabbedPane
+     * 
+     * @return javax.swing.JTabbedPane
      */
     private JTabbedPane getJTabbedPane() {
         if (jTabbedPane == null) {
             jTabbedPane = new JTabbedPane();
-            jTabbedPane.setBackground(null);  // Generated
-            jTabbedPane.addMouseListener(tabPaneClickListener);
-            jTabbedPane.addChangeListener(tabPaneChangeListener);
+            jTabbedPane.setBackground(null); // Generated
             jTabbedPane.setTabPlacement(JTabbedPane.LEFT);
+            addTabPaneListeners(jTabbedPane);
         }
         return jTabbedPane;
     }
 
     /**
-     * This method initializes jToolBar	
-     * 	
-     * @return javax.swing.JToolBar	
+     * This method initializes jToolBar
+     * 
+     * @return javax.swing.JToolBar
      */
     private JToolBar getJToolBar() {
         if (jToolBar == null) {
             jToolBar = new JToolBar();
-            jToolBar.setFloatable(false);  // Generated
-            jToolBar.add(getJButton7());  // Generated
-            jToolBar.add(getJButton2());  // Generated
-            jToolBar.add(getJButton3());  // Generated
+            jToolBar.setFloatable(false); // Generated
+            jToolBar.add(getJButton7()); // Generated
+            jToolBar.add(getJButton2()); // Generated
+            jToolBar.add(getJButton3()); // Generated
             jToolBar.add(getJButton4());
-            jToolBar.add(getJButton());  // Generated
-            jToolBar.add(getJButton5());  // Generated
-            jToolBar.add(getJButton1());  // Generated
+            jToolBar.add(getJButton()); // Generated
+            jToolBar.add(getJButton5()); // Generated
+            jToolBar.add(getJButton1()); // Generated
         }
         return jToolBar;
     }
 
     /**
-     * This method initializes jButton	
-     * 	
-     * @return javax.swing.JButton	
+     * This method initializes jButton
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton() {
         if (jButton == null) {
             jButton = new JButton(addRootEntryAction);
-            jButton.setToolTipText("add root entry");  // Generated
+            jButton.setToolTipText("add root entry"); // Generated
             jButton.setIcon(ICON_ADD_ROOT_ENTRY);
         }
         return jButton;
     }
 
     /**
-     * This method initializes jButton5  
-     *  
-     * @return javax.swing.JButton  
+     * This method initializes jButton5
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton5() {
         if (jButton5 == null) {
             jButton5 = new JButton(addEntryAction);
-            jButton5.setToolTipText("add entry");  // Generated
+            jButton5.setToolTipText("add entry"); // Generated
             jButton5.setIcon(ICON_ADD_ENTRY);
         }
         return jButton5;
     }
 
     /**
-     * This method initializes jButton1	
-     * 	
-     * @return javax.swing.JButton	
+     * This method initializes jButton1
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton1() {
         if (jButton1 == null) {
             jButton1 = new JButton(deleteEntryOrCategoryAction);
-            jButton1.setToolTipText("delete active item");  // Generated
+            jButton1.setToolTipText("delete active item"); // Generated
             jButton1.setIcon(ICON_DELETE);
         }
         return jButton1;
     }
 
     /**
-     * This method initializes jButton2	
-     * 	
-     * @return javax.swing.JButton	
+     * This method initializes jButton2
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton2() {
         if (jButton2 == null) {
             jButton2 = new JButton(importDataAction);
-            jButton2.setToolTipText("import data from another Bias JAR");  // Generated
+            jButton2.setToolTipText("import data from another Bias JAR"); // Generated
             jButton2.setIcon(ICON_IMPORT_DATA);
         }
         return jButton2;
     }
 
     /**
-     * This method initializes jPanel	
-     * 	
-     * @return javax.swing.JPanel	
+     * This method initializes jPanel
+     * 
+     * @return javax.swing.JPanel
      */
     private JPanel getJPanel() {
         if (jPanel == null) {
             jPanel = new JPanel();
-            jPanel.setLayout(new BorderLayout());  // Generated
-            jPanel.add(getJToolBar(), BorderLayout.CENTER);  // Generated
-            jPanel.add(getJToolBar2(), BorderLayout.EAST);  // Generated
+            jPanel.setLayout(new BorderLayout()); // Generated
+            jPanel.add(getJToolBar(), BorderLayout.CENTER); // Generated
+            jPanel.add(getJToolBar2(), BorderLayout.EAST); // Generated
         }
         return jPanel;
     }
 
     /**
-     * This method initializes jToolBar2	
-     * 	
-     * @return javax.swing.JToolBar	
+     * This method initializes jToolBar2
+     * 
+     * @return javax.swing.JToolBar
      */
     private JToolBar getJToolBar2() {
         if (jToolBar2 == null) {
             jToolBar2 = new JToolBar();
-            jToolBar2.setFloatable(false);  // Generated
-            jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);  // Generated
-            jToolBar2.add(getJButton6());  // Generated
+            jToolBar2.setFloatable(false); // Generated
+            jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT); // Generated
+            jToolBar2.add(getJButton6()); // Generated
         }
         return jToolBar2;
     }
 
     /**
-     * This method initializes jButton6	
-     * 	
-     * @return javax.swing.JButton	
+     * This method initializes jButton6
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton6() {
         if (jButton6 == null) {
             jButton6 = new JButton(displayAboutInfoAction);
-            jButton6.setToolTipText("about Bias");  // Generated
+            jButton6.setToolTipText("about Bias"); // Generated
             jButton6.setIcon(ICON_ABOUT);
         }
         return jButton6;
     }
 
     /**
-     * This method initializes jButton7 
-     *  
-     * @return javax.swing.JButton  
+     * This method initializes jButton7
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton7() {
         if (jButton7 == null) {
             jButton7 = new JButton(saveAction);
-            jButton7.setToolTipText("save");  // Generated
+            jButton7.setToolTipText("save"); // Generated
             jButton7.setIcon(ICON_SAVE);
         }
         return jButton7;
     }
 
     /**
-     * This method initializes jButton3	
-     * 	
-     * @return javax.swing.JButton	
+     * This method initializes jButton3
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton3() {
         if (jButton3 == null) {
             jButton3 = new JButton(addRootCategoryAction);
-            jButton3.setToolTipText("add root category");  // Generated
+            jButton3.setToolTipText("add root category"); // Generated
             jButton3.setIcon(ICON_ADD_ROOT_CATEGORY);
         }
         return jButton3;
     }
-    
+
     private JButton getJButton4() {
         if (jButton4 == null) {
             jButton4 = new JButton(addCategoryAction);
@@ -669,26 +842,21 @@ public class FrontEnd extends JFrame {
         }
         return jButton4;
     }
-    
+
     private boolean defineRootPlacement() {
         boolean result = false;
-        Placement placement = (Placement) JOptionPane.showInputDialog(
-                FrontEnd.this, 
-                "Choose placement:", 
-                "Choose placement for root container", 
-                JOptionPane.QUESTION_MESSAGE, 
-                null, 
-                PLACEMENTS, 
-                PLACEMENTS[0]);
+        Placement placement = (Placement) JOptionPane.showInputDialog(FrontEnd.this, "Choose placement:",
+                "Choose placement for root container", JOptionPane.QUESTION_MESSAGE, null, PLACEMENTS, PLACEMENTS[0]);
         if (placement != null) {
             getJTabbedPane().setTabPlacement(placement.getInteger());
             result = true;
         }
         return result;
     }
-    
+
     Action addRootCategoryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
+
         public void actionPerformed(ActionEvent evt) {
             try {
                 if (getJTabbedPane().getTabCount() == 0) {
@@ -703,33 +871,28 @@ public class FrontEnd extends JFrame {
             }
         }
     };
-    
+
     private void addRootCategoryAction() {
         JLabel pLabel = new JLabel("Choose placement:");
         JComboBox placementsChooser = new JComboBox();
         for (Placement placement : PLACEMENTS) {
             placementsChooser.addItem(placement);
         }
-        String categoryCaption = JOptionPane.showInputDialog(
-                FrontEnd.this, 
-                new Component[]{
-                        pLabel, 
-                        placementsChooser}, 
-                "New root category:",
-                JOptionPane.QUESTION_MESSAGE);
+        String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser },
+                "New root category:", JOptionPane.QUESTION_MESSAGE);
         if (categoryCaption != null) {
             JTabbedPane categoryTabPane = new JTabbedPane();
             categoryTabPane.setName(UUID.randomUUID().toString());
-            categoryTabPane.setTabPlacement(((Placement)placementsChooser.getSelectedItem()).getInteger());
-            categoryTabPane.addMouseListener(tabPaneClickListener);
-            categoryTabPane.addChangeListener(tabPaneChangeListener);
+            categoryTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
+            addTabPaneListeners(categoryTabPane);
             getJTabbedPane().addTab(categoryCaption, categoryTabPane);
             getJTabbedPane().setSelectedComponent(categoryTabPane);
         }
     }
-    
+
     Action addRootEntryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
+
         public void actionPerformed(ActionEvent evt) {
             if (getJTabbedPane().getTabCount() == 0) {
                 if (defineRootPlacement()) {
@@ -740,7 +903,7 @@ public class FrontEnd extends JFrame {
             }
         }
     };
-    
+
     private void addRootEntryAction() {
         try {
             JLabel entryTypeLabel = new JLabel("Type:");
@@ -752,13 +915,8 @@ public class FrontEnd extends JFrame {
                 entryTypeComboBox.setSelectedItem(lastAddedEntryType);
             }
             entryTypeComboBox.setEditable(false);
-            String caption = JOptionPane.showInputDialog(
-                    FrontEnd.this, 
-                    new Component[]{
-                            entryTypeLabel,
-                            entryTypeComboBox}, 
-                    "New entry:", 
-                    JOptionPane.QUESTION_MESSAGE);
+            String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox },
+                    "New entry:", JOptionPane.QUESTION_MESSAGE);
             if (caption != null) {
                 String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                 lastAddedEntryType = typeDescription;
@@ -773,9 +931,10 @@ public class FrontEnd extends JFrame {
             displayErrorMessage(ex);
         }
     }
-    
+
     Action addEntryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
+
         public void actionPerformed(ActionEvent evt) {
             if (getJTabbedPane().getTabCount() > 0) {
                 try {
@@ -790,14 +949,9 @@ public class FrontEnd extends JFrame {
                     if (lastAddedEntryType != null) {
                         entryTypeComboBox.setSelectedItem(lastAddedEntryType);
                     }
-                entryTypeComboBox.setEditable(false);
-                    String caption = JOptionPane.showInputDialog(
-                            FrontEnd.this, 
-                            new Component[]{
-                                    entryTypeLabel,
-                                    entryTypeComboBox}, 
-                            "New entry:", 
-                            JOptionPane.QUESTION_MESSAGE);
+                    entryTypeComboBox.setEditable(false);
+                    String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox },
+                            "New entry:", JOptionPane.QUESTION_MESSAGE);
                     if (caption != null) {
                         String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                         lastAddedEntryType = typeDescription;
@@ -814,9 +968,10 @@ public class FrontEnd extends JFrame {
             }
         }
     };
-    
+
     Action deleteEntryOrCategoryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
+
         public void actionPerformed(ActionEvent evt) {
             if (getJTabbedPane().getTabCount() > 0) {
                 try {
@@ -836,14 +991,15 @@ public class FrontEnd extends JFrame {
             }
         }
     };
-    
+
     Action importDataAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
+
         public void actionPerformed(ActionEvent evt) {
             try {
                 JFileChooser jfc = new JFileChooser();
                 jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                jfc.setFileFilter(new FileFilter(){
+                jfc.setFileFilter(new FileFilter() {
                     @Override
                     public boolean accept(File file) {
                         if (file.getName().endsWith(".jar")) {
@@ -851,6 +1007,7 @@ public class FrontEnd extends JFrame {
                         }
                         return false;
                     }
+
                     @Override
                     public String getDescription() {
                         return "Java Archive File (*.jar)";
@@ -867,9 +1024,10 @@ public class FrontEnd extends JFrame {
             }
         }
     };
-    
+
     Action addCategoryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
+
         public void actionPerformed(ActionEvent evt) {
             try {
                 if (getJTabbedPane().getTabCount() > 0) {
@@ -878,23 +1036,17 @@ public class FrontEnd extends JFrame {
                     for (Placement placement : PLACEMENTS) {
                         placementsChooser.addItem(placement);
                     }
-                    String categoryCaption = JOptionPane.showInputDialog(
-                            FrontEnd.this, 
-                            new Component[]{
-                                    pLabel, 
-                                    placementsChooser}, 
-                            "New category:",
-                            JOptionPane.QUESTION_MESSAGE);
+                    String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser },
+                            "New category:", JOptionPane.QUESTION_MESSAGE);
                     if (categoryCaption != null) {
                         JTabbedPane categoryTabPane = new JTabbedPane();
                         UUID id = UUID.randomUUID();
                         categoryTabPane.setName(id.toString());
-                        categoryTabPane.setTabPlacement(((Placement)placementsChooser.getSelectedItem()).getInteger());
-                        categoryTabPane.addMouseListener(tabPaneClickListener);
-                        categoryTabPane.addChangeListener(tabPaneChangeListener);
+                        categoryTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
+                        addTabPaneListeners(categoryTabPane);
                         currentTabPane.addTab(categoryCaption, categoryTabPane);
-                        ((JTabbedPane)categoryTabPane.getParent()).setSelectedComponent(categoryTabPane);
-                        currentTabPane = (JTabbedPane)categoryTabPane.getParent();
+                        ((JTabbedPane) categoryTabPane.getParent()).setSelectedComponent(categoryTabPane);
+                        currentTabPane = (JTabbedPane) categoryTabPane.getParent();
                     }
                 }
             } catch (Exception ex) {
@@ -902,9 +1054,10 @@ public class FrontEnd extends JFrame {
             }
         }
     };
-    
+
     Action saveAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
+
         public void actionPerformed(ActionEvent evt) {
             try {
                 store();
@@ -913,15 +1066,14 @@ public class FrontEnd extends JFrame {
             }
         }
     };
-    
+
     Action displayAboutInfoAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
+
         public void actionPerformed(ActionEvent evt) {
-            JOptionPane.showMessageDialog(FrontEnd.this, 
-                    "<html>Bias Personal Information Manager, version 0.1-beta"
-                    + "<br>(c) kion, 2006"
-                    + "<br>http://bias.sourceforge.net");
+            JOptionPane.showMessageDialog(FrontEnd.this, "<html>Bias Personal Information Manager, version 0.1-beta"
+                    + "<br>(c) kion, 2006" + "<br>http://bias.sourceforge.net");
         }
     };
-    
-}  //  @jve:decl-index=0:visual-constraint="10,10"
+
+} // @jve:decl-index=0:visual-constraint="10,10"
