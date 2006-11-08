@@ -2,7 +2,7 @@
  * Created on Nov 1, 2006
  */
 
-package bias.gui;
+package bias.utils;
 
 import java.io.IOException;
 

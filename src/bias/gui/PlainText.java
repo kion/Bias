@@ -12,6 +12,8 @@ import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 
+import bias.utils.UndoRedoManager;
+
 /**
  * @author kion
  */
@@ -54,6 +56,7 @@ public class PlainText extends VisualEntry {
         this.add(getJScrollPane(), BorderLayout.CENTER);  // Generated
         this.add(getJToolBar(), BorderLayout.SOUTH);  // Generated
         getJTextArea().setText(new String(getData()));
+        getJTextArea().getDocument().addUndoableEditListener(new UndoRedoManager(jTextArea));
     }
 
     /**

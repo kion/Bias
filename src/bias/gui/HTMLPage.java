@@ -50,6 +50,8 @@ import javax.swing.text.html.HTMLEditorKit;
 
 import bias.global.Constants;
 import bias.utils.BrowserLauncher;
+import bias.utils.HTMLPageEditor;
+import bias.utils.UndoRedoManager;
 import bias.utils.Validator;
 
 /**
@@ -242,22 +244,7 @@ public class HTMLPage extends VisualEntry {
         this.add(getJScrollPane(), BorderLayout.CENTER);  // Generated
         this.add(getJPanel(), BorderLayout.SOUTH);  // Generated
         getJTextPane().setText(new String(getData()));
-        getJTextPane().addHyperlinkListener(new HyperlinkListener(){
-            public void hyperlinkUpdate(HyperlinkEvent e) {
-                if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
-                    if (e.getDescription().startsWith(Constants.ENTRY_PROTOCOL_PREFIX)) {
-                        String idStr = e.getDescription().substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
-                        FrontEnd.getInstance().switchToVisualItem(UUID.fromString(idStr));
-                    } else {
-                        try {
-                            BrowserLauncher.openURL(e.getDescription());
-                        } catch (Exception ex) {
-                            FrontEnd.getInstance().displayErrorMessage(ex);
-                        }
-                    }
-                }
-            }
-        });
+        getJTextPane().getDocument().addUndoableEditListener(new UndoRedoManager(jTextPane));
     }
 
     /**
@@ -665,6 +652,22 @@ public class HTMLPage extends VisualEntry {
                             HTMLPageEditor.insertLineBreakOnEnter(getJTextPane());
                         } catch (Exception exception) {
                             FrontEnd.getInstance().displayErrorMessage(exception);
+                        }
+                    }
+                }
+            });
+            jTextPane.addHyperlinkListener(new HyperlinkListener(){
+                public void hyperlinkUpdate(HyperlinkEvent e) {
+                    if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
+                        if (e.getDescription().startsWith(Constants.ENTRY_PROTOCOL_PREFIX)) {
+                            String idStr = e.getDescription().substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
+                            FrontEnd.getInstance().switchToVisualItem(UUID.fromString(idStr));
+                        } else {
+                            try {
+                                BrowserLauncher.openURL(e.getDescription());
+                            } catch (Exception ex) {
+                                FrontEnd.getInstance().displayErrorMessage(ex);
+                            }
                         }
                     }
                 }

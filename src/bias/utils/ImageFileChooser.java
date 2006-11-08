@@ -1,7 +1,7 @@
 /**
  * Created on Jan 27, 2006
  */
-package bias.gui;
+package bias.utils;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -26,7 +26,7 @@ import javax.swing.filechooser.FileFilter;
  */
 public class ImageFileChooser extends JFileChooser implements ActionListener, PropertyChangeListener {
 
-    private static final long serialVersionUID = -1340395163043217929L;
+    private static final long serialVersionUID = 1L;
     
     private static final int PREVIEW_WIDTH = 150;
 
