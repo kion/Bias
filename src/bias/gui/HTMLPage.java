@@ -512,9 +512,7 @@ public class HTMLPage extends VisualEntry {
                                 String[] param = attrs.getAttribute(attr).toString().split(" ");
                                 for (int i = 0; i < param.length; i++) {
                                     if (param[i].startsWith("href=")) {
-                                        if (param[i].split("=").length == 2) {
-                                            href = param[i].split("=")[1];
-                                        }
+                                        href = param[i].substring("href=".length(), param[i].length());
                                     }
                                 }
                                 break;

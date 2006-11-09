@@ -1002,7 +1002,7 @@ public class FrontEnd extends JFrame {
                 jfc.setFileFilter(new FileFilter() {
                     @Override
                     public boolean accept(File file) {
-                        if (file.getName().endsWith(".jar")) {
+                        if (file.isDirectory() || file.getName().endsWith(".jar")) {
                             return true;
                         }
                         return false;
