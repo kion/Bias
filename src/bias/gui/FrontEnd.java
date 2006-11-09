@@ -45,6 +45,7 @@ import bias.core.DataCategory;
 import bias.core.DataEntry;
 import bias.core.Recognizable;
 import bias.global.Constants;
+import bias.utils.BrowserLauncher;
 
 /**
  * @author kion
@@ -1071,8 +1072,25 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
-            JOptionPane.showMessageDialog(FrontEnd.this, "<html>Bias Personal Information Manager, version 0.1-beta"
-                    + "<br>(c) kion, 2006" + "<br>http://bias.sourceforge.net");
+        	JLabel aboutLabel = new JLabel(
+        							"<html>Bias Personal Information Manager, version 0.1-beta<br>" +
+        							"(c) kion, 2006<br>"
+        						);
+        	JLabel linkLabel = new JLabel(
+        							"<html><u><font color=blue>http://bias.sourceforge.net</font></u>"
+        						);
+        	linkLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        	linkLabel.addMouseListener(new MouseAdapter(){
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					try {
+						BrowserLauncher.openURL("http://bias.sourceforge.net");
+					} catch (Exception ex) {
+						// do nothing
+					}
+				}
+        	});
+            JOptionPane.showMessageDialog(FrontEnd.this, new Component[]{aboutLabel, linkLabel} );
         }
     };
 
