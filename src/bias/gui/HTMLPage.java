@@ -7,7 +7,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
@@ -81,6 +80,8 @@ public class HTMLPage extends VisualEntry {
 
     private static final ImageIcon ICON_SWITCH_MODE = 
         new ImageIcon(HTMLPage.class.getResource("/bias/res/switch_mode.png"));  //  @jve:decl-index=0:
+    
+    String[] FONT_FAMILY_NAMES = new String[] { "SansSerif", "Serif", "Monospaced" };
 
     private static final Integer FONT_SIZE_XX_LARGE = new Integer(36);
     private static final Integer FONT_SIZE_X_LARGE = new Integer(24);
@@ -605,9 +606,8 @@ public class HTMLPage extends VisualEntry {
             jComboBox1.setPreferredSize(new Dimension(150, 20));  // Generated
             jComboBox1.setToolTipText("font family");  // Generated
             jComboBox1.setMinimumSize(new Dimension(150, 20));  // Generated
-            String[] fontFamilyNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-            for (int i = 0; i < fontFamilyNames.length; i++) {
-                jComboBox1.addItem(fontFamilyNames[i]);
+            for (int i = 0; i < FONT_FAMILY_NAMES.length; i++) {
+                jComboBox1.addItem(FONT_FAMILY_NAMES[i]);
             }
             jComboBox1.setSelectedIndex(-1);
             jComboBox1.addItemListener(new java.awt.event.ItemListener() {
