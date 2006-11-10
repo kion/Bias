@@ -4,6 +4,7 @@
 package bias.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
 import java.util.UUID;
 
 import javax.swing.ImageIcon;
@@ -24,6 +25,8 @@ public class PlainText extends VisualEntry {
     private static final ImageIcon ICON_SWITCH_MODE = 
         new ImageIcon(PlainText.class.getResource("/bias/res/switch_mode.png"));
 
+    private static final Font FONT = new Font("SansSerif", Font.PLAIN, 12);
+    
     private JScrollPane jScrollPane = null;
     private JTextArea jTextArea = null;
     private JToolBar jToolBar = null;
@@ -80,6 +83,7 @@ public class PlainText extends VisualEntry {
     private JTextArea getJTextArea() {
         if (jTextArea == null) {
             jTextArea = new JTextArea();
+            jTextArea.setFont(FONT);
             jTextArea.setEditable(false);
         }
         return jTextArea;

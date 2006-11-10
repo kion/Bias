@@ -7,6 +7,7 @@ package bias.utils;
 import java.io.IOException;
 
 import javax.swing.JTextPane;
+import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
@@ -22,9 +23,14 @@ public class HTMLPageEditor {
 
     public static void insertHTML(JTextPane editor, String htmlText, Tag tag) throws BadLocationException, IOException {
         if (editor.getEditorKit() instanceof HTMLEditorKit && editor.getDocument() instanceof HTMLDocument) {
+            
             HTMLEditorKit editorKit = (HTMLEditorKit) editor.getEditorKit();
             HTMLDocument document = (HTMLDocument) editor.getDocument();
 
+            // remember attribute set on current editor's caret position
+            int getStylePos = editor.getCaretPosition() == 0 ? editor.getCaretPosition() : editor.getCaretPosition() - 1;
+            AttributeSet as = ((HTMLDocument) editor.getDocument()).getCharacterElement(getStylePos).getAttributes();
+            
             int caret = editor.getCaretPosition();
             Element pEl = document.getParagraphElement(caret);
 
@@ -52,6 +58,13 @@ public class HTMLPageEditor {
                 // remove blank char added before
                 document.remove(caret, 1);
             }
+            
+            // set remembered attribute set for inserted html
+            int caretAfter = editor.getCaretPosition();
+            editor.setSelectionStart(caret);
+            editor.setSelectionEnd(caretAfter);
+            editor.setCharacterAttributes(as, false);
+            
         }
     }
     
