@@ -85,7 +85,7 @@ public class HTMLPage extends VisualEntry {
     
     private static final Font DEFAULT_FONT = new Font("SansSerif", Font.PLAIN, 12);
     
-    String[] FONT_FAMILY_NAMES = new String[] { "SansSerif", "Serif", "Monospaced" };
+    private static final String[] FONT_FAMILY_NAMES = new String[] { "SansSerif", "Serif", "Monospaced" };
 
     private static final Integer FONT_SIZE_XX_LARGE = new Integer(36);
     private static final Integer FONT_SIZE_X_LARGE = new Integer(24);
