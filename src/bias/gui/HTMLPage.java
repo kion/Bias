@@ -606,7 +606,6 @@ public class HTMLPage extends VisualEntry {
             jComboBox1.setToolTipText("font family");  // Generated
             jComboBox1.setMinimumSize(new Dimension(150, 20));  // Generated
             String[] fontFamilyNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-            jComboBox1.addItem(Constants.EMPTY_STR);
             for (int i = 0; i < fontFamilyNames.length; i++) {
                 jComboBox1.addItem(fontFamilyNames[i]);
             }
