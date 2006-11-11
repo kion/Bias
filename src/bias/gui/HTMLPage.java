@@ -10,8 +10,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -549,9 +547,8 @@ public class HTMLPage extends VisualEntry {
                             linkHTML.append("</a>");
                             if (replaceSel) {
                                 getJTextPane().replaceSelection(Constants.EMPTY_STR);
-                            } else {
-                                linkHTML.append("&nbsp;");
                             }
+                            linkHTML.append("&nbsp;");
                             HTMLPageEditor.insertHTML(getJTextPane(), linkHTML.toString(), HTML.Tag.A);
                         } catch (BadLocationException exception) {
                             FrontEnd.getInstance().displayErrorMessage(exception);
@@ -647,21 +644,6 @@ public class HTMLPage extends VisualEntry {
                 public void caretUpdate(CaretEvent e) {
                     JTextPane textPane = (JTextPane) e.getSource();
                     synchronizeEditNoteControlsStates(textPane);
-                }
-            });
-            jTextPane.addKeyListener(new KeyListener(){
-                public void keyTyped(KeyEvent e) {
-                }
-                public void keyPressed(KeyEvent e) {
-                }
-                public void keyReleased(KeyEvent e) {
-                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                        try {
-                            HTMLPageEditor.insertLineBreakOnEnter(getJTextPane());
-                        } catch (Exception exception) {
-                            FrontEnd.getInstance().displayErrorMessage(exception);
-                        }
-                    }
                 }
             });
             jTextPane.addHyperlinkListener(new HyperlinkListener(){
