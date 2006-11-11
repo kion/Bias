@@ -7,9 +7,9 @@ package bias.utils;
 import java.io.IOException;
 
 import javax.swing.JTextPane;
-import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
+import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTML.Tag;
@@ -26,10 +26,6 @@ public class HTMLPageEditor {
             HTMLEditorKit editorKit = (HTMLEditorKit) editor.getEditorKit();
             HTMLDocument document = (HTMLDocument) editor.getDocument();
 
-            // remember attribute set on current editor's caret position
-            int getStylePos = editor.getCaretPosition() == 0 ? editor.getCaretPosition() : editor.getCaretPosition() - 1;
-            AttributeSet as = ((HTMLDocument) editor.getDocument()).getCharacterElement(getStylePos).getAttributes();
-            
             int caret = editor.getCaretPosition();
             Element pEl = document.getParagraphElement(caret);
 
@@ -58,13 +54,31 @@ public class HTMLPageEditor {
                 document.remove(caret, 1);
             }
             
-            // set remembered attribute set for inserted html
-            int caretAfter = editor.getCaretPosition();
-            editor.setSelectionStart(caret);
-            editor.setSelectionEnd(caretAfter);
-            editor.setCharacterAttributes(as, false);
-            
         }
     }
     
+    /**
+     * inserts HTML-line-break as response to user's Enter-key pressing;
+     * should be called immediately after Enter-key has been released
+     * 
+     * @param editor editor to insert line break to
+     * @throws BadLocationException
+     * @throws IOException
+     */
+    public static void insertLineBreakOnEnter(JTextPane editor) throws BadLocationException, IOException {
+        if (editor.getEditorKit() instanceof HTMLEditorKit && editor.getDocument() instanceof HTMLDocument) {
+            HTMLEditorKit editorKit = (HTMLEditorKit) editor.getEditorKit();
+            HTMLDocument document = (HTMLDocument) editor.getDocument();
+
+            int caret = editor.getCaretPosition();
+
+            // remove line break inserted by pressing "Enter" key...
+            document.remove(caret-1, 1);
+            // ...and insert HTML-line-break instead
+            editorKit.insertHTML(document, caret-1, "<br>", 0, 0, HTML.Tag.BR);
+            // set editor's caret position before inserted line break
+            editor.setCaretPosition(caret);
+        }
+    }
+
 }
