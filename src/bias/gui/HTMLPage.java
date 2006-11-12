@@ -7,6 +7,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
@@ -41,6 +42,7 @@ import javax.swing.text.Element;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.AbstractDocument.BranchElement;
 import javax.swing.text.html.HTML;
@@ -80,6 +82,8 @@ public class HTMLPage extends VisualEntry {
 
     private static final ImageIcon ICON_SWITCH_MODE = 
         new ImageIcon(HTMLPage.class.getResource("/bias/res/switch_mode.png"));  //  @jve:decl-index=0:
+    
+    private static final Font DEFAULT_FONT = new Font("SansSerif", Font.PLAIN, 12);
     
     private static final String[] FONT_FAMILY_NAMES = new String[] { "SansSerif", "Serif", "Monospaced" };
 
@@ -204,7 +208,7 @@ public class HTMLPage extends VisualEntry {
                 getJComboBox().removeItemListener(ils[i]);
             }
             if (fontSize == null) {
-                fontSize = FONT_SIZE_MEDIUM;
+                fontSize = DEFAULT_FONT.getSize();
             }
             Iterator it = HTMLPage.FONT_SIZES.entrySet().iterator();
             while (it.hasNext()) {
@@ -226,7 +230,7 @@ public class HTMLPage extends VisualEntry {
             if (fontFamilyAS.isDefined(StyleConstants.FontFamily)) {
                 getJComboBox1().setSelectedItem(fontFamilyAS.getAttribute(StyleConstants.FontFamily));
             } else {
-                getJComboBox1().setSelectedIndex(-1);
+                getJComboBox1().setSelectedItem(DEFAULT_FONT.getAttributes().get(StyleConstants.FontFamily));
             }
             for (int i = 0; i < ils.length; i++) {
                 getJComboBox1().addItemListener(ils[i]);
@@ -459,9 +463,8 @@ public class HTMLPage extends VisualEntry {
                             linkHTML.append("</a>");
                             if (replaceSel) {
                                 getJTextPane().replaceSelection(Constants.EMPTY_STR);
-                            } else {
-                                linkHTML.append("&nbsp;");
                             }
+                            linkHTML.append("&nbsp;");
                             HTMLPageEditor.insertHTML(getJTextPane(), linkHTML.toString(), HTML.Tag.A);
                         } catch (BadLocationException exception) {
                             FrontEnd.getInstance().displayErrorMessage(exception);
@@ -469,6 +472,7 @@ public class HTMLPage extends VisualEntry {
                             FrontEnd.getInstance().displayErrorMessage(exception);
                         }
                     }
+                    getJTextPane().requestFocusInWindow();
                 }
             });    
         }
@@ -489,11 +493,9 @@ public class HTMLPage extends VisualEntry {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     String text = null;
                     String href = null;
-                    boolean replaceSel;
                     if (getJTextPane().getSelectedText() == null) {
                         text = null;
                         href = null;
-                        replaceSel = false;
                     } else {
                         text = getJTextPane().getSelectedText();
                         int pos;
@@ -518,7 +520,6 @@ public class HTMLPage extends VisualEntry {
                                 break;
                             }
                         }
-                        replaceSel = true;
                     }
                     JLabel textLabel = new JLabel("text:");
                     JTextField textField = new JTextField();
@@ -543,11 +544,6 @@ public class HTMLPage extends VisualEntry {
                                 linkHTML.append(href);
                             }
                             linkHTML.append("</a>");
-                            if (replaceSel) {
-                                getJTextPane().replaceSelection(Constants.EMPTY_STR);
-                            } else {
-                                linkHTML.append("&nbsp;");
-                            }
                             HTMLPageEditor.insertHTML(getJTextPane(), linkHTML.toString(), HTML.Tag.A);
                         } catch (BadLocationException exception) {
                             FrontEnd.getInstance().displayErrorMessage(exception);
@@ -555,6 +551,7 @@ public class HTMLPage extends VisualEntry {
                             FrontEnd.getInstance().displayErrorMessage(exception);
                         }
                     }
+                    getJTextPane().requestFocusInWindow();
                 }
             });    
         }
@@ -629,6 +626,16 @@ public class HTMLPage extends VisualEntry {
             jTextPane = new JTextPane();
             jTextPane.setEditable(false);
             jTextPane.setEditorKit(new HTMLEditorKit());
+
+            // set default font for JTextPane instance
+            MutableAttributeSet attrs = jTextPane.getInputAttributes();
+            StyleConstants.setFontFamily(attrs, DEFAULT_FONT.getFamily());
+            StyleConstants.setFontSize(attrs, DEFAULT_FONT.getSize());
+            StyleConstants.setItalic(attrs, (DEFAULT_FONT.getStyle() & Font.ITALIC) != 0);
+            StyleConstants.setBold(attrs, (DEFAULT_FONT.getStyle() & Font.BOLD) != 0);
+            StyledDocument doc = jTextPane.getStyledDocument();
+            doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
+
             jTextPane.addCaretListener(new CaretListener(){
                 public void caretUpdate(CaretEvent e) {
                     JTextPane textPane = (JTextPane) e.getSource();
