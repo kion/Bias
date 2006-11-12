@@ -43,7 +43,7 @@ public class HTMLPageEditor {
             
             // insert space after inserted html if needed
             boolean insertSpace = true;
-            if (caret == document.getLength()) {
+            if (caret < document.getLength()) {
                 if (document.getText(caret, 1).matches("\\s+")) {
                     insertSpace = false;
                 }
