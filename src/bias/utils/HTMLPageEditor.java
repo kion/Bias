@@ -101,11 +101,16 @@ public class HTMLPageEditor {
             HTMLDocument document = (HTMLDocument) editor.getDocument();
 
             int caret = editor.getCaretPosition();
+            Element pEl = document.getParagraphElement(caret-1);
+            boolean isParagraphBegining = caret-1 == pEl.getStartOffset();
 
             // insert HTML-line-break
             editorKit.insertHTML(document, caret-1, "<br>", 0, 0, HTML.Tag.BR);
-            // remove plain line break
-            document.remove(caret-1, 1);
+
+            if (!isParagraphBegining) {
+                // remove plain line break
+                document.remove(caret-1, 1);
+            }
             
         }
     }
