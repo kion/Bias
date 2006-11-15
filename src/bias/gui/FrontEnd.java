@@ -72,35 +72,32 @@ public class FrontEnd extends JFrame {
 
     public static final ImageIcon ICON_SAVE = new ImageIcon(Constants.class.getResource("/bias/res/save.png"));
 
-    private static final Placement[] PLACEMENTS = new Placement[] { new Placement("Top", JTabbedPane.TOP),
-            new Placement("Left", JTabbedPane.LEFT), new Placement("Right", JTabbedPane.RIGHT),
-            new Placement("Bottom", JTabbedPane.BOTTOM) };
+    private static final Placement[] PLACEMENTS = new Placement[] { new Placement(JTabbedPane.TOP),
+            new Placement(JTabbedPane.LEFT), new Placement(JTabbedPane.RIGHT),
+            new Placement(JTabbedPane.BOTTOM) };
 
     private static class Placement {
         private String string;
-
         private Integer integer;
-
-        public Placement() {
+        public Placement(int placementType) {
+        	this.integer = placementType;
+        	switch (placementType) {
+        	case JTabbedPane.TOP: this.string = "Top"; break;
+        	case JTabbedPane.LEFT: this.string = "Left"; break;
+        	case JTabbedPane.RIGHT: this.string = "Right"; break;
+        	case JTabbedPane.BOTTOM: this.string = "Bottom"; break;
+        	default: this.string = "Top";
+        	}
         }
-
-        public Placement(String string, Integer integer) {
-            this.string = string;
-            this.integer = integer;
-        }
-
         public Integer getInteger() {
             return integer;
         }
-
         public void setInteger(Integer integer) {
             this.integer = integer;
         }
-
         public String getString() {
             return string;
         }
-
         public void setString(String string) {
             this.string = string;
         }
@@ -484,10 +481,25 @@ public class FrontEnd extends JFrame {
                 JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
                 int index = tabbedPane.getSelectedIndex();
                 String caption = tabbedPane.getTitleAt(index);
-                caption = JOptionPane.showInputDialog(FrontEnd.this, "Entry caption:", caption);
-                if (caption != null) {
-                    tabbedPane.setTitleAt(index, caption);
+                JLabel pLabel = new JLabel("Item's category placement:");
+                JComboBox placementsChooser = new JComboBox();
+                for (Placement placement : PLACEMENTS) {
+                    placementsChooser.addItem(placement);
                 }
+                for (int i = 0; i < placementsChooser.getItemCount(); i++) {
+                	if (((Placement) placementsChooser.getItemAt(i)).getInteger().equals(tabbedPane.getTabPlacement())) {
+                		placementsChooser.setSelectedIndex(i);
+                		break;
+                	}
+                }
+                JLabel cLabel = new JLabel("Item's caption:");
+                caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, cLabel },
+                        caption);
+                if (caption != null) {
+                	tabbedPane.setTitleAt(index, caption);
+                	tabbedPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
+                }
+                
             }
         }
     };
