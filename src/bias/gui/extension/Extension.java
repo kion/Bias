@@ -17,7 +17,9 @@ public abstract class Extension extends JPanel {
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Annotation {
         String name();
+        String version();
         String description();
+        String author();
     }
     
     private UUID id;

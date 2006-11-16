@@ -21,7 +21,9 @@ import bias.utils.UndoRedoManager;
 
 @Extension.Annotation(
         name = "Plain text", 
-        description = "Simple component with plain text editing feature only")
+        version="1.0",
+        description = "Simple plain text editor",
+        author="kion")
 public class PlainText extends Extension {
 
     private static final long serialVersionUID = 1L;

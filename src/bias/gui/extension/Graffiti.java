@@ -34,8 +34,10 @@ import com.sun.image.codec.jpeg.ImageFormatException;
  */
 
 @Extension.Annotation(
-        name = "Graffiti", 
-        description = "Simple painting component with basic features")
+        name = "Graffiti",
+        version="0.1.1",
+        description = "Simple painting component with basic features",
+        author="kion")
 public class Graffiti extends Extension {
 
     private static final long serialVersionUID = 1L;
