@@ -347,7 +347,7 @@ public class FrontEnd extends JFrame {
             } else {
                 Extension extension = (Extension) c;
                 byte[] serializedData = extension.serialize();
-                DataEntry dataEntry = new DataEntry(extension.getId(), caption, extension.getClass().getSimpleName(), serializedData);
+                DataEntry dataEntry = new DataEntry(extension.getId(), caption, extension.getClass().getName(), serializedData);
                 data.addDataItem(dataEntry);
             }
         }
@@ -1140,11 +1140,18 @@ public class FrontEnd extends JFrame {
                 JList vcsList = new JList(new DefaultListModel());
                 model = (DefaultListModel) vcsList.getModel();
                 components = new HashMap<String, String>();
-                for (String component : BackEnd.getInstance().getExtensions()) {
-                    Class<?> vcClass = Class.forName(component);
+                for (String extension : BackEnd.getInstance().getExtensions()) {
+                    String annotationStr;
+                    Class<?> vcClass = Class.forName(extension);
                     Extension.Annotation vcAnn = 
                         (Extension.Annotation) vcClass.getAnnotation(Extension.Annotation.class);
-                    String annotationStr = vcAnn.name() + " [ " + vcAnn.description() + " ]";
+                    if (vcAnn != null) {
+                        annotationStr = vcAnn.name() 
+                                        + " [ " + vcAnn.description() + " ]";
+                    } else {
+                        annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length()) 
+                                        + " [ No Description ]";
+                    }
                     model.addElement(annotationStr);
                     components.put(annotationStr, vcClass.getName());
                 }

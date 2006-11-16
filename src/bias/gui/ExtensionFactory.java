@@ -42,18 +42,25 @@ public class ExtensionFactory {
     }
     
     public Extension newExtension(DataEntry dataEntry) throws Exception {
-        Class entryClass = Class.forName(Extension.class.getPackage().getName() + "." + dataEntry.getType());
+        Class entryClass = Class.forName(dataEntry.getType());
         Extension extension = newExtension(entryClass, dataEntry.getId(), dataEntry.getData());
         return extension;
     }
 
     public final Map<String, Class> getExtensions() throws Exception {
         Map<String, Class> types = new LinkedHashMap<String, Class>();
-        for (String component : BackEnd.getInstance().getExtensions()) {
-            Class<?> vcClass = Class.forName(component);
+        for (String extension : BackEnd.getInstance().getExtensions()) {
+            String annotationStr;
+            Class<?> vcClass = Class.forName(extension);
             Extension.Annotation vcAnn = 
                 (Extension.Annotation) vcClass.getAnnotation(Extension.Annotation.class);
-            String annotationStr = vcAnn.name() + " [ " + vcAnn.description() + " ]";
+            if (vcAnn != null) {
+                annotationStr = vcAnn.name() 
+                                + " [ " + vcAnn.description() + " ]";
+            } else {
+                annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length()) 
+                                + " [ No Description ]";
+            }
             types.put(annotationStr, vcClass);
         }
         return types;
