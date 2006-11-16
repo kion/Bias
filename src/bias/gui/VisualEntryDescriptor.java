@@ -8,17 +8,17 @@ import java.util.UUID;
 /**
  * @author kion
  */
-public class VisualItemDescriptor {
+public class VisualEntryDescriptor {
     
     private UUID id;
     
     private String[] captionsPath;
     
-    public VisualItemDescriptor() {
+    public VisualEntryDescriptor() {
         // default constructor
     }
     
-    public VisualItemDescriptor(UUID id, String[] captionsPath) {
+    public VisualEntryDescriptor(UUID id, String[] captionsPath) {
         this.id = id;
         this.captionsPath = captionsPath;
     }

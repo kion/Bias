@@ -1,8 +1,10 @@
 /**
  * Created on Oct 23, 2006
  */
-package bias.gui;
+package bias.gui.extension;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.UUID;
 
 import javax.swing.JPanel;
@@ -10,13 +12,19 @@ import javax.swing.JPanel;
 /**
  * @author kion
  */
-public abstract class VisualEntry extends JPanel {
+public abstract class Extension extends JPanel {
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Annotation {
+        String name();
+        String description();
+    }
     
     private UUID id;
     
     private byte[] data;
     
-    private VisualEntry() {
+    private Extension() {
         // default constructor without parameters is not visible
     }
     
@@ -24,7 +32,7 @@ public abstract class VisualEntry extends JPanel {
      * The only allowed constructor that is aware of initialization data.
      * @param data data to be incapsulated by visual entry
      */
-    public VisualEntry(UUID id, byte[] data) {
+    public Extension(UUID id, byte[] data) {
         if (id == null) {
         	id = UUID.randomUUID();
         }

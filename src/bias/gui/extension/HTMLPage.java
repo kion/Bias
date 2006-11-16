@@ -1,7 +1,7 @@
 /**
  * Created on Oct 23, 2006
  */
-package bias.gui;
+package bias.gui.extension;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -50,6 +50,8 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
 import bias.global.Constants;
+import bias.gui.FrontEnd;
+import bias.gui.VisualEntryDescriptor;
 import bias.utils.BrowserLauncher;
 import bias.utils.HTMLPageEditor;
 import bias.utils.UndoRedoManager;
@@ -58,7 +60,11 @@ import bias.utils.Validator;
 /**
  * @author kion
  */
-public class HTMLPage extends VisualEntry {
+
+@Extension.Annotation(
+        name = "HTML Page", 
+        description = "WYSIWYG HTML page editor")
+public class HTMLPage extends Extension {
 
     private static final long serialVersionUID = 1L;
 
@@ -133,7 +139,7 @@ public class HTMLPage extends VisualEntry {
     }
 
     /* (non-Javadoc)
-     * @see bias.gui.VisualEntry#serialize()
+     * @see bias.gui.Extension#serialize()
      */
     @Override
     public byte[] serialize() {
@@ -434,10 +440,10 @@ public class HTMLPage extends VisualEntry {
                     if (href != null) {
                         id = href.substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
                     }
-                    VisualItemDescriptor currDescriptor = null;
+                    VisualEntryDescriptor currDescriptor = null;
                     JLabel entryLabel = new JLabel("entry:");
                     JComboBox hrefComboBox = new JComboBox();
-                    for (VisualItemDescriptor veDescriptor : FrontEnd.getInstance().getVisualItemDescriptors()) {
+                    for (VisualEntryDescriptor veDescriptor : FrontEnd.getInstance().getVisualEntryDescriptors()) {
                         hrefComboBox.addItem(veDescriptor);
                         if (veDescriptor.getId().toString().equals(id)) {
                             currDescriptor = veDescriptor;
@@ -454,7 +460,7 @@ public class HTMLPage extends VisualEntry {
                             StringBuffer linkHTML = new StringBuffer("<a ");
                             linkHTML.append("href=\"" + Constants.ENTRY_PROTOCOL_PREFIX);
                             if (!Validator.isNullOrBlank(hrefComboBox.getSelectedItem())) {
-                                linkHTML.append(((VisualItemDescriptor)hrefComboBox.getSelectedItem()).getId());
+                                linkHTML.append(((VisualEntryDescriptor)hrefComboBox.getSelectedItem()).getId());
                             } else {
                                 linkHTML.append("#");
                             }
@@ -662,7 +668,7 @@ public class HTMLPage extends VisualEntry {
                     if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
                         if (e.getDescription().startsWith(Constants.ENTRY_PROTOCOL_PREFIX)) {
                             String idStr = e.getDescription().substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
-                            FrontEnd.getInstance().switchToVisualItem(UUID.fromString(idStr));
+                            FrontEnd.getInstance().switchToVisualEntry(UUID.fromString(idStr));
                         } else {
                             try {
                                 BrowserLauncher.openURL(e.getDescription());

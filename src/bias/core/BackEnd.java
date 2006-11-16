@@ -3,6 +3,7 @@
  */
 package bias.core;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -14,7 +15,9 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -80,19 +83,20 @@ public class BackEnd {
             while ((c = zis.read()) != -1) {
                 out.write(c);
             }
-            if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
+            String name = ze.getName();
+            if (name.matches(Constants.DATA_FILE_PATTERN)) {
             	String entryNumericPath = ze.getName()
 			            	.replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
 			            	.replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
                 DataEntry de = new DataEntry();
                 de.setData(out.toByteArray());
                 numberedData.put(entryNumericPath, de);
-            } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
+            } else if (name.equals(Constants.METADATA_FILE_PATH)) {
                 if (out.size() != 0) {
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
                             new ByteArrayInputStream(out.toByteArray()));
                 }
-            } else if (ze.getName().equals(Constants.CONFIG_FILE_PATH)) {
+            } else if (name.equals(Constants.CONFIG_FILE_PATH)) {
                 properties.load(
                         new ByteArrayInputStream(out.toByteArray()));
             } else {
@@ -103,6 +107,67 @@ public class BackEnd {
         data = parseMetadata(metadata, numberedData, null);
     }
     
+    public Collection<String> getExtensions() {
+        Collection<String> extensions = new LinkedHashSet<String>();
+        for (String name : zipEntries.keySet()) {
+            if (name.matches(Constants.VISUAL_COMPONENT_FILE_PATTERN)
+                    && !name.equals(Constants.VISUAL_COMPONENT_SKIP_FILE_PATH)) {
+                String extension = 
+                    name.substring(0, name.length() - Constants.VISUAL_COMPONENT_FILE_ENDING.length())
+                    .replaceAll(Constants.ZIP_PATH_SEPARATOR, Constants.PACKAGE_PATH_SEPARATOR);
+                extensions.add(extension);
+            }
+        }
+        return extensions;
+    }
+
+    public void installExtension(File componentFile) throws Exception {
+        if (componentFile != null && componentFile.exists() && !componentFile.isDirectory()) {
+            String name = componentFile.getName();
+            if (name.matches(Constants.ARCHIVE_FILE_PATTHERN)) {
+                ZipInputStream in = new ZipInputStream(new FileInputStream(componentFile));
+                ZipEntry ze = null;
+                while ((ze = in.getNextEntry()) != null) {
+                    String zeName = ze.getName();
+                    if (zeName.endsWith(Constants.VISUAL_COMPONENT_FILE_ENDING)) {
+                        ByteArrayOutputStream out = new ByteArrayOutputStream();
+                        int b;
+                        while ((b = in.read()) != -1) {
+                            out.write(b);
+                        }
+                        out.flush();
+                        out.close();
+                        zipEntries.put(Constants.VISUAL_COMPONENT_DIR_PATH + Constants.ZIP_PATH_SEPARATOR + zeName, out.toByteArray());
+                    }
+                }
+                in.close();
+            } else if (name.endsWith(Constants.VISUAL_COMPONENT_FILE_ENDING)) {
+                BufferedInputStream in = new BufferedInputStream(new FileInputStream(componentFile));
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                int b;
+                while ((b = in.read()) != -1) {
+                    out.write(b);
+                }
+                out.flush();
+                out.close();
+                in.close();
+                zipEntries.put(Constants.VISUAL_COMPONENT_DIR_PATH + Constants.ZIP_PATH_SEPARATOR + name, out.toByteArray());
+            }
+        }
+    }
+    
+    public void uninstallExtension(String componentName) throws Exception {
+        Collection<String> removeKeys = new HashSet<String>();
+        for (String key : zipEntries.keySet()) {
+            if (key.matches(componentName + Constants.ANY_CHARACTERS_PATTHERN)) {
+                removeKeys.add(key);
+            }
+        }
+        for (String key : removeKeys) {
+            zipEntries.remove(key);
+        }
+    }
+        
     public DataCategory importData(File jarFile, Collection<UUID> existingIDs) throws Exception {
         Map<String,DataEntry> importedNumberedData = new LinkedHashMap<String, DataEntry>();
         Document metadata = null;
@@ -148,6 +213,7 @@ public class BackEnd {
         return data;
     }
     
+    // TODO: handle imported/existing types somehow
     private void buildData(String path, DataCategory data, Node node, Map<String, DataEntry> numberedData, Collection<UUID> existingIDs) throws Exception {
         if (node.getNodeName().equals(Constants.XML_ELEMENT_ROOT_CONTAINER)) {
             NodeList nodes = node.getChildNodes();

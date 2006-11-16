@@ -1,7 +1,7 @@
 /**
  * Created on Oct 28, 2006
  */
-package bias.gui;
+package bias.gui.extension;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -26,12 +26,17 @@ import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.border.LineBorder;
 
+
 import com.sun.image.codec.jpeg.ImageFormatException;
 
 /**
  * @author kion
  */
-public class Graffiti extends VisualEntry {
+
+@Extension.Annotation(
+        name = "Graffiti", 
+        description = "Simple painting component with basic features")
+public class Graffiti extends Extension {
 
     private static final long serialVersionUID = 1L;
     
@@ -249,7 +254,7 @@ public class Graffiti extends VisualEntry {
     }
 
     /* (non-Javadoc)
-     * @see bias.gui.VisualEntry#serialize()
+     * @see bias.gui.Extension#serialize()
      */
     @Override
     public byte[] serialize() throws ImageFormatException, IOException {

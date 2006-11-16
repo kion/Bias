@@ -3,8 +3,7 @@
  */
 package bias.global;
 
-
-
+import bias.gui.extension.Extension;
 
 /**
  * @author kion
@@ -16,6 +15,16 @@ public class Constants {
     public static final String EMPTY_STR = "";
     public static final String NULL_STR = "NULL";
     public static final String EMPTY_STR_PATTERN = "\\s*";
+
+    public static final String ZIP_PATH_SEPARATOR = "/";
+    public static final String PACKAGE_PATH_SEPARATOR = ".";
+
+    public static final String ARCHIVE_FILE_PATTHERN = "(?i).*\\.(zip|jar)$";
+    
+    public static final String EXTENSION_FILE_PATTHERN = "(?i).*\\.(class|zip|jar)$";
+    public static final String EXTENSION_FILE_PATTHERN_DESCRIPTION = "Java Class, ZIP/JAR archive containing Java Classes";
+
+    public static final String ANY_CHARACTERS_PATTHERN = ".*";
     
     public static final String DATA_FILE_PATTERN = "data/[\\d/]+\\.data";
     public static final String DATA_FILE_ENDING_PATTERN = "\\.data";
@@ -24,6 +33,12 @@ public class Constants {
     public static final String METADATA_FILE_PATH = "data/metadata.xml";
     public static final String DATA_DIR_PATTERN = "data/";
     public static final String DATA_DIR = "data/";
+    public static final String VISUAL_COMPONENT_FILE_ENDING = ".class";
+    public static final String VISUAL_COMPONENT_DIR_PATH = 
+        Extension.class.getPackage().getName().replaceAll("\\.", ZIP_PATH_SEPARATOR);
+    public static final String VISUAL_COMPONENT_FILE_PATTERN = VISUAL_COMPONENT_DIR_PATH + "/[\\w/]+\\.class";
+    public static final String VISUAL_COMPONENT_SKIP_FILE_PATH = 
+        Extension.class.getName().replaceAll("\\.", ZIP_PATH_SEPARATOR) + VISUAL_COMPONENT_FILE_ENDING;
 
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";

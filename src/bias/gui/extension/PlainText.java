@@ -1,7 +1,7 @@
 /**
  * Created on Oct 24, 2006
  */
-package bias.gui;
+package bias.gui.extension;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
@@ -18,7 +18,11 @@ import bias.utils.UndoRedoManager;
 /**
  * @author kion
  */
-public class PlainText extends VisualEntry {
+
+@Extension.Annotation(
+        name = "Plain text", 
+        description = "Simple component with plain text editing feature only")
+public class PlainText extends Extension {
 
     private static final long serialVersionUID = 1L;
 
@@ -41,7 +45,7 @@ public class PlainText extends VisualEntry {
     }
 
     /* (non-Javadoc)
-     * @see bias.gui.VisualEntry#serialize()
+     * @see bias.gui.Extension#serialize()
      */
     @Override
     public byte[] serialize() {
