@@ -12,31 +12,39 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.TabbedPaneUI;
 
@@ -45,6 +53,7 @@ import bias.core.DataCategory;
 import bias.core.DataEntry;
 import bias.core.Recognizable;
 import bias.global.Constants;
+import bias.gui.extension.Extension;
 import bias.utils.BrowserLauncher;
 
 /**
@@ -71,6 +80,8 @@ public class FrontEnd extends JFrame {
     public static final ImageIcon ICON_ADD_ROOT_ENTRY = new ImageIcon(Constants.class.getResource("/bias/res/add_root_entry.png"));
 
     public static final ImageIcon ICON_SAVE = new ImageIcon(Constants.class.getResource("/bias/res/save.png"));
+
+    public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(Constants.class.getResource("/bias/res/extensions.png"));
 
     private static final Placement[] PLACEMENTS = new Placement[] { new Placement(JTabbedPane.TOP),
             new Placement(JTabbedPane.LEFT), new Placement(JTabbedPane.RIGHT),
@@ -105,6 +116,24 @@ public class FrontEnd extends JFrame {
         @Override
         public String toString() {
             return string;
+        }
+    }
+    
+    private static class ExtensionFileChooser extends JFileChooser {
+        private static final long serialVersionUID = 1L;
+
+        public ExtensionFileChooser() {
+            super();
+            setFileFilter(new FileFilter(){
+                @Override
+                public boolean accept(File file) {
+                    return file.isDirectory() || file.getName().matches(Constants.EXTENSION_FILE_PATTHERN);
+                }
+                @Override
+                public String getDescription() {
+                    return Constants.EXTENSION_FILE_PATTHERN_DESCRIPTION;
+                }
+            });            
         }
     }
 
@@ -152,6 +181,8 @@ public class FrontEnd extends JFrame {
     private JButton jButton6 = null;
 
     private JButton jButton7 = null;
+
+    private JButton jButton8 = null;
 
     private JButton jButton3 = null;
 
@@ -213,7 +244,7 @@ public class FrontEnd extends JFrame {
 
             String lsid = properties.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
             if (lsid != null) {
-                switchToVisualItem(UUID.fromString(lsid));
+                switchToVisualEntry(UUID.fromString(lsid));
             }
 
             this.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -243,8 +274,8 @@ public class FrontEnd extends JFrame {
             for (Recognizable item : data.getData()) {
                 if (item instanceof DataEntry) {
                     String caption = item.getCaption();
-                    VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry((DataEntry) item);
-                    tabbedPane.addTab(caption, visualEntry);
+                    Extension extension = ExtensionFactory.getInstance().newExtension((DataEntry) item);
+                    tabbedPane.addTab(caption, extension);
                 } else if (item instanceof DataCategory) {
                     String caption = item.getCaption();
                     JTabbedPane categoryTabPane = new JTabbedPane();
@@ -283,7 +314,7 @@ public class FrontEnd extends JFrame {
                 / getToolkit().getScreenSize().getHeight());
         properties.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR + getSize().getHeight()
                 / getToolkit().getScreenSize().getHeight());
-        UUID lsid = getSelectedVisualItemID();
+        UUID lsid = getSelectedVisualEntryID();
         if (lsid != null) {
             properties.put(Constants.PROPERTY_LAST_SELECTED_ID, lsid.toString());
         }
@@ -314,27 +345,27 @@ public class FrontEnd extends JFrame {
                 }
                 dc.setPlacement(tp.getTabPlacement());
             } else {
-                VisualEntry visualEntry = (VisualEntry) c;
-                byte[] serializedData = visualEntry.serialize();
-                DataEntry dataEntry = new DataEntry(visualEntry.getId(), caption, visualEntry.getClass().getSimpleName(), serializedData);
+                Extension extension = (Extension) c;
+                byte[] serializedData = extension.serialize();
+                DataEntry dataEntry = new DataEntry(extension.getId(), caption, extension.getClass().getSimpleName(), serializedData);
                 data.addDataItem(dataEntry);
             }
         }
         return data;
     }
 
-    private UUID getSelectedVisualItemID() {
-        return getSelectedVisualItemID(getJTabbedPane());
+    private UUID getSelectedVisualEntryID() {
+        return getSelectedVisualEntryID(getJTabbedPane());
     }
 
-    private UUID getSelectedVisualItemID(JTabbedPane tabPane) {
+    private UUID getSelectedVisualEntryID(JTabbedPane tabPane) {
         if (tabPane.getTabCount() > 0) {
             if (tabPane.getSelectedIndex() != -1) {
                 Component c = tabPane.getSelectedComponent();
                 if (c instanceof JTabbedPane) {
-                    return getSelectedVisualItemID((JTabbedPane) c);
-                } else if (c instanceof VisualEntry) {
-                    return ((VisualEntry) c).getId();
+                    return getSelectedVisualEntryID((JTabbedPane) c);
+                } else if (c instanceof Extension) {
+                    return ((Extension) c).getId();
                 }
             } else {
                 String idStr = tabPane.getName();
@@ -348,11 +379,11 @@ public class FrontEnd extends JFrame {
         return null;
     }
 
-    private Collection<UUID> getVisualItemsIDs() {
-        return getVisualItemsIDs(getJTabbedPane());
+    private Collection<UUID> getVisualEntriesIDs() {
+        return getVisualEntriesIDs(getJTabbedPane());
     }
 
-    private Collection<UUID> getVisualItemsIDs(JTabbedPane rootTabPane) {
+    private Collection<UUID> getVisualEntriesIDs(JTabbedPane rootTabPane) {
         Collection<UUID> ids = new LinkedList<UUID>();
         String idStr = rootTabPane.getName();
         if (idStr != null) {
@@ -360,9 +391,9 @@ public class FrontEnd extends JFrame {
         }
         for (Component c : rootTabPane.getComponents()) {
             if (c instanceof JTabbedPane) {
-                ids.addAll(getVisualItemsIDs((JTabbedPane) c));
-            } else if (c instanceof VisualEntry) {
-                VisualEntry ve = (VisualEntry) c;
+                ids.addAll(getVisualEntriesIDs((JTabbedPane) c));
+            } else if (c instanceof Extension) {
+                Extension ve = (Extension) c;
                 if (ve.getId() != null) {
                     ids.add(ve.getId());
                 }
@@ -371,27 +402,27 @@ public class FrontEnd extends JFrame {
         return ids;
     }
 
-    public Collection<VisualItemDescriptor> getVisualItemDescriptors() {
-        return getVisualItemDescriptors(getJTabbedPane(), new LinkedList<String>());
+    public Collection<VisualEntryDescriptor> getVisualEntryDescriptors() {
+        return getVisualEntryDescriptors(getJTabbedPane(), new LinkedList<String>());
     }
 
-    private Collection<VisualItemDescriptor> getVisualItemDescriptors(JTabbedPane rootTabPane, LinkedList<String> captionsPath) {
-        Collection<VisualItemDescriptor> vDescriptors = new LinkedList<VisualItemDescriptor>();
+    private Collection<VisualEntryDescriptor> getVisualEntryDescriptors(JTabbedPane rootTabPane, LinkedList<String> captionsPath) {
+        Collection<VisualEntryDescriptor> vDescriptors = new LinkedList<VisualEntryDescriptor>();
         String idStr = rootTabPane.getName();
         if (idStr != null) {
-            vDescriptors.add(new VisualItemDescriptor(UUID.fromString(idStr), captionsPath.toArray(new String[] {})));
+            vDescriptors.add(new VisualEntryDescriptor(UUID.fromString(idStr), captionsPath.toArray(new String[] {})));
         }
         for (int i = 0; i < rootTabPane.getTabCount(); i++) {
             Component c = rootTabPane.getComponent(i);
             String caption = rootTabPane.getTitleAt(i);
             captionsPath.addLast(caption);
             if (c instanceof JTabbedPane) {
-                vDescriptors.addAll(getVisualItemDescriptors((JTabbedPane) c, captionsPath));
+                vDescriptors.addAll(getVisualEntryDescriptors((JTabbedPane) c, captionsPath));
                 captionsPath.removeLast();
-            } else if (c instanceof VisualEntry) {
-                VisualEntry ve = (VisualEntry) c;
+            } else if (c instanceof Extension) {
+                Extension ve = (Extension) c;
                 if (ve.getId() != null) {
-                    vDescriptors.add(new VisualItemDescriptor(ve.getId(), captionsPath.toArray(new String[] {})));
+                    vDescriptors.add(new VisualEntryDescriptor(ve.getId(), captionsPath.toArray(new String[] {})));
                 }
                 captionsPath.removeLast();
             }
@@ -399,29 +430,29 @@ public class FrontEnd extends JFrame {
         return vDescriptors;
     }
 
-    public boolean switchToVisualItem(UUID id) {
-        return switchToVisualItem(getJTabbedPane(), id, new LinkedList<Component>());
+    public boolean switchToVisualEntry(UUID id) {
+        return switchToVisualEntry(getJTabbedPane(), id, new LinkedList<Component>());
     }
 
-    private boolean switchToVisualItem(JTabbedPane rootTabPane, UUID id, LinkedList<Component> path) {
+    private boolean switchToVisualEntry(JTabbedPane rootTabPane, UUID id, LinkedList<Component> path) {
         String idStr = rootTabPane.getName();
         if (idStr != null && UUID.fromString(idStr).equals(id)) {
-            switchToVisualItem(getJTabbedPane(), path.iterator());
+            switchToVisualEntry(getJTabbedPane(), path.iterator());
             return true;
         }
         for (Component c : rootTabPane.getComponents()) {
             path.addLast(c);
             if (c instanceof JTabbedPane) {
                 JTabbedPane tabPane = (JTabbedPane) c;
-                if (switchToVisualItem(tabPane, id, path)) {
+                if (switchToVisualEntry(tabPane, id, path)) {
                     return true;
                 } else {
                     path.removeLast();
                 }
-            } else if (c instanceof VisualEntry) {
-                VisualEntry ve = (VisualEntry) c;
+            } else if (c instanceof Extension) {
+                Extension ve = (Extension) c;
                 if (ve.getId().equals(id)) {
-                    switchToVisualItem(getJTabbedPane(), path.iterator());
+                    switchToVisualEntry(getJTabbedPane(), path.iterator());
                     return true;
                 } else {
                     path.removeLast();
@@ -431,12 +462,12 @@ public class FrontEnd extends JFrame {
         return false;
     }
 
-    private void switchToVisualItem(JTabbedPane tabPane, Iterator<Component> pathIterator) {
+    private void switchToVisualEntry(JTabbedPane tabPane, Iterator<Component> pathIterator) {
         if (pathIterator.hasNext()) {
             Component selComp = pathIterator.next();
             tabPane.setSelectedComponent(selComp);
             if (selComp instanceof JTabbedPane) {
-                switchToVisualItem((JTabbedPane) selComp, pathIterator);
+                switchToVisualEntry((JTabbedPane) selComp, pathIterator);
             }
         }
     }
@@ -801,6 +832,7 @@ public class FrontEnd extends JFrame {
             jToolBar2.setFloatable(false); // Generated
             jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT); // Generated
             jToolBar2.add(getJButton6()); // Generated
+            jToolBar2.add(getJButton8()); // Generated
         }
         return jToolBar2;
     }
@@ -831,6 +863,20 @@ public class FrontEnd extends JFrame {
             jButton7.setIcon(ICON_SAVE);
         }
         return jButton7;
+    }
+
+    /**
+     * This method initializes jButton8
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton8() {
+        if (jButton8 == null) {
+            jButton8 = new JButton(manageExtensionsAction);
+            jButton8.setToolTipText("manage extensions"); // Generated
+            jButton8.setIcon(ICON_EXTENSIONS);
+        }
+        return jButton8;
     }
 
     /**
@@ -867,7 +913,7 @@ public class FrontEnd extends JFrame {
         return result;
     }
 
-    Action addRootCategoryAction = new AbstractAction() {
+    private Action addRootCategoryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
@@ -903,7 +949,7 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    Action addRootEntryAction = new AbstractAction() {
+    private Action addRootEntryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
@@ -921,7 +967,7 @@ public class FrontEnd extends JFrame {
         try {
             JLabel entryTypeLabel = new JLabel("Type:");
             JComboBox entryTypeComboBox = new JComboBox();
-            for (String entryType : VisualEntryFactory.getInstance().getEntryTypes().keySet()) {
+            for (String entryType : ExtensionFactory.getInstance().getExtensions().keySet()) {
                 entryTypeComboBox.addItem(entryType);
             }
             if (lastAddedEntryType != null) {
@@ -933,11 +979,11 @@ public class FrontEnd extends JFrame {
             if (caption != null) {
                 String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                 lastAddedEntryType = typeDescription;
-                Class type = VisualEntryFactory.getInstance().getEntryTypes().get(typeDescription);
-                VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(type);
-                if (visualEntry != null) {
-                    getJTabbedPane().addTab(caption, visualEntry);
-                    getJTabbedPane().setSelectedComponent(visualEntry);
+                Class type = ExtensionFactory.getInstance().getExtensions().get(typeDescription);
+                Extension extension = ExtensionFactory.getInstance().newExtension(type);
+                if (extension != null) {
+                    getJTabbedPane().addTab(caption, extension);
+                    getJTabbedPane().setSelectedComponent(extension);
                 }
             }
         } catch (Exception ex) {
@@ -945,7 +991,7 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    Action addEntryAction = new AbstractAction() {
+    private Action addEntryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
@@ -956,7 +1002,7 @@ public class FrontEnd extends JFrame {
                     }
                     JLabel entryTypeLabel = new JLabel("Type:");
                     JComboBox entryTypeComboBox = new JComboBox();
-                    for (String entryType : VisualEntryFactory.getInstance().getEntryTypes().keySet()) {
+                    for (String entryType : ExtensionFactory.getInstance().getExtensions().keySet()) {
                         entryTypeComboBox.addItem(entryType);
                     }
                     if (lastAddedEntryType != null) {
@@ -968,11 +1014,11 @@ public class FrontEnd extends JFrame {
                     if (caption != null) {
                         String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                         lastAddedEntryType = typeDescription;
-                        Class type = VisualEntryFactory.getInstance().getEntryTypes().get(typeDescription);
-                        VisualEntry visualEntry = VisualEntryFactory.getInstance().newVisualEntry(type);
-                        if (visualEntry != null) {
-                            currentTabPane.addTab(caption, visualEntry);
-                            currentTabPane.setSelectedComponent(visualEntry);
+                        Class type = ExtensionFactory.getInstance().getExtensions().get(typeDescription);
+                        Extension extension = ExtensionFactory.getInstance().newExtension(type);
+                        if (extension != null) {
+                            currentTabPane.addTab(caption, extension);
+                            currentTabPane.setSelectedComponent(extension);
                         }
                     }
                 } catch (Exception ex) {
@@ -982,7 +1028,7 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    Action deleteEntryOrCategoryAction = new AbstractAction() {
+    private Action deleteEntryOrCategoryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
@@ -1005,7 +1051,7 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    Action importDataAction = new AbstractAction() {
+    private Action importDataAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
@@ -1030,7 +1076,7 @@ public class FrontEnd extends JFrame {
                 int rVal = jfc.showOpenDialog(FrontEnd.this);
                 if (rVal == JFileChooser.APPROVE_OPTION) {
                     jarFile = jfc.getSelectedFile();
-                    representData(BackEnd.getInstance().importData(jarFile, getVisualItemsIDs()));
+                    representData(BackEnd.getInstance().importData(jarFile, getVisualEntriesIDs()));
                 }
             } catch (Exception ex) {
                 displayErrorMessage(ex);
@@ -1038,7 +1084,7 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    Action addCategoryAction = new AbstractAction() {
+    private Action addCategoryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
@@ -1068,7 +1114,7 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    Action saveAction = new AbstractAction() {
+    private Action saveAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
@@ -1079,8 +1125,84 @@ public class FrontEnd extends JFrame {
             }
         }
     };
+    
+    private Action manageExtensionsAction = new AbstractAction() {
+        private static final long serialVersionUID = 1L;
 
-    Action displayAboutInfoAction = new AbstractAction() {
+        private Map<String, String> components;
+        private String selectedComponent;
+        DefaultListModel model;
+        private boolean modified = false;
+        
+        public void actionPerformed(ActionEvent e) {
+            try {
+                JLabel vcsLabel = new JLabel("Visual Components Management");
+                JList vcsList = new JList(new DefaultListModel());
+                model = (DefaultListModel) vcsList.getModel();
+                components = new HashMap<String, String>();
+                for (String component : BackEnd.getInstance().getExtensions()) {
+                    Class<?> vcClass = Class.forName(component);
+                    Extension.Annotation vcAnn = 
+                        (Extension.Annotation) vcClass.getAnnotation(Extension.Annotation.class);
+                    String annotationStr = vcAnn.name() + " [ " + vcAnn.description() + " ]";
+                    model.addElement(annotationStr);
+                    components.put(annotationStr, vcClass.getName());
+                }
+                vcsList.addListSelectionListener(new ListSelectionListener(){
+                    public void valueChanged(ListSelectionEvent e) {
+                        selectedComponent = 
+                            ((String) ((JList) e.getSource()).getSelectedValue());
+                    }
+                });
+                JButton instButt = new JButton("Install new");
+                instButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        JFileChooser fc = new ExtensionFileChooser();
+                        if (fc.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                            try {
+                                BackEnd.getInstance().installExtension(fc.getSelectedFile());
+                                model.addElement("Extension installed from: " + fc.getSelectedFile());
+                                setTitle("Will be restarted");
+                                modified = true;
+                            } catch (Exception ex) {
+                                FrontEnd.getInstance().displayErrorMessage(ex);
+                            }
+                        }
+                    }
+                });
+                JButton uninstButt = new JButton("Uninstall selected");
+                uninstButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            BackEnd.getInstance().uninstallExtension(components.get(selectedComponent));
+                            model.removeElement(selectedComponent);
+                            setTitle("Will be restarted");
+                            modified = true;
+                        } catch (Exception ex) {
+                            FrontEnd.getInstance().displayErrorMessage(ex);
+                        }
+                    }
+                });
+                JOptionPane.showMessageDialog(
+                    FrontEnd.this, 
+                    new Component[]{
+                            vcsLabel,
+                            new JScrollPane(vcsList),
+                            instButt,
+                            uninstButt
+                    }
+                );
+                if (modified) {
+                    store();
+                    System.exit(0);
+                }
+            } catch (Exception ex) {
+                displayErrorMessage(ex);
+            }
+        }
+    };
+
+    private Action displayAboutInfoAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
