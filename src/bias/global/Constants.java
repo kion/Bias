@@ -19,10 +19,10 @@ public class Constants {
     public static final String ZIP_PATH_SEPARATOR = "/";
     public static final String PACKAGE_PATH_SEPARATOR = ".";
 
-    public static final String ARCHIVE_FILE_PATTHERN = "(?i).*\\.(zip|jar)$";
+    public static final String ARCHIVE_FILE_PATTHERN = "(?i).*\\.(jar)$";
     
-    public static final String EXTENSION_FILE_PATTHERN = "(?i).*\\.(class|zip|jar)$";
-    public static final String EXTENSION_FILE_PATTHERN_DESCRIPTION = "Java Class, ZIP/JAR archive containing Java Classes";
+    public static final String EXTENSION_FILE_PATTHERN = "(?i).*\\.(class|jar)$";
+    public static final String EXTENSION_FILE_PATTHERN_DESCRIPTION = "Java Class, JAR";
 
     public static final String ANY_CHARACTERS_PATTHERN = ".*";
     
