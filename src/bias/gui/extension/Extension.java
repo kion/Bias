@@ -12,6 +12,12 @@ import javax.swing.JPanel;
 /**
  * @author kion
  */
+
+@Extension.Annotation(
+        name = "Abstract Extension", 
+        version="1.0",
+        description = "Abstract extension representing extensions interface",
+        author="kion")
 public abstract class Extension extends JPanel {
 
     @Retention(RetentionPolicy.RUNTIME)

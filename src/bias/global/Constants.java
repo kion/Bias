@@ -4,6 +4,7 @@
 package bias.global;
 
 import bias.gui.extension.Extension;
+import bias.gui.extension.MissingExtensionInformer;
 
 /**
  * @author kion
@@ -38,8 +39,10 @@ public class Constants {
         Extension.class.getPackage().getName().replaceAll("\\.", ZIP_PATH_SEPARATOR);
     public static final String VISUAL_COMPONENT_FILE_PATTERN = VISUAL_COMPONENT_DIR_PATH + "/[\\w/]+\\.class";
     public static final String VISUAL_COMPONENT_SKIP_FILE_PATH = 
-        Extension.class.getName().replaceAll("\\.", ZIP_PATH_SEPARATOR) + VISUAL_COMPONENT_FILE_ENDING;
-
+        "(" + Extension.class.getName().replaceAll("\\.", ZIP_PATH_SEPARATOR) + "|" 
+        + MissingExtensionInformer.class.getName().replaceAll("\\.", ZIP_PATH_SEPARATOR) + ")" 
+        + "\\" + VISUAL_COMPONENT_FILE_ENDING;
+    
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";
     public static final String PROPERTY_WINDOW_WIDTH = "WINDOW_WIDTH";

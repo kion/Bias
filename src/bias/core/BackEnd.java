@@ -111,7 +111,7 @@ public class BackEnd {
         Collection<String> extensions = new LinkedHashSet<String>();
         for (String name : zipEntries.keySet()) {
             if (name.matches(Constants.VISUAL_COMPONENT_FILE_PATTERN)
-                    && !name.equals(Constants.VISUAL_COMPONENT_SKIP_FILE_PATH)) {
+                    && !name.matches(Constants.VISUAL_COMPONENT_SKIP_FILE_PATH)) {
                 String extension = 
                     name.substring(0, name.length() - Constants.VISUAL_COMPONENT_FILE_ENDING.length())
                     .replaceAll(Constants.ZIP_PATH_SEPARATOR, Constants.PACKAGE_PATH_SEPARATOR);
@@ -213,7 +213,6 @@ public class BackEnd {
         return data;
     }
     
-    // TODO: handle imported/existing types somehow
     private void buildData(String path, DataCategory data, Node node, Map<String, DataEntry> numberedData, Collection<UUID> existingIDs) throws Exception {
         if (node.getNodeName().equals(Constants.XML_ELEMENT_ROOT_CONTAINER)) {
             NodeList nodes = node.getChildNodes();
@@ -230,27 +229,25 @@ public class BackEnd {
             UUID id = UUID.fromString(attID.getNodeValue());
             if (existingIDs == null || !existingIDs.contains(id)) {
                 dc.setId(id);
-            } else {
-                dc.setId(UUID.randomUUID());
-            }
-            Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
-            String caption = attCaption.getNodeValue();
-            caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
-            dc.setCaption(caption);
-            Node attPlacement = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT);
-            Integer placement = Integer.valueOf(attPlacement.getNodeValue());
-            dc.setPlacement(placement);
-            Node attActiveIdx = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX);
-            if (attActiveIdx != null) {
-                Integer activeIdx = Integer.valueOf(attActiveIdx.getNodeValue());
-                dc.setActiveIndex(activeIdx);
-            }
-            data.addDataItem(dc);
-            String catPath = path + catNumber + "/";
-            NodeList nodes = node.getChildNodes();
-            for (int i = 0; i < nodes.getLength(); i++) {
-                Node n = nodes.item(i);
-                buildData(catPath, dc, n, numberedData, existingIDs);
+                Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
+                String caption = attCaption.getNodeValue();
+                caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+                dc.setCaption(caption);
+                Node attPlacement = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT);
+                Integer placement = Integer.valueOf(attPlacement.getNodeValue());
+                dc.setPlacement(placement);
+                Node attActiveIdx = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX);
+                if (attActiveIdx != null) {
+                    Integer activeIdx = Integer.valueOf(attActiveIdx.getNodeValue());
+                    dc.setActiveIndex(activeIdx);
+                }
+                data.addDataItem(dc);
+                String catPath = path + catNumber + "/";
+                NodeList nodes = node.getChildNodes();
+                for (int i = 0; i < nodes.getLength(); i++) {
+                    Node n = nodes.item(i);
+                    buildData(catPath, dc, n, numberedData, existingIDs);
+                }
             }
             path += catNumber + "/";
         } else if (node.getNodeName().equals(Constants.XML_ELEMENT_ENTRY)) {
@@ -263,15 +260,15 @@ public class BackEnd {
             UUID id = UUID.fromString(attID.getNodeValue());
             if (existingIDs == null || !existingIDs.contains(id)) {
                 dataEntry.setId(id);
+                Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
+                String caption = attCaption.getNodeValue();
+                caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+                dataEntry.setCaption(caption);
+                Node attType = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_TYPE);
+                String type = attType.getNodeValue();
+                dataEntry.setType(type);
+                data.addDataItem(dataEntry);
             }
-            Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
-            String caption = attCaption.getNodeValue();
-            caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
-            dataEntry.setCaption(caption);
-            Node attType = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_TYPE);
-            String type = attType.getNodeValue();
-            dataEntry.setType(type);
-            data.addDataItem(dataEntry);
         }
     }
     

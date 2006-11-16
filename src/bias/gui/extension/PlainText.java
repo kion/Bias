@@ -38,8 +38,9 @@ public class PlainText extends Extension {
     private JToolBar jToolBar = null;
 
     private JToggleButton jToggleButton = null;
+
     /**
-     * This is the default constructor
+     * Default constructor
      */
     public PlainText(UUID id, byte[] data) {
         super(id, data);

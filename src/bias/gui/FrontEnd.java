@@ -54,6 +54,7 @@ import bias.core.DataEntry;
 import bias.core.Recognizable;
 import bias.global.Constants;
 import bias.gui.extension.Extension;
+import bias.gui.extension.MissingExtensionInformer;
 import bias.utils.BrowserLauncher;
 
 /**
@@ -153,6 +154,8 @@ public class FrontEnd extends JFrame {
         }
         return instance;
     }
+    
+    private Map<UUID, DataEntry> missingExtensionsData = null;
 
     private String lastAddedEntryType = null;
 
@@ -263,6 +266,9 @@ public class FrontEnd extends JFrame {
     }
 
     private void representData(DataCategory data) {
+        if (missingExtensionsData == null) {
+            missingExtensionsData = new HashMap<UUID, DataEntry>();
+        }
         if (data.getPlacement() != null) {
             getJTabbedPane().setTabPlacement(data.getPlacement());
         }
@@ -273,8 +279,14 @@ public class FrontEnd extends JFrame {
         try {
             for (Recognizable item : data.getData()) {
                 if (item instanceof DataEntry) {
-                    String caption = item.getCaption();
-                    Extension extension = ExtensionFactory.getInstance().newExtension((DataEntry) item);
+                    DataEntry de = (DataEntry) item;
+                    String caption = de.getCaption();
+                    Extension extension;
+                    try {
+                        extension = ExtensionFactory.getInstance().newExtension(de);
+                    } catch (Exception ex) {
+                        extension = new MissingExtensionInformer(de);
+                    }
                     tabbedPane.addTab(caption, extension);
                 } else if (item instanceof DataCategory) {
                     String caption = item.getCaption();
@@ -347,7 +359,15 @@ public class FrontEnd extends JFrame {
             } else {
                 Extension extension = (Extension) c;
                 byte[] serializedData = extension.serialize();
-                DataEntry dataEntry = new DataEntry(extension.getId(), caption, extension.getClass().getName(), serializedData);
+                DataEntry dataEntry;
+                if (extension instanceof MissingExtensionInformer) {
+                    dataEntry = ((MissingExtensionInformer) extension).getDataEntry();
+                    if (BackEnd.getInstance().getExtensions().contains(dataEntry.getType())) {
+                        dataEntry = new DataEntry(extension.getId(), caption, dataEntry.getType(), serializedData);
+                    }
+                } else {
+                    dataEntry = new DataEntry(extension.getId(), caption, extension.getClass().getName(), serializedData);
+                }
                 data.addDataItem(dataEntry);
             }
         }
