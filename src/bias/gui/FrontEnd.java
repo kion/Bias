@@ -1190,7 +1190,10 @@ public class FrontEnd extends JFrame {
                             new JScrollPane(vcsList),
                             instButt,
                             uninstButt
-                    }
+                    },
+                    "Manage Extensions",
+                    JOptionPane.INFORMATION_MESSAGE,
+                    null
                 );
                 if (modified) {
                     store();
