@@ -254,14 +254,14 @@ public class FrontEnd extends JFrame {
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
                         store();
-                    } catch (Exception ex) {
-                        displayErrorMessage(ex);
+                    } catch (Throwable t) {
+                        displayErrorMessage(t);
                     }
                 }
             });
 
-        } catch (Exception ex) {
-            displayErrorMessage(ex);
+        } catch (Throwable t) {
+            displayErrorMessage(t);
         }
     }
 
@@ -284,7 +284,7 @@ public class FrontEnd extends JFrame {
                     Extension extension;
                     try {
                         extension = ExtensionFactory.getInstance().newExtension(de);
-                    } catch (Exception ex) {
+                    } catch (Throwable t) {
                         extension = new MissingExtensionInformer(de);
                     }
                     tabbedPane.addTab(caption, extension);
@@ -508,9 +508,13 @@ public class FrontEnd extends JFrame {
         return rootTabPane;
     }
 
-    public void displayErrorMessage(Exception ex) {
-        JOptionPane.showMessageDialog(FrontEnd.this, "Details: " + ex, "Error", JOptionPane.ERROR_MESSAGE);
-        ex.printStackTrace();
+    public void displayErrorMessage(Throwable t) {
+        JOptionPane.showMessageDialog(FrontEnd.this, "Details: " + t, "Error", JOptionPane.ERROR_MESSAGE);
+        t.printStackTrace();
+    }
+
+    public void displayMessage(String message) {
+        JOptionPane.showMessageDialog(FrontEnd.this, message, "Information", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void addTabPaneListeners(JTabbedPane tabPane) {
@@ -945,8 +949,8 @@ public class FrontEnd extends JFrame {
                 } else {
                     addRootCategoryAction();
                 }
-            } catch (Exception ex) {
-                displayErrorMessage(ex);
+            } catch (Throwable t) {
+                displayErrorMessage(t);
             }
         }
     };
@@ -1006,8 +1010,8 @@ public class FrontEnd extends JFrame {
                     getJTabbedPane().setSelectedComponent(extension);
                 }
             }
-        } catch (Exception ex) {
-            displayErrorMessage(ex);
+        } catch (Throwable t) {
+            displayErrorMessage(t);
         }
     }
 
@@ -1041,8 +1045,8 @@ public class FrontEnd extends JFrame {
                             currentTabPane.setSelectedComponent(extension);
                         }
                     }
-                } catch (Exception ex) {
-                    displayErrorMessage(ex);
+                } catch (Throwable t) {
+                    displayErrorMessage(t);
                 }
             }
         }
@@ -1064,8 +1068,8 @@ public class FrontEnd extends JFrame {
                             currentTabPane = getActiveTabPane(parentTabPane);
                         }
                     }
-                } catch (Exception ex) {
-                    displayErrorMessage(ex);
+                } catch (Throwable t) {
+                    displayErrorMessage(t);
                 }
             }
         }
@@ -1098,8 +1102,8 @@ public class FrontEnd extends JFrame {
                     jarFile = jfc.getSelectedFile();
                     representData(BackEnd.getInstance().importData(jarFile, getVisualEntriesIDs()));
                 }
-            } catch (Exception ex) {
-                displayErrorMessage(ex);
+            } catch (Throwable t) {
+                displayErrorMessage(t);
             }
         }
     };
@@ -1128,8 +1132,8 @@ public class FrontEnd extends JFrame {
                         currentTabPane = (JTabbedPane) categoryTabPane.getParent();
                     }
                 }
-            } catch (Exception ex) {
-                displayErrorMessage(ex);
+            } catch (Throwable t) {
+                displayErrorMessage(t);
             }
         }
     };
@@ -1140,8 +1144,8 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             try {
                 store();
-            } catch (Exception ex) {
-                displayErrorMessage(ex);
+            } catch (Throwable t) {
+                displayErrorMessage(t);
             }
         }
     };
@@ -1162,18 +1166,30 @@ public class FrontEnd extends JFrame {
                 components = new HashMap<String, String>();
                 for (String extension : BackEnd.getInstance().getExtensions()) {
                     String annotationStr;
-                    Class<?> vcClass = Class.forName(extension);
-                    Extension.Annotation vcAnn = 
-                        (Extension.Annotation) vcClass.getAnnotation(Extension.Annotation.class);
-                    if (vcAnn != null) {
-                        annotationStr = vcAnn.name() 
-                                        + " [ " + vcAnn.description() + " ]";
-                    } else {
-                        annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length()) 
-                                        + " [ No Description ]";
+                    try {
+                        Class<?> vcClass = Class.forName(extension);
+                        Extension.Annotation vcAnn = 
+                            (Extension.Annotation) vcClass.getAnnotation(Extension.Annotation.class);
+                        if (vcAnn != null) {
+                            annotationStr = vcAnn.name() 
+                                            + " [ " + vcAnn.description() + " ]";
+                        } else {
+                            annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length()) 
+                                            + " [ No Description ]";
+                        }
+                        model.addElement(annotationStr);
+                        components.put(annotationStr, vcClass.getName());
+                    } catch (Throwable t1) {
+                        // broken extension found, inform user about that...
+                        displayErrorMessage(t1);
+                        // ... and try uninstall broken extension...
+                        try {
+                            BackEnd.getInstance().uninstallExtension(extension);
+                        } catch (Throwable t2) {
+                            // ... if unsuccessfully - inform user about that, do nothing else
+                            displayErrorMessage(t2);
+                        }
                     }
-                    model.addElement(annotationStr);
-                    components.put(annotationStr, vcClass.getName());
                 }
                 vcsList.addListSelectionListener(new ListSelectionListener(){
                     public void valueChanged(ListSelectionEvent e) {
@@ -1187,12 +1203,16 @@ public class FrontEnd extends JFrame {
                         JFileChooser fc = new ExtensionFileChooser();
                         if (fc.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
-                                BackEnd.getInstance().installExtension(fc.getSelectedFile());
-                                model.addElement("Extension installed from: " + fc.getSelectedFile());
-                                setTitle("Will be restarted");
-                                modified = true;
-                            } catch (Exception ex) {
-                                FrontEnd.getInstance().displayErrorMessage(ex);
+                                boolean installed = BackEnd.getInstance().installExtension(fc.getSelectedFile());
+                                if (installed) {
+                                    model.addElement("Extension(s) installed from: " + fc.getSelectedFile());
+                                    setTitle("Will be restarted");
+                                    modified = true;
+                                } else {
+                                    FrontEnd.getInstance().displayMessage("Nothing to install from: " + fc.getSelectedFile());
+                                }
+                            } catch (Throwable t) {
+                                FrontEnd.getInstance().displayErrorMessage(t);
                             }
                         }
                     }
@@ -1205,8 +1225,8 @@ public class FrontEnd extends JFrame {
                             model.removeElement(selectedComponent);
                             setTitle("Will be restarted");
                             modified = true;
-                        } catch (Exception ex) {
-                            FrontEnd.getInstance().displayErrorMessage(ex);
+                        } catch (Throwable t) {
+                            FrontEnd.getInstance().displayErrorMessage(t);
                         }
                     }
                 });
@@ -1226,8 +1246,8 @@ public class FrontEnd extends JFrame {
                     store();
                     System.exit(0);
                 }
-            } catch (Exception ex) {
-                displayErrorMessage(ex);
+            } catch (Throwable t) {
+                displayErrorMessage(t);
             }
         }
     };
@@ -1249,7 +1269,7 @@ public class FrontEnd extends JFrame {
 				public void mouseClicked(MouseEvent e) {
 					try {
 						BrowserLauncher.openURL("http://bias.sourceforge.net");
-					} catch (Exception ex) {
+					} catch (Throwable t) {
 						// do nothing
 					}
 				}

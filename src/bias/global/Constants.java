@@ -42,6 +42,10 @@ public class Constants {
         "(" + Extension.class.getName().replaceAll("\\.", ZIP_PATH_SEPARATOR) + "|" 
         + MissingExtensionInformer.class.getName().replaceAll("\\.", ZIP_PATH_SEPARATOR) + ")" 
         + "\\" + VISUAL_COMPONENT_FILE_ENDING;
+    public static final String VISUAL_COMPONENT_SKIP_FILE_NAME = 
+        "(" + Extension.class.getSimpleName() + "|" 
+        + MissingExtensionInformer.class.getSimpleName() + ")" 
+        + "\\" + VISUAL_COMPONENT_FILE_ENDING;
     
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";

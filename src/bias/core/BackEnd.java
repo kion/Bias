@@ -121,7 +121,8 @@ public class BackEnd {
         return extensions;
     }
 
-    public void installExtension(File extensionFile) throws Exception {
+    public boolean installExtension(File extensionFile) throws Exception {
+        boolean installed = false;
         if (extensionFile != null && extensionFile.exists() && !extensionFile.isDirectory()) {
             String name = extensionFile.getName();
             if (name.matches(Constants.ARCHIVE_FILE_PATTHERN)) {
@@ -129,7 +130,8 @@ public class BackEnd {
                 ZipEntry ze = null;
                 while ((ze = in.getNextEntry()) != null) {
                     String zeName = ze.getName();
-                    if (zeName.endsWith(Constants.VISUAL_COMPONENT_FILE_ENDING)) {
+                    if (zeName.endsWith(Constants.VISUAL_COMPONENT_FILE_ENDING)
+                            && !zeName.matches(Constants.VISUAL_COMPONENT_SKIP_FILE_NAME)) {
                         ByteArrayOutputStream out = new ByteArrayOutputStream();
                         int b;
                         while ((b = in.read()) != -1) {
@@ -138,10 +140,12 @@ public class BackEnd {
                         out.flush();
                         out.close();
                         zipEntries.put(Constants.VISUAL_COMPONENT_DIR_PATH + Constants.ZIP_PATH_SEPARATOR + zeName, out.toByteArray());
+                        installed = true;
                     }
                 }
                 in.close();
-            } else if (name.endsWith(Constants.VISUAL_COMPONENT_FILE_ENDING)) {
+            } else if (name.endsWith(Constants.VISUAL_COMPONENT_FILE_ENDING)
+                    && !name.matches(Constants.VISUAL_COMPONENT_SKIP_FILE_NAME)) {
                 BufferedInputStream in = new BufferedInputStream(new FileInputStream(extensionFile));
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 int b;
@@ -152,8 +156,10 @@ public class BackEnd {
                 out.close();
                 in.close();
                 zipEntries.put(Constants.VISUAL_COMPONENT_DIR_PATH + Constants.ZIP_PATH_SEPARATOR + name, out.toByteArray());
+                installed = true;
             }
         }
+        return installed;
     }
     
     public void uninstallExtension(String extension) throws Exception {
