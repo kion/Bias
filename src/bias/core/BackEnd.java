@@ -121,11 +121,11 @@ public class BackEnd {
         return extensions;
     }
 
-    public void installExtension(File componentFile) throws Exception {
-        if (componentFile != null && componentFile.exists() && !componentFile.isDirectory()) {
-            String name = componentFile.getName();
+    public void installExtension(File extensionFile) throws Exception {
+        if (extensionFile != null && extensionFile.exists() && !extensionFile.isDirectory()) {
+            String name = extensionFile.getName();
             if (name.matches(Constants.ARCHIVE_FILE_PATTHERN)) {
-                ZipInputStream in = new ZipInputStream(new FileInputStream(componentFile));
+                ZipInputStream in = new ZipInputStream(new FileInputStream(extensionFile));
                 ZipEntry ze = null;
                 while ((ze = in.getNextEntry()) != null) {
                     String zeName = ze.getName();
@@ -142,7 +142,7 @@ public class BackEnd {
                 }
                 in.close();
             } else if (name.endsWith(Constants.VISUAL_COMPONENT_FILE_ENDING)) {
-                BufferedInputStream in = new BufferedInputStream(new FileInputStream(componentFile));
+                BufferedInputStream in = new BufferedInputStream(new FileInputStream(extensionFile));
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 int b;
                 while ((b = in.read()) != -1) {
@@ -156,10 +156,10 @@ public class BackEnd {
         }
     }
     
-    public void uninstallExtension(String componentName) throws Exception {
+    public void uninstallExtension(String extension) throws Exception {
         Collection<String> removeKeys = new HashSet<String>();
         for (String key : zipEntries.keySet()) {
-            if (key.matches(componentName + Constants.ANY_CHARACTERS_PATTHERN)) {
+            if (key.matches(extension + Constants.ANY_CHARACTERS_PATTHERN)) {
                 removeKeys.add(key);
             }
         }

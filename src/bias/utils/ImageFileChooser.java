@@ -118,7 +118,7 @@ public class ImageFileChooser extends JFileChooser implements ActionListener, Pr
         private Image image;
 
         /**
-         * sets new image to view and repaints the component
+         * Sets new image to view and repaints the component
          * 
          * @param image
          *            image to view
