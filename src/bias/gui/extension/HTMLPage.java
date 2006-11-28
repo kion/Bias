@@ -674,8 +674,8 @@ public class HTMLPage extends Extension {
                         } else {
                             try {
                                 BrowserLauncher.openURL(e.getDescription());
-                            } catch (Throwable t) {
-                                FrontEnd.getInstance().displayErrorMessage(t);
+                            } catch (Exception ex) {
+                                FrontEnd.getInstance().displayErrorMessage(ex);
                             }
                         }
                     }
