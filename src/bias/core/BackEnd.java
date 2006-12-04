@@ -3,6 +3,7 @@
  */
 package bias.core;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -26,6 +27,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -33,6 +37,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import bias.global.Constants;
+import bias.utils.Validator;
 
 import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
@@ -162,18 +167,63 @@ public class BackEnd {
         return installed;
     }
     
-    public void uninstallExtension(String extension) throws Exception {
+    public boolean uninstallExtension(String extension) throws Exception {
+    	boolean uninstalled = false;
         Collection<String> removeKeys = new HashSet<String>();
         for (String key : zipEntries.keySet()) {
             if (key.matches(extension + Constants.ANY_CHARACTERS_PATTHERN)) {
                 removeKeys.add(key);
             }
         }
-        for (String key : removeKeys) {
-            zipEntries.remove(key);
+        if (!removeKeys.isEmpty()) {
+            for (String key : removeKeys) {
+                zipEntries.remove(key);
+            }
+            uninstalled = true;
         }
+        return uninstalled;
     }
         
+    public Collection<ImageIcon> getIcons() {
+        Collection<ImageIcon> icons = new LinkedHashSet<ImageIcon>();
+        for (String name : zipEntries.keySet()) {
+            if (name.matches(Constants.ICON_FILE_PATTERN)) {
+                ImageIcon icon = new ImageIcon(zipEntries.get(name), name);
+                icons.add(icon);
+            }
+        }
+        return icons;
+    }
+    
+    public boolean addIcon(ImageIcon icon) throws Exception {
+    	boolean added = false;
+    	if (icon != null) {
+        	if (Validator.isNullOrBlank(icon.getDescription())){
+        		String fileName = "" + (getIcons().size() + 1) + Constants.ICON_FILE_ENDING;
+        		BufferedImage image = (BufferedImage) icon.getImage();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(image, Constants.ICON_FORMAT, baos);
+        		zipEntries.put(Constants.ICONS_DIR + Constants.ZIP_PATH_SEPARATOR + fileName, baos.toByteArray());
+        		added = true;
+        	}
+    	}
+    	return added;
+    }
+
+    public boolean removeIcon(ImageIcon icon) throws Exception {
+    	boolean removed = false;
+        Collection<ImageIcon> currentIcons = getIcons();
+    	for (ImageIcon ic : currentIcons) {
+    		String name = icon.getDescription();
+    		if (ic.getDescription().equals(name)) {
+    			zipEntries.remove(Constants.ICONS_DIR + Constants.ZIP_PATH_SEPARATOR + name);
+        		removed = true;
+    			break;
+    		}
+    	}
+    	return removed;
+    }
+    
     public DataCategory importData(File jarFile, Collection<UUID> existingIDs) throws Exception {
         Map<String,DataEntry> importedNumberedData = new LinkedHashMap<String, DataEntry>();
         Document metadata = null;

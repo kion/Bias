@@ -961,7 +961,7 @@ public class FrontEnd extends JFrame {
         for (Placement placement : PLACEMENTS) {
             placementsChooser.addItem(placement);
         }
-        String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser },
+        String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser},
                 "New root category:", JOptionPane.QUESTION_MESSAGE);
         if (categoryCaption != null) {
             JTabbedPane categoryTabPane = new JTabbedPane();
@@ -1184,7 +1184,10 @@ public class FrontEnd extends JFrame {
                         displayErrorMessage(ex1);
                         // ... and try uninstall broken extension...
                         try {
-                            BackEnd.getInstance().uninstallExtension(extension);
+                            boolean uninstalled = BackEnd.getInstance().uninstallExtension(extension);
+                            if (uninstalled) {
+                            	displayMessage("Extension successfully uninstalled!");
+                            }
                         } catch (Exception ex2) {
                             // ... if unsuccessfully - inform user about that, do nothing else
                             displayErrorMessage(ex2);

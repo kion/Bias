@@ -46,6 +46,10 @@ public class Constants {
         "(" + Extension.class.getSimpleName() + "|" 
         + MissingExtensionInformer.class.getSimpleName() + ")" 
         + "\\" + VISUAL_COMPONENT_FILE_ENDING;
+    public static final String ICON_FORMAT = "PNG";
+    public static final String ICON_FILE_ENDING = ".png";
+    public static final String ICONS_DIR = "icons/";
+    public static final String ICON_FILE_PATTERN = ICONS_DIR + ".*\\" + ICON_FILE_ENDING;
     
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";
