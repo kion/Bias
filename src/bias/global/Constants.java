@@ -20,12 +20,12 @@ public class Constants {
     public static final String ZIP_PATH_SEPARATOR = "/";
     public static final String PACKAGE_PATH_SEPARATOR = ".";
 
-    public static final String ARCHIVE_FILE_PATTHERN = "(?i).*\\.(jar)$";
+    public static final String ARCHIVE_FILE_PATTERN = "(?i).*\\.(jar)$";
     
-    public static final String EXTENSION_FILE_PATTHERN = "(?i).*\\.(class|jar)$";
-    public static final String EXTENSION_FILE_PATTHERN_DESCRIPTION = "Java Class, JAR";
+    public static final String EXTENSION_FILE_PATTERN = "(?i).*\\.(class|jar)$";
+    public static final String EXTENSION_FILE_PATTERN_DESCRIPTION = "Java Class, JAR";
 
-    public static final String ANY_CHARACTERS_PATTHERN = ".*";
+    public static final String ANY_CHARACTERS_PATTERN = ".*";
     
     public static final String DATA_FILE_PATTERN = "data/[\\d/]+\\.data";
     public static final String DATA_FILE_ENDING_PATTERN = "\\.data";
@@ -49,7 +49,9 @@ public class Constants {
     public static final String ICON_FORMAT = "PNG";
     public static final String ICON_FILE_ENDING = ".png";
     public static final String ICONS_DIR = "icons/";
-    public static final String ICON_FILE_PATTERN = ICONS_DIR + ".*\\" + ICON_FILE_ENDING;
+    public static final String ICON_FILE_PATH_PATTERN = ICONS_DIR + ".*\\" + ICON_FILE_ENDING;
+    public static final String ICON_FILE_PATTERN = "(?i).*\\.(png|ico)";
+    public static final String ICON_FILE_PATTERN_DESCRIPTION = "Icon File (PNG/ICO)";
     
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";
@@ -65,6 +67,7 @@ public class Constants {
     public static final String XML_ELEMENT_ATTRIBUTE_ID = "id";
     public static final String XML_ELEMENT_ATTRIBUTE_NUMBER = "number";
     public static final String XML_ELEMENT_ATTRIBUTE_CAPTION = "caption";
+    public static final String XML_ELEMENT_ATTRIBUTE_ICON = "icon";
     public static final String XML_ELEMENT_ATTRIBUTE_TYPE = "type";
     public static final String XML_ELEMENT_ATTRIBUTE_PLACEMENT = "placement";
     public static final String XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX = "active-idx";

@@ -130,7 +130,7 @@ public class BackEnd {
         boolean installed = false;
         if (extensionFile != null && extensionFile.exists() && !extensionFile.isDirectory()) {
             String name = extensionFile.getName();
-            if (name.matches(Constants.ARCHIVE_FILE_PATTHERN)) {
+            if (name.matches(Constants.ARCHIVE_FILE_PATTERN)) {
                 ZipInputStream in = new ZipInputStream(new FileInputStream(extensionFile));
                 ZipEntry ze = null;
                 while ((ze = in.getNextEntry()) != null) {
@@ -171,7 +171,7 @@ public class BackEnd {
     	boolean uninstalled = false;
         Collection<String> removeKeys = new HashSet<String>();
         for (String key : zipEntries.keySet()) {
-            if (key.matches(extension + Constants.ANY_CHARACTERS_PATTHERN)) {
+            if (key.matches(extension + Constants.ANY_CHARACTERS_PATTERN)) {
                 removeKeys.add(key);
             }
         }
@@ -187,7 +187,7 @@ public class BackEnd {
     public Collection<ImageIcon> getIcons() {
         Collection<ImageIcon> icons = new LinkedHashSet<ImageIcon>();
         for (String name : zipEntries.keySet()) {
-            if (name.matches(Constants.ICON_FILE_PATTERN)) {
+            if (name.matches(Constants.ICON_FILE_PATH_PATTERN)) {
                 ImageIcon icon = new ImageIcon(zipEntries.get(name), name);
                 icons.add(icon);
             }
@@ -200,10 +200,11 @@ public class BackEnd {
     	if (icon != null) {
         	if (Validator.isNullOrBlank(icon.getDescription())){
         		String fileName = "" + (getIcons().size() + 1) + Constants.ICON_FILE_ENDING;
+        		icon.setDescription(Constants.ICONS_DIR + fileName);
         		BufferedImage image = (BufferedImage) icon.getImage();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(image, Constants.ICON_FORMAT, baos);
-        		zipEntries.put(Constants.ICONS_DIR + Constants.ZIP_PATH_SEPARATOR + fileName, baos.toByteArray());
+        		zipEntries.put(Constants.ICONS_DIR + fileName, baos.toByteArray());
         		added = true;
         	}
     	}
@@ -212,15 +213,7 @@ public class BackEnd {
 
     public boolean removeIcon(ImageIcon icon) throws Exception {
     	boolean removed = false;
-        Collection<ImageIcon> currentIcons = getIcons();
-    	for (ImageIcon ic : currentIcons) {
-    		String name = icon.getDescription();
-    		if (ic.getDescription().equals(name)) {
-    			zipEntries.remove(Constants.ICONS_DIR + Constants.ZIP_PATH_SEPARATOR + name);
-        		removed = true;
-    			break;
-    		}
-    	}
+		removed = zipEntries.remove(icon.getDescription()) != null ? true : false;
     	return removed;
     }
     
@@ -242,6 +235,10 @@ public class BackEnd {
                 DataEntry de = new DataEntry();
                 de.setData(out.toByteArray());
                 importedNumberedData.put(entryNumericPath, de);
+            } else if (ze.getName().matches(Constants.ICON_FILE_PATH_PATTERN)) {
+            	if (!zipEntries.containsKey(ze.getName())) {
+            		zipEntries.put(ze.getName(), out.toByteArray());
+            	}
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
                 if (out.size() != 0) {
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
@@ -265,6 +262,10 @@ public class BackEnd {
         } else {
             buildData(Constants.EMPTY_STR, data, metadata.getFirstChild(), numberedData, existingIDs);
             data.setPlacement(Integer.valueOf(metadata.getFirstChild().getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT).getNodeValue()));
+            Node activeIdxNode = metadata.getFirstChild().getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX);
+            if (activeIdxNode != null) {
+                data.setActiveIndex(Integer.valueOf(activeIdxNode.getNodeValue()));
+            }
         }
         return data;
     }
@@ -289,6 +290,15 @@ public class BackEnd {
                 String caption = attCaption.getNodeValue();
                 caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
                 dc.setCaption(caption);
+                Node attIcon = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ICON);
+                if (attIcon != null) {
+                	String iconPath = attIcon.getNodeValue();
+                	byte[] imageData = zipEntries.get(iconPath);
+                	if (imageData != null) {
+                    	ImageIcon icon = new ImageIcon(imageData, iconPath);
+                    	dc.setIcon(icon);
+                	}
+                }
                 Node attPlacement = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT);
                 Integer placement = Integer.valueOf(attPlacement.getNodeValue());
                 dc.setPlacement(placement);
@@ -320,6 +330,15 @@ public class BackEnd {
                 String caption = attCaption.getNodeValue();
                 caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
                 dataEntry.setCaption(caption);
+                Node attIcon = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ICON);
+                if (attIcon != null) {
+                	String iconPath = attIcon.getNodeValue();
+                	byte[] imageData = zipEntries.get(iconPath);
+                	if (imageData != null) {
+                    	ImageIcon icon = new ImageIcon(imageData, iconPath);
+                    	dataEntry.setIcon(icon);
+                	}
+                }
                 Node attType = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_TYPE);
                 String type = attType.getNodeValue();
                 dataEntry.setType(type);
@@ -335,6 +354,9 @@ public class BackEnd {
         metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         Element rootNode = metadata.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
         rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, data.getPlacement().toString());
+        if (data.getActiveIndex() != null) {
+            rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, data.getActiveIndex().toString());
+        }
         buildNode(Constants.DATA_DIR_PATTERN, rootNode, data);
         metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
@@ -377,6 +399,12 @@ public class BackEnd {
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, de.getId().toString());
                 String encodedCaption = URLEncoder.encode(de.getCaption(), Constants.UNICODE_ENCODING);
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);
+                if (de.getIcon() != null) {
+                	String iconPath = ((ImageIcon)de.getIcon()).getDescription();
+                	if (!Validator.isNullOrBlank(iconPath)) {
+                        entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ICON, iconPath);
+                	}
+                }
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_TYPE, de.getType());
                 node.appendChild(entryNode);
                 entNumber++;
@@ -388,6 +416,12 @@ public class BackEnd {
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, dc.getId().toString());
                 String encodedCaption = URLEncoder.encode(dc.getCaption(), Constants.UNICODE_ENCODING);
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);
+                if (dc.getIcon() != null) {
+                	String iconPath = ((ImageIcon)dc.getIcon()).getDescription();
+                	if (!Validator.isNullOrBlank(iconPath)) {
+                        catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ICON, iconPath);
+                	}
+                }
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, dc.getPlacement().toString());
                 if (dc.getActiveIndex() != null) {
                     catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, dc.getActiveIndex().toString());

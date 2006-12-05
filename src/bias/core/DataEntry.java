@@ -5,6 +5,8 @@ package bias.core;
 
 import java.util.UUID;
 
+import javax.swing.Icon;
+
 /**
  * @author kion
  */
@@ -18,8 +20,8 @@ public class DataEntry extends Recognizable {
         super();
     }
     
-    public DataEntry(UUID id, String caption, String type, byte[] data) {
-        super(id, caption);
+    public DataEntry(UUID id, String caption, Icon icon, String type, byte[] data) {
+        super(id, caption, icon);
         this.type = type;
         this.data = data;
     }

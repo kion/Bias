@@ -5,6 +5,8 @@ package bias.core;
 
 import java.util.UUID;
 
+import javax.swing.Icon;
+
 /**
  * @author kion
  */
@@ -14,13 +16,16 @@ public abstract class Recognizable {
     
     protected String caption;
     
+    protected Icon icon;
+    
     public Recognizable() {
         // default constructor
     }
     
-    public Recognizable(UUID id, String caption) {
+    public Recognizable(UUID id, String caption, Icon icon) {
         this.id = id;
         this.caption = caption;
+        this.icon = icon;
     }
     
     public UUID getId() {
@@ -38,5 +43,13 @@ public abstract class Recognizable {
     public void setCaption(String caption) {
         this.caption = caption;
     }
+
+	public Icon getIcon() {
+		return icon;
+	}
+
+	public void setIcon(Icon icon) {
+		this.icon = icon;
+	}
 
 }

@@ -17,6 +17,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,9 +27,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
+import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultListModel;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -128,11 +131,29 @@ public class FrontEnd extends JFrame {
             setFileFilter(new FileFilter(){
                 @Override
                 public boolean accept(File file) {
-                    return file.isDirectory() || file.getName().matches(Constants.EXTENSION_FILE_PATTHERN);
+                    return file.isDirectory() || file.getName().matches(Constants.EXTENSION_FILE_PATTERN);
                 }
                 @Override
                 public String getDescription() {
-                    return Constants.EXTENSION_FILE_PATTHERN_DESCRIPTION;
+                    return Constants.EXTENSION_FILE_PATTERN_DESCRIPTION;
+                }
+            });            
+        }
+    }
+
+    private static class IconFileChooser extends JFileChooser {
+        private static final long serialVersionUID = 1L;
+
+        public IconFileChooser() {
+            super();
+            setFileFilter(new FileFilter(){
+                @Override
+                public boolean accept(File file) {
+                    return file.isDirectory() || file.getName().matches(Constants.ICON_FILE_PATTERN);
+                }
+                @Override
+                public String getDescription() {
+                    return Constants.ICON_FILE_PATTERN_DESCRIPTION;
                 }
             });            
         }
@@ -186,6 +207,8 @@ public class FrontEnd extends JFrame {
     private JButton jButton7 = null;
 
     private JButton jButton8 = null;
+
+    private JButton jButton9 = null;
 
     private JButton jButton3 = null;
 
@@ -273,10 +296,14 @@ public class FrontEnd extends JFrame {
             getJTabbedPane().setTabPlacement(data.getPlacement());
         }
         representData(getJTabbedPane(), data);
+        if (data.getActiveIndex() != null) {
+            getJTabbedPane().setSelectedIndex(data.getActiveIndex());
+        }
     }
 
     private void representData(JTabbedPane tabbedPane, DataCategory data) {
         try {
+        	int idx = 0;
             for (Recognizable item : data.getData()) {
                 if (item instanceof DataEntry) {
                     DataEntry de = (DataEntry) item;
@@ -288,6 +315,7 @@ public class FrontEnd extends JFrame {
                         extension = new MissingExtensionInformer(de);
                     }
                     tabbedPane.addTab(caption, extension);
+                    tabbedPane.setIconAt(idx++, item.getIcon());
                 } else if (item instanceof DataCategory) {
                     String caption = item.getCaption();
                     JTabbedPane categoryTabPane = new JTabbedPane();
@@ -298,6 +326,7 @@ public class FrontEnd extends JFrame {
                     categoryTabPane.setTabPlacement(dc.getPlacement());
                     addTabPaneListeners(categoryTabPane);
                     tabbedPane.addTab(caption, categoryTabPane);
+                    tabbedPane.setIconAt(idx++, item.getIcon());
                     currentTabPane = categoryTabPane;
                     representData(categoryTabPane, dc);
                     if (dc.getActiveIndex() != null) {
@@ -336,6 +365,9 @@ public class FrontEnd extends JFrame {
     private void collectData() throws Exception {
         DataCategory data = collectData("root", getJTabbedPane());
         data.setPlacement(getJTabbedPane().getTabPlacement());
+        if (getJTabbedPane().getSelectedIndex() != -1) {
+            data.setActiveIndex(getJTabbedPane().getSelectedIndex());
+        }
         BackEnd.getInstance().setData(data);
     }
 
@@ -345,11 +377,13 @@ public class FrontEnd extends JFrame {
         for (int i = 0; i < tabPane.getTabCount(); i++) {
             caption = tabPane.getTitleAt(i);
             Component c = tabPane.getComponent(i);
+            Icon icon = tabPane.getIconAt(i);
             if (c instanceof JTabbedPane) {
                 JTabbedPane tp = (JTabbedPane) c;
                 DataCategory dc = collectData(caption, tp);
                 if (tp.getName() != null) {
                     dc.setId(UUID.fromString(tp.getName()));
+                    dc.setIcon(icon);
                     data.addDataItem(dc);
                     if (tp.getSelectedIndex() != -1) {
                         dc.setActiveIndex(tp.getSelectedIndex());
@@ -363,10 +397,10 @@ public class FrontEnd extends JFrame {
                 if (extension instanceof MissingExtensionInformer) {
                     dataEntry = ((MissingExtensionInformer) extension).getDataEntry();
                     if (BackEnd.getInstance().getExtensions().contains(dataEntry.getType())) {
-                        dataEntry = new DataEntry(extension.getId(), caption, dataEntry.getType(), serializedData);
+                        dataEntry = new DataEntry(extension.getId(), caption, icon, dataEntry.getType(), serializedData);
                     }
                 } else {
-                    dataEntry = new DataEntry(extension.getId(), caption, extension.getClass().getName(), serializedData);
+                    dataEntry = new DataEntry(extension.getId(), caption, icon, extension.getClass().getName(), serializedData);
                 }
                 data.addDataItem(dataEntry);
             }
@@ -547,12 +581,29 @@ public class FrontEnd extends JFrame {
                 		break;
                 	}
                 }
+                JLabel icLabel = new JLabel("Choose icon:");
+                JComboBox iconChooser = new JComboBox();
+                iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
+                for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+                    iconChooser.addItem(icon);
+                }
+                ImageIcon ic = (ImageIcon) tabbedPane.getIconAt(tabbedPane.getSelectedIndex());
+                for (int i = 0; i < iconChooser.getItemCount(); i++) {
+                	if (((ImageIcon) iconChooser.getItemAt(i)).getDescription().equals(ic.getDescription())) {
+                		iconChooser.setSelectedIndex(i);
+                		break;
+                	}
+                }
                 JLabel cLabel = new JLabel("Item's caption:");
-                caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, cLabel },
+                caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser, cLabel },
                         caption);
                 if (caption != null) {
                 	tabbedPane.setTitleAt(index, caption);
                 	tabbedPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
+                    ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+                    if (icon != null) {
+                    	tabbedPane.setIconAt(tabbedPane.getSelectedIndex(), icon);
+                    }
                 }
                 
             }
@@ -856,6 +907,7 @@ public class FrontEnd extends JFrame {
             jToolBar2.setFloatable(false); // Generated
             jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT); // Generated
             jToolBar2.add(getJButton6()); // Generated
+            jToolBar2.add(getJButton9()); // Generated
             jToolBar2.add(getJButton8()); // Generated
         }
         return jToolBar2;
@@ -901,6 +953,20 @@ public class FrontEnd extends JFrame {
             jButton8.setIcon(ICON_EXTENSIONS);
         }
         return jButton8;
+    }
+
+    /**
+     * This method initializes jButton9
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton9() {
+        if (jButton9 == null) {
+            jButton9 = new JButton(manageIconsAction);
+            jButton9.setToolTipText("manage icons"); // Generated
+            jButton9.setIcon(ICON_EXTENSIONS);
+        }
+        return jButton9;
     }
 
     /**
@@ -961,7 +1027,13 @@ public class FrontEnd extends JFrame {
         for (Placement placement : PLACEMENTS) {
             placementsChooser.addItem(placement);
         }
-        String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser},
+        JLabel icLabel = new JLabel("Choose icon:");
+        JComboBox iconChooser = new JComboBox();
+        iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
+        for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+            iconChooser.addItem(icon);
+        }
+        String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser },
                 "New root category:", JOptionPane.QUESTION_MESSAGE);
         if (categoryCaption != null) {
             JTabbedPane categoryTabPane = new JTabbedPane();
@@ -970,6 +1042,10 @@ public class FrontEnd extends JFrame {
             addTabPaneListeners(categoryTabPane);
             getJTabbedPane().addTab(categoryCaption, categoryTabPane);
             getJTabbedPane().setSelectedComponent(categoryTabPane);
+            ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+            if (icon != null) {
+            	getJTabbedPane().setIconAt(getJTabbedPane().getSelectedIndex(), icon);
+            }
         }
     }
 
@@ -998,7 +1074,13 @@ public class FrontEnd extends JFrame {
                 entryTypeComboBox.setSelectedItem(lastAddedEntryType);
             }
             entryTypeComboBox.setEditable(false);
-            String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox },
+            JLabel icLabel = new JLabel("Choose icon:");
+            JComboBox iconChooser = new JComboBox();
+            iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
+            for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+                iconChooser.addItem(icon);
+            }
+            String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser },
                     "New entry:", JOptionPane.QUESTION_MESSAGE);
             if (caption != null) {
                 String typeDescription = (String) entryTypeComboBox.getSelectedItem();
@@ -1008,6 +1090,10 @@ public class FrontEnd extends JFrame {
                 if (extension != null) {
                     getJTabbedPane().addTab(caption, extension);
                     getJTabbedPane().setSelectedComponent(extension);
+                    ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+                    if (icon != null) {
+                    	getJTabbedPane().setIconAt(getJTabbedPane().getSelectedIndex(), icon);
+                    }
                 }
             }
         } catch (Exception ex) {
@@ -1033,7 +1119,13 @@ public class FrontEnd extends JFrame {
                         entryTypeComboBox.setSelectedItem(lastAddedEntryType);
                     }
                     entryTypeComboBox.setEditable(false);
-                    String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox },
+                    JLabel icLabel = new JLabel("Choose icon:");
+                    JComboBox iconChooser = new JComboBox();
+                    iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
+                    for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+                        iconChooser.addItem(icon);
+                    }
+                    String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser },
                             "New entry:", JOptionPane.QUESTION_MESSAGE);
                     if (caption != null) {
                         String typeDescription = (String) entryTypeComboBox.getSelectedItem();
@@ -1043,6 +1135,10 @@ public class FrontEnd extends JFrame {
                         if (extension != null) {
                             currentTabPane.addTab(caption, extension);
                             currentTabPane.setSelectedComponent(extension);
+                            ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+                            if (icon != null) {
+                            	currentTabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
+                            }
                         }
                     }
                 } catch (Exception ex) {
@@ -1119,7 +1215,13 @@ public class FrontEnd extends JFrame {
                     for (Placement placement : PLACEMENTS) {
                         placementsChooser.addItem(placement);
                     }
-                    String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser },
+                    JLabel icLabel = new JLabel("Choose icon:");
+                    JComboBox iconChooser = new JComboBox();
+                    iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
+                    for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+                        iconChooser.addItem(icon);
+                    }
+                    String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser },
                             "New category:", JOptionPane.QUESTION_MESSAGE);
                     if (categoryCaption != null) {
                         JTabbedPane categoryTabPane = new JTabbedPane();
@@ -1129,6 +1231,10 @@ public class FrontEnd extends JFrame {
                         addTabPaneListeners(categoryTabPane);
                         currentTabPane.addTab(categoryCaption, categoryTabPane);
                         ((JTabbedPane) categoryTabPane.getParent()).setSelectedComponent(categoryTabPane);
+                        ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+                        if (icon != null) {
+                        	currentTabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
+                        }
                         currentTabPane = (JTabbedPane) categoryTabPane.getParent();
                     }
                 }
@@ -1156,7 +1262,7 @@ public class FrontEnd extends JFrame {
         private Map<String, String> components;
         private String selectedComponent;
         DefaultListModel model;
-        private boolean modified = false;
+        private boolean modified;
         
         public void actionPerformed(ActionEvent e) {
             try {
@@ -1184,10 +1290,7 @@ public class FrontEnd extends JFrame {
                         displayErrorMessage(ex1);
                         // ... and try uninstall broken extension...
                         try {
-                            boolean uninstalled = BackEnd.getInstance().uninstallExtension(extension);
-                            if (uninstalled) {
-                            	displayMessage("Extension successfully uninstalled!");
-                            }
+                            BackEnd.getInstance().uninstallExtension(extension);
                         } catch (Exception ex2) {
                             // ... if unsuccessfully - inform user about that, do nothing else
                             displayErrorMessage(ex2);
@@ -1196,8 +1299,10 @@ public class FrontEnd extends JFrame {
                 }
                 vcsList.addListSelectionListener(new ListSelectionListener(){
                     public void valueChanged(ListSelectionEvent e) {
-                        selectedComponent = 
-                            ((String) ((JList) e.getSource()).getSelectedValue());
+                    	if (((JList) e.getSource()).getSelectedValue() != null) {
+                            selectedComponent = 
+                                ((String) ((JList) e.getSource()).getSelectedValue());
+                    	}
                     }
                 });
                 JButton instButt = new JButton("Install new");
@@ -1224,15 +1329,21 @@ public class FrontEnd extends JFrame {
                 uninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            BackEnd.getInstance().uninstallExtension(components.get(selectedComponent));
-                            model.removeElement(selectedComponent);
-                            setTitle("Will be restarted");
-                            modified = true;
+                            boolean uninstalled = BackEnd.getInstance().uninstallExtension(components.get(selectedComponent));
+                            if (uninstalled) {
+                                model.removeElement(selectedComponent);
+                                setTitle("Will be restarted");
+                                modified = true;
+                            	FrontEnd.getInstance().displayMessage("Extension successfully uninstalled!");
+                            } else {
+                            	FrontEnd.getInstance().displayMessage("Extension hasn't been uninstalled!");
+                            }
                         } catch (Exception ex) {
                             FrontEnd.getInstance().displayErrorMessage(ex);
                         }
                     }
                 });
+                modified = false;
                 JOptionPane.showMessageDialog(
                     FrontEnd.this, 
                     new Component[]{
@@ -1255,6 +1366,92 @@ public class FrontEnd extends JFrame {
         }
     };
 
+    private Action manageIconsAction = new AbstractAction() {
+        private static final long serialVersionUID = 1L;
+
+        private Collection<ImageIcon> icons;
+        private ImageIcon selectedIcon;
+        DefaultListModel model;
+        private boolean modified;
+        
+        public void actionPerformed(ActionEvent e) {
+            try {
+                JLabel icLabel = new JLabel("Icons Management");
+                JList icList = new JList(new DefaultListModel());
+                model = (DefaultListModel) icList.getModel();
+                icons = new LinkedList<ImageIcon>();
+                for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+                    model.addElement(icon);
+                    icons.add(icon);
+                }
+                icList.addListSelectionListener(new ListSelectionListener(){
+                    public void valueChanged(ListSelectionEvent e) {
+                    	if (((JList) e.getSource()).getSelectedValue() != null) {
+                            selectedIcon = 
+                                ((ImageIcon) ((JList) e.getSource()).getSelectedValue());
+                    	}
+                    }
+                });
+                JButton addButt = new JButton("Add new");
+                addButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        JFileChooser fc = new IconFileChooser();
+                        if (fc.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                            try {
+                                BufferedImage image = ImageIO.read(fc.getSelectedFile());
+                            	ImageIcon icon = new ImageIcon(image);
+                                boolean added = BackEnd.getInstance().addIcon(icon);
+                                if (added) {
+                                    model.addElement(icon);
+                                    modified = true;
+                                } else {
+                                    FrontEnd.getInstance().displayMessage("Not an icon: " + fc.getSelectedFile());
+                                }
+                            } catch (Exception ex) {
+                                FrontEnd.getInstance().displayErrorMessage(ex);
+                            }
+                        }
+                    }
+                });
+                JButton removeButt = new JButton("Remove selected");
+                removeButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            boolean removed = BackEnd.getInstance().removeIcon(selectedIcon);
+                            if (removed) {
+                                model.removeElement(selectedIcon);
+                                modified = true;
+                            	FrontEnd.getInstance().displayMessage("Icon successfully removed!");
+                            } else {
+                            	FrontEnd.getInstance().displayMessage("Icon hasn't been removed!");
+                            }
+                        } catch (Exception ex) {
+                            FrontEnd.getInstance().displayErrorMessage(ex);
+                        }
+                    }
+                });
+                modified = false;
+                JOptionPane.showMessageDialog(
+                    FrontEnd.this, 
+                    new Component[]{
+                            icLabel,
+                            new JScrollPane(icList),
+                            addButt,
+                            removeButt
+                    },
+                    "Manage Icons",
+                    JOptionPane.INFORMATION_MESSAGE,
+                    null
+                );
+                if (modified) {
+                    store();
+                }
+            } catch (Exception ex) {
+                displayErrorMessage(ex);
+            }
+        }
+    };
+    
     private Action displayAboutInfoAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 

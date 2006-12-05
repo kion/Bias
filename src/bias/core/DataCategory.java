@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.UUID;
 
+import javax.swing.Icon;
+
 /**
  * @author kion
  *
@@ -24,8 +26,8 @@ public class DataCategory extends Recognizable {
         this.data = new LinkedList<Recognizable>();
 	}
 
-	public DataCategory(UUID id, String caption, Collection<Recognizable> data, Integer placement) {
-        super(id, caption);
+	public DataCategory(UUID id, String caption, Icon icon, Collection<Recognizable> data, Integer placement) {
+        super(id, caption, icon);
         this.data = data;
         this.placement = placement;
 	}
