@@ -590,11 +590,13 @@ public class FrontEnd extends JFrame {
                     iconChooser.addItem(icon);
                 }
                 ImageIcon ic = (ImageIcon) tabbedPane.getIconAt(tabbedPane.getSelectedIndex());
-                for (int i = 0; i < iconChooser.getItemCount(); i++) {
-                	if (((ImageIcon) iconChooser.getItemAt(i)).getDescription().equals(ic.getDescription())) {
-                		iconChooser.setSelectedIndex(i);
-                		break;
-                	}
+                if (ic != null) {
+                    for (int i = 0; i < iconChooser.getItemCount(); i++) {
+                    	if (((ImageIcon) iconChooser.getItemAt(i)).getDescription().equals(ic.getDescription())) {
+                    		iconChooser.setSelectedIndex(i);
+                    		break;
+                    	}
+                    }
                 }
                 JLabel cLabel = new JLabel("Item's caption:");
                 caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser, cLabel },

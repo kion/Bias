@@ -199,7 +199,7 @@ public class BackEnd {
     	boolean added = false;
     	if (icon != null) {
         	if (Validator.isNullOrBlank(icon.getDescription())){
-        		String fileName = "" + (getIcons().size() + 1) + Constants.ICON_FILE_ENDING;
+        		String fileName = UUID.randomUUID().toString() + Constants.ICON_FILE_ENDING;
         		icon.setDescription(Constants.ICONS_DIR + fileName);
         		BufferedImage image = (BufferedImage) icon.getImage();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
