@@ -37,8 +37,8 @@
     <target name="BuildJarPackage" depends="clean" description="Bias OpenSource Personal Information Manager Project">
         <jar basedir="./bin" destfile="build/bias.jar" includes="bias/**" index="true">
         	<fileset dir=".">
-			    <include name="data/**"/>
-			    <include name="res/**"/>
+        		<!-- include default icons set -->
+			    <include name="icons/**"/>
 			</fileset>
         	<manifest>
         		<attribute name="Main-Class" value="bias.Bias"/>
