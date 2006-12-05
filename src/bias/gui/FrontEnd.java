@@ -46,8 +46,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JToolBar;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.TabbedPaneUI;
 
@@ -130,6 +128,7 @@ public class FrontEnd extends JFrame {
 
         public ExtensionFileChooser() {
             super();
+            setMultiSelectionEnabled(true);
             setFileFilter(new FileFilter(){
                 @Override
                 public boolean accept(File file) {
@@ -148,6 +147,7 @@ public class FrontEnd extends JFrame {
 
         public IconFileChooser() {
             super();
+            setMultiSelectionEnabled(true);
             setFileFilter(new FileFilter(){
                 @Override
                 public boolean accept(File file) {
@@ -1264,14 +1264,14 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         private Map<String, String> components;
-        private String selectedComponent;
-        DefaultListModel model;
+        private DefaultListModel model;
+        private JList vcsList;
         private boolean modified;
         
         public void actionPerformed(ActionEvent e) {
             try {
                 JLabel vcsLabel = new JLabel("Visual Components Management");
-                JList vcsList = new JList(new DefaultListModel());
+                vcsList = new JList(new DefaultListModel());
                 model = (DefaultListModel) vcsList.getModel();
                 components = new HashMap<String, String>();
                 for (String extension : BackEnd.getInstance().getExtensions()) {
@@ -1301,27 +1301,21 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 }
-                vcsList.addListSelectionListener(new ListSelectionListener(){
-                    public void valueChanged(ListSelectionEvent e) {
-                    	if (((JList) e.getSource()).getSelectedValue() != null) {
-                            selectedComponent = 
-                                ((String) ((JList) e.getSource()).getSelectedValue());
-                    	}
-                    }
-                });
                 JButton instButt = new JButton("Install new");
                 instButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         JFileChooser fc = new ExtensionFileChooser();
                         if (fc.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
-                                boolean installed = BackEnd.getInstance().installExtension(fc.getSelectedFile());
-                                if (installed) {
-                                    model.addElement("Extension(s) installed from: " + fc.getSelectedFile());
-                                    setTitle("Will be restarted");
-                                    modified = true;
-                                } else {
-                                    FrontEnd.getInstance().displayMessage("Nothing to install from: " + fc.getSelectedFile());
+                                boolean installed = false;
+                                for (File file : fc.getSelectedFiles()) {
+                                    installed = BackEnd.getInstance().installExtension(file);
+                                    if (installed) {
+                                        model.addElement("Extension(s) installed from: " + file.getAbsolutePath());
+                                        modified = true;
+                                    } else {
+                                        FrontEnd.getInstance().displayMessage("Nothing to install from: " + file.getAbsolutePath());
+                                    }
                                 }
                             } catch (Exception ex) {
                                 FrontEnd.getInstance().displayErrorMessage(ex);
@@ -1333,14 +1327,20 @@ public class FrontEnd extends JFrame {
                 uninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            boolean uninstalled = BackEnd.getInstance().uninstallExtension(components.get(selectedComponent));
-                            if (uninstalled) {
-                                model.removeElement(selectedComponent);
-                                setTitle("Will be restarted");
-                                modified = true;
-                            	FrontEnd.getInstance().displayMessage("Extension successfully uninstalled!");
-                            } else {
-                            	FrontEnd.getInstance().displayMessage("Extension hasn't been uninstalled!");
+                            if (vcsList.getSelectedValues().length > 0) {
+                                boolean uninstalled = false;
+                                for (Object extension : vcsList.getSelectedValues()) {
+                                    uninstalled = BackEnd.getInstance().uninstallExtension(components.get(extension));
+                                    if (uninstalled) {
+                                        model.removeElement(extension);
+                                        modified = true;
+                                    }
+                                }
+                                if (uninstalled) {
+                                    FrontEnd.getInstance().displayMessage("Extensions have been successfully uninstalled!");
+                                } else {
+                                    FrontEnd.getInstance().displayMessage("Some extensions haven't been uninstalled!");
+                                }
                             }
                         } catch (Exception ex) {
                             FrontEnd.getInstance().displayErrorMessage(ex);
@@ -1361,6 +1361,7 @@ public class FrontEnd extends JFrame {
                     null
                 );
                 if (modified) {
+                    FrontEnd.getInstance().displayMessage("Changes will take effect after Bias restart!");
                     store();
                     System.exit(0);
                 }
@@ -1374,42 +1375,36 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         private Collection<ImageIcon> icons;
-        private ImageIcon selectedIcon;
-        DefaultListModel model;
+        private JList icList;
+        private DefaultListModel model;
         private boolean modified;
         
         public void actionPerformed(ActionEvent e) {
             try {
                 JLabel icLabel = new JLabel("Icons Management");
-                JList icList = new JList(new DefaultListModel());
+                icList = new JList(new DefaultListModel());
                 model = (DefaultListModel) icList.getModel();
                 icons = new LinkedList<ImageIcon>();
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                     model.addElement(icon);
                     icons.add(icon);
                 }
-                icList.addListSelectionListener(new ListSelectionListener(){
-                    public void valueChanged(ListSelectionEvent e) {
-                    	if (((JList) e.getSource()).getSelectedValue() != null) {
-                            selectedIcon = 
-                                ((ImageIcon) ((JList) e.getSource()).getSelectedValue());
-                    	}
-                    }
-                });
                 JButton addButt = new JButton("Add new");
                 addButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         JFileChooser fc = new IconFileChooser();
                         if (fc.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
-                                BufferedImage image = ImageIO.read(fc.getSelectedFile());
-                            	ImageIcon icon = new ImageIcon(image);
-                                boolean added = BackEnd.getInstance().addIcon(icon);
-                                if (added) {
-                                    model.addElement(icon);
-                                    modified = true;
-                                } else {
-                                    FrontEnd.getInstance().displayMessage("Not an icon: " + fc.getSelectedFile());
+                                for (File file : fc.getSelectedFiles()) {
+                                    BufferedImage image = ImageIO.read(file);
+                                    ImageIcon icon = new ImageIcon(image);
+                                    boolean added = BackEnd.getInstance().addIcon(icon);
+                                    if (added) {
+                                        model.addElement(icon);
+                                        modified = true;
+                                    } else {
+                                        FrontEnd.getInstance().displayMessage("Can not read icon from: " + file.getAbsolutePath());
+                                    }
                                 }
                             } catch (Exception ex) {
                                 FrontEnd.getInstance().displayErrorMessage(ex);
@@ -1421,13 +1416,20 @@ public class FrontEnd extends JFrame {
                 removeButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            boolean removed = BackEnd.getInstance().removeIcon(selectedIcon);
-                            if (removed) {
-                                model.removeElement(selectedIcon);
-                                modified = true;
-                            	FrontEnd.getInstance().displayMessage("Icon successfully removed!");
-                            } else {
-                            	FrontEnd.getInstance().displayMessage("Icon hasn't been removed!");
+                            if (icList.getSelectedValues().length > 0) {
+                                boolean removed = false;
+                                for (Object icon : icList.getSelectedValues()) {
+                                    removed = BackEnd.getInstance().removeIcon((ImageIcon)icon);
+                                    if (removed) {
+                                        model.removeElement(icon);
+                                        modified = true;
+                                    }
+                                }
+                                if (removed) {
+                                    FrontEnd.getInstance().displayMessage("Icons have been successfully removed!");
+                                } else {
+                                    FrontEnd.getInstance().displayMessage("Some icons haven't been removed!");
+                                }
                             }
                         } catch (Exception ex) {
                             FrontEnd.getInstance().displayErrorMessage(ex);
