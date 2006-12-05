@@ -1289,11 +1289,13 @@ public class FrontEnd extends JFrame {
                         Extension.Annotation vcAnn = 
                             (Extension.Annotation) vcClass.getAnnotation(Extension.Annotation.class);
                         if (vcAnn != null) {
-                            annotationStr = vcAnn.name() 
-                                            + " [ " + vcAnn.description() + " ]";
+                            annotationStr = vcAnn.name() + Constants.SPACE_STR 
+                                            + ", version: " + vcAnn.version() + Constants.SPACE_STR 
+                                            + ", author: " + vcAnn.author() + Constants.SPACE_STR
+                                            + ", description: " + vcAnn.description();
                         } else {
-                            annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length()) 
-                                            + " [ No Description ]";
+                            annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length())
+                                            + " [ Extension Info Is Missing ]";
                         }
                         model.addElement(annotationStr);
                         components.put(annotationStr, vcClass.getName());

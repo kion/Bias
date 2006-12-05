@@ -20,7 +20,7 @@ import bias.utils.UndoRedoManager;
  */
 
 @Extension.Annotation(
-        name = "Plain text", 
+        name = "Plain Text", 
         version="1.0",
         description = "Simple plain text editor",
         author="kion")

@@ -14,6 +14,7 @@ public class Constants {
     public static final String UNICODE_ENCODING = "UTF-8";
 
     public static final String EMPTY_STR = "";
+    public static final String SPACE_STR = " ";
     public static final String NULL_STR = "NULL";
     public static final String EMPTY_STR_PATTERN = "\\s*";
 
