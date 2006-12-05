@@ -713,7 +713,7 @@ public class FrontEnd extends JFrame {
             
             int cnt = tabPane.getTabCount();
 
-            // get tabpane's components/captions
+            // get tabpane's components/captions/icons
             Component[] components = new Component[cnt];
             for (int i = 0; i< cnt; i++) {
                 components[i] = tabPane.getComponent(i);
@@ -722,34 +722,42 @@ public class FrontEnd extends JFrame {
             for (int i = 0; i < cnt; i++) {
                 captions[i] = tabPane.getTitleAt(i);
             }
+            ImageIcon[] icons = new ImageIcon[cnt];
+            for (int i = 0; i < cnt; i++) {
+                icons[i] = (ImageIcon) tabPane.getIconAt(i);
+            }
 
             // remember component/caption that has to be moved
             Component srcComp = components[srcIndex];
             String srcCap = captions[srcIndex];
+            ImageIcon srcIcon = icons[srcIndex];
             
             // rearrange components/captions using shifting
             if (srcIndex > dstIndex) {
                 for (int i = srcIndex; i > dstIndex; i--) {
                     components[i] = components[i-1];
                     captions[i] = captions[i-1];
+                    icons[i] = icons[i-1];
                 }
             } else {
                 for (int i = srcIndex; i < dstIndex; i++) {
                     components[i] = components[i+1];
                     captions[i] = captions[i+1];
+                    icons[i] = icons[i+1];
                 }
             }
 
             // set moved component/caption to its new position
             components[dstIndex] = srcComp;
             captions[dstIndex] = srcCap;
+            icons[dstIndex] = srcIcon;
             
             // remove everything from tabpane before repopulating it
             tabPane.removeAll();
             
             // repopulate tabpane with resulting components/captions
             for (int i = 0; i < cnt; i++) {
-                tabPane.addTab(captions[i], components[i]);
+                tabPane.addTab(captions[i], icons[i], components[i]);
             }
             
             // set moved component as selected
