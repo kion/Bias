@@ -236,6 +236,7 @@ public class BackEnd {
                 de.setData(out.toByteArray());
                 importedNumberedData.put(entryNumericPath, de);
             } else if (ze.getName().matches(Constants.ICON_FILE_PATH_PATTERN)) {
+                System.out.println(ze.getName());
             	if (!zipEntries.containsKey(ze.getName())) {
             		zipEntries.put(ze.getName(), out.toByteArray());
             	}
