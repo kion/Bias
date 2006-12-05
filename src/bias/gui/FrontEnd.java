@@ -87,6 +87,8 @@ public class FrontEnd extends JFrame {
 
     public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(Constants.class.getResource("/bias/res/extensions.png"));
 
+    public static final ImageIcon ICON_ICONS = new ImageIcon(Constants.class.getResource("/bias/res/icons.png"));
+
     private static final Placement[] PLACEMENTS = new Placement[] { new Placement(JTabbedPane.TOP),
             new Placement(JTabbedPane.LEFT), new Placement(JTabbedPane.RIGHT),
             new Placement(JTabbedPane.BOTTOM) };
@@ -964,7 +966,7 @@ public class FrontEnd extends JFrame {
         if (jButton9 == null) {
             jButton9 = new JButton(manageIconsAction);
             jButton9.setToolTipText("manage icons"); // Generated
-            jButton9.setIcon(ICON_EXTENSIONS);
+            jButton9.setIcon(ICON_ICONS);
         }
         return jButton9;
     }
