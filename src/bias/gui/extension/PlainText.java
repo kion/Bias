@@ -29,7 +29,7 @@ public class PlainText extends Extension {
     private static final long serialVersionUID = 1L;
 
     private static final ImageIcon ICON_SWITCH_MODE = 
-        new ImageIcon(PlainText.class.getResource("/bias/res/switch_mode.png"));
+        new ImageIcon(PlainText.class.getResource("/bias/res/PlainText/switch_mode.png"));
 
     private static final Font FONT = new Font("SansSerif", Font.PLAIN, 12);
     

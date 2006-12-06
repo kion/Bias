@@ -71,25 +71,25 @@ public class HTMLPage extends Extension {
     private static final long serialVersionUID = 1L;
 
     private static final ImageIcon ICON_ENTRY_LINK = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/entry_link.png"));
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/entry_link.png"));
 
     private static final ImageIcon ICON_URL_LINK = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/url_link.png"));
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/url_link.png"));
 
     private static final ImageIcon ICON_COLOR = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/color.png"));
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/color.png"));
 
     private static final ImageIcon ICON_TEXT_UNDERLINE = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/text_underlined.png"));
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/text_underlined.png"));
 
     private static final ImageIcon ICON_TEXT_ITALIC = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/text_italic.png"));
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/text_italic.png"));
 
     private static final ImageIcon ICON_TEXT_BOLD = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/text_bold.png"));
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/text_bold.png"));
 
     private static final ImageIcon ICON_SWITCH_MODE = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/switch_mode.png"));  //  @jve:decl-index=0:
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/switch_mode.png"));  //  @jve:decl-index=0:
     
     private static final Font DEFAULT_FONT = new Font("SansSerif", Font.PLAIN, 12);
     

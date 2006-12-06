@@ -20,8 +20,9 @@ public class Constants {
 
     public static final String ZIP_PATH_SEPARATOR = "/";
     public static final String PACKAGE_PATH_SEPARATOR = ".";
+    public static final String PACKAGE_PREFIX_PATTERN = "^.*\\.";
 
-    public static final String ARCHIVE_FILE_PATTERN = "(?i).*\\.(jar)$";
+    public static final String JAR_FILE_PATTERN = "(?i).*\\.jar$";
     
     public static final String EXTENSION_FILE_PATTERN = "(?i).*\\.(class|jar)$";
     public static final String EXTENSION_FILE_PATTERN_DESCRIPTION = "Java Class, JAR";
@@ -29,24 +30,27 @@ public class Constants {
     public static final String ANY_CHARACTERS_PATTERN = ".*";
     
     public static final String DATA_FILE_PATTERN = "data/[\\d/]+\\.data";
-    public static final String DATA_FILE_ENDING_PATTERN = "\\.data";
+    public static final String DATA_FILE_ENDING_PATTERN = "\\.data$";
     public static final String DATA_FILE_ENDING = ".data";
     public static final String CONFIG_FILE_PATH = "conf/config.properties";
     public static final String METADATA_FILE_PATH = "data/metadata.xml";
     public static final String DATA_DIR_PATTERN = "data/";
     public static final String DATA_DIR = "data/";
-    public static final String VISUAL_COMPONENT_FILE_ENDING = ".class";
-    public static final String VISUAL_COMPONENT_DIR_PATH = 
+    public static final String EXTENSION_FILE_ENDING = ".class";
+    public static final String EXTENSION_DIR_PATH = 
         Extension.class.getPackage().getName().replaceAll("\\.", ZIP_PATH_SEPARATOR);
-    public static final String VISUAL_COMPONENT_FILE_PATTERN = VISUAL_COMPONENT_DIR_PATH + "/[\\w/]+\\.class";
-    public static final String VISUAL_COMPONENT_SKIP_FILE_PATH = 
+    public static final String EXTENSION_FILE_PATH_PATTERN = EXTENSION_DIR_PATH + "/[\\w/]+\\.class";
+    public static final String EXTENSION_SKIP_FILE_PATH = 
         "(" + Extension.class.getName().replaceAll("\\.", ZIP_PATH_SEPARATOR) + "|" 
         + MissingExtensionInformer.class.getName().replaceAll("\\.", ZIP_PATH_SEPARATOR) + ")" 
-        + "\\" + VISUAL_COMPONENT_FILE_ENDING;
-    public static final String VISUAL_COMPONENT_SKIP_FILE_NAME = 
+        + "\\" + EXTENSION_FILE_ENDING;
+    public static final String EXTENSION_SKIP_FILE_NAME = 
         "(" + Extension.class.getSimpleName() + "|" 
         + MissingExtensionInformer.class.getSimpleName() + ")" 
-        + "\\" + VISUAL_COMPONENT_FILE_ENDING;
+        + "\\" + EXTENSION_FILE_ENDING;
+    public static final String RESOURCE_FILE_PATTERN = "res/.+";
+    public static final String RESOURCE_FILE_PREFIX_PATTERN = "^res/";
+    public static final String RESOURCE_DIR = "bias/res/";
     public static final String ICON_FORMAT = "PNG";
     public static final String ICON_FILE_ENDING = ".png";
     public static final String ICONS_DIR = "icons/";

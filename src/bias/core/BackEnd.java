@@ -4,7 +4,6 @@
 package bias.core;
 
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -16,11 +15,13 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
@@ -115,10 +116,10 @@ public class BackEnd {
     public Collection<String> getExtensions() {
         Collection<String> extensions = new LinkedHashSet<String>();
         for (String name : zipEntries.keySet()) {
-            if (name.matches(Constants.VISUAL_COMPONENT_FILE_PATTERN)
-                    && !name.matches(Constants.VISUAL_COMPONENT_SKIP_FILE_PATH)) {
+            if (name.matches(Constants.EXTENSION_FILE_PATH_PATTERN)
+                    && !name.matches(Constants.EXTENSION_SKIP_FILE_PATH)) {
                 String extension = 
-                    name.substring(0, name.length() - Constants.VISUAL_COMPONENT_FILE_ENDING.length())
+                    name.substring(0, name.length() - Constants.EXTENSION_FILE_ENDING.length())
                     .replaceAll(Constants.ZIP_PATH_SEPARATOR, Constants.PACKAGE_PATH_SEPARATOR);
                 extensions.add(extension);
             }
@@ -126,52 +127,75 @@ public class BackEnd {
         return extensions;
     }
 
-    public boolean installExtension(File extensionFile) throws Exception {
-        boolean installed = false;
+    public void installExtension(File extensionFile) throws Exception {
+        Set<String> installedExtNames = new HashSet<String>();
         if (extensionFile != null && extensionFile.exists() && !extensionFile.isDirectory()) {
             String name = extensionFile.getName();
-            if (name.matches(Constants.ARCHIVE_FILE_PATTERN)) {
+            Map<String, byte[]> classesMap = new HashMap<String, byte[]>();
+            Map<String, byte[]> resoursesMap = new HashMap<String, byte[]>();
+            if (name.matches(Constants.JAR_FILE_PATTERN)) {
                 ZipInputStream in = new ZipInputStream(new FileInputStream(extensionFile));
                 ZipEntry ze = null;
                 while ((ze = in.getNextEntry()) != null) {
                     String zeName = ze.getName();
-                    if (zeName.endsWith(Constants.VISUAL_COMPONENT_FILE_ENDING)
-                            && !zeName.matches(Constants.VISUAL_COMPONENT_SKIP_FILE_NAME)) {
-                        ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    ByteArrayOutputStream out = null;
+                    int type = 0;
+                    if (zeName.endsWith(Constants.EXTENSION_FILE_ENDING)
+                            && !zeName.matches(Constants.EXTENSION_SKIP_FILE_NAME)) {
+                        type = 1;
+                    } else if (zeName.matches(Constants.RESOURCE_FILE_PATTERN)) {
+                        type = 2;
+                    }
+                    if (type != 0) {
+                        out = new ByteArrayOutputStream();
                         int b;
                         while ((b = in.read()) != -1) {
                             out.write(b);
                         }
                         out.flush();
                         out.close();
-                        zipEntries.put(Constants.VISUAL_COMPONENT_DIR_PATH + Constants.ZIP_PATH_SEPARATOR + zeName, out.toByteArray());
-                        installed = true;
+                        if (type == 1) {
+                            String shortName = zeName.replaceFirst("^.*/", Constants.EMPTY_STR)
+                                                     .replaceFirst("\\.class$", Constants.EMPTY_STR)
+                                                     .replaceFirst("\\$.*$", Constants.EMPTY_STR);
+                            installedExtNames.add(shortName);
+                            classesMap.put(zeName, out.toByteArray());
+                        } else if (type == 2) {
+                            resoursesMap.put(zeName, out.toByteArray());
+                        }
                     }
                 }
                 in.close();
-            } else if (name.endsWith(Constants.VISUAL_COMPONENT_FILE_ENDING)
-                    && !name.matches(Constants.VISUAL_COMPONENT_SKIP_FILE_NAME)) {
-                BufferedInputStream in = new BufferedInputStream(new FileInputStream(extensionFile));
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                int b;
-                while ((b = in.read()) != -1) {
-                    out.write(b);
-                }
-                out.flush();
-                out.close();
-                in.close();
-                zipEntries.put(Constants.VISUAL_COMPONENT_DIR_PATH + Constants.ZIP_PATH_SEPARATOR + name, out.toByteArray());
-                installed = true;
             }
+            if (installedExtNames.isEmpty()) {
+                throw new Exception("Wrong extension pack: nothing to install!");
+            } else if (installedExtNames.size() > 1) {
+                throw new Exception("Wrong extension pack: only one extension per pack allowed!");
+            } else {
+                String extName = installedExtNames.iterator().next();
+                for (Entry<String, byte[]> entry : resoursesMap.entrySet()) {
+                    zipEntries.put(Constants.RESOURCE_DIR + extName + Constants.ZIP_PATH_SEPARATOR 
+                                    + entry.getKey().replaceFirst(Constants.RESOURCE_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
+                                    entry.getValue());
+                }
+                for (Entry<String, byte[]> entry : classesMap.entrySet()) {
+                    zipEntries.put(Constants.EXTENSION_DIR_PATH + Constants.ZIP_PATH_SEPARATOR + entry.getKey(), entry.getValue());
+                }
+            }
+        } else {
+            throw new Exception("Invalid extension pack file!");
         }
-        return installed;
     }
     
-    public boolean uninstallExtension(String extension) throws Exception {
-    	boolean uninstalled = false;
+    public void uninstallExtension(String extension) throws Exception {
         Collection<String> removeKeys = new HashSet<String>();
         for (String key : zipEntries.keySet()) {
-            if (key.matches(extension + Constants.ANY_CHARACTERS_PATTERN)) {
+            if (key.matches(extension + Constants.ANY_CHARACTERS_PATTERN)
+                    || key.matches(Constants.RESOURCE_DIR +
+                            extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR) 
+                            + Constants.ANY_CHARACTERS_PATTERN)) {
+                System.out.println(key);
+                System.out.println(extension);
                 removeKeys.add(key);
             }
         }
@@ -179,9 +203,7 @@ public class BackEnd {
             for (String key : removeKeys) {
                 zipEntries.remove(key);
             }
-            uninstalled = true;
         }
-        return uninstalled;
     }
         
     public Collection<ImageIcon> getIcons() {
@@ -195,26 +217,21 @@ public class BackEnd {
         return icons;
     }
     
-    public boolean addIcon(ImageIcon icon) throws Exception {
-    	boolean added = false;
+    public void addIcon(ImageIcon icon) throws Exception {
     	if (icon != null) {
-        	if (Validator.isNullOrBlank(icon.getDescription())){
-        		String fileName = UUID.randomUUID().toString() + Constants.ICON_FILE_ENDING;
-        		icon.setDescription(Constants.ICONS_DIR + fileName);
-        		BufferedImage image = (BufferedImage) icon.getImage();
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(image, Constants.ICON_FORMAT, baos);
-        		zipEntries.put(Constants.ICONS_DIR + fileName, baos.toByteArray());
-        		added = true;
-        	}
-    	}
-    	return added;
+            String fileName = UUID.randomUUID().toString() + Constants.ICON_FILE_ENDING;
+            icon.setDescription(Constants.ICONS_DIR + fileName);
+            BufferedImage image = (BufferedImage) icon.getImage();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, Constants.ICON_FORMAT, baos);
+            zipEntries.put(Constants.ICONS_DIR + fileName, baos.toByteArray());
+    	} else {
+            throw new Exception("Invalid icon!");
+        }
     }
 
-    public boolean removeIcon(ImageIcon icon) throws Exception {
-    	boolean removed = false;
-		removed = zipEntries.remove(icon.getDescription()) != null ? true : false;
-    	return removed;
+    public void removeIcon(ImageIcon icon) throws Exception {
+		zipEntries.remove(icon.getDescription());
     }
     
     public DataCategory importData(File jarFile, Collection<UUID> existingIDs) throws Exception {
@@ -357,7 +374,7 @@ public class BackEnd {
         if (data.getActiveIndex() != null) {
             rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, data.getActiveIndex().toString());
         }
-        buildNode(Constants.DATA_DIR_PATTERN, rootNode, data);
+        buildNode(Constants.DATA_DIR, rootNode, data);
         metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
         properties.list(new PrintWriter(sw));

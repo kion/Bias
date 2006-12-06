@@ -45,16 +45,16 @@ public class Graffiti extends Extension {
     private static final String IMG_FORMAT = "PNG";
     
     private static final ImageIcon ICON_PAINT_BRUSH = 
-        new ImageIcon(Graffiti.class.getResource("/bias/res/paint_brush.png"));
+        new ImageIcon(Graffiti.class.getResource("/bias/res/Graffiti/paint_brush.png"));
 
     private static final ImageIcon ICON_LIVE_BRUSH = 
-        new ImageIcon(Graffiti.class.getResource("/bias/res/live_brush.png"));
+        new ImageIcon(Graffiti.class.getResource("/bias/res/Graffiti/live_brush.png"));
 
     private static final ImageIcon ICON_ERASER = 
-        new ImageIcon(Graffiti.class.getResource("/bias/res/eraser.png"));
+        new ImageIcon(Graffiti.class.getResource("/bias/res/Graffiti/eraser.png"));
 
     private static final ImageIcon ICON_COLOR = 
-        new ImageIcon(Graffiti.class.getResource("/bias/res/color.png"));
+        new ImageIcon(Graffiti.class.getResource("/bias/res/Graffiti/color.png"));
 
     private class PaintingPanel extends JPanel implements MouseListener, MouseMotionListener {
 
