@@ -173,14 +173,20 @@ public class BackEnd {
                 throw new Exception("Wrong extension pack: only one extension per pack allowed!");
             } else {
                 String extName = installedExtNames.iterator().next();
-                for (Entry<String, byte[]> entry : resoursesMap.entrySet()) {
-                    zipEntries.put(Constants.RESOURCE_DIR + extName + Constants.ZIP_PATH_SEPARATOR 
-                                    + entry.getKey().replaceFirst(Constants.RESOURCE_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
-                                    entry.getValue());
-                }
-                for (Entry<String, byte[]> entry : classesMap.entrySet()) {
-                    zipEntries.put(Constants.EXTENSION_DIR_PATH + Constants.ZIP_PATH_SEPARATOR + entry.getKey(), entry.getValue());
-                }
+            	String fullExtName = Constants.EXTENSION_DIR_PATH.replaceAll(Constants.ZIP_PATH_SEPARATOR, 
+            			Constants.PACKAGE_PATH_SEPARATOR) + Constants.PACKAGE_PATH_SEPARATOR + extName;
+            	if (getExtensions().contains(fullExtName)) {
+            		throw new Exception("Can not install pack: duplicate extension class name!");
+            	} else {
+                    for (Entry<String, byte[]> entry : resoursesMap.entrySet()) {
+                        zipEntries.put(Constants.RESOURCE_DIR + extName + Constants.ZIP_PATH_SEPARATOR 
+                                        + entry.getKey().replaceFirst(Constants.RESOURCE_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
+                                        entry.getValue());
+                    }
+                    for (Entry<String, byte[]> entry : classesMap.entrySet()) {
+                        zipEntries.put(Constants.EXTENSION_DIR_PATH + Constants.ZIP_PATH_SEPARATOR + entry.getKey(), entry.getValue());
+                    }
+            	}
             }
         } else {
             throw new Exception("Invalid extension pack file!");

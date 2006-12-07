@@ -305,6 +305,7 @@ public class FrontEnd extends JFrame {
 
     private void representData(JTabbedPane tabbedPane, DataCategory data) {
         try {
+        	boolean brokenExtensionsPresent = false;
         	int idx = 0;
             for (Recognizable item : data.getData()) {
                 if (item instanceof DataEntry) {
@@ -313,7 +314,9 @@ public class FrontEnd extends JFrame {
                     Extension extension;
                     try {
                         extension = ExtensionFactory.getInstance().newExtension(de);
-                    } catch (Exception ex) {
+                    } catch (Throwable t) {
+                    	t.printStackTrace();
+                    	brokenExtensionsPresent = true;
                         extension = new MissingExtensionInformer(de);
                     }
                     tabbedPane.addTab(caption, extension);
@@ -336,8 +339,16 @@ public class FrontEnd extends JFrame {
                     }
                 }
             }
+            if (brokenExtensionsPresent) {
+                displayErrorMessage("Some entries have not been successfully represented.\n" +
+    					"Corresponding extensions seem to be broken.\n" +
+    					"Try to open extensions management dialog, " +
+    					"it will autodetect and remove broken extensions.\n" +
+    					"After that, try to reinstall broken extensions.");
+            }
         } catch (Exception ex) {
-            displayErrorMessage(ex);
+            displayErrorMessage("Critical error! :( Bias can not proceed further...", ex);
+            System.exit(1);
         }
     }
 
@@ -544,11 +555,20 @@ public class FrontEnd extends JFrame {
         return rootTabPane;
     }
 
-    public void displayErrorMessage(Exception ex) {
-        JOptionPane.showMessageDialog(FrontEnd.this, "Details: " + ex, "Error", JOptionPane.ERROR_MESSAGE);
-        ex.printStackTrace();
+    public void displayErrorMessage(Throwable t) {
+        JOptionPane.showMessageDialog(FrontEnd.this, "Details: " + t, "Error", JOptionPane.ERROR_MESSAGE);
+        t.printStackTrace();
     }
 
+    public void displayErrorMessage(String message, Throwable t) {
+        JOptionPane.showMessageDialog(FrontEnd.this, message, "Error", JOptionPane.ERROR_MESSAGE);
+        t.printStackTrace();
+    }
+
+    public void displayErrorMessage(String message) {
+        JOptionPane.showMessageDialog(FrontEnd.this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    
     public void displayMessage(String message) {
         JOptionPane.showMessageDialog(FrontEnd.this, message, "Information", JOptionPane.INFORMATION_MESSAGE);
     }
@@ -1108,8 +1128,12 @@ public class FrontEnd extends JFrame {
                     }
                 }
             }
-        } catch (Exception ex) {
-            displayErrorMessage(ex);
+        } catch (Throwable t) {
+            displayErrorMessage("Unable to add entry.\n" +
+            					"Some extension may be broken.\n" +
+            					"Try to open extensions management dialog, " +
+            					"it will autodetect and remove broken extensions.\n" +
+            					"After that, try to add entry again.", t);
         }
     }
 
@@ -1153,8 +1177,12 @@ public class FrontEnd extends JFrame {
                             }
                         }
                     }
-                } catch (Exception ex) {
-                    displayErrorMessage(ex);
+                } catch (Throwable t) {
+                    displayErrorMessage("Unable to add entry.\n" +
+                    					"Some extension may be broken.\n" +
+                    					"Try to open extensions management dialog, " +
+                    					"it will autodetect and remove broken extensions.\n" +
+                    					"After that, try to add entry again.", t);
                 }
             }
         }
@@ -1297,11 +1325,14 @@ public class FrontEnd extends JFrame {
                             annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length())
                                             + " [ Extension Info Is Missing ]";
                         }
+                        // extension instantiation test
+                        ExtensionFactory.getInstance().newExtension(vcClass);
+                        // extension is ok, add it to the list
                         model.addElement(annotationStr);
                         components.put(annotationStr, vcClass.getName());
-                    } catch (Exception ex1) {
+                    } catch (Throwable t) {
                         // broken extension found, inform user about that...
-                        displayErrorMessage(ex1);
+                        displayErrorMessage("Extension [ " + extension + " ] is broken and will be uninstalled!", t);
                         // ... and try uninstall broken extension...
                         try {
                             BackEnd.getInstance().uninstallExtension(extension);

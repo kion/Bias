@@ -30,24 +30,24 @@ public class ExtensionFactory {
 		return instance;
 	}
 	
-	public Extension newExtension(Class entryClass) throws Exception {
+	public Extension newExtension(Class entryClass) throws Throwable {
         Extension extension = newExtension(entryClass, null, new byte[]{});
         return extension;
     }
     
-	public Extension newExtension(Class entryClass, UUID id, byte[] data) throws Exception {
+	public Extension newExtension(Class entryClass, UUID id, byte[] data) throws Throwable {
         Extension extension = (Extension) entryClass.getConstructor(
                 new Class[]{UUID.class, byte[].class}).newInstance(new Object[]{id, data});
         return extension;
     }
     
-    public Extension newExtension(DataEntry dataEntry) throws Exception {
+    public Extension newExtension(DataEntry dataEntry) throws Throwable {
         Class entryClass = Class.forName(dataEntry.getType());
         Extension extension = newExtension(entryClass, dataEntry.getId(), dataEntry.getData());
         return extension;
     }
 
-    public final Map<String, Class> getExtensions() throws Exception {
+    public final Map<String, Class> getExtensions() throws Throwable {
         Map<String, Class> types = new LinkedHashMap<String, Class>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
             String annotationStr;
@@ -59,7 +59,7 @@ public class ExtensionFactory {
                                 + " [ " + vcAnn.description() + " ]";
             } else {
                 annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length()) 
-                                + " [ No Description ]";
+                                + " [ Extension Info Is Missing ]";
             }
             types.put(annotationStr, vcClass);
         }
