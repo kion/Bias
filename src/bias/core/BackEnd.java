@@ -200,8 +200,6 @@ public class BackEnd {
                     || key.matches(Constants.RESOURCE_DIR +
                             extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR) 
                             + Constants.ANY_CHARACTERS_PATTERN)) {
-                System.out.println(key);
-                System.out.println(extension);
                 removeKeys.add(key);
             }
         }

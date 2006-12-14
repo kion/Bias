@@ -109,7 +109,6 @@ public class ImageFileChooser extends JFileChooser implements ActionListener, Pr
         } else {
             file = getSelectedFile();
         }
-        System.out.println(file);
         if (previewCheckBox.isSelected() && file != null && !file.isDirectory()) {
             ImageIcon ii = new ImageIcon(file.getAbsolutePath());
             imageViewPanel.setImage(ii.getImage());
