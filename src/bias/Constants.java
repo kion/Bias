@@ -1,7 +1,7 @@
 /**
  * Created on Oct 19, 2006
  */
-package bias.global;
+package bias;
 
 import bias.gui.extension.Extension;
 import bias.gui.extension.MissingExtensionInformer;
@@ -55,8 +55,6 @@ public class Constants {
     public static final String ICON_FILE_ENDING = ".png";
     public static final String ICONS_DIR = "icons/";
     public static final String ICON_FILE_PATH_PATTERN = ICONS_DIR + ".*\\" + ICON_FILE_ENDING;
-    public static final String ICON_FILE_PATTERN = "(?i).*\\.(png|gif|jpg|jpeg)";
-    public static final String ICON_FILE_PATTERN_DESCRIPTION = "Icon File (PNG/GIF/JPG)";
     
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";

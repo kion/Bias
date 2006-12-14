@@ -49,13 +49,14 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.TabbedPaneUI;
 
+import bias.Constants;
 import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
 import bias.core.Recognizable;
-import bias.global.Constants;
 import bias.gui.extension.Extension;
 import bias.gui.extension.MissingExtensionInformer;
+import bias.gui.utils.ImageFileChooser;
 import bias.utils.BrowserLauncher;
 
 /**
@@ -142,22 +143,10 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    private static class IconFileChooser extends JFileChooser {
+    private static class IconFileChooser extends ImageFileChooser {
         private static final long serialVersionUID = 1L;
-
         public IconFileChooser() {
-            super();
-            setMultiSelectionEnabled(true);
-            setFileFilter(new FileFilter(){
-                @Override
-                public boolean accept(File file) {
-                    return file.isDirectory() || file.getName().matches(Constants.ICON_FILE_PATTERN);
-                }
-                @Override
-                public String getDescription() {
-                    return Constants.ICON_FILE_PATTERN_DESCRIPTION;
-                }
-            });            
+            super(true);
         }
     }
 

@@ -1,7 +1,7 @@
 /**
  * Created on Jan 27, 2006
  */
-package bias.utils;
+package bias.gui.utils;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -36,7 +36,7 @@ public class ImageFileChooser extends JFileChooser implements ActionListener, Pr
 
     private ImageViewPanel imageViewPanel = new ImageViewPanel();
 
-    public ImageFileChooser() {
+    public ImageFileChooser(boolean multiselectionEnabled) {
         super();
         JPanel previewPanel = new JPanel(new BorderLayout());
         previewPanel.add(imageViewPanel, BorderLayout.CENTER);
@@ -49,7 +49,29 @@ public class ImageFileChooser extends JFileChooser implements ActionListener, Pr
         setFileSelectionMode(FILES_ONLY);
         setFileFilter(imageFileFilter);
         setAccessory(previewPanel);
-        addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, this);
+        if (multiselectionEnabled) {
+            setMultiSelectionEnabled(multiselectionEnabled);
+            addPropertyChangeListener(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY, this);
+        } else {
+            addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, this);
+        }
+    }
+
+    /* 
+     * (non-Javadoc)
+     * 
+     * @see javax.swing.JFileChooser#setMultiSelectionEnabled(boolean)
+     */
+    @Override
+    public void setMultiSelectionEnabled(boolean b) {
+        if (b) {
+            removePropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, this);
+            addPropertyChangeListener(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY, this);
+        } else {
+            removePropertyChangeListener(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY, this);
+            addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, this);
+        }
+        super.setMultiSelectionEnabled(b);
     }
 
     /*
@@ -61,7 +83,9 @@ public class ImageFileChooser extends JFileChooser implements ActionListener, Pr
         showPreview();
     }
 
-    /* (non-Javadoc)
+    /* 
+     * (non-Javadoc)
+     * 
      * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
      */
     public void actionPerformed(ActionEvent e) {
@@ -75,9 +99,19 @@ public class ImageFileChooser extends JFileChooser implements ActionListener, Pr
     }
     
     private void showPreview(){
-        File selectedFile = getSelectedFile();
-        if (selectedFile != null && !selectedFile.isDirectory() && previewCheckBox.isSelected() && accept(selectedFile)) {
-            ImageIcon ii = new ImageIcon(selectedFile.getAbsolutePath());
+        File file = null;
+        if (isMultiSelectionEnabled()) {
+            File[] selectedFiles = getSelectedFiles();
+            if (selectedFiles.length > 0) {
+                int idx = selectedFiles.length - 1;
+                file = selectedFiles[idx];
+            }
+        } else {
+            file = getSelectedFile();
+        }
+        System.out.println(file);
+        if (previewCheckBox.isSelected() && file != null && !file.isDirectory()) {
+            ImageIcon ii = new ImageIcon(file.getAbsolutePath());
             imageViewPanel.setImage(ii.getImage());
         } else {
             imageViewPanel.setImage(null);

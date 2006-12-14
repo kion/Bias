@@ -3,7 +3,7 @@
  */
 package bias.utils;
 
-import bias.global.Constants;
+import bias.Constants;
 
 /**
  * @author kion
