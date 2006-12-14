@@ -285,13 +285,6 @@ public class HTMLPage extends Extension {
                 HTMLEditorKit editorKit = (HTMLEditorKit) editor.getEditorKit();
                 HTMLDocument document = (HTMLDocument) editor.getDocument();
 
-                AttributeSet as = null;
-                if (Tag.A.equals(tag)) {
-                    // remember attribute set on current editor's caret position
-                    int getStylePos = editor.getCaretPosition() == 0 ? editor.getCaretPosition() : editor.getCaretPosition() - 1;
-                    as = document.getCharacterElement(getStylePos).getAttributes();
-                }
-
                 int caret = editor.getCaretPosition();
                 Element pEl = document.getParagraphElement(caret);
                 
@@ -329,15 +322,6 @@ public class HTMLPage extends Extension {
                     editorKit.insertHTML(document, caret + 1, htmlText, 0, 0, tag);
                     // remove blank char added before
                     document.remove(caret, 1);
-                }
-                
-                if (as != null) {
-                    // set remembered attribute set for inserted html
-                    int caretAfter = editor.getCaretPosition();
-                    editor.setSelectionStart(caret);
-                    editor.setSelectionEnd(caretAfter);
-                    editor.setCharacterAttributes(as, false);
-                    editor.setCaretPosition(caretAfter);
                 }
                 
             }
