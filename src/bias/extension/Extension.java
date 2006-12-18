@@ -35,7 +35,7 @@ public abstract class Extension extends JPanel {
     private Extension() {
         // default constructor without parameters is not visible
     }
-    
+
     /**
      * The only allowed constructor that is aware of initialization data.
      * @param data data to be incapsulated by visual entry

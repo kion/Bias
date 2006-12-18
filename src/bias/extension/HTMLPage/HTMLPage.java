@@ -8,6 +8,9 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
@@ -872,7 +875,16 @@ public class HTMLPage extends Extension {
      */
     private JTextPane getJTextPane() {
         if (jTextPane == null) {
-            jTextPane = new JTextPane();
+            jTextPane = new JTextPane(){
+                private static final long serialVersionUID = 1L;
+                @Override
+                public void paint(Graphics g) {
+                    // enable font anti-aliasing
+                    ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON);
+                    super.paint(g);
+                }
+            };
             jTextPane.setEditable(false);
             jTextPane.setEditorKit(new HTMLEditorKit());
 

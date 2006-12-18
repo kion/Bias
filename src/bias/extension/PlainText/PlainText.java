@@ -5,6 +5,9 @@ package bias.extension.PlainText;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.UUID;
@@ -246,7 +249,16 @@ public class PlainText extends Extension {
      */
     private JTextArea getJTextArea() {
         if (jTextArea == null) {
-            jTextArea = new JTextArea();
+            jTextArea = new JTextArea(){
+                private static final long serialVersionUID = 1L;
+                @Override
+                public void paint(Graphics g) {
+                    // enable font anti-aliasing
+                    ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON);
+                    super.paint(g);
+                }
+            };
             jTextArea.setFont(FONT);
             jTextArea.setEditable(false);
         }
