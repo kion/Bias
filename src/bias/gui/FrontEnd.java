@@ -167,8 +167,6 @@ public class FrontEnd extends JFrame {
         return instance;
     }
     
-    private Map<UUID, DataEntry> missingExtensionsData = null;
-
     private String lastAddedEntryType = null;
 
     private JTabbedPane currentTabPane = null;
@@ -280,22 +278,26 @@ public class FrontEnd extends JFrame {
     }
 
     private void representData(DataCategory data) {
-        if (missingExtensionsData == null) {
-            missingExtensionsData = new HashMap<UUID, DataEntry>();
-        }
         if (data.getPlacement() != null) {
             getJTabbedPane().setTabPlacement(data.getPlacement());
         }
-        representData(getJTabbedPane(), data);
+        int brokenExtensionsFound = representData(getJTabbedPane(), data);
         if (data.getActiveIndex() != null) {
             getJTabbedPane().setSelectedIndex(data.getActiveIndex());
         }
+        if (brokenExtensionsFound > 0) {
+            displayErrorMessage("Some entries have not been successfully represented.\n" +
+                    "Corresponding extensions (" + brokenExtensionsFound + ") seem to be broken/missing.\n" +
+                    "Try to open extensions management dialog, " +
+                    "it will autodetect and remove broken extensions (if any).\n" +
+                    "After that, try to (re)install broken/missing extensions.\n");
+        }
     }
 
-    private void representData(JTabbedPane tabbedPane, DataCategory data) {
+    private int representData(JTabbedPane tabbedPane, DataCategory data) {
+        int brokenExtensionsFound = 0;
         try {
-        	boolean brokenExtensionsPresent = false;
-        	int idx = 0;
+        	int idx = tabbedPane.getTabCount();
             for (Recognizable item : data.getData()) {
                 if (item instanceof DataEntry) {
                     DataEntry de = (DataEntry) item;
@@ -305,7 +307,7 @@ public class FrontEnd extends JFrame {
                         extension = ExtensionFactory.getInstance().newExtension(de);
                     } catch (Throwable t) {
                     	t.printStackTrace();
-                    	brokenExtensionsPresent = true;
+                    	brokenExtensionsFound++;
                         extension = new MissingExtensionInformer(de);
                     }
                     tabbedPane.addTab(caption, extension);
@@ -322,23 +324,17 @@ public class FrontEnd extends JFrame {
                     tabbedPane.addTab(caption, categoryTabPane);
                     tabbedPane.setIconAt(idx++, item.getIcon());
                     currentTabPane = categoryTabPane;
-                    representData(categoryTabPane, dc);
+                    brokenExtensionsFound += representData(categoryTabPane, dc);
                     if (dc.getActiveIndex() != null) {
                         categoryTabPane.setSelectedIndex(dc.getActiveIndex());
                     }
                 }
             }
-            if (brokenExtensionsPresent) {
-                displayErrorMessage("Some entries have not been successfully represented.\n" +
-    					"Corresponding extensions seem to be broken.\n" +
-    					"Try to open extensions management dialog, " +
-    					"it will autodetect and remove broken extensions.\n" +
-    					"After that, try to reinstall broken extensions.");
-            }
         } catch (Exception ex) {
             displayErrorMessage("Critical error! :( Bias can not proceed further...", ex);
             System.exit(1);
         }
+        return brokenExtensionsFound;
     }
 
     private void store() throws Exception {
@@ -399,10 +395,12 @@ public class FrontEnd extends JFrame {
                 if (extension instanceof MissingExtensionInformer) {
                     dataEntry = ((MissingExtensionInformer) extension).getDataEntry();
                     if (BackEnd.getInstance().getExtensions().contains(dataEntry.getType())) {
-                        dataEntry = new DataEntry(extension.getId(), caption, icon, dataEntry.getType(), serializedData);
+                        String type = dataEntry.getType();
+                        type = type.substring(0, type.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR));
+                        dataEntry = new DataEntry(extension.getId(), caption, icon, type, serializedData);
                     }
                 } else {
-                    dataEntry = new DataEntry(extension.getId(), caption, icon, extension.getClass().getName(), serializedData);
+                    dataEntry = new DataEntry(extension.getId(), caption, icon, extension.getClass().getPackage().getName(), serializedData);
                 }
                 data.addDataItem(dataEntry);
             }
@@ -1130,49 +1128,52 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
-            if (getJTabbedPane().getTabCount() > 0) {
-                try {
-                    if (getJTabbedPane().getSelectedIndex() == -1) {
-                        currentTabPane = getJTabbedPane();
+            try {
+                if (getJTabbedPane().getTabCount() == 0) {
+                    if (!defineRootPlacement()) {
+                        return;
                     }
-                    JLabel entryTypeLabel = new JLabel("Type:");
-                    JComboBox entryTypeComboBox = new JComboBox();
-                    for (String entryType : ExtensionFactory.getInstance().getExtensions().keySet()) {
-                        entryTypeComboBox.addItem(entryType);
-                    }
-                    if (lastAddedEntryType != null) {
-                        entryTypeComboBox.setSelectedItem(lastAddedEntryType);
-                    }
-                    entryTypeComboBox.setEditable(false);
-                    JLabel icLabel = new JLabel("Choose icon:");
-                    JComboBox iconChooser = new JComboBox();
-                    iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
-                    for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-                        iconChooser.addItem(icon);
-                    }
-                    String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser },
-                            "New entry:", JOptionPane.QUESTION_MESSAGE);
-                    if (caption != null) {
-                        String typeDescription = (String) entryTypeComboBox.getSelectedItem();
-                        lastAddedEntryType = typeDescription;
-                        Class type = ExtensionFactory.getInstance().getExtensions().get(typeDescription);
-                        Extension extension = ExtensionFactory.getInstance().newExtension(type);
-                        if (extension != null) {
-                            currentTabPane.addTab(caption, extension);
-                            currentTabPane.setSelectedComponent(extension);
-                            ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
-                            if (icon != null) {
-                            	currentTabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
-                            }
+                }
+                if (getJTabbedPane().getTabCount() == 0 || getJTabbedPane().getSelectedIndex() == -1) {
+                    currentTabPane = getJTabbedPane();
+                }
+                JLabel entryTypeLabel = new JLabel("Type:");
+                JComboBox entryTypeComboBox = new JComboBox();
+                for (String entryType : ExtensionFactory.getInstance().getExtensions().keySet()) {
+                    entryTypeComboBox.addItem(entryType);
+                }
+                if (lastAddedEntryType != null) {
+                    entryTypeComboBox.setSelectedItem(lastAddedEntryType);
+                }
+                entryTypeComboBox.setEditable(false);
+                JLabel icLabel = new JLabel("Choose icon:");
+                JComboBox iconChooser = new JComboBox();
+                iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
+                for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+                    iconChooser.addItem(icon);
+                }
+                String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser },
+                        "New entry:", JOptionPane.QUESTION_MESSAGE);
+                if (caption != null) {
+                    String typeDescription = (String) entryTypeComboBox.getSelectedItem();
+                    lastAddedEntryType = typeDescription;
+                    Class type = ExtensionFactory.getInstance().getExtensions().get(typeDescription);
+                    Extension extension = ExtensionFactory.getInstance().newExtension(type);
+                    if (extension != null) {
+                        currentTabPane.addTab(caption, extension);
+                        currentTabPane.setSelectedComponent(extension);
+                        ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+                        if (icon != null) {
+                            currentTabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
                         }
                     }
-                } catch (Throwable t) {
-                    displayErrorMessage("Unable to add entry.\n" +
-                    					"Some extension may be broken.\n" +
-                    					"Try to open extensions management dialog, " +
-                    					"it will autodetect and remove broken extensions.\n" +
-                    					"After that, try to add entry again.", t);
                 }
+            } catch (Throwable t) {
+                displayErrorMessage("Unable to add entry.\n" +
+                                    "Some extension may be broken.\n" +
+                                    "Try to open extensions management dialog, " +
+                                    "it will autodetect and remove broken extensions.\n" +
+                                    "After that, try to add entry again.", t);
             }
         }
     };
@@ -1238,34 +1239,41 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             try {
-                if (getJTabbedPane().getTabCount() > 0) {
-                    JLabel pLabel = new JLabel("Choose placement:");
-                    JComboBox placementsChooser = new JComboBox();
-                    for (Placement placement : PLACEMENTS) {
-                        placementsChooser.addItem(placement);
+                if (getJTabbedPane().getTabCount() == 0) {
+                    if (!defineRootPlacement()) {
+                        return;
                     }
-                    JLabel icLabel = new JLabel("Choose icon:");
-                    JComboBox iconChooser = new JComboBox();
-                    iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
-                    for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-                        iconChooser.addItem(icon);
+                }
+                if (getJTabbedPane().getTabCount() == 0 || getJTabbedPane().getSelectedIndex() == -1) {
+                    currentTabPane = getJTabbedPane();
+                }
+                JLabel pLabel = new JLabel("Choose placement:");
+                JComboBox placementsChooser = new JComboBox();
+                for (Placement placement : PLACEMENTS) {
+                    placementsChooser.addItem(placement);
+                }
+                JLabel icLabel = new JLabel("Choose icon:");
+                JComboBox iconChooser = new JComboBox();
+                iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
+                for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+                    iconChooser.addItem(icon);
+                }
+                String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser },
+                        "New category:", JOptionPane.QUESTION_MESSAGE);
+                if (categoryCaption != null) {
+                    JTabbedPane categoryTabPane = new JTabbedPane();
+                    UUID id = UUID.randomUUID();
+                    categoryTabPane.setName(id.toString());
+                    categoryTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
+                    addTabPaneListeners(categoryTabPane);
+                    currentTabPane.addTab(categoryCaption, categoryTabPane);
+                    JTabbedPane parentTabPane = ((JTabbedPane) categoryTabPane.getParent());
+                    parentTabPane.setSelectedComponent(categoryTabPane);
+                    ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+                    if (icon != null) {
+                        parentTabPane.setIconAt(parentTabPane.getSelectedIndex(), icon);
                     }
-                    String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser },
-                            "New category:", JOptionPane.QUESTION_MESSAGE);
-                    if (categoryCaption != null) {
-                        JTabbedPane categoryTabPane = new JTabbedPane();
-                        UUID id = UUID.randomUUID();
-                        categoryTabPane.setName(id.toString());
-                        categoryTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
-                        addTabPaneListeners(categoryTabPane);
-                        currentTabPane.addTab(categoryCaption, categoryTabPane);
-                        ((JTabbedPane) categoryTabPane.getParent()).setSelectedComponent(categoryTabPane);
-                        ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
-                        if (icon != null) {
-                        	currentTabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
-                        }
-                        currentTabPane = (JTabbedPane) categoryTabPane.getParent();
-                    }
+                    currentTabPane = (JTabbedPane) categoryTabPane.getParent();
                 }
             } catch (Exception ex) {
                 displayErrorMessage(ex);
@@ -1321,10 +1329,12 @@ public class FrontEnd extends JFrame {
                         components.put(annotationStr, vcClass.getName());
                     } catch (Throwable t) {
                         // broken extension found, inform user about that...
+                        extension = extension.substring(extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR)+1, extension.length());
                         displayErrorMessage("Extension [ " + extension + " ] is broken and will be uninstalled!", t);
                         // ... and try uninstall broken extension...
                         try {
                             BackEnd.getInstance().uninstallExtension(extension);
+                            BackEnd.getInstance().store();
                         } catch (Exception ex2) {
                             // ... if unsuccessfully - inform user about that, do nothing else
                             displayErrorMessage(ex2);

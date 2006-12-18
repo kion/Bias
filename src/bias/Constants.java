@@ -4,7 +4,6 @@
 package bias;
 
 import bias.gui.extension.Extension;
-import bias.gui.extension.MissingExtensionInformer;
 
 /**
  * @author kion
@@ -37,20 +36,14 @@ public class Constants {
     public static final String DATA_DIR_PATTERN = "data/";
     public static final String DATA_DIR = "data/";
     public static final String EXTENSION_FILE_ENDING = ".class";
-    public static final String EXTENSION_DIR_PATH = 
-        Extension.class.getPackage().getName().replaceAll("\\.", ZIP_PATH_SEPARATOR);
-    public static final String EXTENSION_FILE_PATH_PATTERN = EXTENSION_DIR_PATH + "/[\\w/]+\\.class";
-    public static final String EXTENSION_SKIP_FILE_PATH = 
-        "(" + Extension.class.getName().replaceAll("\\.", ZIP_PATH_SEPARATOR) + "|" 
-        + MissingExtensionInformer.class.getName().replaceAll("\\.", ZIP_PATH_SEPARATOR) + ")" 
-        + "\\" + EXTENSION_FILE_ENDING;
-    public static final String EXTENSION_SKIP_FILE_NAME = 
-        "(" + Extension.class.getSimpleName() + "|" 
-        + MissingExtensionInformer.class.getSimpleName() + ")" 
-        + "\\" + EXTENSION_FILE_ENDING;
-    public static final String RESOURCE_FILE_PATTERN = "res/.+";
-    public static final String RESOURCE_FILE_PREFIX_PATTERN = "^res/";
-    public static final String RESOURCE_DIR = "bias/res/";
+    public static final String EXTENSION_FILE_PATH_PATTERN = "classes/.+\\" + EXTENSION_FILE_ENDING;
+    public static final String EXTENSION_DIR_PACKAGE_NAME = Extension.class.getPackage().getName();
+    public static final String EXTENSION_DIR_PATH = EXTENSION_DIR_PACKAGE_NAME.replaceAll("\\.", ZIP_PATH_SEPARATOR);
+    public static final String EXTENSION_PATTERN = EXTENSION_DIR_PATH + "/[\\w/]+/[\\w/]+\\" + EXTENSION_FILE_ENDING;
+    public static final String CLASS_FILE_PREFIX_PATTERN = "^classes/";
+    public static final String RESOURCE_FILE_PATTERN = "resources/.+";
+    public static final String RESOURCE_FILE_PREFIX_PATTERN = "^resources/";
+    public static final String RESOURCES_DIR = "bias/res/";
     public static final String ICON_FORMAT = "PNG";
     public static final String ICON_FILE_ENDING = ".png";
     public static final String ICONS_DIR = "icons/";

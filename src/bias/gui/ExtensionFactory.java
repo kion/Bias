@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import bias.Constants;
 import bias.core.BackEnd;
 import bias.core.DataEntry;
 import bias.gui.extension.Extension;
@@ -42,7 +43,10 @@ public class ExtensionFactory {
     }
     
     public Extension newExtension(DataEntry dataEntry) throws Throwable {
-        Class entryClass = Class.forName(dataEntry.getType());
+        String type = dataEntry.getType();
+        type = type.substring(type.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR)+1, type.length());
+        type = dataEntry.getType() + Constants.PACKAGE_PATH_SEPARATOR + type; 
+        Class entryClass = Class.forName(type);
         Extension extension = newExtension(entryClass, dataEntry.getId(), dataEntry.getData());
         return extension;
     }
