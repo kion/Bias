@@ -109,13 +109,13 @@ public class HTMLPage extends Extension {
     
     private static final String[] FONT_FAMILY_NAMES = new String[] { "SansSerif", "Serif", "Monospaced" };
 
-    private static final Integer FONT_SIZE_XX_LARGE = new Integer(36);
-    private static final Integer FONT_SIZE_X_LARGE = new Integer(24);
-    private static final Integer FONT_SIZE_LARGE = new Integer(18);
-    private static final Integer FONT_SIZE_MEDIUM = new Integer(14);
-    private static final Integer FONT_SIZE_SMALL = new Integer(12);
-    private static final Integer FONT_SIZE_X_SMALL = new Integer(10);
-    private static final Integer FONT_SIZE_XX_SMALL = new Integer(8);
+    private static final int FONT_SIZE_XX_LARGE = 36;
+    private static final int FONT_SIZE_X_LARGE = 24;
+    private static final int FONT_SIZE_LARGE = 18;
+    private static final int FONT_SIZE_MEDIUM = 14;
+    private static final int FONT_SIZE_SMALL = 12;
+    private static final int FONT_SIZE_X_SMALL = 10;
+    private static final int FONT_SIZE_XX_SMALL = 8;
 
     private static final Map<String, Integer> FONT_SIZES = fontSizes();
 
@@ -829,7 +829,7 @@ public class HTMLPage extends Extension {
             jComboBox.addItemListener(new java.awt.event.ItemListener() {
                 public void itemStateChanged(java.awt.event.ItemEvent e) {
                     String selectedFontSizeStr = (String) getJComboBox().getSelectedItem();
-                    int selectedFontSize = ((Integer) HTMLPage.FONT_SIZES.get(selectedFontSizeStr)).intValue();
+                    int selectedFontSize = HTMLPage.FONT_SIZES.get(selectedFontSizeStr);
                     String actionName = "font size";
                     new StyledEditorKit.FontSizeAction(actionName, selectedFontSize).actionPerformed(
                             new ActionEvent(e.getSource(), e.getID(), actionName));

@@ -4,6 +4,7 @@
 package bias.extension.PlainText;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -11,8 +12,12 @@ import java.awt.RenderingHints;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
@@ -36,7 +41,7 @@ import bias.extension.Extension;
 
 @Extension.Annotation(
         name = "Plain Text", 
-        version="1.0",
+        version="1.1",
         description = "Simple plain text editor",
         author="kion")
 public class PlainText extends Extension {
@@ -45,9 +50,13 @@ public class PlainText extends Extension {
 
     private static final ImageIcon ICON_SWITCH_MODE = 
         new ImageIcon(PlainText.class.getResource("/bias/res/PlainText/switch_mode.png"));
-
-    private static final Font FONT = new Font("SansSerif", Font.PLAIN, 12);
     
+    private static final int DEFAULT_FONT_SIZE = 12;
+    
+    private static final String DEFAULT_FONT_FAMILY = "SansSerif";
+    
+    private static final String[] FONT_FAMILY_NAMES = new String[] { "SansSerif", "Serif", "Monospaced" };
+
     private static class UndoRedoManager extends UndoManager implements DocumentListener {
 
         private static final long serialVersionUID = 1L;
@@ -192,12 +201,17 @@ public class PlainText extends Extension {
         }
 
     }
+    
+    private String currentFontFamily = DEFAULT_FONT_FAMILY;
+    private int currentFontSize = DEFAULT_FONT_SIZE;
 
     private JScrollPane jScrollPane = null;
     private JTextArea jTextArea = null;
     private JToolBar jToolBar = null;
-
     private JToggleButton jToggleButton = null;
+    private JButton jButton1 = null;
+    private JButton jButton2 = null;
+    private JComboBox jComboBox = null;
 
     /**
      * Default constructor
@@ -212,7 +226,8 @@ public class PlainText extends Extension {
      */
     @Override
     public byte[] serialize() {
-        return getJTextArea().getText().getBytes();
+        return ("[FONT=" + currentFontFamily + ":" + currentFontSize + "]" 
+                + getJTextArea().getText()).getBytes();
     }
 
     /**
@@ -223,10 +238,20 @@ public class PlainText extends Extension {
     private void initialize() {
         this.setSize(733, 515);
         this.setLayout(new BorderLayout());
+        String data = new String(getData());
+        Pattern p = Pattern.compile("(^\\[FONT=(\\w+):(\\d+)\\]).*");
+        Matcher m = p.matcher(data);
+        if (m.find()) {
+            currentFontFamily = m.group(2);
+            currentFontSize = Integer.valueOf(m.group(3));
+            data = data.substring(m.group(1).length(), data.length());
+        }
+        getJTextArea().setText(data);
+        Font font = new Font(currentFontFamily, Font.PLAIN, currentFontSize);
+        getJTextArea().setFont(font);
+        getJTextArea().getDocument().addUndoableEditListener(new UndoRedoManager(jTextArea));
         this.add(getJScrollPane(), BorderLayout.CENTER);  // Generated
         this.add(getJToolBar(), BorderLayout.SOUTH);  // Generated
-        getJTextArea().setText(new String(getData()));
-        getJTextArea().getDocument().addUndoableEditListener(new UndoRedoManager(jTextArea));
     }
 
     /**
@@ -259,7 +284,6 @@ public class PlainText extends Extension {
                     super.paint(g);
                 }
             };
-            jTextArea.setFont(FONT);
             jTextArea.setLineWrap(true);
             jTextArea.setWrapStyleWord(true);
             jTextArea.setEditable(false);
@@ -277,6 +301,9 @@ public class PlainText extends Extension {
             jToolBar = new JToolBar();
             jToolBar.setFloatable(false);  // Generated
             jToolBar.add(getJToggleButton());  // Generated
+            jToolBar.add(getJButton1());  // Generated
+            jToolBar.add(getJButton2());  // Generated
+            jToolBar.add(getJComboBox());  // Generated
         }
         return jToolBar;
     }
@@ -301,6 +328,84 @@ public class PlainText extends Extension {
             });
         }
         return jToggleButton;
+    }
+
+    /**
+     * This method initializes jButton1    
+     *  
+     * @return javax.swing.JButton    
+     */
+    private JButton getJButton1() {
+        if (jButton1 == null) {
+            jButton1 = new JButton();
+            jButton1.setToolTipText("increase font size");  // Generated
+            jButton1.setText("+");
+            jButton1.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    currentFontSize += 1;
+                    Font font = new Font(currentFontFamily, Font.PLAIN, currentFontSize);
+                    getJTextArea().setFont(font);
+                    if (getJTextArea().isEditable()) {
+                        getJTextArea().requestFocusInWindow();
+                    }
+                }
+            });
+        }
+        return jButton1;
+    }
+
+    /**
+     * This method initializes jButton2    
+     *  
+     * @return javax.swing.JButton    
+     */
+    private JButton getJButton2() {
+        if (jButton2 == null) {
+            jButton2 = new JButton();
+            jButton2.setToolTipText("decrease font size");  // Generated
+            jButton2.setText("-");
+            jButton2.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    currentFontSize -= 1;
+                    Font font = new Font(currentFontFamily, Font.PLAIN, currentFontSize);
+                    getJTextArea().setFont(font);
+                    if (getJTextArea().isEditable()) {
+                        getJTextArea().requestFocusInWindow();
+                    }
+                }
+            });
+        }
+        return jButton2;
+    }
+
+    /**
+     * This method initializes jComboBox   
+     *  
+     * @return javax.swing.JComboBox    
+     */
+    private JComboBox getJComboBox() {
+        if (jComboBox == null) {
+            jComboBox = new JComboBox();
+            jComboBox.setMaximumSize(new Dimension(150, 20));  // Generated
+            jComboBox.setPreferredSize(new Dimension(150, 20));  // Generated
+            jComboBox.setToolTipText("font family");  // Generated
+            jComboBox.setMinimumSize(new Dimension(150, 20));  // Generated
+            for (int i = 0; i < FONT_FAMILY_NAMES.length; i++) {
+                jComboBox.addItem(FONT_FAMILY_NAMES[i]);
+            }
+            jComboBox.setSelectedItem(currentFontFamily);
+            jComboBox.addItemListener(new java.awt.event.ItemListener() {
+                public void itemStateChanged(java.awt.event.ItemEvent e) {
+                    currentFontFamily = (String) getJComboBox().getSelectedItem();
+                    Font font = new Font(currentFontFamily, Font.PLAIN, currentFontSize);
+                    getJTextArea().setFont(font);
+                    if (getJTextArea().isEditable()) {
+                        getJTextArea().requestFocusInWindow();
+                    }
+                }
+            });
+        }
+        return jComboBox;
     }
 
 }  //  @jve:decl-index=0:visual-constraint="10,10"
