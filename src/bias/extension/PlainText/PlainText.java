@@ -260,6 +260,8 @@ public class PlainText extends Extension {
                 }
             };
             jTextArea.setFont(FONT);
+            jTextArea.setLineWrap(true);
+            jTextArea.setWrapStyleWord(true);
             jTextArea.setEditable(false);
         }
         return jTextArea;
