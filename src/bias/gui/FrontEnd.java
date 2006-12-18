@@ -54,8 +54,9 @@ import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
 import bias.core.Recognizable;
-import bias.gui.extension.Extension;
-import bias.gui.extension.MissingExtensionInformer;
+import bias.extension.Extension;
+import bias.extension.ExtensionFactory;
+import bias.extension.MissingExtensionInformer;
 import bias.gui.utils.ImageFileChooser;
 import bias.utils.BrowserLauncher;
 
@@ -286,8 +287,8 @@ public class FrontEnd extends JFrame {
             getJTabbedPane().setSelectedIndex(data.getActiveIndex());
         }
         if (brokenExtensionsFound > 0) {
-            displayErrorMessage("Some entries have not been successfully represented.\n" +
-                    "Corresponding extensions (" + brokenExtensionsFound + ") seem to be broken/missing.\n" +
+            displayErrorMessage("Some entries (" + brokenExtensionsFound + ") have not been successfully represented.\n" +
+                    "Corresponding extensions seem to be broken/missing.\n" +
                     "Try to open extensions management dialog, " +
                     "it will autodetect and remove broken extensions (if any).\n" +
                     "After that, try to (re)install broken/missing extensions.\n");

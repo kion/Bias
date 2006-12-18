@@ -3,7 +3,7 @@
  */
 package bias;
 
-import bias.gui.extension.Extension;
+import bias.extension.Extension;
 
 /**
  * @author kion
