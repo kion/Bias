@@ -60,6 +60,7 @@ import bias.extension.MissingExtensionInformer;
 import bias.gui.utils.ImageFileChooser;
 import bias.utils.BrowserLauncher;
 
+
 /**
  * @author kion
  */
@@ -84,6 +85,8 @@ public class FrontEnd extends JFrame {
     public static final ImageIcon ICON_ADD_ROOT_ENTRY = new ImageIcon(Constants.class.getResource("/bias/res/add_root_entry.png"));
 
     public static final ImageIcon ICON_SAVE = new ImageIcon(Constants.class.getResource("/bias/res/save.png"));
+
+    public static final ImageIcon ICON_DISCARD_UNSAVED_CHANGES = new ImageIcon(Constants.class.getResource("/bias/res/discard.png"));
 
     public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(Constants.class.getResource("/bias/res/extensions.png"));
 
@@ -199,6 +202,8 @@ public class FrontEnd extends JFrame {
     private JButton jButton8 = null;
 
     private JButton jButton9 = null;
+
+    private JButton jButton10 = null;
 
     private JButton jButton3 = null;
 
@@ -841,6 +846,7 @@ public class FrontEnd extends JFrame {
             jToolBar.add(getJButton()); // Generated
             jToolBar.add(getJButton5()); // Generated
             jToolBar.add(getJButton1()); // Generated
+            jToolBar.add(getJButton10());
         }
         return jToolBar;
     }
@@ -990,6 +996,20 @@ public class FrontEnd extends JFrame {
     }
 
     /**
+     * This method initializes jButton10
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton10() {
+        if (jButton10 == null) {
+            jButton10 = new JButton(discardUnsavedChangesAction);
+            jButton10.setToolTipText("exit & discard unsaved changes"); // Generated
+            jButton10.setIcon(ICON_DISCARD_UNSAVED_CHANGES);
+        }
+        return jButton10;
+    }
+
+    /**
      * This method initializes jButton3
      * 
      * @return javax.swing.JButton
@@ -1124,7 +1144,7 @@ public class FrontEnd extends JFrame {
             					"After that, try to add entry again.", t);
         }
     }
-
+    
     private Action addEntryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
@@ -1290,6 +1310,22 @@ public class FrontEnd extends JFrame {
                 store();
             } catch (Exception ex) {
                 displayErrorMessage(ex);
+            }
+        }
+    };
+    
+    private Action discardUnsavedChangesAction = new AbstractAction() {
+        private static final long serialVersionUID = 1L;
+
+        public void actionPerformed(ActionEvent evt) {
+            // show confirmation dialog
+            if (JOptionPane.showConfirmDialog(FrontEnd.getInstance(), 
+                    "All unsaved data will be lost. " +
+                    "Are you sure you want to discard chages?",
+                    "Discard unsaved changes confirmation",
+                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                // store nothing, just exit
+                System.exit(0);
             }
         }
     };
