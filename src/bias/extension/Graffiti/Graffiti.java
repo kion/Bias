@@ -37,7 +37,7 @@ import com.sun.image.codec.jpeg.ImageFormatException;
 @Extension.Annotation(
         name = "Graffiti",
         version="0.1.1",
-        description = "Simple painting component with basic features",
+        description = "Simple painting component",
         author="kion")
 public class Graffiti extends Extension {
 
