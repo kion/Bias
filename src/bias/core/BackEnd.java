@@ -66,7 +66,7 @@ public class BackEnd {
 
     private Map<String, byte[]> zipEntries;
     
-    private Map<String, DataEntry> numberedData;
+    private Map<String, DataEntry> identifiedData;
     
     private DataCategory data;
     
@@ -79,7 +79,7 @@ public class BackEnd {
             init();
         }
         zipEntries = new LinkedHashMap<String, byte[]>();
-        numberedData = new LinkedHashMap<String, DataEntry>();
+        identifiedData = new LinkedHashMap<String, DataEntry>();
         properties = new Properties();
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
         ZipEntry ze = null;
@@ -91,12 +91,12 @@ public class BackEnd {
             }
             String name = ze.getName();
             if (name.matches(Constants.DATA_FILE_PATTERN)) {
-            	String entryNumericPath = ze.getName()
-			            	.replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
-			            	.replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
+            	String entryIDStr = ze.getName()
+                                        .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
+                                        .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
                 DataEntry de = new DataEntry();
                 de.setData(out.toByteArray());
-                numberedData.put(entryNumericPath, de);
+                identifiedData.put(entryIDStr, de);
             } else if (name.equals(Constants.METADATA_FILE_PATH)) {
                 if (out.size() != 0) {
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
@@ -110,11 +110,11 @@ public class BackEnd {
             }
         }
         zis.close();
-        data = parseMetadata(metadata, numberedData, null);
+        data = parseMetadata(metadata, identifiedData, null);
     }
     
     public DataCategory importData(File jarFile, Collection<UUID> existingIDs) throws Exception {
-        Map<String,DataEntry> importedNumberedData = new LinkedHashMap<String, DataEntry>();
+        Map<String,DataEntry> importedIdentifiedData = new LinkedHashMap<String, DataEntry>();
         Document metadata = null;
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
         ZipEntry ze = null;
@@ -125,12 +125,12 @@ public class BackEnd {
                 out.write(c);
             }
             if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
-                String entryNumericPath = ze.getName()
-                            .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
-                            .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
+                String entryIDStr = ze.getName()
+                                        .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
+                                        .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
                 DataEntry de = new DataEntry();
                 de.setData(out.toByteArray());
-                importedNumberedData.put(entryNumericPath, de);
+                importedIdentifiedData.put(entryIDStr, de);
             } else if (ze.getName().matches(Constants.ICON_FILE_PATH_PATTERN)) {
             	if (!zipEntries.containsKey(ze.getName())) {
             		zipEntries.put(ze.getName(), out.toByteArray());
@@ -143,20 +143,20 @@ public class BackEnd {
             }    
         }
         zis.close();
-        DataCategory importedData = parseMetadata(metadata, importedNumberedData, existingIDs);
+        DataCategory importedData = parseMetadata(metadata, importedIdentifiedData, existingIDs);
         data.addDataItems(importedData.getData());
         return importedData;
     }
     
     private DataCategory parseMetadata(
     		Document metadata, 
-    		Map<String, DataEntry> numberedData,
+    		Map<String, DataEntry> identifiedData,
     		Collection<UUID> existingIDs) throws Exception {
         DataCategory data = new DataCategory();
         if (metadata == null) {
             metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         } else {
-            buildData(Constants.EMPTY_STR, data, metadata.getFirstChild(), numberedData, existingIDs);
+            buildData(data, metadata.getFirstChild(), identifiedData, existingIDs);
             data.setPlacement(Integer.valueOf(metadata.getFirstChild().getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT).getNodeValue()));
             Node activeIdxNode = metadata.getFirstChild().getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX);
             if (activeIdxNode != null) {
@@ -166,17 +166,15 @@ public class BackEnd {
         return data;
     }
     
-    private void buildData(String path, DataCategory data, Node node, Map<String, DataEntry> numberedData, Collection<UUID> existingIDs) throws Exception {
+    private void buildData(DataCategory data, Node node, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs) throws Exception {
         if (node.getNodeName().equals(Constants.XML_ELEMENT_ROOT_CONTAINER)) {
             NodeList nodes = node.getChildNodes();
             for (int i = 0; i < nodes.getLength(); i++) {
                 Node n = nodes.item(i);
-                buildData(path, data, n, numberedData, existingIDs);
+                buildData(data, n, identifiedData, existingIDs);
             }
         } else if (node.getNodeName().equals(Constants.XML_ELEMENT_CATEGORY)) {
             NamedNodeMap attributes = node.getAttributes();
-            Node attCatNumber = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_NUMBER);
-            Integer catNumber = Integer.valueOf(attCatNumber.getNodeValue());
             DataCategory dc = new DataCategory();
             Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
             UUID id = UUID.fromString(attID.getNodeValue());
@@ -188,10 +186,10 @@ public class BackEnd {
                 dc.setCaption(caption);
                 Node attIcon = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ICON);
                 if (attIcon != null) {
-                	String iconPath = attIcon.getNodeValue();
-                	byte[] imageData = zipEntries.get(iconPath);
+                	String iconID = attIcon.getNodeValue();
+                	byte[] imageData = zipEntries.get(Constants.ICONS_DIR + iconID + Constants.ICON_FILE_ENDING);
                 	if (imageData != null) {
-                    	ImageIcon icon = new ImageIcon(imageData, iconPath);
+                    	ImageIcon icon = new ImageIcon(imageData, iconID);
                     	dc.setIcon(icon);
                 	}
                 }
@@ -204,22 +202,17 @@ public class BackEnd {
                     dc.setActiveIndex(activeIdx);
                 }
                 data.addDataItem(dc);
-                String catPath = path + catNumber + "/";
                 NodeList nodes = node.getChildNodes();
                 for (int i = 0; i < nodes.getLength(); i++) {
                     Node n = nodes.item(i);
-                    buildData(catPath, dc, n, numberedData, existingIDs);
+                    buildData(dc, n, identifiedData, existingIDs);
                 }
             }
-            path += catNumber + "/";
         } else if (node.getNodeName().equals(Constants.XML_ELEMENT_ENTRY)) {
             NamedNodeMap attributes = node.getAttributes();
-            Node attEntNumber = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_NUMBER);
-            Integer entNumber = Integer.valueOf(attEntNumber.getNodeValue());
-            String dePath = path + entNumber;
-            DataEntry dataEntry = numberedData.get(dePath);
             Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
             UUID id = UUID.fromString(attID.getNodeValue());
+            DataEntry dataEntry = identifiedData.get(id.toString());
             if (existingIDs == null || !existingIDs.contains(id)) {
                 dataEntry.setId(id);
                 Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
@@ -228,10 +221,10 @@ public class BackEnd {
                 dataEntry.setCaption(caption);
                 Node attIcon = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ICON);
                 if (attIcon != null) {
-                	String iconPath = attIcon.getNodeValue();
-                	byte[] imageData = zipEntries.get(iconPath);
+                	String iconID = attIcon.getNodeValue();
+                	byte[] imageData = zipEntries.get(Constants.ICONS_DIR + iconID + Constants.ICON_FILE_ENDING);
                 	if (imageData != null) {
-                    	ImageIcon icon = new ImageIcon(imageData, iconPath);
+                    	ImageIcon icon = new ImageIcon(imageData, iconID);
                     	dataEntry.setIcon(icon);
                 	}
                 }
@@ -253,7 +246,7 @@ public class BackEnd {
         if (data.getActiveIndex() != null) {
             rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, data.getActiveIndex().toString());
         }
-        buildNode(Constants.DATA_DIR, rootNode, data);
+        buildNode(rootNode, data);
         metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
         properties.list(new PrintWriter(sw));
@@ -281,17 +274,14 @@ public class BackEnd {
         zos.close();
     }
     
-    private void buildNode(String path, Node node, DataCategory data) throws Exception {
-        int dcNumber = 1;
-        int entNumber = 1;
+    private void buildNode(Node node, DataCategory data) throws Exception {
         for (Recognizable item : data.getData()) {
             if (item instanceof DataEntry) {
                 DataEntry de = (DataEntry) item;
-                String dePath = path + entNumber + Constants.DATA_FILE_ENDING;
+                String dePath = Constants.DATA_DIR + de.getId().toString() + Constants.DATA_FILE_ENDING;
                 byte[] value = de.getData();
                 zipEntries.put(dePath, value);
                 Element entryNode = metadata.createElement(Constants.XML_ELEMENT_ENTRY);
-                entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_NUMBER, "" + entNumber);
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, de.getId().toString());
                 String encodedCaption = URLEncoder.encode(de.getCaption(), Constants.UNICODE_ENCODING);
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);
@@ -303,12 +293,9 @@ public class BackEnd {
                 }
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_TYPE, de.getType());
                 node.appendChild(entryNode);
-                entNumber++;
             } else if (item instanceof DataCategory) {
                 DataCategory dc = (DataCategory) item;
-                String dataCatPath = path + dcNumber + "/";
                 Element catNode = metadata.createElement(Constants.XML_ELEMENT_CATEGORY);
-                catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_NUMBER, "" + dcNumber);
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, dc.getId().toString());
                 String encodedCaption = URLEncoder.encode(dc.getCaption(), Constants.UNICODE_ENCODING);
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);
@@ -322,12 +309,10 @@ public class BackEnd {
                 if (dc.getActiveIndex() != null) {
                     catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, dc.getActiveIndex().toString());
                 }
-                buildNode(dataCatPath, catNode, dc);
+                buildNode(catNode, dc);
                 node.appendChild(catNode);
-                dcNumber++;
             }
         }
-        path += dcNumber + "/";
     }
     
     public Collection<String> getExtensions() {
@@ -434,7 +419,8 @@ public class BackEnd {
         Collection<ImageIcon> icons = new LinkedHashSet<ImageIcon>();
         for (String name : zipEntries.keySet()) {
             if (name.matches(Constants.ICON_FILE_PATH_PATTERN)) {
-                ImageIcon icon = new ImageIcon(zipEntries.get(name), name);
+                ImageIcon icon = new ImageIcon(zipEntries.get(name), 
+                        name.replaceFirst(Constants.ICONS_DIR_PATTERN, Constants.EMPTY_STR));
                 icons.add(icon);
             }
         }
@@ -444,7 +430,7 @@ public class BackEnd {
     public void addIcon(ImageIcon icon) throws Exception {
         if (icon != null) {
             String fileName = UUID.randomUUID().toString() + Constants.ICON_FILE_ENDING;
-            icon.setDescription(Constants.ICONS_DIR + fileName);
+            icon.setDescription(fileName);
             BufferedImage image = (BufferedImage) icon.getImage();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(image, Constants.ICON_FORMAT, baos);
@@ -455,7 +441,7 @@ public class BackEnd {
     }
 
     public void removeIcon(ImageIcon icon) throws Exception {
-        zipEntries.remove(icon.getDescription());
+        zipEntries.remove(Constants.ICONS_DIR + icon.getDescription());
     }
     
     private void init() {

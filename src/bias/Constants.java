@@ -28,12 +28,12 @@ public class Constants {
 
     public static final String ANY_CHARACTERS_PATTERN = ".*";
     
-    public static final String DATA_FILE_PATTERN = "data/[\\d/]+\\.data";
-    public static final String DATA_FILE_ENDING_PATTERN = "\\.data$";
-    public static final String DATA_FILE_ENDING = ".data";
     public static final String CONFIG_FILE_PATH = "conf/config.properties";
     public static final String METADATA_FILE_PATH = "data/metadata.xml";
-    public static final String DATA_DIR_PATTERN = "data/";
+    public static final String DATA_FILE_ENDING = ".data";
+    public static final String DATA_FILE_ENDING_PATTERN = "\\" + DATA_FILE_ENDING + "$";
+    public static final String DATA_DIR_PATTERN = "^data/";
+    public static final String DATA_FILE_PATTERN = DATA_DIR_PATTERN + ".+\\" + DATA_FILE_ENDING;
     public static final String DATA_DIR = "data/";
     public static final String EXTENSION_FILE_ENDING = ".class";
     public static final String EXTENSION_FILE_PATH_PATTERN = "classes/.+\\" + EXTENSION_FILE_ENDING;
@@ -41,13 +41,14 @@ public class Constants {
     public static final String EXTENSION_DIR_PATH = EXTENSION_DIR_PACKAGE_NAME.replaceAll("\\.", ZIP_PATH_SEPARATOR);
     public static final String EXTENSION_PATTERN = EXTENSION_DIR_PATH + "/[\\w/]+/[\\w/]+\\" + EXTENSION_FILE_ENDING;
     public static final String CLASS_FILE_PREFIX_PATTERN = "^classes/";
-    public static final String RESOURCE_FILE_PATTERN = "resources/.+";
+    public static final String RESOURCE_FILE_PATTERN = "^resources/.+";
     public static final String RESOURCE_FILE_PREFIX_PATTERN = "^resources/";
     public static final String RESOURCES_DIR = "bias/res/";
     public static final String ICON_FORMAT = "PNG";
     public static final String ICON_FILE_ENDING = ".png";
     public static final String ICONS_DIR = "icons/";
-    public static final String ICON_FILE_PATH_PATTERN = ICONS_DIR + ".*\\" + ICON_FILE_ENDING;
+    public static final String ICONS_DIR_PATTERN = "^icons/";
+    public static final String ICON_FILE_PATH_PATTERN = ICONS_DIR_PATTERN + ".+\\" + ICON_FILE_ENDING;
     
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";
@@ -61,7 +62,6 @@ public class Constants {
     public static final String XML_ELEMENT_CATEGORY = "category";
     public static final String XML_ELEMENT_ENTRY = "entry";
     public static final String XML_ELEMENT_ATTRIBUTE_ID = "id";
-    public static final String XML_ELEMENT_ATTRIBUTE_NUMBER = "number";
     public static final String XML_ELEMENT_ATTRIBUTE_CAPTION = "caption";
     public static final String XML_ELEMENT_ATTRIBUTE_ICON = "icon";
     public static final String XML_ELEMENT_ATTRIBUTE_TYPE = "type";

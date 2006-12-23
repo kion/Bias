@@ -1447,13 +1447,16 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent e) {
             try {
                 JLabel icLabel = new JLabel("Icons Management");
-                icList = new JList(new DefaultListModel());
-                model = (DefaultListModel) icList.getModel();
+                model = new DefaultListModel();
+                icList = new JList(model);
                 icons = new LinkedList<ImageIcon>();
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                     model.addElement(icon);
                     icons.add(icon);
                 }
+                JScrollPane jsp = new JScrollPane(icList);
+                jsp.setPreferredSize(new Dimension(200,200));
+                jsp.setMinimumSize(new Dimension(200,200));
                 JButton addButt = new JButton("Add new");
                 addButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -1495,7 +1498,7 @@ public class FrontEnd extends JFrame {
                     FrontEnd.this, 
                     new Component[]{
                             icLabel,
-                            new JScrollPane(icList),
+                            jsp,
                             addButt,
                             removeButt
                     },
