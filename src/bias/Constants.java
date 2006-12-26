@@ -49,6 +49,9 @@ public class Constants {
     public static final String ICONS_DIR = "icons/";
     public static final String ICONS_DIR_PATTERN = "^icons/";
     public static final String ICON_FILE_PATH_PATTERN = ICONS_DIR_PATTERN + ".+\\" + ICON_FILE_ENDING;
+    public static final String ATTACHMENTS_DIR = "atts/";
+    public static final String ATTACHMENTS_DIR_PATTERN = "^atts/";
+    public static final String ATTACHMENT_FILE_PATH_PATTERN = ATTACHMENTS_DIR_PATTERN + ".+/.+";
     
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";

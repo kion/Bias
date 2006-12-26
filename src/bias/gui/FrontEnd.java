@@ -134,6 +134,7 @@ public class FrontEnd extends JFrame {
         public ExtensionFileChooser() {
             super();
             setMultiSelectionEnabled(true);
+    		setFileSelectionMode(JFileChooser.FILES_ONLY);
             setFileFilter(new FileFilter(){
                 @Override
                 public boolean accept(File file) {
@@ -414,7 +415,7 @@ public class FrontEnd extends JFrame {
         return data;
     }
 
-    private UUID getSelectedVisualEntryID() {
+    public UUID getSelectedVisualEntryID() {
         return getSelectedVisualEntryID(getJTabbedPane());
     }
 

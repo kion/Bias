@@ -14,6 +14,7 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -419,8 +420,9 @@ public class BackEnd {
         Collection<ImageIcon> icons = new LinkedHashSet<ImageIcon>();
         for (String name : zipEntries.keySet()) {
             if (name.matches(Constants.ICON_FILE_PATH_PATTERN)) {
-                ImageIcon icon = new ImageIcon(zipEntries.get(name), 
-                        name.replaceFirst(Constants.ICONS_DIR_PATTERN, Constants.EMPTY_STR));
+            	String id = name.replaceFirst(Constants.ICONS_DIR_PATTERN, Constants.EMPTY_STR);
+            	id = id.substring(0, id.length() - Constants.ICON_FILE_ENDING.length());
+                ImageIcon icon = new ImageIcon(zipEntries.get(name), id);
                 icons.add(icon);
             }
         }
@@ -429,19 +431,52 @@ public class BackEnd {
     
     public void addIcon(ImageIcon icon) throws Exception {
         if (icon != null) {
-            String fileName = UUID.randomUUID().toString() + Constants.ICON_FILE_ENDING;
-            icon.setDescription(fileName);
+            String id = UUID.randomUUID().toString();
+            icon.setDescription(id);
             BufferedImage image = (BufferedImage) icon.getImage();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(image, Constants.ICON_FORMAT, baos);
-            zipEntries.put(Constants.ICONS_DIR + fileName, baos.toByteArray());
+            zipEntries.put(Constants.ICONS_DIR + id + Constants.ICON_FILE_ENDING, baos.toByteArray());
         } else {
             throw new Exception("Invalid icon!");
         }
     }
 
     public void removeIcon(ImageIcon icon) throws Exception {
-        zipEntries.remove(Constants.ICONS_DIR + icon.getDescription());
+        zipEntries.remove(Constants.ICONS_DIR + icon.getDescription() + Constants.ICON_FILE_ENDING);
+    }
+    
+    public Collection<Attachment> getAttachments(UUID dataEntryID) {
+        Collection<Attachment> atts = new ArrayList<Attachment>();
+        for (String name : zipEntries.keySet()) {
+            if (name.matches(Constants.ATTACHMENT_FILE_PATH_PATTERN)
+                    && name.startsWith(Constants.ATTACHMENTS_DIR + dataEntryID.toString())) {
+                byte[] attData = zipEntries.get(name);
+                String attName;
+                int idx = name.lastIndexOf(Constants.ZIP_PATH_SEPARATOR);
+            	attName = name.substring(idx+1, name.length());
+                Attachment att = new Attachment(attName, attData);
+                atts.add(att);
+            }
+        }
+        return atts;
+    }
+    
+    public void addAttachment(UUID dataEntryID, Attachment attachment) throws Exception {
+        if (dataEntryID != null && attachment != null) {
+            String attPath = Constants.ATTACHMENTS_DIR + dataEntryID + Constants.ZIP_PATH_SEPARATOR + attachment.getName();
+            if (zipEntries.get(attPath) != null) {
+            	throw new Exception("Duplicate attachment name!");
+            }
+            zipEntries.put(attPath, attachment.getData());
+        } else {
+            throw new Exception("Invalid parameters!");
+        }
+    }
+
+    public void removeAttachment(UUID dataEntryID, String attachmentName) {
+        String attPath = Constants.ATTACHMENTS_DIR + dataEntryID + Constants.ZIP_PATH_SEPARATOR + attachmentName;
+        zipEntries.remove(attPath);
     }
     
     private void init() {
