@@ -36,7 +36,7 @@ import bias.utils.FSUtils;
 
 @Extension.Annotation(
         name = "File Pack", 
-        version="0.1",
+        version="0.1.1",
         description = "Simple file pack",
         author="kion")
 public class FilePack extends Extension {
