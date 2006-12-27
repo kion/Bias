@@ -13,6 +13,7 @@ import java.util.UUID;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -98,7 +99,7 @@ public class FilePack extends Extension {
 						jButton1.setToolTipText("add file to pack");
 						jButton1.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent evt) {
-								jButton1ActionPerformed(evt);
+								addFileAction(evt);
 							}
 						});
 					}
@@ -109,7 +110,7 @@ public class FilePack extends Extension {
 						jButton2.setToolTipText("delete file from pack");
 						jButton2.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent evt) {
-								jButton2ActionPerformed(evt);
+								removeFileAction(evt);
 							}
 						});
 					}
@@ -120,7 +121,7 @@ public class FilePack extends Extension {
 						jButton3.setToolTipText("save file to external target");
 						jButton3.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent evt) {
-								jButton3ActionPerformed(evt);
+								saveFileAction(evt);
 							}
 						});
 					}
@@ -150,7 +151,7 @@ public class FilePack extends Extension {
 		}
 	}
 	
-	private void jButton1ActionPerformed(ActionEvent evt) {
+	private void addFileAction(ActionEvent evt) {
 		try {
             JFileChooser jfc;
             if (lastInputDir != null) {
@@ -189,7 +190,7 @@ public class FilePack extends Extension {
 		}
 	}
 	
-	private void jButton2ActionPerformed(ActionEvent evt) {
+	private void removeFileAction(ActionEvent evt) {
 		try {
 			if (jTable1.getSelectedRows().length > 0) {
 				DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
@@ -205,7 +206,7 @@ public class FilePack extends Extension {
 		}
 	}
 	
-	private void jButton3ActionPerformed(ActionEvent evt) {
+	private void saveFileAction(ActionEvent evt) {
 		try {
 			if (jTable1.getSelectedRows().length > 0) {
 				DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
@@ -222,9 +223,19 @@ public class FilePack extends Extension {
 					jfc.setSelectedFile(file);
 					if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 						file = jfc.getSelectedFile();
-						byte[] data = getFileData((String) fileName);
-							FSUtils.getInstance().writeFile(file, data);
-                        lastOutputDir = file.getParentFile();
+                        Integer option = null;
+                        if (file.exists()) {
+                            option = JOptionPane.showConfirmDialog(
+                                    this, 
+                                    "File already exists, overwrite?", 
+                                    "Overwrite existing file", 
+                                    JOptionPane.YES_NO_OPTION);
+                        }
+                        if (option == null || option == JOptionPane.YES_OPTION) {
+                            byte[] data = getFileData(fileName);
+                            FSUtils.getInstance().writeFile(file, data);
+                            lastOutputDir = file.getParentFile();
+                        }
 					}
 				}
 			}
