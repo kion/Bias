@@ -53,7 +53,11 @@ public class FilePack extends Extension {
         new ImageIcon(PlainText.class.getResource("/bias/res/FilePack/save.png"));
     
 	private Collection<Attachment> filePack;
+    
+    private File lastInputDir = null;
 	
+    private File lastOutputDir = null;
+    
 	private JToolBar jToolBar1;
 	private JButton jButton2;
 	private JPanel jPanel1;
@@ -64,7 +68,7 @@ public class FilePack extends Extension {
 
 	public FilePack(UUID id, byte[] data) {
 		super(id, data);
-		filePack = BackEnd.getInstance().getAttachments(id);
+		filePack = BackEnd.getInstance().getAttachments(getId());
 		initGUI();
 	}
 
@@ -148,7 +152,12 @@ public class FilePack extends Extension {
 	
 	private void jButton1ActionPerformed(ActionEvent evt) {
 		try {
-			JFileChooser jfc = new JFileChooser();
+            JFileChooser jfc;
+            if (lastInputDir != null) {
+                jfc = new JFileChooser(lastInputDir);
+            } else {
+                jfc = new JFileChooser();
+            }
 			jfc.setMultiSelectionEnabled(true);
 			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			jfc.setFileFilter(new FileFilter(){
@@ -170,6 +179,7 @@ public class FilePack extends Extension {
 					for (File file : files) {
 						addFile(file);
 					}
+                    lastInputDir = files[0].getParentFile();
 				} catch (Exception e) {
 					FrontEnd.getInstance().displayErrorMessage(e);
 				}
@@ -200,15 +210,21 @@ public class FilePack extends Extension {
 			if (jTable1.getSelectedRows().length > 0) {
 				DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
 				for (int i : jTable1.getSelectedRows()) {
-					JFileChooser jfc = new JFileChooser();
+                    JFileChooser jfc;
+                    if (lastOutputDir != null) {
+                        jfc = new JFileChooser(lastOutputDir);
+                    } else {
+                        jfc = new JFileChooser();
+                    }
 					jfc.setMultiSelectionEnabled(false);
 					String fileName = (String) model.getValueAt(i, 0);
-					File file = new File((String) fileName); 
+					File file = new File(fileName);
 					jfc.setSelectedFile(file);
 					if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 						file = jfc.getSelectedFile();
 						byte[] data = getFileData((String) fileName);
 							FSUtils.getInstance().writeFile(file, data);
+                        lastOutputDir = file.getParentFile();
 					}
 				}
 			}
@@ -243,7 +259,7 @@ public class FilePack extends Extension {
 			model.addColumn("Size");
 		}
 		String metrics = " B";
-		int size = attachment.getData().length;
+		float size = attachment.getData().length;
 		if (size >= 1024) {
 			size = size/1024;
 			metrics = " KB";
@@ -252,7 +268,17 @@ public class FilePack extends Extension {
 			size = size/1024;
 			metrics = " MB";
 		}
-		model.addRow(new Object[]{attachment.getName(), size + metrics});
+        String sizeStr = "" + size;
+        int idx = sizeStr.indexOf(".");
+        if (idx != -1) {
+            if (sizeStr.charAt(idx + 1) != '0') {
+                sizeStr = sizeStr.substring(0, idx + 2);
+            } else {
+                sizeStr = sizeStr.substring(0, idx);
+            }
+        }
+        sizeStr += metrics;
+		model.addRow(new Object[]{attachment.getName(), sizeStr});
 	}
 
 	private void removeFile(String fileName, int rowIdx) throws Exception {

@@ -50,7 +50,7 @@ public class ExtensionFactory {
         return extension;
     }
 
-    public final Map<String, Class> getExtensions() throws Throwable {
+    public Map<String, Class> getExtensions() throws Throwable {
         Map<String, Class> types = new LinkedHashMap<String, Class>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
             String annotationStr;
