@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JList;
@@ -23,9 +24,9 @@ import javax.swing.filechooser.FileFilter;
 import bias.core.Attachment;
 import bias.core.BackEnd;
 import bias.extension.Extension;
+import bias.extension.PlainText.PlainText;
 import bias.gui.FrontEnd;
 import bias.utils.FSUtils;
-
 
 /**
  * @author kion
@@ -41,6 +42,15 @@ public class FilePack extends Extension {
 
 	private static final long serialVersionUID = 1L;
 	
+    private static final ImageIcon ICON_ADD = 
+        new ImageIcon(PlainText.class.getResource("/bias/res/FilePack/add.png"));
+    
+    private static final ImageIcon ICON_DELETE = 
+        new ImageIcon(PlainText.class.getResource("/bias/res/FilePack/delete.png"));
+    
+    private static final ImageIcon ICON_SAVE = 
+        new ImageIcon(PlainText.class.getResource("/bias/res/FilePack/save.png"));
+    
 	private Collection<Attachment> filePack;
 	
 	private JToolBar jToolBar1;
@@ -78,7 +88,8 @@ public class FilePack extends Extension {
 					{
 						jButton1 = new JButton();
 						jToolBar1.add(jButton1);
-						jButton1.setText("add file to pack");
+						jButton1.setIcon(ICON_ADD);
+						jButton1.setToolTipText("add file to pack");
 						jButton1.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent evt) {
 								jButton1ActionPerformed(evt);
@@ -88,7 +99,8 @@ public class FilePack extends Extension {
 					{
 						jButton2 = new JButton();
 						jToolBar1.add(jButton2);
-						jButton2.setText("delete file from pack");
+						jButton2.setIcon(ICON_DELETE);
+						jButton2.setToolTipText("delete file from pack");
 						jButton2.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent evt) {
 								jButton2ActionPerformed(evt);
@@ -98,7 +110,8 @@ public class FilePack extends Extension {
 					{
 						jButton3 = new JButton();
 						jToolBar1.add(jButton3);
-						jButton3.setText("save file to external target");
+						jButton3.setIcon(ICON_SAVE);
+						jButton3.setToolTipText("save file to external target");
 						jButton3.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent evt) {
 								jButton3ActionPerformed(evt);
