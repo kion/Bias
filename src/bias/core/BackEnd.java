@@ -14,12 +14,12 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -447,7 +447,7 @@ public class BackEnd {
     }
     
     public Collection<Attachment> getAttachments(UUID dataEntryID) {
-        Collection<Attachment> atts = new ArrayList<Attachment>();
+        Collection<Attachment> atts = new LinkedList<Attachment>();
         for (String name : zipEntries.keySet()) {
             if (name.matches(Constants.ATTACHMENT_FILE_PATH_PATTERN)
                     && name.startsWith(Constants.ATTACHMENTS_DIR + dataEntryID.toString())) {
