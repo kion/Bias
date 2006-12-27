@@ -15,6 +15,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.ListModel;
 import javax.swing.filechooser.FileFilter;
@@ -113,7 +114,7 @@ public class FilePack extends Extension {
 					{
 						ListModel jList1Model = new DefaultComboBoxModel();
 						jList1 = new JList();
-						jPanel1.add(jList1, BorderLayout.CENTER);
+						jPanel1.add(new JScrollPane(jList1), BorderLayout.CENTER);
 						jList1.setModel(jList1Model);
 					}
 				}
@@ -152,6 +153,7 @@ public class FilePack extends Extension {
 				refreshView();
 			} catch (Exception e) {
 				FrontEnd.getInstance().displayErrorMessage(e);
+				refreshView();
 			}
 		}
 	}
@@ -180,6 +182,7 @@ public class FilePack extends Extension {
 						FSUtils.getInstance().writeFile(file, data);
 					} catch (Exception e) {
 						FrontEnd.getInstance().displayErrorMessage(e);
+						refreshView();
 					}
 				}
 			}
