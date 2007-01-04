@@ -25,7 +25,6 @@ import javax.swing.table.TableModel;
 import bias.core.Attachment;
 import bias.core.BackEnd;
 import bias.extension.Extension;
-import bias.extension.PlainText.PlainText;
 import bias.gui.FrontEnd;
 import bias.utils.FSUtils;
 
@@ -45,13 +44,13 @@ public class FilePack extends Extension {
 	private static final long serialVersionUID = 1L;
 	
     private static final ImageIcon ICON_ADD = 
-        new ImageIcon(PlainText.class.getResource("/bias/res/FilePack/add.png"));
+        new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/add.png"));
     
     private static final ImageIcon ICON_DELETE = 
-        new ImageIcon(PlainText.class.getResource("/bias/res/FilePack/delete.png"));
+        new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/delete.png"));
     
     private static final ImageIcon ICON_SAVE = 
-        new ImageIcon(PlainText.class.getResource("/bias/res/FilePack/save.png"));
+        new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/save.png"));
     
 	private Collection<Attachment> filePack;
     
