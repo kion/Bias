@@ -11,7 +11,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
@@ -38,6 +37,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import bias.Bias;
 import bias.Constants;
 import bias.utils.Validator;
 
@@ -63,8 +63,6 @@ public class BackEnd {
 		return instance;
 	}
     
-    private File jarFile = null;
-
     private Map<String, byte[]> zipEntries;
     
     private Map<String, DataEntry> identifiedData;
@@ -76,13 +74,10 @@ public class BackEnd {
     private Properties properties;
     
     public void load() throws Exception {
-        if (jarFile == null) {
-            init();
-        }
         zipEntries = new LinkedHashMap<String, byte[]>();
         identifiedData = new LinkedHashMap<String, DataEntry>();
         properties = new Properties();
-        ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
+        ZipInputStream zis = new ZipInputStream(new FileInputStream(Bias.getJarFile()));
         ZipEntry ze = null;
         while ((ze = zis.getNextEntry()) != null) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -238,9 +233,6 @@ public class BackEnd {
     }
     
     public void store() throws Exception {
-        if (jarFile == null) {
-            init();
-        }
         metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         Element rootNode = metadata.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
         rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, data.getPlacement().toString());
@@ -258,7 +250,7 @@ public class BackEnd {
         of.setIndent(4);
         new XMLSerializer(sw, of).serialize(metadata);
         zipEntries.put(Constants.METADATA_FILE_PATH, sw.getBuffer().toString().getBytes());
-        ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(jarFile));
+        ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(Bias.getJarFile()));
         for (Entry<String, byte[]> entry : zipEntries.entrySet()) {
             String entryName = entry.getKey();
             ZipEntry zipEntry = new ZipEntry(entryName);
@@ -321,7 +313,7 @@ public class BackEnd {
         for (String name : zipEntries.keySet()) {
             if (name.matches(Constants.EXTENSION_PATTERN)) {
                 String extension = 
-                    name.substring(0, name.length() - Constants.EXTENSION_FILE_ENDING.length())
+                    name.substring(0, name.length() - Constants.CLASS_FILE_ENDING.length())
                     .replaceAll(Constants.ZIP_PATH_SEPARATOR, Constants.PACKAGE_PATH_SEPARATOR);
                 extensions.add(extension);
             }
@@ -335,7 +327,8 @@ public class BackEnd {
             String name = extensionFile.getName();
             Map<String, byte[]> classesMap = new HashMap<String, byte[]>();
             Map<String, byte[]> resoursesMap = new HashMap<String, byte[]>();
-            if (name.matches(Constants.JAR_FILE_PATTERN)) {
+            Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
+            if (name.matches(Constants.EXTENSION_FILE_PATTERN)) {
                 ZipInputStream in = new ZipInputStream(new FileInputStream(extensionFile));
                 ZipEntry ze = null;
                 while ((ze = in.getNextEntry()) != null) {
@@ -344,8 +337,10 @@ public class BackEnd {
                     int type = 0;
                     if (zeName.matches(Constants.EXTENSION_FILE_PATH_PATTERN)) {
                         type = 1;
-                    } else if (zeName.matches(Constants.RESOURCE_FILE_PATTERN)) {
+                    } else if (zeName.matches(Constants.RESOURCE_FILE_PATH_PATTERN)) {
                         type = 2;
+                    } else if (zeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
+                        type = 3;
                     }
                     if (type != 0) {
                         out = new ByteArrayOutputStream();
@@ -353,7 +348,6 @@ public class BackEnd {
                         while ((b = in.read()) != -1) {
                             out.write(b);
                         }
-                        out.flush();
                         out.close();
                         if (type == 1) {
                             String shortName = zeName.replaceFirst("^.*/", Constants.EMPTY_STR)
@@ -363,6 +357,25 @@ public class BackEnd {
                             classesMap.put(zeName, out.toByteArray());
                         } else if (type == 2) {
                             resoursesMap.put(zeName, out.toByteArray());
+                        } else if (type == 3) {
+                            ZipInputStream lin = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
+                            ZipEntry lze;
+                            while ((lze = lin.getNextEntry()) != null) {
+                                String lzeName = lze.getName();
+                                if (!lzeName.startsWith(Constants.META_INF_DIR) && !lzeName.endsWith("/")) {
+                                    if (zipEntries.containsKey(lzeName)) {
+                                        throw new Exception("Extension pack conflict! Conflicting resouce: " + lzeName);
+                                    } else {
+                                        ByteArrayOutputStream lout = new ByteArrayOutputStream();
+                                        while ((b = lin.read()) != -1) {
+                                            lout.write(b);
+                                        }
+                                        lout.close();
+                                        libsMap.put(lzeName, lout.toByteArray());
+                                    }
+                                }
+                            }
+                            lin.close();
                         }
                     }
                 }
@@ -377,7 +390,7 @@ public class BackEnd {
                 String fullExtName = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                             + extName + Constants.PACKAGE_PATH_SEPARATOR + extName;
                 if (getExtensions().contains(fullExtName)) {
-                    throw new Exception("Can not install pack: duplicate extension name!");
+                    throw new Exception("Can not install extension pack: duplicate extension name!");
                 } else {
                     for (Entry<String, byte[]> entry : resoursesMap.entrySet()) {
                         zipEntries.put(Constants.RESOURCES_DIR + extName + Constants.ZIP_PATH_SEPARATOR 
@@ -390,6 +403,15 @@ public class BackEnd {
                                 + entry.getKey().replaceFirst(Constants.CLASS_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
                                 entry.getValue());
                     }
+                    if (!libsMap.isEmpty()) {
+                        String extensionInstLogEntryPath = Constants.CONFIG_DIR + extName + Constants.LIB_INSTALL_LOG_FILE_ENDING;
+                        StringBuffer sb = new StringBuffer();
+                        for (Entry<String, byte[]> entry : libsMap.entrySet()) {
+                            zipEntries.put(entry.getKey(), entry.getValue());
+                            sb.append(entry.getKey() + Constants.NEW_LINE);
+                        }
+                        zipEntries.put(extensionInstLogEntryPath, sb.toString().getBytes());
+                    }
                 }
             }
         } else {
@@ -401,18 +423,30 @@ public class BackEnd {
         extension = extension.substring(extension.lastIndexOf(".")+1, extension.length());
         extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension;
         Collection<String> removeKeys = new HashSet<String>();
+        String extName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
         for (String key : zipEntries.keySet()) {
             if (key.matches(extension + Constants.ANY_CHARACTERS_PATTERN)
-                    || key.matches(Constants.RESOURCES_DIR +
-                            extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR) 
+                    || key.matches(Constants.RESOURCES_DIR 
+                            + extName 
                             + Constants.ANY_CHARACTERS_PATTERN)) {
                 removeKeys.add(key);
+            }
+        }
+        String extensionInstLogEntryPath = Constants.CONFIG_DIR + extName + Constants.LIB_INSTALL_LOG_FILE_ENDING;
+        byte[] bytes = zipEntries.get(extensionInstLogEntryPath);
+        if (bytes != null) {
+            String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
+            for (String installEntry : installEntries) {
+                removeKeys.add(installEntry);
             }
         }
         if (!removeKeys.isEmpty()) {
             for (String key : removeKeys) {
                 zipEntries.remove(key);
+                System.out.println("removed: " + key);
             }
+            zipEntries.remove(extensionInstLogEntryPath);
+            System.out.println("removed: " + extensionInstLogEntryPath);
         }
     }
         
@@ -479,15 +513,6 @@ public class BackEnd {
         zipEntries.remove(attPath);
     }
     
-    private void init() {
-        URL url = BackEnd.class.getResource(BackEnd.class.getSimpleName()+".class");
-        String jarFilePath = url.getFile().substring(0, url.getFile().indexOf(BackEnd.class.getName().replaceAll("\\.", "/")) - 2);
-        jarFilePath = jarFilePath.substring("file:".length(), jarFilePath.length());
-        jarFile = new File(jarFilePath);
-        // TODO: remove debug code
-//        jarFile = new File("/mnt/stor/devel/Bias/build/bias.jar");
-    }
-
     public DataCategory getData() {
         return data;
     }

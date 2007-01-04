@@ -16,7 +16,7 @@ import bias.core.DataEntry;
  *
  */
 public class ExtensionFactory {
-	
+    
 	private static ExtensionFactory instance;
 	
 	private ExtensionFactory() {
@@ -54,17 +54,17 @@ public class ExtensionFactory {
         Map<String, Class> types = new LinkedHashMap<String, Class>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
             String annotationStr;
-            Class<?> vcClass = Class.forName(extension);
-            Extension.Annotation vcAnn = 
-                (Extension.Annotation) vcClass.getAnnotation(Extension.Annotation.class);
-            if (vcAnn != null) {
-                annotationStr = vcAnn.name() 
-                                + " [ " + vcAnn.description() + " ]";
+            Class<?> extClass = Class.forName(extension);
+            Extension.Annotation extAnn = 
+                (Extension.Annotation) extClass.getAnnotation(Extension.Annotation.class);
+            if (extAnn != null) {
+                annotationStr = extAnn.name() 
+                                + " [ " + extAnn.description() + " ]";
             } else {
                 annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length()) 
                                 + " [ Extension Info Is Missing ]";
             }
-            types.put(annotationStr, vcClass);
+            types.put(annotationStr, extClass);
         }
         return types;
     }

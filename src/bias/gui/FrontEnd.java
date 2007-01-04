@@ -283,7 +283,7 @@ public class FrontEnd extends JFrame {
             displayErrorMessage(ex);
         }
     }
-
+    
     private void representData(DataCategory data) {
         if (data.getPlacement() != null) {
             getJTabbedPane().setTabPlacement(data.getPlacement());
@@ -1345,26 +1345,27 @@ public class FrontEnd extends JFrame {
                 vcsList = new JList(new DefaultListModel());
                 model = (DefaultListModel) vcsList.getModel();
                 components = new HashMap<String, String>();
+                boolean brokenFixed = false;
                 for (String extension : BackEnd.getInstance().getExtensions()) {
                     String annotationStr;
                     try {
-                        Class<?> vcClass = Class.forName(extension);
-                        Extension.Annotation vcAnn = 
-                            (Extension.Annotation) vcClass.getAnnotation(Extension.Annotation.class);
-                        if (vcAnn != null) {
-                            annotationStr = vcAnn.name() + Constants.SPACE_STR 
-                                            + ", version: " + vcAnn.version() + Constants.SPACE_STR 
-                                            + ", author: " + vcAnn.author() + Constants.SPACE_STR
-                                            + ", description: " + vcAnn.description();
+                        Class<?> extClass = Class.forName(extension);
+                        Extension.Annotation extAnn = 
+                            (Extension.Annotation) extClass.getAnnotation(Extension.Annotation.class);
+                        if (extAnn != null) {
+                            annotationStr = extAnn.name() + Constants.SPACE_STR 
+                                            + ", version: " + extAnn.version() + Constants.SPACE_STR 
+                                            + ", author: " + extAnn.author() + Constants.SPACE_STR
+                                            + ", description: " + extAnn.description();
                         } else {
                             annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length())
                                             + " [ Extension Info Is Missing ]";
                         }
                         // extension instantiation test
-                        ExtensionFactory.getInstance().newExtension(vcClass);
+                        ExtensionFactory.getInstance().newExtension(extClass);
                         // extension is ok, add it to the list
                         model.addElement(annotationStr);
-                        components.put(annotationStr, vcClass.getName());
+                        components.put(annotationStr, extClass.getName());
                     } catch (Throwable t) {
                         // broken extension found, inform user about that...
                         extension = extension.substring(extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR)+1, extension.length());
@@ -1372,12 +1373,18 @@ public class FrontEnd extends JFrame {
                         // ... and try uninstall broken extension...
                         try {
                             BackEnd.getInstance().uninstallExtension(extension);
-                            BackEnd.getInstance().store();
+                            displayMessage("Broken extension [ " + extension + " ] has been uninstalled");
+                            brokenFixed = true;
                         } catch (Exception ex2) {
                             // ... if unsuccessfully - inform user about that, do nothing else
-                            displayErrorMessage(ex2);
+                            displayErrorMessage("Error occured while uninstalling broken extension [ " + extension + " ]!\n" + ex2);
                         }
                     }
+                }
+                if (brokenFixed) {
+                    BackEnd.getInstance().store();
+                    displayMessage("Bias is going to be restarted now...");
+                    System.exit(0);
                 }
                 JButton instButt = new JButton("Install new");
                 instButt.addActionListener(new ActionListener(){

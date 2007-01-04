@@ -7,55 +7,59 @@
                    
      author: kion                                                                
      ====================================================================== -->
-	<project name="Bias" default="BuildAndExecuteJarPackage">
-    <description>
+<project name="Bias" default="BuildAndExecuteJarPackage">
+	<description>
     	Bias OpenSource Personal Information Manager Project
     </description>
-	
-	<!-- =================================
-		  properties
-		 ================================= -->
-	<property name="libDir" value="lib"/>
 
-    <!-- ================================= 
+	<!-- ================================= 
           target: ExecuteJarPackage              
          ================================= -->
-    <target name="ExecuteJarPackage">
-    	<exec command="java -jar build/bias.jar"/>
-    </target>
+	<target name="ExecuteJarPackage">
+		<exec command="java -jar build/bias.jar" />
+	</target>
 
-    <!-- ================================= 
+	<!-- ================================= 
           target: BuildAndExecuteJarPackage              
          ================================= -->
-    <target name="BuildAndExecuteJarPackage" depends="BuildJarPackage">
-    	<exec command="java -jar build/bias.jar"/>
-    </target>
+	<target name="BuildAndExecuteJarPackage" depends="BuildJarPackage">
+		<exec command="java -jar build/bias.jar" />
+	</target>
 
-    <!-- ================================= 
+	<!-- ================================= 
           target: BuildJarPackage              
          ================================= -->
-    <target name="BuildJarPackage" depends="clean" description="Bias OpenSource Personal Information Manager Project">
-        <jar basedir="./bin" destfile="build/bias.jar" includes="bias/**" index="true">
-        	<fileset dir=".">
-        		<!-- include default icons set -->
-			    <include name="icons/**"/>
+	<target name="BuildJarPackage" depends="clean" description="Bias JAR with default extensions/icons bundled">
+		<jar basedir="./bin" destfile="build/bias.jar" includes="bias/**">
+			<!-- include used 3rd-party libs -->
+			<zipfileset src="lib/looks.jar" />
+			<!-- include default icons set -->
+			<fileset dir=".">
+				<include name="icons/**" />
 			</fileset>
-        	<manifest>
-        		<attribute name="Main-Class" value="bias.Bias"/>
-        	</manifest>
-        </jar>
-    </target>
+			<manifest>
+				<attribute name="Main-Class" value="bias.Bias" />
+			</manifest>
+		</jar>
+	</target>
 
-    <!-- ================================= 
+	<!-- ================================= 
+          target: BuildSDKJarPackage              
+         ================================= -->
+	<target name="BuildSDKJarPackage" depends="clean" description="Bias SDK">
+		<jar basedir="./bin" destfile="build/bias.jar" includes="bias/**" />
+	</target>
+
+	<!-- ================================= 
           target: clean                      
          ================================= -->
-    <target name="clean">
+	<target name="clean">
 		<delete>
 			<fileset dir="build">
-	    		<include name="bias.jar"/>
+				<include name="bias.jar" />
 			</fileset>
 		</delete>
-    </target>
+	</target>
 
 </project>
 
