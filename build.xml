@@ -31,8 +31,6 @@
          ================================= -->
 	<target name="BuildJarPackage" depends="clean" description="Bias JAR with default extensions/icons bundled">
 		<jar basedir="./bin" destfile="build/bias.jar" includes="bias/**">
-			<!-- include used 3rd-party libs -->
-			<zipfileset src="lib/looks.jar" />
 			<!-- include default icons set -->
 			<fileset dir=".">
 				<include name="icons/**" />
