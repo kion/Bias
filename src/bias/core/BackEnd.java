@@ -443,10 +443,8 @@ public class BackEnd {
         if (!removeKeys.isEmpty()) {
             for (String key : removeKeys) {
                 zipEntries.remove(key);
-                System.out.println("removed: " + key);
             }
             zipEntries.remove(extensionInstLogEntryPath);
-            System.out.println("removed: " + extensionInstLogEntryPath);
         }
     }
         
