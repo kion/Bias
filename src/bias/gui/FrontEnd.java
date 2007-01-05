@@ -201,6 +201,14 @@ public class FrontEnd extends JFrame {
         activateLAF(laf);
     }
     
+    private static void activateLAF(String laf) throws Throwable {
+        if (laf != null) {
+            Class lafActivatorClass = Class.forName(laf);
+            LookAndFeelActivator lafActivator = (LookAndFeelActivator) lafActivatorClass.newInstance();
+            lafActivator.activate();
+        }
+    }
+    
     private static Properties properties;
     
     private String lastAddedEntryType = null;
@@ -314,7 +322,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private static void selectLAF(String laf) throws Exception {
+    private void selectLAF(String laf) throws Exception {
         if (laf != null) {
             String currentLAF = properties.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
             if (currentLAF == null) {
@@ -328,18 +336,10 @@ public class FrontEnd extends JFrame {
                 } else {
                     properties.put(Constants.PROPERTY_LOOK_AND_FEEL, laf);
                 }
-                BackEnd.getInstance().store();
-                FrontEnd.getInstance().displayMessage("Changes will take effect after Bias restart");
+                store();
+                displayMessage("Changes will take effect after Bias restart");
                 System.exit(0);
             }
-        }
-    }
-    
-    private static void activateLAF(String laf) throws Throwable {
-        if (laf != null) {
-            Class lafActivatorClass = Class.forName(laf);
-            LookAndFeelActivator lafActivator = (LookAndFeelActivator) lafActivatorClass.newInstance();
-            lafActivator.activate();
         }
     }
     
@@ -1021,7 +1021,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton7() {
         if (jButton7 == null) {
             jButton7 = new JButton(saveAction);
-            jButton7.setToolTipText("save"); // Generated
+            jButton7.setToolTipText("save & exit"); // Generated
             jButton7.setIcon(ICON_SAVE);
         }
         return jButton7;
@@ -1321,7 +1321,17 @@ public class FrontEnd extends JFrame {
                 int rVal = jfc.showOpenDialog(FrontEnd.this);
                 if (rVal == JFileChooser.APPROVE_OPTION) {
                     jarFile = jfc.getSelectedFile();
-                    representData(BackEnd.getInstance().importData(jarFile, getVisualEntriesIDs()));
+                    DataCategory data = BackEnd.getInstance().importData(jarFile, getVisualEntriesIDs());
+                    if (!data.getData().isEmpty()) {
+                        representData(data);
+                        store();
+                        displayMessage(
+                                "Some data have been successfully imported.\n" +
+                                "Bias is going to be restarted now...");
+                        System.exit(0);
+                    } else {
+                        displayErrorMessage("Nothing to import!");
+                    }
                 }
             } catch (Exception ex) {
                 displayErrorMessage(ex);
@@ -1381,7 +1391,17 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             try {
-                store();
+                // show confirmation dialog
+                if (JOptionPane.showConfirmDialog(FrontEnd.getInstance(), 
+                        "The data are goint to be saved now.\n" +
+                        "This will finish your current Bias session.\n" +
+                        "Are you sure you want save and exit?",
+                        "Save data and exit",
+                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                    // store, then exit
+                    store();
+                    System.exit(0);
+                }
             } catch (Exception ex) {
                 displayErrorMessage(ex);
             }
@@ -1394,7 +1414,7 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             // show confirmation dialog
             if (JOptionPane.showConfirmDialog(FrontEnd.getInstance(), 
-                    "All unsaved data will be lost. " +
+                    "All unsaved data will be lost.\n" +
                     "Are you sure you want to discard chages?",
                     "Discard unsaved changes confirmation",
                     JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
@@ -1455,7 +1475,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
                 if (brokenFixed) {
-                    BackEnd.getInstance().store();
+                    store();
                     displayMessage("Bias is going to be restarted now...");
                     System.exit(0);
                 }
@@ -1569,7 +1589,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
                 if (brokenFixed) {
-                    BackEnd.getInstance().store();
+                    store();
                     displayMessage("Bias is going to be restarted now...");
                     System.exit(0);
                 }
