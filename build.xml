@@ -29,17 +29,13 @@
 	<!-- ================================= 
           target: BuildJarPackage              
          ================================= -->
-	<target name="BuildJarPackage" description="Bias JAR with default extensions/icons bundled">
+	<target name="BuildJarPackage" description="Bias JAR with default extensions bundled">
 		<delete>
 			<fileset dir="build">
 				<include name="bias.jar" />
 			</fileset>
 		</delete>
 		<jar basedir="./bin" destfile="build/bias.jar" includes="bias/**">
-			<!-- include default icons set -->
-			<fileset dir=".">
-				<include name="icons/**" />
-			</fileset>
 			<manifest>
 				<attribute name="Main-Class" value="bias.Bias" />
 			</manifest>

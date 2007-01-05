@@ -1737,7 +1737,9 @@ public class FrontEnd extends JFrame {
                     null
                 );
                 if (modified) {
+                    FrontEnd.getInstance().displayMessage("Changes will take effect after Bias restart");
                     store();
+                    System.exit(0);
                 }
             } catch (Exception ex) {
                 displayErrorMessage(ex);
