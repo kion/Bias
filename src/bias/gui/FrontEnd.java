@@ -17,7 +17,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,7 +26,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultListModel;
@@ -69,6 +67,8 @@ import bias.utils.BrowserLauncher;
 public class FrontEnd extends JFrame {
 
     private static final long serialVersionUID = 1L;
+    
+    private static final String DEFAULT_LOOK_AND_FEEL = "Default Look-&-Feel";
 
     public static final ImageIcon ICON_APP = new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
 
@@ -132,6 +132,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private static ExtensionFileChooser extensionFileChooser = new ExtensionFileChooser();
     private static class ExtensionFileChooser extends JFileChooser {
         private static final long serialVersionUID = 1L;
 
@@ -152,10 +153,22 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    private static class IconFileChooser extends ImageFileChooser {
+    private static IconsFileChooser iconsFileChooser = new IconsFileChooser();
+    private static class IconsFileChooser extends ImageFileChooser {
         private static final long serialVersionUID = 1L;
-        public IconFileChooser() {
+        public IconsFileChooser() {
             super(true);
+            final FileFilter imgFF = getFileFilter();
+            setFileFilter(new FileFilter(){
+                @Override
+                public boolean accept(File f) {
+                    return imgFF.accept(f) || f.getName().matches(Constants.ADDON_FILE_PATTERN);
+                }
+                @Override
+                public String getDescription() {
+                    return imgFF.getDescription() + ", " + Constants.ADDON_FILE_PATTERN_DESCRIPTION;
+                }
+            });
         }
     }
 
@@ -303,10 +316,22 @@ public class FrontEnd extends JFrame {
     
     private static void selectLAF(String laf) throws Exception {
         if (laf != null) {
-            properties.put(Constants.PROPERTY_LOOK_AND_FEEL, laf);
-            BackEnd.getInstance().store();
-            FrontEnd.getInstance().displayMessage("Changes will take effect after Bias restart");
-            System.exit(0);
+            String currentLAF = properties.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+            if (currentLAF == null) {
+                currentLAF = DEFAULT_LOOK_AND_FEEL;
+            }
+            if (laf.equals(currentLAF)) {
+                FrontEnd.getInstance().displayMessage("Selected Look-&-Feel is already active");
+            } else {
+                if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
+                    properties.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+                } else {
+                    properties.put(Constants.PROPERTY_LOOK_AND_FEEL, laf);
+                }
+                BackEnd.getInstance().store();
+                FrontEnd.getInstance().displayMessage("Changes will take effect after Bias restart");
+                System.exit(0);
+            }
         }
     }
     
@@ -1437,10 +1462,9 @@ public class FrontEnd extends JFrame {
                 JButton instButt = new JButton("Install new");
                 instButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        JFileChooser fc = new ExtensionFileChooser();
-                        if (fc.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                        if (extensionFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
-                                for (File file : fc.getSelectedFiles()) {
+                                for (File file : extensionFileChooser.getSelectedFiles()) {
                                     BackEnd.getInstance().installExtension(file);
                                     model.addElement("Extension installed from: " + file.getAbsolutePath());
                                     modified = true;
@@ -1505,7 +1529,9 @@ public class FrontEnd extends JFrame {
                 JLabel lafLabel = new JLabel("Look-&-Feel Management");
                 lafList = new JList(new DefaultListModel());
                 model = (DefaultListModel) lafList.getModel();
+                model.addElement(DEFAULT_LOOK_AND_FEEL);
                 components = new HashMap<String, String>();
+                components.put(DEFAULT_LOOK_AND_FEEL, DEFAULT_LOOK_AND_FEEL);
                 boolean brokenFixed = false;
                 for (String laf : BackEnd.getInstance().getLAFs()) {
                     String annotationStr;
@@ -1569,10 +1595,9 @@ public class FrontEnd extends JFrame {
                 JButton instButt = new JButton("Install new");
                 instButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        JFileChooser fc = new ExtensionFileChooser();
-                        if (fc.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                        if (extensionFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
-                                for (File file : fc.getSelectedFiles()) {
+                                for (File file : extensionFileChooser.getSelectedFiles()) {
                                     BackEnd.getInstance().installLAF(file);
                                     model.addElement("Look-&-Feel installed from: " + file.getAbsolutePath());
                                     modified = true;
@@ -1588,12 +1613,20 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             if (lafList.getSelectedValues().length > 0) {
+                                boolean uninstalled = false;
                                 for (Object laf : lafList.getSelectedValues()) {
-                                    BackEnd.getInstance().uninstallLAF(components.get(laf));
-                                    model.removeElement(laf);
-                                    modified = true;
+                                    if (!DEFAULT_LOOK_AND_FEEL.equals(laf)) {
+                                        BackEnd.getInstance().uninstallLAF(components.get(laf));
+                                        model.removeElement(laf);
+                                        uninstalled = true;
+                                        modified = true;
+                                    } else {
+                                        FrontEnd.getInstance().displayMessage("Default Look-&-Feel can not be uninstalled!");
+                                    }
                                 }
-                                FrontEnd.getInstance().displayMessage("Look-&-Feel(s) have been successfully uninstalled!");
+                                if (uninstalled) {
+                                    FrontEnd.getInstance().displayMessage("Look-&-Feel(s) have been successfully uninstalled!");
+                                }
                             }
                         } catch (Exception ex) {
                             FrontEnd.getInstance().displayErrorMessage(ex);
@@ -1649,15 +1682,23 @@ public class FrontEnd extends JFrame {
                 JButton addButt = new JButton("Add new");
                 addButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        JFileChooser fc = new IconFileChooser();
-                        if (fc.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                        if (iconsFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
-                                for (File file : fc.getSelectedFiles()) {
-                                    BufferedImage image = ImageIO.read(file);
-                                    ImageIcon icon = new ImageIcon(image);
-                                    BackEnd.getInstance().addIcon(icon);
-                                    model.addElement(icon);
-                                    modified = true;
+                                boolean added = false;
+                                for (File file : iconsFileChooser.getSelectedFiles()) {
+                                    Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
+                                    if (!icons.isEmpty()) {
+                                        for (ImageIcon icon : icons) {
+                                            model.addElement(icon);
+                                        }
+                                        added = true;
+                                        modified = true;
+                                    }
+                                }
+                                if (added) {
+                                    FrontEnd.getInstance().displayMessage("Icon(s) have been successfully installed!");
+                                } else {
+                                    FrontEnd.getInstance().displayErrorMessage("Nothing to install!");
                                 }
                             } catch (Exception ex) {
                                 FrontEnd.getInstance().displayErrorMessage(ex);

@@ -9,6 +9,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URLDecoder;
@@ -588,17 +590,49 @@ public class BackEnd {
         return icons;
     }
     
-    public void addIcon(ImageIcon icon) throws Exception {
-        if (icon != null) {
-            String id = UUID.randomUUID().toString();
-            icon.setDescription(id);
-            BufferedImage image = (BufferedImage) icon.getImage();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(image, Constants.ICON_FORMAT, baos);
-            zipEntries.put(Constants.ICONS_DIR + id + Constants.ICON_FILE_ENDING, baos.toByteArray());
+    public Collection<ImageIcon> addIcons(File file) throws Exception {
+        Collection<ImageIcon> icons = new LinkedList<ImageIcon>();
+        if (file != null && file.exists() && !file.isDirectory()) {
+            if (file.getName().matches(Constants.ADDON_FILE_PATTERN)) {
+                ZipInputStream in = new ZipInputStream(new FileInputStream(file));
+                while (in.getNextEntry() != null) {
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    int b;
+                    while ((b = in.read()) != -1) {
+                        out.write(b);
+                    }
+                    out.close();
+                    ImageIcon icon = addIcon(new ByteArrayInputStream(out.toByteArray()));
+                    if (icon != null) {
+                        icons.add(icon);
+                    }
+                }
+            } else {
+                ImageIcon icon = addIcon(new FileInputStream(file));
+                if (icon != null) {
+                    icons.add(icon);
+                }
+            }
         } else {
-            throw new Exception("Invalid icon!");
+            throw new Exception("Invalid icon file/pack!");
         }
+        return icons;
+    }
+    
+    private ImageIcon addIcon(InputStream is) throws IOException {
+        ImageIcon icon = null;
+        BufferedImage image = ImageIO.read(is);
+        if (image != null) {
+            icon = new ImageIcon(image);
+            if (icon != null) {
+                String id = UUID.randomUUID().toString();
+                icon.setDescription(id);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(image, Constants.ICON_FORMAT, baos);
+                zipEntries.put(Constants.ICONS_DIR + id + Constants.ICON_FILE_ENDING, baos.toByteArray());
+            }
+        }
+        return icon;
     }
 
     public void removeIcon(ImageIcon icon) throws Exception {
