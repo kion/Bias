@@ -22,6 +22,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
+import bias.annotation.AddOnAnnotation;
 import bias.core.Attachment;
 import bias.core.BackEnd;
 import bias.extension.Extension;
@@ -34,7 +35,7 @@ import bias.utils.FSUtils;
  *
  */
 
-@Extension.Annotation(
+@AddOnAnnotation(
         name = "File Pack", 
         version="0.1.2",
         description = "Simple file pack",

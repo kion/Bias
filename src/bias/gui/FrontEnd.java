@@ -50,6 +50,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.TabbedPaneUI;
 
 import bias.Constants;
+import bias.annotation.AddOnAnnotation;
 import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
@@ -58,6 +59,7 @@ import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.MissingExtensionInformer;
 import bias.gui.utils.ImageFileChooser;
+import bias.laf.LookAndFeelActivator;
 import bias.utils.BrowserLauncher;
 
 
@@ -89,6 +91,8 @@ public class FrontEnd extends JFrame {
     public static final ImageIcon ICON_DISCARD_UNSAVED_CHANGES = new ImageIcon(Constants.class.getResource("/bias/res/discard.png"));
 
     public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(Constants.class.getResource("/bias/res/extensions.png"));
+
+    public static final ImageIcon ICON_LAF = new ImageIcon(Constants.class.getResource("/bias/res/laf.png"));
 
     public static final ImageIcon ICON_ICONS = new ImageIcon(Constants.class.getResource("/bias/res/icons.png"));
 
@@ -138,11 +142,11 @@ public class FrontEnd extends JFrame {
             setFileFilter(new FileFilter(){
                 @Override
                 public boolean accept(File file) {
-                    return file.isDirectory() || file.getName().matches(Constants.EXTENSION_FILE_PATTERN);
+                    return file.isDirectory() || file.getName().matches(Constants.ADDON_FILE_PATTERN);
                 }
                 @Override
                 public String getDescription() {
-                    return Constants.EXTENSION_FILE_PATTERN_DESCRIPTION;
+                    return Constants.ADDON_FILE_PATTERN_DESCRIPTION;
                 }
             });            
         }
@@ -166,11 +170,25 @@ public class FrontEnd extends JFrame {
     }
 
     public static FrontEnd getInstance() {
-        if (instance == null) {
-            instance = new FrontEnd();
+        try {
+            if (instance == null) {
+                preInit();
+                instance = new FrontEnd();
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
         return instance;
     }
+    
+    private static void preInit() throws Throwable {
+        BackEnd.getInstance().load();
+        properties = BackEnd.getInstance().getProperties();
+        String laf = properties.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+        activateLAF(laf);
+    }
+    
+    private static Properties properties;
     
     private String lastAddedEntryType = null;
 
@@ -206,6 +224,8 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton10 = null;
 
+    private JButton jButton11 = null;
+
     private JButton jButton3 = null;
 
     /**
@@ -220,9 +240,6 @@ public class FrontEnd extends JFrame {
             this.setIconImage(ICON_APP.getImage());
             this.setDefaultCloseOperation(EXIT_ON_CLOSE);
             this.setContentPane(getJContentPane());
-
-            BackEnd.getInstance().load();
-            Properties properties = BackEnd.getInstance().getProperties();
 
             int wpxValue;
             int wpyValue;
@@ -281,6 +298,23 @@ public class FrontEnd extends JFrame {
 
         } catch (Exception ex) {
             displayErrorMessage(ex);
+        }
+    }
+    
+    private static void selectLAF(String laf) throws Exception {
+        if (laf != null) {
+            properties.put(Constants.PROPERTY_LOOK_AND_FEEL, laf);
+            BackEnd.getInstance().store();
+            FrontEnd.getInstance().displayMessage("Changes will take effect after Bias restart");
+            System.exit(0);
+        }
+    }
+    
+    private static void activateLAF(String laf) throws Throwable {
+        if (laf != null) {
+            Class lafActivatorClass = Class.forName(laf);
+            LookAndFeelActivator lafActivator = (LookAndFeelActivator) lafActivatorClass.newInstance();
+            lafActivator.activate();
         }
     }
     
@@ -351,7 +385,6 @@ public class FrontEnd extends JFrame {
     }
 
     private void collectProperties() {
-        Properties properties = new Properties();
         properties.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR + getLocation().getX()
                 / getToolkit().getScreenSize().getWidth());
         properties.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR + getLocation().getY()
@@ -935,6 +968,7 @@ public class FrontEnd extends JFrame {
             jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT); // Generated
             jToolBar2.add(getJButton6()); // Generated
             jToolBar2.add(getJButton9()); // Generated
+            jToolBar2.add(getJButton11()); // Generated
             jToolBar2.add(getJButton8()); // Generated
         }
         return jToolBar2;
@@ -980,6 +1014,20 @@ public class FrontEnd extends JFrame {
             jButton8.setIcon(ICON_EXTENSIONS);
         }
         return jButton8;
+    }
+
+    /**
+     * This method initializes jButton11
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton11() {
+        if (jButton11 == null) {
+            jButton11 = new JButton(manageLAFAction);
+            jButton11.setToolTipText("manage look-&-feel"); // Generated
+            jButton11.setIcon(ICON_LAF);
+        }
+        return jButton11;
     }
 
     /**
@@ -1336,22 +1384,22 @@ public class FrontEnd extends JFrame {
 
         private Map<String, String> components;
         private DefaultListModel model;
-        private JList vcsList;
+        private JList extList;
         private boolean modified;
         
         public void actionPerformed(ActionEvent e) {
             try {
-                JLabel vcsLabel = new JLabel("Visual Components Management");
-                vcsList = new JList(new DefaultListModel());
-                model = (DefaultListModel) vcsList.getModel();
+                JLabel extLabel = new JLabel("Extensions Management");
+                extList = new JList(new DefaultListModel());
+                model = (DefaultListModel) extList.getModel();
                 components = new HashMap<String, String>();
                 boolean brokenFixed = false;
                 for (String extension : BackEnd.getInstance().getExtensions()) {
                     String annotationStr;
                     try {
                         Class<?> extClass = Class.forName(extension);
-                        Extension.Annotation extAnn = 
-                            (Extension.Annotation) extClass.getAnnotation(Extension.Annotation.class);
+                        AddOnAnnotation extAnn = 
+                            (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
                         if (extAnn != null) {
                             annotationStr = extAnn.name() + Constants.SPACE_STR 
                                             + ", version: " + extAnn.version() + Constants.SPACE_STR 
@@ -1407,8 +1455,8 @@ public class FrontEnd extends JFrame {
                 uninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            if (vcsList.getSelectedValues().length > 0) {
-                                for (Object extension : vcsList.getSelectedValues()) {
+                            if (extList.getSelectedValues().length > 0) {
+                                for (Object extension : extList.getSelectedValues()) {
                                     BackEnd.getInstance().uninstallExtension(components.get(extension));
                                     model.removeElement(extension);
                                     modified = true;
@@ -1424,8 +1472,8 @@ public class FrontEnd extends JFrame {
                 JOptionPane.showMessageDialog(
                     FrontEnd.this, 
                     new Component[]{
-                            vcsLabel,
-                            new JScrollPane(vcsList),
+                            extLabel,
+                            new JScrollPane(extList),
                             instButt,
                             uninstButt
                     },
@@ -1434,7 +1482,140 @@ public class FrontEnd extends JFrame {
                     null
                 );
                 if (modified) {
-                    FrontEnd.getInstance().displayMessage("Changes will take effect after Bias restart!");
+                    FrontEnd.getInstance().displayMessage("Changes will take effect after Bias restart");
+                    store();
+                    System.exit(0);
+                }
+            } catch (Exception ex) {
+                displayErrorMessage(ex);
+            }
+        }
+    };
+
+    private Action manageLAFAction = new AbstractAction() {
+        private static final long serialVersionUID = 1L;
+
+        private Map<String, String> components;
+        private DefaultListModel model;
+        private JList lafList;
+        private boolean modified;
+        
+        public void actionPerformed(ActionEvent e) {
+            try {
+                JLabel lafLabel = new JLabel("Look-&-Feel Management");
+                lafList = new JList(new DefaultListModel());
+                model = (DefaultListModel) lafList.getModel();
+                components = new HashMap<String, String>();
+                boolean brokenFixed = false;
+                for (String laf : BackEnd.getInstance().getLAFs()) {
+                    String annotationStr;
+                    try {
+                        Class<?> lafActivatorClass = Class.forName(laf);
+                        AddOnAnnotation lafAnn = 
+                            (AddOnAnnotation) lafActivatorClass.getAnnotation(AddOnAnnotation.class);
+                        if (lafAnn != null) {
+                            annotationStr = lafAnn.name() + Constants.SPACE_STR 
+                                            + ", version: " + lafAnn.version() + Constants.SPACE_STR 
+                                            + ", author: " + lafAnn.author() + Constants.SPACE_STR
+                                            + ", description: " + lafAnn.description();
+                        } else {
+                            annotationStr = laf.substring(laf.lastIndexOf(".") + 1, laf.length())
+                                            + " [ Look-&-Feel Info Is Missing ]";
+                        }
+                        // laf instantiation test
+                        lafActivatorClass.newInstance();
+                        // laf is ok, add it to the list
+                        model.addElement(annotationStr);
+                        components.put(annotationStr, lafActivatorClass.getName());
+                    } catch (Throwable t) {
+                        // broken laf found, inform user about that...
+                        laf = laf.substring(laf.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR)+1, laf.length());
+                        displayErrorMessage("Look-&-Feel [ " + laf + " ] is broken and will be uninstalled!", t);
+                        // ... and try uninstall broken laf...
+                        try {
+                            BackEnd.getInstance().uninstallLAF(laf);
+                            displayMessage("Broken Look-&-Feel [ " + laf + " ] has been uninstalled");
+                            brokenFixed = true;
+                        } catch (Exception ex2) {
+                            // ... if unsuccessfully - inform user about that, do nothing else
+                            displayErrorMessage("Error occured while uninstalling broken Look-&-Feel [ " + laf + " ]!\n" + ex2);
+                        }
+                    }
+                }
+                if (brokenFixed) {
+                    BackEnd.getInstance().store();
+                    displayMessage("Bias is going to be restarted now...");
+                    System.exit(0);
+                }
+                JButton actButt = new JButton("Select Look-&-Feel");
+                actButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        if (lafList.getSelectedValue() != null) {
+                            String laf = components.get(lafList.getSelectedValue());
+                            if (laf == null) {
+                                displayMessage(
+                                        "This Look-&-Feel can not be activated yet.\n" +
+                                        "Restart Bias first.");
+                            } else {
+                                try {
+                                    selectLAF(laf);
+                                } catch (Exception t) {
+                                    displayErrorMessage(t);
+                                }
+                            }
+                        }
+                    }
+                });
+                JButton instButt = new JButton("Install new");
+                instButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        JFileChooser fc = new ExtensionFileChooser();
+                        if (fc.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                            try {
+                                for (File file : fc.getSelectedFiles()) {
+                                    BackEnd.getInstance().installLAF(file);
+                                    model.addElement("Look-&-Feel installed from: " + file.getAbsolutePath());
+                                    modified = true;
+                                }
+                            } catch (Exception ex) {
+                                FrontEnd.getInstance().displayErrorMessage(ex);
+                            }
+                        }
+                    }
+                });
+                JButton uninstButt = new JButton("Uninstall selected");
+                uninstButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            if (lafList.getSelectedValues().length > 0) {
+                                for (Object laf : lafList.getSelectedValues()) {
+                                    BackEnd.getInstance().uninstallLAF(components.get(laf));
+                                    model.removeElement(laf);
+                                    modified = true;
+                                }
+                                FrontEnd.getInstance().displayMessage("Look-&-Feel(s) have been successfully uninstalled!");
+                            }
+                        } catch (Exception ex) {
+                            FrontEnd.getInstance().displayErrorMessage(ex);
+                        }
+                    }
+                });
+                modified = false;
+                JOptionPane.showMessageDialog(
+                    FrontEnd.this, 
+                    new Component[]{
+                            lafLabel,
+                            new JScrollPane(lafList),
+                            actButt,
+                            instButt,
+                            uninstButt
+                    },
+                    "Manage Look-&-Feel",
+                    JOptionPane.INFORMATION_MESSAGE,
+                    null
+                );
+                if (modified) {
+                    FrontEnd.getInstance().displayMessage("Changes will take effect after Bias restart");
                     store();
                     System.exit(0);
                 }

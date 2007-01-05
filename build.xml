@@ -29,7 +29,12 @@
 	<!-- ================================= 
           target: BuildJarPackage              
          ================================= -->
-	<target name="BuildJarPackage" depends="clean" description="Bias JAR with default extensions/icons bundled">
+	<target name="BuildJarPackage" description="Bias JAR with default extensions/icons bundled">
+		<delete>
+			<fileset dir="build">
+				<include name="bias.jar" />
+			</fileset>
+		</delete>
 		<jar basedir="./bin" destfile="build/bias.jar" includes="bias/**">
 			<!-- include default icons set -->
 			<fileset dir=".">
@@ -44,19 +49,13 @@
 	<!-- ================================= 
           target: BuildSDKJarPackage              
          ================================= -->
-	<target name="BuildSDKJarPackage" depends="clean" description="Bias SDK">
-		<jar basedir="./bin" destfile="build/bias.jar" includes="bias/**" />
-	</target>
-
-	<!-- ================================= 
-          target: clean                      
-         ================================= -->
-	<target name="clean">
+	<target name="BuildSDKJarPackage" description="Bias SDK">
 		<delete>
 			<fileset dir="build">
-				<include name="bias.jar" />
+				<include name="bias-sdk.jar" />
 			</fileset>
 		</delete>
+		<jar basedir="./bin" destfile="build/bias-sdk.jar" includes="bias/**" />
 	</target>
 
 </project>

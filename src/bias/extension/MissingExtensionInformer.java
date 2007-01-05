@@ -10,13 +10,14 @@ import javax.swing.JTextPane;
 import javax.swing.text.html.HTMLEditorKit;
 
 import bias.Constants;
+import bias.annotation.AddOnAnnotation;
 import bias.core.DataEntry;
 
 /**
  * @author kion
  */
 
-@Extension.Annotation(
+@AddOnAnnotation(
         name = "Missing Extension Informer", 
         version="1.0",
         description = "Special extension to inform about missing extensions",

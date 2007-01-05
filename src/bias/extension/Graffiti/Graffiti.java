@@ -26,6 +26,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.border.LineBorder;
 
+import bias.annotation.AddOnAnnotation;
 import bias.extension.Extension;
 
 import com.sun.image.codec.jpeg.ImageFormatException;
@@ -34,7 +35,7 @@ import com.sun.image.codec.jpeg.ImageFormatException;
  * @author kion
  */
 
-@Extension.Annotation(
+@AddOnAnnotation(
         name = "Graffiti",
         version="0.1.1",
         description = "Simple painting component",

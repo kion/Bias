@@ -4,6 +4,7 @@
 package bias;
 
 import bias.extension.Extension;
+import bias.laf.LookAndFeelActivator;
 
 /**
  * @author kion
@@ -26,8 +27,8 @@ public class Constants {
     public static final String PACKAGE_PATH_SEPARATOR = ".";
     public static final String PACKAGE_PREFIX_PATTERN = "^.*\\.";
 
-    public static final String EXTENSION_FILE_PATTERN = "(?i).+\\.jar$";
-    public static final String EXTENSION_FILE_PATTERN_DESCRIPTION = "JAR file";
+    public static final String ADDON_FILE_PATTERN = "(?i).+\\.jar$";
+    public static final String ADDON_FILE_PATTERN_DESCRIPTION = "JAR file";
 
     public static final String ANY_CHARACTERS_PATTERN = ".*";
     
@@ -44,7 +45,7 @@ public class Constants {
     public static final String EXTENSION_DIR_PACKAGE_NAME = Extension.class.getPackage().getName();
     public static final String EXTENSION_DIR_PATH = EXTENSION_DIR_PACKAGE_NAME.replaceAll("\\.", ZIP_PATH_SEPARATOR);
     public static final String EXTENSION_PATTERN = EXTENSION_DIR_PATH + "/[\\w/]+/[\\w/]+\\" + CLASS_FILE_ENDING;
-    public static final String CLASS_FILE_PREFIX_PATTERN = "^cls/";
+    public static final String EXT_CLASS_PREFIX_PATTERN = "^cls/";
     public static final String RESOURCE_FILE_PATH_PATTERN = "^res/.+";
     public static final String RESOURCE_FILE_PREFIX_PATTERN = "^res/";
     public static final String RESOURCES_DIR = "bias/res/";
@@ -58,8 +59,15 @@ public class Constants {
     public static final String ATTACHMENT_FILE_PATH_PATTERN = ATTACHMENTS_DIR_PATTERN + ".+/.+";
     public static final String LIB_DIR_PATTERN = "^lib/";
     public static final String LIB_FILE_PATH_PATTERN = "(?i)" + LIB_DIR_PATTERN + "[^/]+\\.jar$";
-    public static final String LIB_INSTALL_LOG_FILE_ENDING = ".lib.inst.log";
+    public static final String EXT_LIB_INSTALL_LOG_FILE_ENDING = ".ext.lib.inst.log";
+    public static final String LAF_LIB_INSTALL_LOG_FILE_ENDING = ".laf.lib.inst.log";
+    public static final String LAF_ACTIVATOR_PATH_PATTERN = "lac/.+\\" + CLASS_FILE_ENDING;
+    public static final String LAF_ACTIVATOR_CLASS_PREFIX_PATTERN = "^lac/";
+    public static final String LAF_DIR_PACKAGE_NAME = LookAndFeelActivator.class.getPackage().getName();
+    public static final String LAF_DIR_PATH = LAF_DIR_PACKAGE_NAME.replaceAll("\\.", ZIP_PATH_SEPARATOR);
+    public static final String LAF_PATTERN = LAF_DIR_PATH + "/[\\w/]+/[\\w/]+\\" + CLASS_FILE_ENDING;
     
+    public static final String PROPERTY_LOOK_AND_FEEL = "LOOK_AND_FEEL";
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";
     public static final String PROPERTY_WINDOW_WIDTH = "WINDOW_WIDTH";

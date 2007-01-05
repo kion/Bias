@@ -328,7 +328,7 @@ public class BackEnd {
             Map<String, byte[]> classesMap = new HashMap<String, byte[]>();
             Map<String, byte[]> resoursesMap = new HashMap<String, byte[]>();
             Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
-            if (name.matches(Constants.EXTENSION_FILE_PATTERN)) {
+            if (name.matches(Constants.ADDON_FILE_PATTERN)) {
                 ZipInputStream in = new ZipInputStream(new FileInputStream(extensionFile));
                 ZipEntry ze = null;
                 while ((ze = in.getNextEntry()) != null) {
@@ -364,7 +364,7 @@ public class BackEnd {
                                 String lzeName = lze.getName();
                                 if (!lzeName.startsWith(Constants.META_INF_DIR) && !lzeName.endsWith("/")) {
                                     if (zipEntries.containsKey(lzeName)) {
-                                        throw new Exception("Extension pack conflict! Conflicting resouce: " + lzeName);
+                                        throw new Exception("Extension pack conflict! Conflicting resource: " + lzeName);
                                     } else {
                                         ByteArrayOutputStream lout = new ByteArrayOutputStream();
                                         while ((b = lin.read()) != -1) {
@@ -400,11 +400,11 @@ public class BackEnd {
                     for (Entry<String, byte[]> entry : classesMap.entrySet()) {
                         zipEntries.put(Constants.EXTENSION_DIR_PATH + Constants.ZIP_PATH_SEPARATOR 
                                 + extName + Constants.ZIP_PATH_SEPARATOR 
-                                + entry.getKey().replaceFirst(Constants.CLASS_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
+                                + entry.getKey().replaceFirst(Constants.EXT_CLASS_PREFIX_PATTERN, Constants.EMPTY_STR), 
                                 entry.getValue());
                     }
                     if (!libsMap.isEmpty()) {
-                        String extensionInstLogEntryPath = Constants.CONFIG_DIR + extName + Constants.LIB_INSTALL_LOG_FILE_ENDING;
+                        String extensionInstLogEntryPath = Constants.CONFIG_DIR + extName + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING;
                         StringBuffer sb = new StringBuffer();
                         for (Entry<String, byte[]> entry : libsMap.entrySet()) {
                             zipEntries.put(entry.getKey(), entry.getValue());
@@ -415,7 +415,7 @@ public class BackEnd {
                 }
             }
         } else {
-            throw new Exception("Invalid extension pack file!");
+            throw new Exception("Invalid extension pack!");
         }
     }
     
@@ -432,7 +432,7 @@ public class BackEnd {
                 removeKeys.add(key);
             }
         }
-        String extensionInstLogEntryPath = Constants.CONFIG_DIR + extName + Constants.LIB_INSTALL_LOG_FILE_ENDING;
+        String extensionInstLogEntryPath = Constants.CONFIG_DIR + extName + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING;
         byte[] bytes = zipEntries.get(extensionInstLogEntryPath);
         if (bytes != null) {
             String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
@@ -445,6 +445,133 @@ public class BackEnd {
                 zipEntries.remove(key);
             }
             zipEntries.remove(extensionInstLogEntryPath);
+        }
+    }
+        
+    public Collection<String> getLAFs() {
+        Collection<String> lafs = new LinkedHashSet<String>();
+        for (String name : zipEntries.keySet()) {
+            if (name.matches(Constants.LAF_PATTERN)) {
+                String laf = 
+                    name.substring(0, name.length() - Constants.CLASS_FILE_ENDING.length())
+                    .replaceAll(Constants.ZIP_PATH_SEPARATOR, Constants.PACKAGE_PATH_SEPARATOR);
+                lafs.add(laf);
+            }
+        }
+        return lafs;
+    }
+
+    public void installLAF(File lafFile) throws Exception {
+        Set<String> installedLAFActivatorNames = new HashSet<String>();
+        if (lafFile != null && lafFile.exists() && !lafFile.isDirectory()) {
+            String name = lafFile.getName();
+            Map<String, byte[]> classesMap = new HashMap<String, byte[]>();
+            Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
+            if (name.matches(Constants.ADDON_FILE_PATTERN)) {
+                ZipInputStream in = new ZipInputStream(new FileInputStream(lafFile));
+                ZipEntry ze = null;
+                while ((ze = in.getNextEntry()) != null) {
+                    String zeName = ze.getName();
+                    ByteArrayOutputStream out = null;
+                    int type = 0;
+                    if (zeName.matches(Constants.LAF_ACTIVATOR_PATH_PATTERN)) {
+                        type = 1;
+                    } else if (zeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
+                        type = 2;
+                    }
+                    if (type != 0) {
+                        out = new ByteArrayOutputStream();
+                        int b;
+                        while ((b = in.read()) != -1) {
+                            out.write(b);
+                        }
+                        out.close();
+                        if (type == 1) {
+                            String shortName = zeName.replaceFirst("^.*/", Constants.EMPTY_STR)
+                                                     .replaceFirst("\\.class$", Constants.EMPTY_STR)
+                                                     .replaceFirst("\\$.*$", Constants.EMPTY_STR);
+                            installedLAFActivatorNames.add(shortName);
+                            classesMap.put(zeName, out.toByteArray());
+                        } else if (type == 2) {
+                            ZipInputStream lin = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
+                            ZipEntry lze;
+                            while ((lze = lin.getNextEntry()) != null) {
+                                String lzeName = lze.getName();
+                                if (!lzeName.startsWith(Constants.META_INF_DIR) && !lzeName.endsWith("/")) {
+                                    if (zipEntries.containsKey(lzeName)) {
+                                        throw new Exception("LAF pack conflict! Conflicting resource: " + lzeName);
+                                    } else {
+                                        ByteArrayOutputStream lout = new ByteArrayOutputStream();
+                                        while ((b = lin.read()) != -1) {
+                                            lout.write(b);
+                                        }
+                                        lout.close();
+                                        libsMap.put(lzeName, lout.toByteArray());
+                                    }
+                                }
+                            }
+                            lin.close();
+                        }
+                    }
+                }
+                in.close();
+            }
+            if (installedLAFActivatorNames.isEmpty()) {
+                throw new Exception("Wrong LAF pack: nothing to install!");
+            } else if (installedLAFActivatorNames.size() > 1) {
+                throw new Exception("Wrong LAF pack: only one LAF activator per pack allowed!");
+            } else {
+                String lafActivatorName = installedLAFActivatorNames.iterator().next();
+                String fullLAFActivatorName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                            + lafActivatorName + Constants.PACKAGE_PATH_SEPARATOR + lafActivatorName;
+                if (getLAFs().contains(fullLAFActivatorName)) {
+                    throw new Exception("Can not install LAF pack: duplicate LAF Activator name!");
+                } else {
+                    for (Entry<String, byte[]> entry : classesMap.entrySet()) {
+                        zipEntries.put(Constants.LAF_DIR_PATH + Constants.ZIP_PATH_SEPARATOR 
+                                + lafActivatorName + Constants.ZIP_PATH_SEPARATOR 
+                                + entry.getKey().replaceFirst(Constants.LAF_ACTIVATOR_CLASS_PREFIX_PATTERN, Constants.EMPTY_STR), 
+                                entry.getValue());
+                    }
+                    if (!libsMap.isEmpty()) {
+                        String lafInstLogEntryPath = Constants.CONFIG_DIR + lafActivatorName + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
+                        StringBuffer sb = new StringBuffer();
+                        for (Entry<String, byte[]> entry : libsMap.entrySet()) {
+                            zipEntries.put(entry.getKey(), entry.getValue());
+                            sb.append(entry.getKey() + Constants.NEW_LINE);
+                        }
+                        zipEntries.put(lafInstLogEntryPath, sb.toString().getBytes());
+                    }
+                }
+            }
+        } else {
+            throw new Exception("Invalid LAF pack!");
+        }
+    }
+    
+    public void uninstallLAF(String laf) throws Exception {
+        laf = laf.substring(laf.lastIndexOf(".")+1, laf.length());
+        laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + laf;
+        Collection<String> removeKeys = new HashSet<String>();
+        String lafActivatorName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+        for (String key : zipEntries.keySet()) {
+            if (key.matches(laf + Constants.ANY_CHARACTERS_PATTERN)) {
+                removeKeys.add(key);
+            }
+        }
+        String lafInstLogEntryPath = Constants.CONFIG_DIR + lafActivatorName + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
+        byte[] bytes = zipEntries.get(lafInstLogEntryPath);
+        if (bytes != null) {
+            String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
+            for (String installEntry : installEntries) {
+                removeKeys.add(installEntry);
+            }
+        }
+        if (!removeKeys.isEmpty()) {
+            for (String key : removeKeys) {
+                zipEntries.remove(key);
+            }
+            zipEntries.remove(lafInstLogEntryPath);
         }
     }
         

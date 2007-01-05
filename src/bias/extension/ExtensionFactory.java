@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import bias.Constants;
+import bias.annotation.AddOnAnnotation;
 import bias.core.BackEnd;
 import bias.core.DataEntry;
 
@@ -55,8 +56,8 @@ public class ExtensionFactory {
         for (String extension : BackEnd.getInstance().getExtensions()) {
             String annotationStr;
             Class<?> extClass = Class.forName(extension);
-            Extension.Annotation extAnn = 
-                (Extension.Annotation) extClass.getAnnotation(Extension.Annotation.class);
+            AddOnAnnotation extAnn = 
+                (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
             if (extAnn != null) {
                 annotationStr = extAnn.name() 
                                 + " [ " + extAnn.description() + " ]";

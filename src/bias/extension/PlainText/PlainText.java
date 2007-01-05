@@ -33,13 +33,14 @@ import javax.swing.undo.CompoundEdit;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
+import bias.annotation.AddOnAnnotation;
 import bias.extension.Extension;
 
 /**
  * @author kion
  */
 
-@Extension.Annotation(
+@AddOnAnnotation(
         name = "Plain Text", 
         version="1.1",
         description = "Simple plain text editor",

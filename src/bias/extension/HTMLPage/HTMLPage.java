@@ -65,6 +65,7 @@ import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
 import bias.Constants;
+import bias.annotation.AddOnAnnotation;
 import bias.extension.Extension;
 import bias.gui.FrontEnd;
 import bias.gui.VisualEntryDescriptor;
@@ -75,7 +76,7 @@ import bias.utils.Validator;
  * @author kion
  */
 
-@Extension.Annotation(
+@AddOnAnnotation(
         name = "HTML Page", 
         version="0.3",
         description = "WYSIWYG HTML page editor",
