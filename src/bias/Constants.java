@@ -4,7 +4,7 @@
 package bias;
 
 import bias.extension.Extension;
-import bias.laf.LookAndFeelActivator;
+import bias.laf.LookAndFeelManager;
 
 /**
  * @author kion
@@ -25,6 +25,7 @@ public class Constants {
 
     public static final String ZIP_PATH_SEPARATOR = "/";
     public static final String PACKAGE_PATH_SEPARATOR = ".";
+    public static final String PACKAGE_PATH_SEPARATOR_PATTERN = "\\.";
     public static final String PACKAGE_PREFIX_PATTERN = "^.*\\.";
 
     public static final String ADDON_FILE_PATTERN = "(?i).+\\.jar$";
@@ -59,13 +60,14 @@ public class Constants {
     public static final String ATTACHMENT_FILE_PATH_PATTERN = ATTACHMENTS_DIR_PATTERN + ".+/.+";
     public static final String LIB_DIR_PATTERN = "^lib/";
     public static final String LIB_FILE_PATH_PATTERN = "(?i)" + LIB_DIR_PATTERN + "[^/]+\\.jar$";
-    public static final String EXT_LIB_INSTALL_LOG_FILE_ENDING = ".ext.lib.inst.log";
-    public static final String LAF_LIB_INSTALL_LOG_FILE_ENDING = ".laf.lib.inst.log";
-    public static final String LAF_ACTIVATOR_PATH_PATTERN = "lac/.+\\" + CLASS_FILE_ENDING;
-    public static final String LAF_ACTIVATOR_CLASS_PREFIX_PATTERN = "^lac/";
-    public static final String LAF_DIR_PACKAGE_NAME = LookAndFeelActivator.class.getPackage().getName();
+    public static final String LAF_MANAGER_PATH_PATTERN = "lfm/.+\\" + CLASS_FILE_ENDING;
+    public static final String LAF_MANAGER_CLASS_PREFIX_PATTERN = "^lfm/";
+    public static final String LAF_DIR_PACKAGE_NAME = LookAndFeelManager.class.getPackage().getName();
     public static final String LAF_DIR_PATH = LAF_DIR_PACKAGE_NAME.replaceAll("\\.", ZIP_PATH_SEPARATOR);
     public static final String LAF_PATTERN = LAF_DIR_PATH + "/[\\w/]+/[\\w/]+\\" + CLASS_FILE_ENDING;
+    public static final String EXT_LIB_INSTALL_LOG_FILE_ENDING = ".ext.lib.inst.log";
+    public static final String LAF_LIB_INSTALL_LOG_FILE_ENDING = ".laf.lib.inst.log";
+    public static final String LAF_CONFIG_FILE_ENDING = ".laf.conf";
     
     public static final String PROPERTY_LOOK_AND_FEEL = "LOOK_AND_FEEL";
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";

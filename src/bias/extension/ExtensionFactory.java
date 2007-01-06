@@ -43,15 +43,14 @@ public class ExtensionFactory {
     }
     
     public Extension newExtension(DataEntry dataEntry) throws Throwable {
-        String type = dataEntry.getType();
-        type = type.substring(type.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR)+1, type.length());
-        type = dataEntry.getType() + Constants.PACKAGE_PATH_SEPARATOR + type; 
+        String type = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                        + dataEntry.getType() + Constants.PACKAGE_PATH_SEPARATOR + dataEntry.getType();
         Class entryClass = Class.forName(type);
         Extension extension = newExtension(entryClass, dataEntry.getId(), dataEntry.getData());
         return extension;
     }
 
-    public Map<String, Class> getExtensions() throws Throwable {
+    public Map<String, Class> getAnnotatedExtensions() throws Throwable {
         Map<String, Class> types = new LinkedHashMap<String, Class>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
             String annotationStr;
@@ -62,7 +61,8 @@ public class ExtensionFactory {
                 annotationStr = extAnn.name() 
                                 + " [ " + extAnn.description() + " ]";
             } else {
-                annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length()) 
+                annotationStr = extension.substring(
+                        extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR) + 1, extension.length()) 
                                 + " [ Extension Info Is Missing ]";
             }
             types.put(annotationStr, extClass);

@@ -9,7 +9,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.text.html.HTMLEditorKit;
 
-import bias.Constants;
 import bias.annotation.AddOnAnnotation;
 import bias.core.DataEntry;
 
@@ -91,14 +90,12 @@ public class MissingExtensionInformer extends Extension {
     }
 
     private String buildMissingExtensionMessage() {
-        String extension = dataEntry.getType();
-        extension = extension.substring(extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR)+1, extension.length());
         return
         "<html><body>" + 
         "<font size=\"3\" face=\"SansSerif\">" +
         "<b><font color=\"#FF0000\">MISSING EXTENSION!</font></b><br><br>" + 
         "<b>To display this entry you should install following extension:</b><br><br>" + 
-        "<b><i><font color=\"#0000FF\">" + extension + "</font></i></b>" +
+        "<b><i><font color=\"#0000FF\">" + dataEntry.getType() + "</font></i></b>" +
         "</font>" +
         "</body></html>"; 
     }

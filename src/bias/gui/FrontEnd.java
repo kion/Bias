@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.Map.Entry;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -57,7 +58,7 @@ import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.MissingExtensionInformer;
 import bias.gui.utils.ImageFileChooser;
-import bias.laf.LookAndFeelActivator;
+import bias.laf.LookAndFeelManager;
 import bias.utils.BrowserLauncher;
 
 
@@ -196,20 +197,23 @@ public class FrontEnd extends JFrame {
     
     private static void preInit() throws Throwable {
         BackEnd.getInstance().load();
-        properties = BackEnd.getInstance().getProperties();
-        String laf = properties.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+        settings = BackEnd.getInstance().getSettings();
+        String laf = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
         activateLAF(laf);
     }
     
     private static void activateLAF(String laf) throws Throwable {
         if (laf != null) {
-            Class lafActivatorClass = Class.forName(laf);
-            LookAndFeelActivator lafActivator = (LookAndFeelActivator) lafActivatorClass.newInstance();
-            lafActivator.activate();
+            String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                        + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+            Class lafManagerClass = Class.forName(lafFullClassName);
+            LookAndFeelManager lafManager = (LookAndFeelManager) lafManagerClass.newInstance();
+            Properties lafSettings = BackEnd.getInstance().getLAFSettings(lafFullClassName);
+            lafManager.activate(lafSettings);
         }
     }
     
-    private static Properties properties;
+    private static Properties settings;
     
     private String lastAddedEntryType = null;
 
@@ -266,7 +270,7 @@ public class FrontEnd extends JFrame {
             int wpyValue;
             int wwValue;
             int whValue;
-            String wpx = properties.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_X);
+            String wpx = settings.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_X);
             if (wpx == null) {
                 wpxValue = getToolkit().getScreenSize().width / 4;
             } else {
@@ -275,21 +279,21 @@ public class FrontEnd extends JFrame {
                 wpxValue = Math.round(Float
                         .valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getWidth() * Double.valueOf(wpx))));
             }
-            String wpy = properties.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_Y);
+            String wpy = settings.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_Y);
             if (wpy == null) {
                 wpyValue = getToolkit().getScreenSize().height / 4;
             } else {
                 wpyValue = Math.round(Float.valueOf(Constants.EMPTY_STR
                         + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wpy))));
             }
-            String ww = properties.getProperty(Constants.PROPERTY_WINDOW_WIDTH);
+            String ww = settings.getProperty(Constants.PROPERTY_WINDOW_WIDTH);
             if (ww == null) {
                 wwValue = (getToolkit().getScreenSize().width / 4) * 2;
             } else {
                 wwValue = Math
                         .round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(ww))));
             }
-            String wh = properties.getProperty(Constants.PROPERTY_WINDOW_HEIGHT);
+            String wh = settings.getProperty(Constants.PROPERTY_WINDOW_HEIGHT);
             if (wh == null) {
                 whValue = (getToolkit().getScreenSize().height / 4) * 2;
             } else {
@@ -302,7 +306,7 @@ public class FrontEnd extends JFrame {
 
             representData(BackEnd.getInstance().getData());
 
-            String lsid = properties.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
+            String lsid = settings.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
             if (lsid != null) {
                 switchToVisualEntry(UUID.fromString(lsid));
             }
@@ -322,20 +326,36 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private void selectLAF(String laf) throws Exception {
+    private void setActiveLAF(String laf) throws Exception {
+        boolean changed = false;
+        String currentLAF = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
         if (laf != null) {
-            String currentLAF = properties.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
-            if (currentLAF == null) {
-                currentLAF = DEFAULT_LOOK_AND_FEEL;
+            String lafManagerName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+            if (!lafManagerName.equals(currentLAF)) {
+                settings.put(Constants.PROPERTY_LOOK_AND_FEEL, lafManagerName);
+                changed = true;
             }
-            if (laf.equals(currentLAF)) {
-                FrontEnd.getInstance().displayMessage("Selected Look-&-Feel is already active");
-            } else {
-                if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
-                    properties.remove(Constants.PROPERTY_LOOK_AND_FEEL);
-                } else {
-                    properties.put(Constants.PROPERTY_LOOK_AND_FEEL, laf);
-                }
+        } else if (currentLAF != null) {
+            settings.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+            changed = true;
+        }
+        if (!changed) {
+            FrontEnd.getInstance().displayMessage("Selected Look-&-Feel is already active");
+        } else {    
+            store();
+            displayMessage("Changes will take effect after Bias restart");
+            System.exit(0);
+        }
+    }
+    
+    private void configureLAF(String laf) throws Exception {
+        if (laf != null) {
+            Class lafManagerClass = Class.forName(laf);
+            LookAndFeelManager lafManager = ((LookAndFeelManager)lafManagerClass.newInstance());
+            Properties lafSettings = BackEnd.getInstance().getLAFSettings(laf);
+            Properties settings = lafManager.configure(lafSettings);
+            if (settings != null && !settings.equals(lafSettings)) {
+                BackEnd.getInstance().storeLAFSettings(laf, settings);
                 store();
                 displayMessage("Changes will take effect after Bias restart");
                 System.exit(0);
@@ -410,19 +430,19 @@ public class FrontEnd extends JFrame {
     }
 
     private void collectProperties() {
-        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR + getLocation().getX()
+        settings.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR + getLocation().getX()
                 / getToolkit().getScreenSize().getWidth());
-        properties.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR + getLocation().getY()
+        settings.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR + getLocation().getY()
                 / getToolkit().getScreenSize().getHeight());
-        properties.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR + getSize().getWidth()
+        settings.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR + getSize().getWidth()
                 / getToolkit().getScreenSize().getHeight());
-        properties.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR + getSize().getHeight()
+        settings.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR + getSize().getHeight()
                 / getToolkit().getScreenSize().getHeight());
         UUID lsid = getSelectedVisualEntryID();
         if (lsid != null) {
-            properties.put(Constants.PROPERTY_LAST_SELECTED_ID, lsid.toString());
+            settings.put(Constants.PROPERTY_LAST_SELECTED_ID, lsid.toString());
         }
-        BackEnd.getInstance().setProperties(properties);
+        BackEnd.getInstance().setSettings(settings);
     }
 
     private void collectData() throws Exception {
@@ -457,16 +477,17 @@ public class FrontEnd extends JFrame {
                 Extension extension = (Extension) c;
                 byte[] serializedData = extension.serialize();
                 DataEntry dataEntry;
+                String type = null;
                 if (extension instanceof MissingExtensionInformer) {
                     dataEntry = ((MissingExtensionInformer) extension).getDataEntry();
                     if (BackEnd.getInstance().getExtensions().contains(dataEntry.getType())) {
-                        String type = dataEntry.getType();
-                        type = type.substring(0, type.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR));
-                        dataEntry = new DataEntry(extension.getId(), caption, icon, type, serializedData);
+                        type = dataEntry.getType().replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                     }
                 } else {
-                    dataEntry = new DataEntry(extension.getId(), caption, icon, extension.getClass().getPackage().getName(), serializedData);
+                    type = extension.getClass().getPackage().getName()
+                                .replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                 }
+                dataEntry = new DataEntry(extension.getId(), caption, icon, type, serializedData);
                 data.addDataItem(dataEntry);
             }
         }
@@ -1181,7 +1202,7 @@ public class FrontEnd extends JFrame {
         try {
             JLabel entryTypeLabel = new JLabel("Type:");
             JComboBox entryTypeComboBox = new JComboBox();
-            for (String entryType : ExtensionFactory.getInstance().getExtensions().keySet()) {
+            for (String entryType : ExtensionFactory.getInstance().getAnnotatedExtensions().keySet()) {
                 entryTypeComboBox.addItem(entryType);
             }
             if (lastAddedEntryType != null) {
@@ -1199,7 +1220,7 @@ public class FrontEnd extends JFrame {
             if (caption != null) {
                 String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                 lastAddedEntryType = typeDescription;
-                Class type = ExtensionFactory.getInstance().getExtensions().get(typeDescription);
+                Class type = ExtensionFactory.getInstance().getAnnotatedExtensions().get(typeDescription);
                 Extension extension = ExtensionFactory.getInstance().newExtension(type);
                 if (extension != null) {
                     getJTabbedPane().addTab(caption, extension);
@@ -1234,7 +1255,7 @@ public class FrontEnd extends JFrame {
                 }
                 JLabel entryTypeLabel = new JLabel("Type:");
                 JComboBox entryTypeComboBox = new JComboBox();
-                for (String entryType : ExtensionFactory.getInstance().getExtensions().keySet()) {
+                for (String entryType : ExtensionFactory.getInstance().getAnnotatedExtensions().keySet()) {
                     entryTypeComboBox.addItem(entryType);
                 }
                 if (lastAddedEntryType != null) {
@@ -1252,7 +1273,7 @@ public class FrontEnd extends JFrame {
                 if (caption != null) {
                     String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                     lastAddedEntryType = typeDescription;
-                    Class type = ExtensionFactory.getInstance().getExtensions().get(typeDescription);
+                    Class type = ExtensionFactory.getInstance().getAnnotatedExtensions().get(typeDescription);
                     Extension extension = ExtensionFactory.getInstance().newExtension(type);
                     if (extension != null) {
                         currentTabPane.addTab(caption, extension);
@@ -1327,7 +1348,7 @@ public class FrontEnd extends JFrame {
                         store();
                         displayMessage(
                                 "Some data have been successfully imported.\n" +
-                                "Bias is going to be restarted now...");
+                                "Bias session is going to be finished now...");
                         System.exit(0);
                     } else {
                         displayErrorMessage("Nothing to import!");
@@ -1451,8 +1472,7 @@ public class FrontEnd extends JFrame {
                                             + ", author: " + extAnn.author() + Constants.SPACE_STR
                                             + ", description: " + extAnn.description();
                         } else {
-                            annotationStr = extension.substring(extension.lastIndexOf(".") + 1, extension.length())
-                                            + " [ Extension Info Is Missing ]";
+                            annotationStr = extClass.getSimpleName() + " [ Extension Info Is Missing ]";
                         }
                         // extension instantiation test
                         ExtensionFactory.getInstance().newExtension(extClass);
@@ -1461,22 +1481,22 @@ public class FrontEnd extends JFrame {
                         components.put(annotationStr, extClass.getName());
                     } catch (Throwable t) {
                         // broken extension found, inform user about that...
-                        extension = extension.substring(extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR)+1, extension.length());
-                        displayErrorMessage("Extension [ " + extension + " ] is broken and will be uninstalled!", t);
+                        String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                        displayErrorMessage("Extension [ " + extensionName + " ] is broken and will be uninstalled!", t);
                         // ... and try uninstall broken extension...
                         try {
                             BackEnd.getInstance().uninstallExtension(extension);
-                            displayMessage("Broken extension [ " + extension + " ] has been uninstalled");
+                            displayMessage("Broken extension [ " + extensionName + " ] has been uninstalled");
                             brokenFixed = true;
                         } catch (Exception ex2) {
                             // ... if unsuccessfully - inform user about that, do nothing else
-                            displayErrorMessage("Error occured while uninstalling broken extension [ " + extension + " ]!\n" + ex2);
+                            displayErrorMessage("Error occured while uninstalling broken extension [ " + extensionName + " ]!\n" + ex2);
                         }
                     }
                 }
                 if (brokenFixed) {
                     store();
-                    displayMessage("Bias is going to be restarted now...");
+                    displayMessage("Bias session is going to be finished now...");
                     System.exit(0);
                 }
                 JButton instButt = new JButton("Install new");
@@ -1551,62 +1571,94 @@ public class FrontEnd extends JFrame {
                 model = (DefaultListModel) lafList.getModel();
                 model.addElement(DEFAULT_LOOK_AND_FEEL);
                 components = new HashMap<String, String>();
-                components.put(DEFAULT_LOOK_AND_FEEL, DEFAULT_LOOK_AND_FEEL);
+                components.put(DEFAULT_LOOK_AND_FEEL, null);
                 boolean brokenFixed = false;
-                for (String laf : BackEnd.getInstance().getLAFs()) {
+                for (Entry<String, Properties> lafEntry : BackEnd.getInstance().getLAFs().entrySet()) {
                     String annotationStr;
                     try {
-                        Class<?> lafActivatorClass = Class.forName(laf);
+                        Class<?> lafManagerClass = Class.forName(lafEntry.getKey());
                         AddOnAnnotation lafAnn = 
-                            (AddOnAnnotation) lafActivatorClass.getAnnotation(AddOnAnnotation.class);
+                            (AddOnAnnotation) lafManagerClass.getAnnotation(AddOnAnnotation.class);
                         if (lafAnn != null) {
                             annotationStr = lafAnn.name() + Constants.SPACE_STR 
                                             + ", version: " + lafAnn.version() + Constants.SPACE_STR 
                                             + ", author: " + lafAnn.author() + Constants.SPACE_STR
                                             + ", description: " + lafAnn.description();
                         } else {
-                            annotationStr = laf.substring(laf.lastIndexOf(".") + 1, laf.length())
-                                            + " [ Look-&-Feel Info Is Missing ]";
+                            annotationStr = lafManagerClass.getSimpleName() + " [ Look-&-Feel Info Is Missing ]";
                         }
                         // laf instantiation test
-                        lafActivatorClass.newInstance();
+                        lafManagerClass.newInstance();
                         // laf is ok, add it to the list
                         model.addElement(annotationStr);
-                        components.put(annotationStr, lafActivatorClass.getName());
+                        components.put(annotationStr, lafManagerClass.getName());
                     } catch (Throwable t) {
                         // broken laf found, inform user about that...
-                        laf = laf.substring(laf.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR)+1, laf.length());
-                        displayErrorMessage("Look-&-Feel [ " + laf + " ] is broken and will be uninstalled!", t);
+                        String lafName = lafEntry.getKey().replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                        displayErrorMessage("Look-&-Feel [ " + lafName + " ] is broken and will be uninstalled!", t);
                         // ... and try uninstall broken laf...
                         try {
-                            BackEnd.getInstance().uninstallLAF(laf);
-                            displayMessage("Broken Look-&-Feel [ " + laf + " ] has been uninstalled");
+                            BackEnd.getInstance().uninstallLAF(lafEntry.getKey());
+                            displayMessage("Broken Look-&-Feel [ " + lafName + " ] has been uninstalled");
                             brokenFixed = true;
                         } catch (Exception ex2) {
                             // ... if unsuccessfully - inform user about that, do nothing else
-                            displayErrorMessage("Error occured while uninstalling broken Look-&-Feel [ " + laf + " ]!\n" + ex2);
+                            displayErrorMessage("Error occured while uninstalling broken Look-&-Feel [ " + lafName + " ]!\n" + ex2);
                         }
                     }
                 }
                 if (brokenFixed) {
                     store();
-                    displayMessage("Bias is going to be restarted now...");
+                    displayMessage("Bias session is going to be finished now...");
                     System.exit(0);
                 }
-                JButton actButt = new JButton("Select Look-&-Feel");
-                actButt.addActionListener(new ActionListener(){
+                JButton activateButt = new JButton("Activate Look-&-Feel");
+                activateButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafList.getSelectedValue() != null) {
-                            String laf = components.get(lafList.getSelectedValue());
-                            if (laf == null) {
-                                displayMessage(
-                                        "This Look-&-Feel can not be activated yet.\n" +
-                                        "Restart Bias first.");
-                            } else {
+                            String description = (String) lafList.getSelectedValue();
+                            if (DEFAULT_LOOK_AND_FEEL.equals(description)) {
                                 try {
-                                    selectLAF(laf);
+                                    setActiveLAF(null);
                                 } catch (Exception t) {
                                     displayErrorMessage(t);
+                                }
+                            } else {
+                                String lafManagerClassName = components.get(description);
+                                if (lafManagerClassName == null) {
+                                    displayMessage(
+                                            "This Look-&-Feel can not be activated yet.\n" +
+                                            "Restart Bias first.");
+                                } else {
+                                    try {
+                                        setActiveLAF(lafManagerClassName);
+                                    } catch (Exception t) {
+                                        displayErrorMessage(t);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                JButton configButt = new JButton("Configure Look-&-Feel");
+                configButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        if (lafList.getSelectedValue() != null) {
+                            if (DEFAULT_LOOK_AND_FEEL.equals(lafList.getSelectedValue())) {
+                                displayErrorMessage(
+                                        "Default Look-&-Feel is not configurable");
+                            } else {
+                                String lafManagerClassName = components.get(lafList.getSelectedValue());
+                                if (lafManagerClassName == null) {
+                                    displayMessage(
+                                            "This Look-&-Feel can not be configured yet.\n" +
+                                            "Restart Bias first.");
+                                } else {
+                                    try {
+                                        configureLAF(lafManagerClassName);
+                                    } catch (Exception t) {
+                                        displayErrorMessage(t);
+                                    }
                                 }
                             }
                         }
@@ -1659,7 +1711,8 @@ public class FrontEnd extends JFrame {
                     new Component[]{
                             lafLabel,
                             new JScrollPane(lafList),
-                            actButt,
+                            activateButt,
+                            configButt,
                             instButt,
                             uninstButt
                     },
@@ -1668,7 +1721,7 @@ public class FrontEnd extends JFrame {
                     null
                 );
                 if (modified) {
-                    FrontEnd.getInstance().displayMessage("Bias is going to be restarted now...");
+                    FrontEnd.getInstance().displayMessage("Bias session is going to be finished now...");
                     store();
                     System.exit(0);
                 }
