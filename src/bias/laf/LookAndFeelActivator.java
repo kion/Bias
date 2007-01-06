@@ -11,7 +11,7 @@ package bias.laf;
 public interface LookAndFeelActivator {
     
     /**
-     * Performs actions to activate certain LookAndFeel
+     * Performs needed actions to activate certain LookAndFeel
      */
     public void activate() throws Exception;
 
