@@ -453,7 +453,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
                 dc.setPlacement(tp.getTabPlacement());
-            } else {
+            } else if (c instanceof Extension) {
                 Extension extension = (Extension) c;
                 byte[] serializedData = extension.serialize();
                 DataEntry dataEntry;
