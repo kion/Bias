@@ -7,17 +7,10 @@ import java.util.UUID;
 
 import javax.swing.JPanel;
 
-import bias.annotation.AddOnAnnotation;
-
 /**
  * @author kion
  */
 
-@AddOnAnnotation(
-        name = "Abstract Extension", 
-        version="1.0",
-        description = "Abstract extension representing extensions interface",
-        author="kion")
 public abstract class Extension extends JPanel {
 
     private UUID id;
