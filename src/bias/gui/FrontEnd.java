@@ -1623,9 +1623,16 @@ public class FrontEnd extends JFrame {
                         try {
                             if (extList.getSelectedValues().length > 0) {
                                 for (Object extension : extList.getSelectedValues()) {
-                                    BackEnd.getInstance().uninstallExtension(components.get(extension));
-                                    model.removeElement(extension);
-                                    modified = true;
+                                    String extClassName = components.get(extension);
+                                    if (extClassName == null) {
+                                        displayMessage(
+                                                "This Extension can not be uninstalled now.\n" +
+                                                "Restart Bias first.");
+                                    } else {
+                                        BackEnd.getInstance().uninstallExtension(extClassName);
+                                        model.removeElement(extension);
+                                        modified = true;
+                                    }
                                 }
                                 FrontEnd.getInstance().displayMessage("Extension(s) have been successfully uninstalled!");
                             }
@@ -1791,10 +1798,17 @@ public class FrontEnd extends JFrame {
                                 boolean uninstalled = false;
                                 for (Object laf : lafList.getSelectedValues()) {
                                     if (!DEFAULT_LOOK_AND_FEEL.equals(laf)) {
-                                        BackEnd.getInstance().uninstallLAF(components.get(laf));
-                                        model.removeElement(laf);
-                                        uninstalled = true;
-                                        modified = true;
+                                        String lafManagerClassName = components.get(laf);
+                                        if (lafManagerClassName == null) {
+                                            displayMessage(
+                                                    "This Look-&-Feel can not be uninstalled now.\n" +
+                                                    "Restart Bias first.");
+                                        } else {
+                                            BackEnd.getInstance().uninstallLAF(lafManagerClassName);
+                                            model.removeElement(laf);
+                                            uninstalled = true;
+                                            modified = true;
+                                        }
                                     } else {
                                         FrontEnd.getInstance().displayMessage("Default Look-&-Feel can not be uninstalled!");
                                     }
