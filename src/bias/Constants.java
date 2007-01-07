@@ -28,7 +28,7 @@ public class Constants {
     public static final String PACKAGE_PATH_SEPARATOR_PATTERN = "\\.";
     public static final String PACKAGE_PREFIX_PATTERN = "^.*\\.";
 
-    public static final String ADDON_FILE_PATTERN = "(?i).+\\.jar$";
+    public static final String ADDON_PACK_PATTERN = "(?i).+\\.jar$";
     public static final String ADDON_FILE_PATTERN_DESCRIPTION = "JAR file";
 
     public static final String ANY_CHARACTERS_PATTERN = ".*";

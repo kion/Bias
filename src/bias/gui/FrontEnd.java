@@ -144,7 +144,7 @@ public class FrontEnd extends JFrame {
             setFileFilter(new FileFilter(){
                 @Override
                 public boolean accept(File file) {
-                    return file.isDirectory() || file.getName().matches(Constants.ADDON_FILE_PATTERN);
+                    return file.isDirectory() || file.getName().matches(Constants.ADDON_PACK_PATTERN);
                 }
                 @Override
                 public String getDescription() {
@@ -163,7 +163,7 @@ public class FrontEnd extends JFrame {
             setFileFilter(new FileFilter(){
                 @Override
                 public boolean accept(File f) {
-                    return imgFF.accept(f) || f.getName().matches(Constants.ADDON_FILE_PATTERN);
+                    return imgFF.accept(f) || f.getName().matches(Constants.ADDON_PACK_PATTERN);
                 }
                 @Override
                 public String getDescription() {

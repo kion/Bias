@@ -378,7 +378,7 @@ public class BackEnd {
             Map<String, byte[]> classesMap = new HashMap<String, byte[]>();
             Map<String, byte[]> resoursesMap = new HashMap<String, byte[]>();
             Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
-            if (name.matches(Constants.ADDON_FILE_PATTERN)) {
+            if (name.matches(Constants.ADDON_PACK_PATTERN)) {
                 ZipInputStream in = new ZipInputStream(new FileInputStream(extensionFile));
                 ZipEntry ze = null;
                 while ((ze = in.getNextEntry()) != null) {
@@ -414,7 +414,9 @@ public class BackEnd {
                                 String lzeName = lze.getName();
                                 if (!lzeName.startsWith(Constants.META_INF_DIR) && !lzeName.endsWith("/")) {
                                     if (zipEntries.containsKey(lzeName)) {
-                                        throw new Exception("Extension pack conflict! Conflicting resource: " + lzeName);
+                                        throw new Exception(
+                                                "Can not install from file '" + extensionFile + "'\n" +
+                                                "Extension pack conflict! Conflicting resource: " + lzeName);
                                     } else {
                                         ByteArrayOutputStream lout = new ByteArrayOutputStream();
                                         while ((b = lin.read()) != -1) {
@@ -536,7 +538,7 @@ public class BackEnd {
             String name = lafFile.getName();
             Map<String, byte[]> classesMap = new HashMap<String, byte[]>();
             Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
-            if (name.matches(Constants.ADDON_FILE_PATTERN)) {
+            if (name.matches(Constants.ADDON_PACK_PATTERN)) {
                 ZipInputStream in = new ZipInputStream(new FileInputStream(lafFile));
                 ZipEntry ze = null;
                 while ((ze = in.getNextEntry()) != null) {
@@ -568,7 +570,9 @@ public class BackEnd {
                                 String lzeName = lze.getName();
                                 if (!lzeName.startsWith(Constants.META_INF_DIR) && !lzeName.endsWith("/")) {
                                     if (zipEntries.containsKey(lzeName)) {
-                                        throw new Exception("LAF pack conflict! Conflicting resource: " + lzeName);
+                                        throw new Exception(
+                                                "Can not install from file '" + lafFile + "'\n" +
+                                                "LAF pack conflict! Conflicting resource: " + lzeName);
                                     } else {
                                         ByteArrayOutputStream lout = new ByteArrayOutputStream();
                                         while ((b = lin.read()) != -1) {
@@ -662,7 +666,7 @@ public class BackEnd {
     public Collection<ImageIcon> addIcons(File file) throws Exception {
         Collection<ImageIcon> icons = new LinkedList<ImageIcon>();
         if (file != null && file.exists() && !file.isDirectory()) {
-            if (file.getName().matches(Constants.ADDON_FILE_PATTERN)) {
+            if (file.getName().matches(Constants.ADDON_PACK_PATTERN)) {
                 ZipInputStream in = new ZipInputStream(new FileInputStream(file));
                 while (in.getNextEntry() != null) {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
