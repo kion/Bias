@@ -57,7 +57,7 @@ public class Constants {
     public static final String ICON_FILE_PATH_PATTERN = ICONS_DIR_PATTERN + ".+\\" + ICON_FILE_ENDING;
     public static final String ATTACHMENTS_DIR = "atts/";
     public static final String ATTACHMENTS_DIR_PATTERN = "^atts/";
-    public static final String ATTACHMENT_FILE_PATH_PATTERN = ATTACHMENTS_DIR_PATTERN + ".+/.+";
+    public static final String ATTACHMENT_FILE_PATH_PATTERN = ATTACHMENTS_DIR_PATTERN + "(.+)/.+";
     public static final String LIB_DIR_PATTERN = "^lib/";
     public static final String LIB_FILE_PATH_PATTERN = "(?i)" + LIB_DIR_PATTERN + "[^/]+\\.jar$";
     public static final String LAF_MANAGER_PATH_PATTERN = "lfm/.+\\" + CLASS_FILE_ENDING;

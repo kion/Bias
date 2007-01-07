@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,6 +27,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -241,7 +244,8 @@ public class BackEnd {
         if (data.getActiveIndex() != null) {
             rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, data.getActiveIndex().toString());
         }
-        buildNode(rootNode, data);
+        Collection<UUID> ids = buildNode(rootNode, data);
+        cleanUpOrphanedAttachments(ids);
         metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
         settings.list(new PrintWriter(sw));
@@ -269,7 +273,8 @@ public class BackEnd {
         zos.close();
     }
     
-    private void buildNode(Node node, DataCategory data) throws Exception {
+    private Collection<UUID> buildNode(Node node, DataCategory data) throws Exception {
+        Collection<UUID> ids = new ArrayList<UUID>();
         for (Recognizable item : data.getData()) {
             if (item instanceof DataEntry) {
                 DataEntry de = (DataEntry) item;
@@ -288,6 +293,7 @@ public class BackEnd {
                 }
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_TYPE, de.getType());
                 node.appendChild(entryNode);
+                ids.add(de.getId());
             } else if (item instanceof DataCategory) {
                 DataCategory dc = (DataCategory) item;
                 Element catNode = metadata.createElement(Constants.XML_ELEMENT_CATEGORY);
@@ -304,10 +310,11 @@ public class BackEnd {
                 if (dc.getActiveIndex() != null) {
                     catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, dc.getActiveIndex().toString());
                 }
-                buildNode(catNode, dc);
+                ids.addAll(buildNode(catNode, dc));
                 node.appendChild(catNode);
             }
         }
+        return ids;
     }
     
     public Collection<String> getExtensions() {
@@ -698,6 +705,42 @@ public class BackEnd {
     public void removeAttachment(UUID dataEntryID, String attachmentName) {
         String attPath = Constants.ATTACHMENTS_DIR + dataEntryID + Constants.ZIP_PATH_SEPARATOR + attachmentName;
         zipEntries.remove(attPath);
+    }
+    
+    public void removeAttachments(UUID dataEntryID) {
+        String attsPath = Constants.ATTACHMENTS_DIR + dataEntryID;
+        Collection<String> removeKeys = new HashSet<String>();
+        for (String path : zipEntries.keySet()) {
+            if (path.startsWith(attsPath)) {
+                removeKeys.add(path);
+            }
+        }
+        if (!removeKeys.isEmpty()) {
+            for (String key : removeKeys) {
+                zipEntries.remove(key);
+            }
+        }
+    }
+    
+    private void cleanUpOrphanedAttachments(Collection<UUID> ids) {
+        Collection<UUID> foundIds = new ArrayList<UUID>();
+        Pattern p = Pattern.compile(Constants.ATTACHMENT_FILE_PATH_PATTERN);
+        for (String path : zipEntries.keySet()) {
+            Matcher m = p.matcher(path);
+            if (m.find()) {
+                String idStr = m.group(1);
+                try {
+                    UUID id = UUID.fromString(idStr);
+                    foundIds.add(id);
+                } catch (IllegalArgumentException iae) {}
+            }
+        }
+        for (UUID id : foundIds) {
+            if (!ids.contains(id)) {
+                // orphaned attachments found, remove 'em
+                removeAttachments(id);
+            }
+        }
     }
     
     public DataCategory getData() {
