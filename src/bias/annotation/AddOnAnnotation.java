@@ -12,8 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AddOnAnnotation {
-    String name();
-    String version();
     String description();
+    String version();
     String author();
 }

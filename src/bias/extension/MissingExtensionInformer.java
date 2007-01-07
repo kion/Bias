@@ -17,10 +17,9 @@ import bias.core.DataEntry;
  */
 
 @AddOnAnnotation(
-        name = "Missing Extension Informer", 
         version="1.0",
-        description = "Special extension to inform about missing extensions",
-        author="kion")
+        author="kion",
+        description = "Special extension to inform about missing extensions")
 public class MissingExtensionInformer extends Extension {
 
     private static final long serialVersionUID = 1L;

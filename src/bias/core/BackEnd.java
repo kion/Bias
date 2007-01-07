@@ -385,7 +385,7 @@ public class BackEnd {
                     String zeName = ze.getName();
                     ByteArrayOutputStream out = null;
                     int type = 0;
-                    if (zeName.matches(Constants.EXTENSION_FILE_PATH_PATTERN)) {
+                    if (zeName.matches(Constants.ADDON_CLASS_FILE_PATH_PATTERN)) {
                         type = 1;
                     } else if (zeName.matches(Constants.RESOURCE_FILE_PATH_PATTERN)) {
                         type = 2;
@@ -450,7 +450,7 @@ public class BackEnd {
                     for (Entry<String, byte[]> entry : classesMap.entrySet()) {
                         zipEntries.put(Constants.EXTENSION_DIR_PATH + Constants.ZIP_PATH_SEPARATOR 
                                 + extName + Constants.ZIP_PATH_SEPARATOR 
-                                + entry.getKey().replaceFirst(Constants.EXT_CLASS_PREFIX_PATTERN, Constants.EMPTY_STR), 
+                                + entry.getKey().replaceFirst(Constants.ADDON_CLASS_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
                                 entry.getValue());
                     }
                     if (!libsMap.isEmpty()) {
@@ -543,7 +543,7 @@ public class BackEnd {
                     String zeName = ze.getName();
                     ByteArrayOutputStream out = null;
                     int type = 0;
-                    if (zeName.matches(Constants.LAF_MANAGER_PATH_PATTERN)) {
+                    if (zeName.matches(Constants.ADDON_CLASS_FILE_PATH_PATTERN)) {
                         type = 1;
                     } else if (zeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
                         type = 2;
@@ -599,7 +599,7 @@ public class BackEnd {
                     for (Entry<String, byte[]> entry : classesMap.entrySet()) {
                         zipEntries.put(Constants.LAF_DIR_PATH + Constants.ZIP_PATH_SEPARATOR 
                                 + lafManagerName + Constants.ZIP_PATH_SEPARATOR 
-                                + entry.getKey().replaceFirst(Constants.LAF_MANAGER_CLASS_PREFIX_PATTERN, Constants.EMPTY_STR), 
+                                + entry.getKey().replaceFirst(Constants.ADDON_CLASS_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
                                 entry.getValue());
                     }
                     if (!libsMap.isEmpty()) {

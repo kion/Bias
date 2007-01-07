@@ -59,7 +59,7 @@ public class ExtensionFactory {
             AddOnAnnotation extAnn = 
                 (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
             if (extAnn != null) {
-                annotationStr = extAnn.name() 
+                annotationStr = extClass.getSimpleName() 
                                 + " [ " + extAnn.description() + " ]";
             } else {
                 annotationStr = extension.substring(

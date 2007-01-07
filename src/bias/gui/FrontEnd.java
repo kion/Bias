@@ -58,7 +58,7 @@ import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.MissingExtensionInformer;
 import bias.gui.utils.ImageFileChooser;
-import bias.laf.LookAndFeelManager;
+import bias.laf.LookAndFeel;
 import bias.utils.BrowserLauncher;
 
 
@@ -231,7 +231,7 @@ public class FrontEnd extends JFrame {
             String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                         + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
             Class lafManagerClass = Class.forName(lafFullClassName);
-            LookAndFeelManager lafManager = (LookAndFeelManager) lafManagerClass.newInstance();
+            LookAndFeel lafManager = (LookAndFeel) lafManagerClass.newInstance();
             byte[] lafSettings = BackEnd.getInstance().getLAFSettings(lafFullClassName);
             lafManager.activate(lafSettings);
         }
@@ -376,7 +376,7 @@ public class FrontEnd extends JFrame {
     private void configureLAF(String laf) throws Exception {
         if (laf != null) {
             Class lafManagerClass = Class.forName(laf);
-            LookAndFeelManager lafManager = ((LookAndFeelManager)lafManagerClass.newInstance());
+            LookAndFeel lafManager = ((LookAndFeel)lafManagerClass.newInstance());
             byte[] lafSettings = BackEnd.getInstance().getLAFSettings(laf);
             byte[] settings = lafManager.configure(lafSettings);
             if (!Arrays.equals(settings,lafSettings)) {
@@ -1554,7 +1554,7 @@ public class FrontEnd extends JFrame {
                         AddOnAnnotation extAnn = 
                             (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
                         if (extAnn != null) {
-                            annotationStr = extAnn.name() + Constants.SPACE_STR 
+                            annotationStr = extClass.getSimpleName() + Constants.SPACE_STR 
                                             + ", version: " + extAnn.version() + Constants.SPACE_STR 
                                             + ", author: " + extAnn.author() + Constants.SPACE_STR
                                             + ", description: " + extAnn.description();
@@ -1683,7 +1683,7 @@ public class FrontEnd extends JFrame {
                         AddOnAnnotation lafAnn = 
                             (AddOnAnnotation) lafManagerClass.getAnnotation(AddOnAnnotation.class);
                         if (lafAnn != null) {
-                            annotationStr = lafAnn.name() + Constants.SPACE_STR 
+                            annotationStr = lafManagerClass.getSimpleName() + Constants.SPACE_STR 
                                             + ", version: " + lafAnn.version() + Constants.SPACE_STR 
                                             + ", author: " + lafAnn.author() + Constants.SPACE_STR
                                             + ", description: " + lafAnn.description();

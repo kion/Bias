@@ -45,10 +45,9 @@ import bias.utils.FSUtils;
  */
 
 @AddOnAnnotation(
-        name = "File Pack", 
         version="0.1.2",
-        description = "Simple file pack",
-        author="kion")
+        author="kion",
+        description = "Simple file pack")
 public class FilePack extends Extension {
 
 	private static final long serialVersionUID = 1L;

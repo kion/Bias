@@ -36,10 +36,9 @@ import com.sun.image.codec.jpeg.ImageFormatException;
  */
 
 @AddOnAnnotation(
-        name = "Graffiti",
         version="0.1.1",
-        description = "Simple painting component",
-        author="kion")
+        author="kion",
+        description = "Simple painting component")
 public class Graffiti extends Extension {
 
     private static final long serialVersionUID = 1L;

@@ -77,10 +77,9 @@ import bias.utils.Validator;
  */
 
 @AddOnAnnotation(
-        name = "HTML Page", 
         version="0.3",
-        description = "WYSIWYG HTML page editor",
-        author="kion")
+        author="kion",
+        description = "WYSIWYG HTML page editor")
 public class HTMLPage extends Extension {
 
     private static final long serialVersionUID = 1L;

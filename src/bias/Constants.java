@@ -4,7 +4,7 @@
 package bias;
 
 import bias.extension.Extension;
-import bias.laf.LookAndFeelManager;
+import bias.laf.LookAndFeel;
 
 /**
  * @author kion
@@ -44,11 +44,11 @@ public class Constants {
     public static final String DATA_FILE_ENDING_PATTERN = "\\" + DATA_FILE_ENDING + "$";
     public static final String DATA_FILE_PATTERN = DATA_DIR_PATTERN + ".+\\" + DATA_FILE_ENDING;
     public static final String CLASS_FILE_ENDING = ".class";
-    public static final String EXTENSION_FILE_PATH_PATTERN = "cls/.+\\" + CLASS_FILE_ENDING;
+    public static final String ADDON_CLASS_FILE_PREFIX_PATTERN = "^cls/";
+    public static final String ADDON_CLASS_FILE_PATH_PATTERN = ADDON_CLASS_FILE_PREFIX_PATTERN + ".+\\" + CLASS_FILE_ENDING;
     public static final String EXTENSION_DIR_PACKAGE_NAME = Extension.class.getPackage().getName();
     public static final String EXTENSION_DIR_PATH = EXTENSION_DIR_PACKAGE_NAME.replaceAll("\\.", ZIP_PATH_SEPARATOR);
     public static final String EXTENSION_PATTERN = EXTENSION_DIR_PATH + "/[\\w/]+/[\\w/]+\\" + CLASS_FILE_ENDING;
-    public static final String EXT_CLASS_PREFIX_PATTERN = "^cls/";
     public static final String RESOURCE_FILE_PATH_PATTERN = "^res/.+";
     public static final String RESOURCE_FILE_PREFIX_PATTERN = "^res/";
     public static final String RESOURCES_DIR = "bias/res/";
@@ -62,9 +62,7 @@ public class Constants {
     public static final String ATTACHMENT_FILE_PATH_PATTERN = ATTACHMENTS_DIR_PATTERN + "(.+)/.+";
     public static final String LIB_DIR_PATTERN = "^lib/";
     public static final String LIB_FILE_PATH_PATTERN = "(?i)" + LIB_DIR_PATTERN + "[^/]+\\.jar$";
-    public static final String LAF_MANAGER_PATH_PATTERN = "lfm/.+\\" + CLASS_FILE_ENDING;
-    public static final String LAF_MANAGER_CLASS_PREFIX_PATTERN = "^lfm/";
-    public static final String LAF_DIR_PACKAGE_NAME = LookAndFeelManager.class.getPackage().getName();
+    public static final String LAF_DIR_PACKAGE_NAME = LookAndFeel.class.getPackage().getName();
     public static final String LAF_DIR_PATH = LAF_DIR_PACKAGE_NAME.replaceAll("\\.", ZIP_PATH_SEPARATOR);
     public static final String LAF_PATTERN = LAF_DIR_PATH + "/[\\w/]+/[\\w/]+\\" + CLASS_FILE_ENDING;
     public static final String EXT_LIB_INSTALL_LOG_FILE_ENDING = ".ext.lib.inst.log";

@@ -48,10 +48,9 @@ import bias.utils.PropertiesUtils;
  */
 
 @AddOnAnnotation(
-        name = "Plain Text", 
         version="1.3",
-        description = "Simple plain text editor",
-        author="kion")
+        author="kion",
+        description = "Simple plain text editor")
 public class PlainText extends Extension {
 
     private static final long serialVersionUID = 1L;
