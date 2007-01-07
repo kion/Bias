@@ -6,9 +6,18 @@ package bias.extension.FilePack;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.Collection;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
+import java.util.Map.Entry;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -53,7 +62,7 @@ public class FilePack extends Extension {
     private static final ImageIcon ICON_SAVE = 
         new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/save.png"));
     
-	private Collection<Attachment> filePack;
+	private Map<Attachment, String> filePack;
     
     private File lastInputDir = null;
 	
@@ -69,7 +78,17 @@ public class FilePack extends Extension {
 
 	public FilePack(UUID id, byte[] data) {
 		super(id, data);
-		filePack = BackEnd.getInstance().getAttachments(getId());
+        Properties p = new Properties();
+        if (getData() != null) {
+            try {
+                p.load(new ByteArrayInputStream(getData()));
+            } catch (IOException e) {}
+        }
+        filePack = new LinkedHashMap<Attachment, String>();
+		for (Attachment att : BackEnd.getInstance().getAttachments(getId())) {
+		    String date = p.getProperty(att.getName());
+            filePack.put(att, date);
+        }
 		initGUI();
 	}
 
@@ -78,7 +97,13 @@ public class FilePack extends Extension {
 	 */
 	@Override
 	public byte[] serialize() throws Exception {
-		return new byte[]{};
+        Properties p = new Properties();
+        for (Entry<Attachment, String> fpEntry : filePack.entrySet()) {
+            p.setProperty(fpEntry.getKey().getName(), fpEntry.getValue());
+        }
+        StringWriter sw = new StringWriter();
+        p.list(new PrintWriter(sw));
+		return sw.getBuffer().toString().getBytes();
 	}
 	
 	private void initGUI() {
@@ -142,8 +167,8 @@ public class FilePack extends Extension {
 						}
 					}
 				}
-				for (Attachment file : filePack) {
-					addRow(file);
+				for (Entry<Attachment, String> fpEntry : filePack.entrySet()) {
+					addRow(fpEntry.getKey(), fpEntry.getValue());
 				}
 			}
 		} catch (Exception e) {
@@ -246,7 +271,7 @@ public class FilePack extends Extension {
 	
 	private byte[] getFileData(String fileName) throws Exception {
 		byte[] data = null;
-		for (Attachment att : filePack) {
+		for (Attachment att : filePack.keySet()) {
 			if (att.getName().equals(fileName)) {
 				data = att.getData();
 				break;
@@ -258,16 +283,18 @@ public class FilePack extends Extension {
 	private void addFile(File file) throws Exception {
 		Attachment attachment = new Attachment(file);
 		BackEnd.getInstance().addAttachment(getId(), attachment);
-		filePack.add(attachment);
+        String date = new SimpleDateFormat("yyyy.MM.dd @ HH:mm:ss").format(new Date());
+		filePack.put(attachment, date);
 		// update grid
-		addRow(attachment);
+		addRow(attachment, date);
 	}
 	
-	private void addRow(Attachment attachment) {
+	private void addRow(Attachment attachment, String date) {
 		DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
 		if (model.getColumnCount() == 0) {
 			model.addColumn("File");
 			model.addColumn("Size");
+            model.addColumn("Date");
 		}
 		String metrics = " B";
 		float size = attachment.getData().length;
@@ -289,12 +316,12 @@ public class FilePack extends Extension {
             }
         }
         sizeStr += metrics;
-		model.addRow(new Object[]{attachment.getName(), sizeStr});
+		model.addRow(new Object[]{attachment.getName(), sizeStr, date});
 	}
 
 	private void removeFile(String fileName, int rowIdx) throws Exception {
 		Attachment toRemove = null;
-		for (Attachment att : filePack) {
+		for (Attachment att : filePack.keySet()) {
 			if (att.getName().equals(fileName)) {
 				toRemove = att;
 				break;
