@@ -184,13 +184,37 @@ public class FrontEnd extends JFrame {
     }
 
     public static FrontEnd getInstance() {
-        try {
-            if (instance == null) {
+        if (instance == null) {
+            boolean lafActivationSuccess;
+            Throwable error = null;
+            try {
                 preInit();
-                instance = new FrontEnd();
+                lafActivationSuccess = true;
+            } catch (Throwable e) {
+                error = e;
+                lafActivationSuccess = false;
             }
-        } catch (Throwable e) {
-            e.printStackTrace();
+            instance = new FrontEnd();
+            if (!lafActivationSuccess) {
+                String laf = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+                instance.displayErrorMessage(
+                        "Current Look-&-Feel '" + laf + "' is broken (failed to initialize)!\n" +
+                        "It will be uninstalled.", 
+                        error);
+                try {
+                    String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                    BackEnd.getInstance().uninstallLAF(lafFullClassName);
+                    settings.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+                    BackEnd.getInstance().store();
+                    instance.displayMessage(
+                            "Broken Look-&-Feel '" + laf + "' has been uninstalled ;)\n" +
+                            "Bias needs to be restarted now...");
+                    System.exit(0);
+                } catch (Exception e) {
+                    instance.displayErrorMessage("Broken Look-&-Feel '" + laf + "' failed to uninstall :(", e);
+                }
+            }
         }
         return instance;
     }
@@ -341,7 +365,8 @@ public class FrontEnd extends JFrame {
         }
         if (!changed) {
             FrontEnd.getInstance().displayMessage("Selected Look-&-Feel is already active");
-        } else {    
+        } else {
+            configureLAF(laf);
             store();
             displayMessage("Changes will take effect after Bias restart");
             System.exit(0);
@@ -1348,7 +1373,7 @@ public class FrontEnd extends JFrame {
                         store();
                         displayMessage(
                                 "Some data have been successfully imported.\n" +
-                                "Bias session is going to be finished now...");
+                                "Bias needs to be restarted now...");
                         System.exit(0);
                     } else {
                         displayErrorMessage("Nothing to import!");
@@ -1414,7 +1439,7 @@ public class FrontEnd extends JFrame {
             try {
                 // show confirmation dialog
                 if (JOptionPane.showConfirmDialog(FrontEnd.getInstance(), 
-                        "The data are goint to be saved now.\n" +
+                        "The data are going to be saved now.\n" +
                         "This will finish your current Bias session.\n" +
                         "Are you sure you want save and exit?",
                         "Save data and exit",
@@ -1496,7 +1521,7 @@ public class FrontEnd extends JFrame {
                 }
                 if (brokenFixed) {
                     store();
-                    displayMessage("Bias session is going to be finished now...");
+                    displayMessage("Bias needs to be restarted now...");
                     System.exit(0);
                 }
                 JButton instButt = new JButton("Install new");
@@ -1609,7 +1634,7 @@ public class FrontEnd extends JFrame {
                 }
                 if (brokenFixed) {
                     store();
-                    displayMessage("Bias session is going to be finished now...");
+                    displayMessage("Bias needs to be restarted now...");
                     System.exit(0);
                 }
                 JButton activateButt = new JButton("Activate Look-&-Feel");
@@ -1721,7 +1746,7 @@ public class FrontEnd extends JFrame {
                     null
                 );
                 if (modified) {
-                    FrontEnd.getInstance().displayMessage("Bias session is going to be finished now...");
+                    FrontEnd.getInstance().displayMessage("Bias needs to be restarted now...");
                     store();
                     System.exit(0);
                 }

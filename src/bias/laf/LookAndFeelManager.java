@@ -15,7 +15,7 @@ public abstract class LookAndFeelManager {
     /**
      * Performs needed actions to activate certain Look-&-Feel
      */
-    public abstract void activate(Properties properties) throws Exception;
+    public abstract void activate(Properties properties) throws Throwable;
     
     /**
      * Configures Look-&-Feel.
