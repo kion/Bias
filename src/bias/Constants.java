@@ -34,13 +34,15 @@ public class Constants {
     public static final String ANY_CHARACTERS_PATTERN = ".*";
     
     public static final String CONFIG_DIR = "conf/";
-    public static final String CONFIG_FILE_PATH = CONFIG_DIR + "config.properties";
-    public static final String METADATA_FILE_PATH = "data/metadata.xml";
+    public static final String GLOBAL_CONFIG_FILE_PATH = CONFIG_DIR + "config.properties";
+    public static final String CONFIG_DIR_PATTERN = "^conf/";
+    public static final String CONFIG_FILE_PATH_PATTERN = CONFIG_DIR_PATTERN + "([^\\.]+).+\\.conf";
+    public static final String DATA_DIR = "data/";
+    public static final String DATA_DIR_PATTERN = "^data/";
+    public static final String METADATA_FILE_PATH = DATA_DIR + "metadata.xml";
     public static final String DATA_FILE_ENDING = ".data";
     public static final String DATA_FILE_ENDING_PATTERN = "\\" + DATA_FILE_ENDING + "$";
-    public static final String DATA_DIR_PATTERN = "^data/";
     public static final String DATA_FILE_PATTERN = DATA_DIR_PATTERN + ".+\\" + DATA_FILE_ENDING;
-    public static final String DATA_DIR = "data/";
     public static final String CLASS_FILE_ENDING = ".class";
     public static final String EXTENSION_FILE_PATH_PATTERN = "cls/.+\\" + CLASS_FILE_ENDING;
     public static final String EXTENSION_DIR_PACKAGE_NAME = Extension.class.getPackage().getName();
@@ -67,7 +69,9 @@ public class Constants {
     public static final String LAF_PATTERN = LAF_DIR_PATH + "/[\\w/]+/[\\w/]+\\" + CLASS_FILE_ENDING;
     public static final String EXT_LIB_INSTALL_LOG_FILE_ENDING = ".ext.lib.inst.log";
     public static final String LAF_LIB_INSTALL_LOG_FILE_ENDING = ".laf.lib.inst.log";
+    public static final String EXTENSION_CONFIG_FILE_ENDING = ".ext.conf";
     public static final String LAF_CONFIG_FILE_ENDING = ".laf.conf";
+    public static final String DATA_ENTRY_CONFIG_FILE_ENDING = ".data.conf";
     
     public static final String PROPERTY_LOOK_AND_FEEL = "LOOK_AND_FEEL";
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";

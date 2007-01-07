@@ -34,7 +34,7 @@ public class MissingExtensionInformer extends Extension {
      * Default constructor
      */
     public MissingExtensionInformer(DataEntry dataEntry) {
-        super(dataEntry.getId(), dataEntry.getData());
+        super(dataEntry.getId(), dataEntry.getData(), null);
         this.dataEntry = dataEntry;
         initialize();
     }
@@ -44,13 +44,21 @@ public class MissingExtensionInformer extends Extension {
     }
 
     /* (non-Javadoc)
-     * @see bias.gui.Extension#serialize()
+     * @see bias.extension.Extension#serializeData()
      */
     @Override
-    public byte[] serialize() {
+    public byte[] serializeData() throws Throwable {
         return getData();
     }
-    
+
+    /* (non-Javadoc)
+     * @see bias.extension.Extension#serializeSettings()
+     */
+    @Override
+    public byte[] serializeSettings() throws Throwable {
+        return getSettings();
+    }
+
     /**
      * This method initializes this
      * 

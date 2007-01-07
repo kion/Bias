@@ -16,14 +16,17 @@ public class DataEntry extends Recognizable {
     
     private byte[] data;
     
+    private byte[] settings;
+    
     public DataEntry() {
         super();
     }
     
-    public DataEntry(UUID id, String caption, Icon icon, String type, byte[] data) {
+    public DataEntry(UUID id, String caption, Icon icon, String type, byte[] data, byte[] settings) {
         super(id, caption, icon);
         this.type = type;
         this.data = data;
+        this.settings = settings;
     }
 
     public String getType() {
@@ -40,6 +43,14 @@ public class DataEntry extends Recognizable {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    public byte[] getSettings() {
+        return settings;
+    }
+
+    public void setSettings(byte[] settings) {
+        this.settings = settings;
     }
 
 }

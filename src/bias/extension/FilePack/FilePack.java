@@ -76,8 +76,8 @@ public class FilePack extends Extension {
 	private JButton jButton3;
 	private JButton jButton1;
 
-	public FilePack(UUID id, byte[] data) {
-		super(id, data);
+	public FilePack(UUID id, byte[] data, byte[] settings) {
+		super(id, data, settings);
         Properties p = new Properties();
         if (getData() != null) {
             try {
@@ -93,10 +93,10 @@ public class FilePack extends Extension {
 	}
 
 	/* (non-Javadoc)
-	 * @see bias.extension.Extension#serialize()
+	 * @see bias.extension.Extension#serializeData()
 	 */
 	@Override
-	public byte[] serialize() throws Exception {
+	public byte[] serializeData() throws Throwable {
         Properties p = new Properties();
         for (Entry<Attachment, String> fpEntry : filePack.entrySet()) {
             p.setProperty(fpEntry.getKey().getName(), fpEntry.getValue());
@@ -258,7 +258,7 @@ public class FilePack extends Extension {
                         }
                         if (option == null || option == JOptionPane.YES_OPTION) {
                             byte[] data = getFileData(fileName);
-                            FSUtils.getInstance().writeFile(file, data);
+                            FSUtils.writeFile(file, data);
                             lastOutputDir = file.getParentFile();
                         }
 					}

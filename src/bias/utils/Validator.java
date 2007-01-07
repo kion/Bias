@@ -10,6 +10,10 @@ import bias.Constants;
  *
  */
 public class Validator {
+    
+    private Validator() {
+        // hidden default constructor
+    }
 	
 	public static boolean isNullOrBlank(Object obj) {
 		boolean isNullOrBlank = false;

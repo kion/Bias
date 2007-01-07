@@ -31,14 +31,9 @@ public class ExtensionFactory {
 		return instance;
 	}
 	
-	public Extension newExtension(Class entryClass) throws Throwable {
-        Extension extension = newExtension(entryClass, null, new byte[]{});
-        return extension;
-    }
-    
-	public Extension newExtension(Class entryClass, UUID id, byte[] data) throws Throwable {
-        Extension extension = (Extension) entryClass.getConstructor(
-                new Class[]{UUID.class, byte[].class}).newInstance(new Object[]{id, data});
+	public Extension newExtension(Class clazz) throws Throwable {
+        byte[] defSettings = BackEnd.getInstance().getExtensionSettings(clazz.getName());
+        Extension extension = newExtension(clazz, null, new byte[]{}, defSettings);
         return extension;
     }
     
@@ -46,10 +41,16 @@ public class ExtensionFactory {
         String type = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                         + dataEntry.getType() + Constants.PACKAGE_PATH_SEPARATOR + dataEntry.getType();
         Class entryClass = Class.forName(type);
-        Extension extension = newExtension(entryClass, dataEntry.getId(), dataEntry.getData());
+        Extension extension = newExtension(entryClass, dataEntry.getId(), dataEntry.getData(), dataEntry.getSettings());
         return extension;
     }
 
+	private Extension newExtension(Class clazz, UUID id, byte[] data, byte[] settings) throws Throwable {
+        Extension extension = (Extension) clazz.getConstructor(
+                new Class[]{UUID.class, byte[].class, byte[].class}).newInstance(new Object[]{id, data, settings});
+        return extension;
+    }
+    
     public Map<String, Class> getAnnotatedExtensions() throws Throwable {
         Map<String, Class> types = new LinkedHashMap<String, Class>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
@@ -65,6 +66,9 @@ public class ExtensionFactory {
                         extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR) + 1, extension.length()) 
                                 + " [ Extension Info Is Missing ]";
             }
+            // extension instantiation test
+            ExtensionFactory.getInstance().newExtension(extClass);
+            // extension is ok, add it to the list
             types.put(annotationStr, extClass);
         }
         return types;

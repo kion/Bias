@@ -3,9 +3,6 @@
  */
 package bias.laf;
 
-import java.util.Properties;
-
-
 /**
  * @author kion
  */
@@ -14,18 +11,20 @@ public abstract class LookAndFeelManager {
     
     /**
      * Performs needed actions to activate certain Look-&-Feel
+     * 
+     * @param settings settings to use while activating
      */
-    public abstract void activate(Properties properties) throws Throwable;
+    public abstract void activate(byte[] settings) throws Throwable;
     
     /**
      * Configures Look-&-Feel.
      * By default returns null (no settings).
      * Should be overriden to return settings for certain Look-&-Feel.
      * 
-     * @param properties initial settings
-     * @return Properties instance containing configuration settings
+     * @param settings initial settings
+     * @return settings byte array containing serialized configuration settings
      */
-    public Properties configure(Properties properties) {
+    public byte[] configure(byte[] settings) {
         return null;
     }
 

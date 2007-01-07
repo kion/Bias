@@ -17,42 +17,77 @@ public abstract class Extension extends JPanel {
     
     private byte[] data;
     
+    private byte[] settings;
+    
     private Extension() {
         // default constructor without parameters is not visible
     }
 
     /**
-     * The only allowed constructor that is aware of initialization data.
-     * @param data data to be incapsulated by extension
+     * The only allowed constructor that is aware of initialization data and settings
+     * 
+     * @param id id to be assigned to extension instance
+     * @param data data to be incapsulated by extension instance
+     * @param settings extension instance settings
      */
-    public Extension(UUID id, byte[] data) {
+    public Extension(UUID id, byte[] data, byte[] settings) {
         if (id == null) {
         	id = UUID.randomUUID();
         }
     	this.id = id;
         this.data = data;
+        this.settings = settings;
     }
 
 	/**
-	 * Concrete extension instance unique identifier getter.
-	 * @return
+	 * @return extension instance unique identifier
 	 */
 	public UUID getId() {
 		return id;
 	}
 
     /**
-     * Data getter visible for extending classes only.
-     * @return data to be used for extension representation
+     * @return data to be used for extension instance representation
      */
     protected byte[] getData() {
         return data;
     }
 
     /**
-     * Serializes extension data to array of bytes.
-     * @return array of bytes representing serialized data
+     * @return settings to be used for extension instance representation
      */
-    abstract public byte[] serialize() throws Exception;
+    protected byte[] getSettings() {
+        return settings;
+    }
+
+    /**
+     * Configures extension.
+     * By default returns null (no settings).
+     * Should be overriden to return settings for certain extension.
+     * 
+     * @param settings initial settings
+     * @return settings byte array containing serialized configuration settings
+     */
+    public byte[] configure(byte[] settings) throws Throwable {
+        return null;
+    }
+
+    /**
+     * Serializes extension's settings to array of bytes
+     * By default returns null (no settings).
+     * Should be overriden to return settings for certain extension's instance
+     * 
+     * @return array of bytes representing serialized settings of extension's instance
+     */
+    public byte[] serializeSettings() throws Throwable {
+        return null;
+    }
+
+    /**
+     * Serializes extension data to array of bytes.
+     * 
+     * @return array of bytes representing serialized data of extension's instance
+     */
+    abstract public byte[] serializeData() throws Throwable;
 
 }

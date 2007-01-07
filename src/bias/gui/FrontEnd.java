@@ -18,6 +18,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -25,7 +26,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.Map.Entry;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -232,7 +232,7 @@ public class FrontEnd extends JFrame {
                                         + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
             Class lafManagerClass = Class.forName(lafFullClassName);
             LookAndFeelManager lafManager = (LookAndFeelManager) lafManagerClass.newInstance();
-            Properties lafSettings = BackEnd.getInstance().getLAFSettings(lafFullClassName);
+            byte[] lafSettings = BackEnd.getInstance().getLAFSettings(lafFullClassName);
             lafManager.activate(lafSettings);
         }
     }
@@ -377,13 +377,34 @@ public class FrontEnd extends JFrame {
         if (laf != null) {
             Class lafManagerClass = Class.forName(laf);
             LookAndFeelManager lafManager = ((LookAndFeelManager)lafManagerClass.newInstance());
-            Properties lafSettings = BackEnd.getInstance().getLAFSettings(laf);
-            Properties settings = lafManager.configure(lafSettings);
-            if (settings != null && !settings.equals(lafSettings)) {
+            byte[] lafSettings = BackEnd.getInstance().getLAFSettings(laf);
+            byte[] settings = lafManager.configure(lafSettings);
+            if (!Arrays.equals(settings,lafSettings)) {
                 BackEnd.getInstance().storeLAFSettings(laf, settings);
                 store();
                 displayMessage("Changes will take effect after Bias restart");
                 System.exit(0);
+            }
+        }
+    }
+    
+    private void configureExtension(String extension) throws Exception {
+        if (extension != null) {
+            try {
+                Class extensionClass = Class.forName(extension);
+                Extension extensionInstance = ExtensionFactory.getInstance().newExtension(extensionClass);
+                byte[] extensionSettings = BackEnd.getInstance().getExtensionSettings(extension);
+                byte[] settings = extensionInstance.configure(extensionSettings);
+                BackEnd.getInstance().storeExtensionSettings(extension, settings);
+            } catch (Throwable t) {
+                displayErrorMessage(
+                        "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize just configured settings!\n" +
+                        "Settings that are failed to serialize will be lost! :(\n" + 
+                        "This the most likely is an extension's bug.\n" +
+                        "You can either:\n" +
+                            "* check for new version of extension (the bug may be fixed in new version)\n" +
+                            "* uninstall extension to avoid further instability and data loss\n" + 
+                            "* refer to extension's author for further help", t);
             }
         }
     }
@@ -500,7 +521,32 @@ public class FrontEnd extends JFrame {
                 dc.setPlacement(tp.getTabPlacement());
             } else if (c instanceof Extension) {
                 Extension extension = (Extension) c;
-                byte[] serializedData = extension.serialize();
+                byte[] serializedData = null;
+                try {
+                    serializedData = extension.serializeData();
+                } catch (Throwable t) {
+                    displayErrorMessage(
+                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize some data!\n" +
+                            "Data that are failed to serialize will be lost! :(\n" + 
+                            "This the most likely is an extension's bug.\n" +
+                            "You can either:\n" +
+                                "* check for new version of extension (the bug may be fixed in new version)\n" +
+                                "* uninstall extension to avoid further instability and data loss\n" + 
+                                "* refer to extension's author for further help", t);
+                }
+                byte[] serializedSettings = null;
+                try {
+                    serializedSettings = extension.serializeSettings();
+                } catch (Throwable t) {
+                    displayErrorMessage(
+                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize some settings!\n" +
+                            "Settings that are failed to serialize will be lost! :(\n" + 
+                            "This the most likely is an extension's bug.\n" +
+                            "You can either:\n" +
+                                "* check for new version of extension (the bug may be fixed in new version)\n" +
+                                "* uninstall extension to avoid further instability and data loss\n" + 
+                                "* refer to extension's author for further help", t);
+                }
                 DataEntry dataEntry;
                 String type = null;
                 if (extension instanceof MissingExtensionInformer) {
@@ -512,7 +558,7 @@ public class FrontEnd extends JFrame {
                     type = extension.getClass().getPackage().getName()
                                 .replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                 }
-                dataEntry = new DataEntry(extension.getId(), caption, icon, type, serializedData);
+                dataEntry = new DataEntry(extension.getId(), caption, icon, type, serializedData, serializedSettings);
                 data.addDataItem(dataEntry);
             }
         }
@@ -1246,6 +1292,14 @@ public class FrontEnd extends JFrame {
                 String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                 lastAddedEntryType = typeDescription;
                 Class type = ExtensionFactory.getInstance().getAnnotatedExtensions().get(typeDescription);
+                byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
+                if (defSettings == null) {
+                    // extension's first time usage
+                    displayMessage(
+                            "This is first time you use '" + type.getSimpleName() + "' extension.\n" +
+                            "You can adjust extension's default settings...");
+                    configureExtension(type.getName());
+                }
                 Extension extension = ExtensionFactory.getInstance().newExtension(type);
                 if (extension != null) {
                     getJTabbedPane().addTab(caption, extension);
@@ -1258,7 +1312,7 @@ public class FrontEnd extends JFrame {
             }
         } catch (Throwable t) {
             displayErrorMessage("Unable to add entry.\n" +
-            					"Some extension may be broken.\n" +
+            					"Some extension(s) may be broken.\n" +
             					"Try to open extensions management dialog, " +
             					"it will autodetect and remove broken extensions.\n" +
             					"After that, try to add entry again.", t);
@@ -1299,6 +1353,14 @@ public class FrontEnd extends JFrame {
                     String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                     lastAddedEntryType = typeDescription;
                     Class type = ExtensionFactory.getInstance().getAnnotatedExtensions().get(typeDescription);
+                    byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
+                    if (defSettings == null) {
+                        // extension's first time usage
+                        displayMessage(
+                                "This is first time you use '" + type.getSimpleName() + "' extension.\n" +
+                                "You can adjust extension's default settings...");
+                        configureExtension(type.getName());
+                    }
                     Extension extension = ExtensionFactory.getInstance().newExtension(type);
                     if (extension != null) {
                         currentTabPane.addTab(caption, extension);
@@ -1311,7 +1373,7 @@ public class FrontEnd extends JFrame {
                 }
             } catch (Throwable t) {
                 displayErrorMessage("Unable to add entry.\n" +
-                                    "Some extension may be broken.\n" +
+                                    "Some extension(s) may be broken.\n" +
                                     "Try to open extensions management dialog, " +
                                     "it will autodetect and remove broken extensions.\n" +
                                     "After that, try to add entry again.", t);
@@ -1524,6 +1586,21 @@ public class FrontEnd extends JFrame {
                     displayMessage("Bias needs to be restarted now...");
                     System.exit(0);
                 }
+                JButton configButt = new JButton("Configure selected");
+                configButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        if (extList.getSelectedValues().length == 1) {
+                            try {
+                                String extension = (String) components.get(extList.getSelectedValue());
+                                configureExtension(extension);
+                            } catch (Exception ex) {
+                                FrontEnd.getInstance().displayErrorMessage(ex);
+                            }
+                        } else {
+                            displayMessage("Please, choose only one extension from the list");
+                        }
+                    }
+                });
                 JButton instButt = new JButton("Install new");
                 instButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -1563,6 +1640,7 @@ public class FrontEnd extends JFrame {
                     new Component[]{
                             extLabel,
                             new JScrollPane(extList),
+                            configButt,
                             instButt,
                             uninstButt
                     },
@@ -1598,10 +1676,10 @@ public class FrontEnd extends JFrame {
                 components = new HashMap<String, String>();
                 components.put(DEFAULT_LOOK_AND_FEEL, null);
                 boolean brokenFixed = false;
-                for (Entry<String, Properties> lafEntry : BackEnd.getInstance().getLAFs().entrySet()) {
+                for (String laf : BackEnd.getInstance().getLAFs().keySet()) {
                     String annotationStr;
                     try {
-                        Class<?> lafManagerClass = Class.forName(lafEntry.getKey());
+                        Class<?> lafManagerClass = Class.forName(laf);
                         AddOnAnnotation lafAnn = 
                             (AddOnAnnotation) lafManagerClass.getAnnotation(AddOnAnnotation.class);
                         if (lafAnn != null) {
@@ -1619,11 +1697,11 @@ public class FrontEnd extends JFrame {
                         components.put(annotationStr, lafManagerClass.getName());
                     } catch (Throwable t) {
                         // broken laf found, inform user about that...
-                        String lafName = lafEntry.getKey().replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                        String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                         displayErrorMessage("Look-&-Feel [ " + lafName + " ] is broken and will be uninstalled!", t);
                         // ... and try uninstall broken laf...
                         try {
-                            BackEnd.getInstance().uninstallLAF(lafEntry.getKey());
+                            BackEnd.getInstance().uninstallLAF(laf);
                             displayMessage("Broken Look-&-Feel [ " + lafName + " ] has been uninstalled");
                             brokenFixed = true;
                         } catch (Exception ex2) {

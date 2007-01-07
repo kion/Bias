@@ -380,16 +380,16 @@ public class HTMLPage extends Extension {
     /**
      * This is the default constructor
      */
-    public HTMLPage(UUID id, byte[] data) {
-        super(id, data);
+    public HTMLPage(UUID id, byte[] data, byte[] settings) {
+        super(id, data, settings);
         initialize();
     }
 
     /* (non-Javadoc)
-     * @see bias.gui.Extension#serialize()
+     * @see bias.extension.Extension#serializeData()
      */
     @Override
-    public byte[] serialize() {
+    public byte[] serializeData() throws Throwable {
         return getJTextPane().getText().getBytes();
     }
     

@@ -225,8 +225,8 @@ public class Graffiti extends Extension {
      * @throws IOException 
      * @throws ImageFormatException 
      */
-    public Graffiti(UUID id, byte[] data) throws ImageFormatException, IOException {
-        super(id, data);
+    public Graffiti(UUID id, byte[] data, byte[] settings) throws ImageFormatException, IOException {
+        super(id, data, settings);
         initialize();
     }
 
@@ -258,10 +258,10 @@ public class Graffiti extends Extension {
     }
 
     /* (non-Javadoc)
-     * @see bias.gui.Extension#serialize()
+     * @see bias.gui.Extension#serializeData()
      */
     @Override
-    public byte[] serialize() throws ImageFormatException, IOException {
+    public byte[] serializeData() throws Throwable {
         BufferedImage image = pp.getImage();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(image, IMG_FORMAT, baos);

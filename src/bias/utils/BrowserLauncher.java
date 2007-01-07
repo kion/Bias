@@ -3,6 +3,10 @@ package bias.utils;
 import java.lang.reflect.Method;
 
 public class BrowserLauncher {
+    
+    private BrowserLauncher() {
+        // hidden default constructor
+    }
 
     public static void openURL(String url) throws Exception {
         String osName = System.getProperty("os.name");

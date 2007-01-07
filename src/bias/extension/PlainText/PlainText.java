@@ -4,6 +4,7 @@
 package bias.extension.PlainText;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -11,18 +12,22 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Properties;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.UndoableEditEvent;
@@ -35,6 +40,8 @@ import javax.swing.undo.UndoableEdit;
 
 import bias.annotation.AddOnAnnotation;
 import bias.extension.Extension;
+import bias.gui.FrontEnd;
+import bias.utils.PropertiesUtils;
 
 /**
  * @author kion
@@ -42,7 +49,7 @@ import bias.extension.Extension;
 
 @AddOnAnnotation(
         name = "Plain Text", 
-        version="1.1",
+        version="1.3",
         description = "Simple plain text editor",
         author="kion")
 public class PlainText extends Extension {
@@ -51,6 +58,10 @@ public class PlainText extends Extension {
 
     private static final ImageIcon ICON_SWITCH_MODE = 
         new ImageIcon(PlainText.class.getResource("/bias/res/PlainText/switch_mode.png"));
+    
+    private static final String PROPERTY_FONT_FAMILY = "FONT_FAMILY";
+    
+    private static final String PROPERTY_FONT_SIZE = "FONT_SIZE";
     
     private static final int DEFAULT_FONT_SIZE = 12;
     
@@ -217,18 +228,67 @@ public class PlainText extends Extension {
     /**
      * Default constructor
      */
-    public PlainText(UUID id, byte[] data) {
-        super(id, data);
+    public PlainText(UUID id, byte[] data, byte[] settings) {
+        super(id, data, settings);
         initialize();
     }
 
     /* (non-Javadoc)
-     * @see bias.gui.Extension#serialize()
+     * @see bias.extension.Extension#configure(byte[])
      */
     @Override
-    public byte[] serialize() {
-        return ("[FONT=" + currentFontFamily + ":" + currentFontSize + "]" 
-                + getJTextArea().getText()).getBytes();
+    public byte[] configure(byte[] settings) throws Throwable {
+        Properties newSettings = PropertiesUtils.deserializeProperties(settings);
+        JLabel ffLb = new JLabel("Default font family:");
+        JComboBox ffCb = new JComboBox();
+        for (String ff : FONT_FAMILY_NAMES) {
+            ffCb.addItem(ff);
+        }
+        String selValue = newSettings.getProperty(PROPERTY_FONT_FAMILY);
+        if (selValue == null) {
+            selValue = DEFAULT_FONT_FAMILY;
+        }
+        ffCb.setSelectedItem(selValue);
+        JLabel fsLb = new JLabel("Default font size:");
+        selValue = newSettings.getProperty(PROPERTY_FONT_SIZE);
+        int sel = DEFAULT_FONT_SIZE;
+        if (selValue != null) {
+            sel = Integer.valueOf(selValue);
+        }
+        final JLabel cfsLb = new JLabel("" + sel);
+        final JSlider fsSl = new JSlider(1, 48, sel);
+        fsSl.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e) {
+                cfsLb.setText("" + fsSl.getValue());
+            }
+        });
+        JOptionPane.showMessageDialog(
+                FrontEnd.getInstance(), 
+                new Component[]{ffLb, ffCb, fsLb, fsSl, cfsLb}, 
+                "Settings for " + this.getClass().getSimpleName() + " extension", 
+                JOptionPane.INFORMATION_MESSAGE);
+        newSettings.setProperty(PROPERTY_FONT_FAMILY, (String) ffCb.getSelectedItem());
+        newSettings.setProperty(PROPERTY_FONT_SIZE, "" + fsSl.getValue());
+        return PropertiesUtils.serializeProperties(newSettings);
+    }
+
+    /* (non-Javadoc)
+     * @see bias.gui.Extension#serializeSettings()
+     */
+    @Override
+    public byte[] serializeSettings() throws Throwable {
+        Properties settings = new Properties();
+        settings.setProperty(PROPERTY_FONT_FAMILY, currentFontFamily);
+        settings.setProperty(PROPERTY_FONT_SIZE, "" + currentFontSize);
+        return PropertiesUtils.serializeProperties(settings);
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.gui.Extension#serializeData()
+     */
+    @Override
+    public byte[] serializeData() throws Throwable {
+        return getJTextArea().getText().getBytes();
     }
 
     /**
@@ -239,15 +299,22 @@ public class PlainText extends Extension {
     private void initialize() {
         this.setSize(733, 515);
         this.setLayout(new BorderLayout());
-        String data = new String(getData());
-        Pattern p = Pattern.compile("(^\\[FONT=(\\w+):(\\d+)\\]).*");
-        Matcher m = p.matcher(data);
-        if (m.find()) {
-            currentFontFamily = m.group(2);
-            currentFontSize = Integer.valueOf(m.group(3));
-            data = data.substring(m.group(1).length(), data.length());
+        Properties settings = PropertiesUtils.deserializeProperties(getSettings());
+        String cff = settings.getProperty(PROPERTY_FONT_FAMILY);
+        if (cff != null) {
+            currentFontFamily = cff;
+        } else {
+            currentFontFamily = DEFAULT_FONT_FAMILY;
         }
-        getJTextArea().setText(data);
+        String cfs = settings.getProperty(PROPERTY_FONT_SIZE);
+        if (cfs != null) {
+            currentFontSize = Integer.valueOf(cfs);
+        } else {
+            currentFontSize = DEFAULT_FONT_SIZE;
+        }
+        if (getData() != null) {
+            getJTextArea().setText(new String(getData()));
+        }
         Font font = new Font(currentFontFamily, Font.PLAIN, currentFontSize);
         getJTextArea().setFont(font);
         getJTextArea().getDocument().addUndoableEditListener(new UndoRedoManager(jTextArea));

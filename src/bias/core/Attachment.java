@@ -27,7 +27,7 @@ public class Attachment {
     }
 
     public Attachment(File file) throws IOException {
-    	this.data = FSUtils.getInstance().readFile(file);
+    	this.data = FSUtils.readFile(file);
     	this.name = file.getName();
     }
 

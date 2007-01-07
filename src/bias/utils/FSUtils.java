@@ -19,20 +19,11 @@ import java.io.IOException;
 
 public class FSUtils {
 	
-	private static FSUtils instance;
-	
-	public static FSUtils getInstance() {
-		if (instance == null) {
-			instance = new FSUtils();
-		}
-		return instance;
-	}
-	
 	private FSUtils() {
-		// singleton: default constructor is private
+        // hidden default constructor
 	}
 	
-	public byte[] readFile(File file) throws IOException {
+	public static byte[] readFile(File file) throws IOException {
 		byte[] data = null;
 		if (file != null && file.exists() && !file.isDirectory()) {
 			FileInputStream fis = new FileInputStream(file);
@@ -49,7 +40,7 @@ public class FSUtils {
 		return data;
 	}
 	
-	public void writeFile(File file, byte[] data) throws IOException {
+	public static void writeFile(File file, byte[] data) throws IOException {
 		if (file != null && !file.isDirectory()) {
 			ByteArrayInputStream bais = new ByteArrayInputStream(data);
 			FileOutputStream fos = new FileOutputStream(file);

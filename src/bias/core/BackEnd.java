@@ -16,6 +16,7 @@ import java.io.StringWriter;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -103,7 +104,7 @@ public class BackEnd {
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
                             new ByteArrayInputStream(out.toByteArray()));
                 }
-            } else if (name.equals(Constants.CONFIG_FILE_PATH)) {
+            } else if (name.equals(Constants.GLOBAL_CONFIG_FILE_PATH)) {
                 settings.load(
                         new ByteArrayInputStream(out.toByteArray()));
             } else {
@@ -232,6 +233,7 @@ public class BackEnd {
                 Node attType = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_TYPE);
                 String type = attType.getNodeValue();
                 dataEntry.setType(type);
+                setDataEntrySettings(dataEntry);
                 data.addDataItem(dataEntry);
             }
         }
@@ -245,11 +247,11 @@ public class BackEnd {
             rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, data.getActiveIndex().toString());
         }
         Collection<UUID> ids = buildNode(rootNode, data);
-        cleanUpOrphanedAttachments(ids);
+        cleanUpOrphanedStuff(ids);
         metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
         settings.list(new PrintWriter(sw));
-        zipEntries.put(Constants.CONFIG_FILE_PATH, sw.getBuffer().toString().getBytes());
+        zipEntries.put(Constants.GLOBAL_CONFIG_FILE_PATH, sw.getBuffer().toString().getBytes());
         sw = new StringWriter();
         OutputFormat of = new OutputFormat();
         of.setIndenting(true);
@@ -281,6 +283,7 @@ public class BackEnd {
                 String dePath = Constants.DATA_DIR + de.getId().toString() + Constants.DATA_FILE_ENDING;
                 byte[] value = de.getData();
                 zipEntries.put(dePath, value);
+                storeDataEntrySettings(de);
                 Element entryNode = metadata.createElement(Constants.XML_ELEMENT_ENTRY);
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, de.getId().toString());
                 String encodedCaption = URLEncoder.encode(de.getCaption(), Constants.UNICODE_ENCODING);
@@ -317,6 +320,28 @@ public class BackEnd {
         return ids;
     }
     
+    private void setDataEntrySettings(DataEntry dataEntry) {
+        if (dataEntry != null) {
+            byte[] settings = zipEntries.get(Constants.CONFIG_DIR + dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_ENDING);
+            if (settings == null) {
+                settings = getExtensionSettings(dataEntry.getType());
+            }
+            dataEntry.setSettings(settings);
+        }
+    }
+
+    private void storeDataEntrySettings(DataEntry dataEntry) throws Exception {
+        if (dataEntry != null && dataEntry.getSettings() != null) {
+            byte[] defSettings = getExtensionSettings(dataEntry.getType());
+            if (!Arrays.equals(defSettings,dataEntry.getSettings())) {
+                zipEntries.put(Constants.CONFIG_DIR + dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_ENDING, 
+                        dataEntry.getSettings());
+            } else {
+                zipEntries.remove(Constants.CONFIG_DIR + dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_ENDING);
+            }
+        }
+    }
+
     public Collection<String> getExtensions() {
         Collection<String> extensions = new LinkedHashSet<String>();
         for (String name : zipEntries.keySet()) {
@@ -328,6 +353,22 @@ public class BackEnd {
             }
         }
         return extensions;
+    }
+
+    public byte[] getExtensionSettings(String extension) {
+        byte[] settings = null;
+        if (!Validator.isNullOrBlank(extension)) {
+            String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+            settings = zipEntries.get(Constants.CONFIG_DIR + extensionName + Constants.EXTENSION_CONFIG_FILE_ENDING);
+        }
+        return settings;
+    }
+
+    public void storeExtensionSettings(String extension, byte[] settings) throws Exception {
+        if (!Validator.isNullOrBlank(extension) && settings != null) {
+            String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+            zipEntries.put(Constants.CONFIG_DIR + extensionName + Constants.EXTENSION_CONFIG_FILE_ENDING, settings);
+        }
     }
 
     public void installExtension(File extensionFile) throws Exception {
@@ -453,48 +494,39 @@ public class BackEnd {
             for (String key : removeKeys) {
                 zipEntries.remove(key);
             }
-            zipEntries.remove(extensionInstLogEntryPath);
         }
+        zipEntries.remove(extensionInstLogEntryPath);
+        String extensionConfigPath = Constants.CONFIG_DIR + extensionName + Constants.EXTENSION_CONFIG_FILE_ENDING;
+        zipEntries.remove(extensionConfigPath);
     }
         
-    public Map<String, Properties> getLAFs() {
-        Map<String, Properties> lafs = new LinkedHashMap<String, Properties>();
+    public Map<String, byte[]> getLAFs() {
+        Map<String, byte[]> lafs = new LinkedHashMap<String, byte[]>();
         for (String name : zipEntries.keySet()) {
             if (name.matches(Constants.LAF_PATTERN)) {
                 String laf = 
                     name.substring(0, name.length() - Constants.CLASS_FILE_ENDING.length())
                     .replaceAll(Constants.ZIP_PATH_SEPARATOR, Constants.PACKAGE_PATH_SEPARATOR);
-                Properties settings = getLAFSettings(laf);
+                byte[] settings = getLAFSettings(laf);
                 lafs.put(laf, settings);
             }
         }
         return lafs;
     }
     
-    public Properties getLAFSettings(String laf) {
-        Properties settings = new Properties();
+    public byte[] getLAFSettings(String laf) {
+        byte[] settings = null;
         if (!Validator.isNullOrBlank(laf)) {
             String lafManagerName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            byte[] propBytes = zipEntries.get(Constants.CONFIG_DIR + lafManagerName + Constants.LAF_CONFIG_FILE_ENDING);
-            if (propBytes != null) {
-                try {
-                    settings.load(new ByteArrayInputStream(propBytes));
-                } catch (IOException e) {
-                    // do nothing
-                }
-            }
+            settings = zipEntries.get(Constants.CONFIG_DIR + lafManagerName + Constants.LAF_CONFIG_FILE_ENDING);
         }
         return settings;
     }
 
-    public void storeLAFSettings(String laf, Properties settings) throws Exception {
+    public void storeLAFSettings(String laf, byte[] settings) throws Exception {
         if (!Validator.isNullOrBlank(laf) && settings != null) {
             String lafManagerName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            String comments = "Settings for " + lafManagerName + " Look-&-Feel";
-            settings.store(out, comments);
-            out.close();
-            zipEntries.put(Constants.CONFIG_DIR + lafManagerName + Constants.LAF_CONFIG_FILE_ENDING, out.toByteArray());
+            zipEntries.put(Constants.CONFIG_DIR + lafManagerName + Constants.LAF_CONFIG_FILE_ENDING, settings);
         }
     }
 
@@ -608,8 +640,10 @@ public class BackEnd {
             for (String key : removeKeys) {
                 zipEntries.remove(key);
             }
-            zipEntries.remove(lafInstLogEntryPath);
         }
+        zipEntries.remove(lafInstLogEntryPath);
+        String lafConfigPath = Constants.CONFIG_DIR + lafManagerName + Constants.LAF_CONFIG_FILE_ENDING;
+        zipEntries.remove(lafConfigPath);
     }
         
     public Collection<ImageIcon> getIcons() {
@@ -722,23 +756,37 @@ public class BackEnd {
         }
     }
     
-    private void cleanUpOrphanedAttachments(Collection<UUID> ids) {
-        Collection<UUID> foundIds = new ArrayList<UUID>();
-        Pattern p = Pattern.compile(Constants.ATTACHMENT_FILE_PATH_PATTERN);
+    private void cleanUpOrphanedStuff(Collection<UUID> ids) {
+        Collection<UUID> foundAttIds = new ArrayList<UUID>();
+        Collection<UUID> foundConfIds = new ArrayList<UUID>();
+        Pattern p1 = Pattern.compile(Constants.ATTACHMENT_FILE_PATH_PATTERN);
+        Pattern p2 = Pattern.compile(Constants.CONFIG_FILE_PATH_PATTERN);
         for (String path : zipEntries.keySet()) {
-            Matcher m = p.matcher(path);
+            Matcher m = p1.matcher(path);
             if (m.find()) {
-                String idStr = m.group(1);
                 try {
-                    UUID id = UUID.fromString(idStr);
-                    foundIds.add(id);
+                    UUID id = UUID.fromString(m.group(1));
+                    foundAttIds.add(id);
+                } catch (IllegalArgumentException iae) {}
+            }
+            m = p2.matcher(path);
+            if (m.find()) {
+                try {
+                    UUID id = UUID.fromString(m.group(1));
+                    foundConfIds.add(id);
                 } catch (IllegalArgumentException iae) {}
             }
         }
-        for (UUID id : foundIds) {
+        for (UUID id : foundAttIds) {
             if (!ids.contains(id)) {
                 // orphaned attachments found, remove 'em
                 removeAttachments(id);
+            }
+        }
+        for (UUID id : foundConfIds) {
+            if (!ids.contains(id)) {
+                // orphaned config found, remove it
+                zipEntries.remove(Constants.CONFIG_DIR + id.toString() + Constants.DATA_ENTRY_CONFIG_FILE_ENDING);
             }
         }
     }
