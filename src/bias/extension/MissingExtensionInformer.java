@@ -4,6 +4,9 @@
 package bias.extension;
 
 import java.awt.BorderLayout;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
@@ -88,7 +91,16 @@ public class MissingExtensionInformer extends Extension {
      */
     private JTextPane getJTextPane() {
         if (jTextPane == null) {
-            jTextPane = new JTextPane();
+            jTextPane = new JTextPane(){
+                private static final long serialVersionUID = 1L;
+                @Override
+                public void paint(Graphics g) {
+                    // enable font anti-aliasing
+                    ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON);
+                    super.paint(g);
+                }
+            };
             jTextPane.setEditable(false);
             jTextPane.setEditorKit(new HTMLEditorKit());
             jTextPane.setText(buildMissingExtensionMessage());
