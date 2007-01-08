@@ -230,10 +230,10 @@ public class FrontEnd extends JFrame {
         if (laf != null) {
             String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                         + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-            Class lafManagerClass = Class.forName(lafFullClassName);
-            LookAndFeel lafManager = (LookAndFeel) lafManagerClass.newInstance();
+            Class lafClass = Class.forName(lafFullClassName);
+            LookAndFeel lafInstance = (LookAndFeel) lafClass.newInstance();
             byte[] lafSettings = BackEnd.getInstance().getLAFSettings(lafFullClassName);
-            lafManager.activate(lafSettings);
+            lafInstance.activate(lafSettings);
         }
     }
     
@@ -354,9 +354,9 @@ public class FrontEnd extends JFrame {
         boolean changed = false;
         String currentLAF = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
         if (laf != null) {
-            String lafManagerName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            if (!lafManagerName.equals(currentLAF)) {
-                settings.put(Constants.PROPERTY_LOOK_AND_FEEL, lafManagerName);
+            String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+            if (!lafName.equals(currentLAF)) {
+                settings.put(Constants.PROPERTY_LOOK_AND_FEEL, lafName);
                 changed = true;
             }
         } else if (currentLAF != null) {
@@ -375,10 +375,10 @@ public class FrontEnd extends JFrame {
     
     private void configureLAF(String laf) throws Exception {
         if (laf != null) {
-            Class lafManagerClass = Class.forName(laf);
-            LookAndFeel lafManager = ((LookAndFeel)lafManagerClass.newInstance());
+            Class lafClass = Class.forName(laf);
+            LookAndFeel lafInstance = ((LookAndFeel)lafClass.newInstance());
             byte[] lafSettings = BackEnd.getInstance().getLAFSettings(laf);
-            byte[] settings = lafManager.configure(lafSettings);
+            byte[] settings = lafInstance.configure(lafSettings);
             if (!Arrays.equals(settings,lafSettings)) {
                 BackEnd.getInstance().storeLAFSettings(laf, settings);
                 store();
@@ -1686,22 +1686,22 @@ public class FrontEnd extends JFrame {
                 for (String laf : BackEnd.getInstance().getLAFs().keySet()) {
                     String annotationStr;
                     try {
-                        Class<?> lafManagerClass = Class.forName(laf);
+                        Class<?> lafClass = Class.forName(laf);
                         AddOnAnnotation lafAnn = 
-                            (AddOnAnnotation) lafManagerClass.getAnnotation(AddOnAnnotation.class);
+                            (AddOnAnnotation) lafClass.getAnnotation(AddOnAnnotation.class);
                         if (lafAnn != null) {
-                            annotationStr = lafManagerClass.getSimpleName() + Constants.SPACE_STR 
+                            annotationStr = lafClass.getSimpleName() + Constants.SPACE_STR 
                                             + ", version: " + lafAnn.version() + Constants.SPACE_STR 
                                             + ", author: " + lafAnn.author() + Constants.SPACE_STR
                                             + ", description: " + lafAnn.description();
                         } else {
-                            annotationStr = lafManagerClass.getSimpleName() + " [ Look-&-Feel Info Is Missing ]";
+                            annotationStr = lafClass.getSimpleName() + " [ Look-&-Feel Info Is Missing ]";
                         }
                         // laf instantiation test
-                        lafManagerClass.newInstance();
+                        lafClass.newInstance();
                         // laf is ok, add it to the list
                         model.addElement(annotationStr);
-                        components.put(annotationStr, lafManagerClass.getName());
+                        components.put(annotationStr, lafClass.getName());
                     } catch (Throwable t) {
                         // broken laf found, inform user about that...
                         String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
@@ -1734,14 +1734,14 @@ public class FrontEnd extends JFrame {
                                     displayErrorMessage(t);
                                 }
                             } else {
-                                String lafManagerClassName = components.get(description);
-                                if (lafManagerClassName == null) {
+                                String lafClassName = components.get(description);
+                                if (lafClassName == null) {
                                     displayMessage(
                                             "This Look-&-Feel can not be activated yet.\n" +
                                             "Restart Bias first.");
                                 } else {
                                     try {
-                                        setActiveLAF(lafManagerClassName);
+                                        setActiveLAF(lafClassName);
                                     } catch (Exception t) {
                                         displayErrorMessage(t);
                                     }
@@ -1758,14 +1758,14 @@ public class FrontEnd extends JFrame {
                                 displayErrorMessage(
                                         "Default Look-&-Feel is not configurable");
                             } else {
-                                String lafManagerClassName = components.get(lafList.getSelectedValue());
-                                if (lafManagerClassName == null) {
+                                String lafClassName = components.get(lafList.getSelectedValue());
+                                if (lafClassName == null) {
                                     displayMessage(
                                             "This Look-&-Feel can not be configured yet.\n" +
                                             "Restart Bias first.");
                                 } else {
                                     try {
-                                        configureLAF(lafManagerClassName);
+                                        configureLAF(lafClassName);
                                     } catch (Exception t) {
                                         displayErrorMessage(t);
                                     }
@@ -1796,16 +1796,25 @@ public class FrontEnd extends JFrame {
                         try {
                             if (lafList.getSelectedValues().length > 0) {
                                 boolean uninstalled = false;
+                                String currentLAF = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
                                 for (Object laf : lafList.getSelectedValues()) {
                                     if (!DEFAULT_LOOK_AND_FEEL.equals(laf)) {
-                                        String lafManagerClassName = components.get(laf);
-                                        if (lafManagerClassName == null) {
+                                        String lafClassName = components.get(laf);
+                                        if (lafClassName == null) {
                                             displayMessage(
                                                     "This Look-&-Feel can not be uninstalled now.\n" +
                                                     "Restart Bias first.");
                                         } else {
-                                            BackEnd.getInstance().uninstallLAF(lafManagerClassName);
+                                            BackEnd.getInstance().uninstallLAF(lafClassName);
                                             model.removeElement(laf);
+                                            String uninstalledClassName = lafClassName.replaceFirst(
+                                                    Constants.PACKAGE_PREFIX_PATTERN, 
+                                                    Constants.EMPTY_STR);
+                                            // if look-&-feel that has been uninstalled was active one...
+                                            if (uninstalledClassName.equals(currentLAF)) {
+                                                //... unset it (default one will be used)
+                                                settings.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+                                            }
                                             uninstalled = true;
                                             modified = true;
                                         }

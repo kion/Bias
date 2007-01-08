@@ -519,21 +519,21 @@ public class BackEnd {
     public byte[] getLAFSettings(String laf) {
         byte[] settings = null;
         if (!Validator.isNullOrBlank(laf)) {
-            String lafManagerName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            settings = zipEntries.get(Constants.CONFIG_DIR + lafManagerName + Constants.LAF_CONFIG_FILE_ENDING);
+            String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+            settings = zipEntries.get(Constants.CONFIG_DIR + lafName + Constants.LAF_CONFIG_FILE_ENDING);
         }
         return settings;
     }
 
     public void storeLAFSettings(String laf, byte[] settings) throws Exception {
         if (!Validator.isNullOrBlank(laf) && settings != null) {
-            String lafManagerName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            zipEntries.put(Constants.CONFIG_DIR + lafManagerName + Constants.LAF_CONFIG_FILE_ENDING, settings);
+            String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+            zipEntries.put(Constants.CONFIG_DIR + lafName + Constants.LAF_CONFIG_FILE_ENDING, settings);
         }
     }
 
     public void installLAF(File lafFile) throws Exception {
-        Set<String> installedLAFManagerNames = new HashSet<String>();
+        Set<String> installedLAFNames = new HashSet<String>();
         if (lafFile != null && lafFile.exists() && !lafFile.isDirectory()) {
             String name = lafFile.getName();
             Map<String, byte[]> classesMap = new HashMap<String, byte[]>();
@@ -561,7 +561,7 @@ public class BackEnd {
                             String shortName = zeName.replaceFirst("^.*/", Constants.EMPTY_STR)
                                                      .replaceFirst("\\.class$", Constants.EMPTY_STR)
                                                      .replaceFirst("\\$.*$", Constants.EMPTY_STR);
-                            installedLAFManagerNames.add(shortName);
+                            installedLAFNames.add(shortName);
                             classesMap.put(zeName, out.toByteArray());
                         } else if (type == 2) {
                             ZipInputStream lin = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
@@ -589,25 +589,25 @@ public class BackEnd {
                 }
                 in.close();
             }
-            if (installedLAFManagerNames.isEmpty()) {
+            if (installedLAFNames.isEmpty()) {
                 throw new Exception("Wrong LAF pack: nothing to install!");
-            } else if (installedLAFManagerNames.size() > 1) {
+            } else if (installedLAFNames.size() > 1) {
                 throw new Exception("Wrong LAF pack: only one LAF activator per pack allowed!");
             } else {
-                String lafManagerName = installedLAFManagerNames.iterator().next();
-                String fullLAFManagerName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                            + lafManagerName + Constants.PACKAGE_PATH_SEPARATOR + lafManagerName;
-                if (getLAFs().keySet().contains(fullLAFManagerName)) {
+                String lafName = installedLAFNames.iterator().next();
+                String fullLAFName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                            + lafName + Constants.PACKAGE_PATH_SEPARATOR + lafName;
+                if (getLAFs().keySet().contains(fullLAFName)) {
                     throw new Exception("Can not install LAF pack: duplicate LAF Manager name!");
                 } else {
                     for (Entry<String, byte[]> entry : classesMap.entrySet()) {
                         zipEntries.put(Constants.LAF_DIR_PATH + Constants.ZIP_PATH_SEPARATOR 
-                                + lafManagerName + Constants.ZIP_PATH_SEPARATOR 
+                                + lafName + Constants.ZIP_PATH_SEPARATOR 
                                 + entry.getKey().replaceFirst(Constants.ADDON_CLASS_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
                                 entry.getValue());
                     }
                     if (!libsMap.isEmpty()) {
-                        String lafInstLogEntryPath = Constants.CONFIG_DIR + lafManagerName + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
+                        String lafInstLogEntryPath = Constants.CONFIG_DIR + lafName + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
                         StringBuffer sb = new StringBuffer();
                         for (Entry<String, byte[]> entry : libsMap.entrySet()) {
                             zipEntries.put(entry.getKey(), entry.getValue());
@@ -623,16 +623,16 @@ public class BackEnd {
     }
     
     public void uninstallLAF(String laf) throws Exception {
-        String lafManagerName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-        String lafManagerPath = laf.replaceAll(Constants.PACKAGE_PATH_SEPARATOR_PATTERN, Constants.ZIP_PATH_SEPARATOR);
-        lafManagerPath = lafManagerPath.substring(0, lafManagerPath.lastIndexOf(Constants.ZIP_PATH_SEPARATOR));
+        String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+        String lafPath = laf.replaceAll(Constants.PACKAGE_PATH_SEPARATOR_PATTERN, Constants.ZIP_PATH_SEPARATOR);
+        lafPath = lafPath.substring(0, lafPath.lastIndexOf(Constants.ZIP_PATH_SEPARATOR));
         Collection<String> removeKeys = new HashSet<String>();
         for (String key : zipEntries.keySet()) {
-            if (key.startsWith(lafManagerPath)) {
+            if (key.startsWith(lafPath)) {
                 removeKeys.add(key);
             }
         }
-        String lafInstLogEntryPath = Constants.CONFIG_DIR + lafManagerName + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
+        String lafInstLogEntryPath = Constants.CONFIG_DIR + lafName + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
         byte[] bytes = zipEntries.get(lafInstLogEntryPath);
         if (bytes != null) {
             String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
@@ -646,7 +646,7 @@ public class BackEnd {
             }
         }
         zipEntries.remove(lafInstLogEntryPath);
-        String lafConfigPath = Constants.CONFIG_DIR + lafManagerName + Constants.LAF_CONFIG_FILE_ENDING;
+        String lafConfigPath = Constants.CONFIG_DIR + lafName + Constants.LAF_CONFIG_FILE_ENDING;
         zipEntries.remove(lafConfigPath);
     }
         
