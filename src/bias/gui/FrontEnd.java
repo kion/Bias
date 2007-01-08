@@ -551,11 +551,7 @@ public class FrontEnd extends JFrame {
                 String type = null;
                 if (extension instanceof MissingExtensionInformer) {
                     dataEntry = ((MissingExtensionInformer) extension).getDataEntry();
-                    String extClassName = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                            + dataEntry.getType() + Constants.PACKAGE_PATH_SEPARATOR + dataEntry.getType();
-                    if (BackEnd.getInstance().getExtensions().contains(extClassName)) {
-                        type = dataEntry.getType();
-                    }
+                    type = dataEntry.getType();
                 } else {
                     type = extension.getClass().getPackage().getName()
                                 .replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);

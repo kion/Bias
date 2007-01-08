@@ -67,6 +67,7 @@ public class Constants {
     public static final String LAF_PATTERN = LAF_DIR_PATH + "/[\\w/]+/[\\w/]+\\" + CLASS_FILE_ENDING;
     public static final String EXT_LIB_INSTALL_LOG_FILE_ENDING = ".ext.lib.inst.log";
     public static final String LAF_LIB_INSTALL_LOG_FILE_ENDING = ".laf.lib.inst.log";
+    public static final String LIB_INSTALL_LOG_FILE_PATTERN = CONFIG_DIR_PATTERN + "(.+)\\.(ext|laf)\\.lib\\.inst\\.log";
     public static final String EXTENSION_CONFIG_FILE_ENDING = ".ext.conf";
     public static final String LAF_CONFIG_FILE_ENDING = ".laf.conf";
     public static final String DATA_ENTRY_CONFIG_FILE_ENDING = ".data.conf";

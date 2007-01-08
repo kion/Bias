@@ -413,17 +413,15 @@ public class BackEnd {
                             while ((lze = lin.getNextEntry()) != null) {
                                 String lzeName = lze.getName();
                                 if (!lzeName.startsWith(Constants.META_INF_DIR) && !lzeName.endsWith("/")) {
-                                    if (zipEntries.containsKey(lzeName)) {
-                                        throw new Exception(
-                                                "Can not install from file '" + extensionFile + "'\n" +
-                                                "Extension pack conflict! Conflicting resource: " + lzeName);
-                                    } else {
+                                    if (!zipEntries.containsKey(lzeName)) {
                                         ByteArrayOutputStream lout = new ByteArrayOutputStream();
                                         while ((b = lin.read()) != -1) {
                                             lout.write(b);
                                         }
                                         lout.close();
                                         libsMap.put(lzeName, lout.toByteArray());
+                                    } else {
+                                        libsMap.put(lzeName, null);
                                     }
                                 }
                             }
@@ -459,7 +457,9 @@ public class BackEnd {
                         String extensionInstLogEntryPath = Constants.CONFIG_DIR + extName + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING;
                         StringBuffer sb = new StringBuffer();
                         for (Entry<String, byte[]> entry : libsMap.entrySet()) {
-                            zipEntries.put(entry.getKey(), entry.getValue());
+                            if (entry.getValue() != null) {
+                                zipEntries.put(entry.getKey(), entry.getValue());
+                            }
                             sb.append(entry.getKey() + Constants.NEW_LINE);
                         }
                         zipEntries.put(extensionInstLogEntryPath, sb.toString().getBytes());
@@ -484,20 +484,12 @@ public class BackEnd {
                 removeKeys.add(key);
             }
         }
-        String extensionInstLogEntryPath = Constants.CONFIG_DIR + extensionName + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING;
-        byte[] bytes = zipEntries.get(extensionInstLogEntryPath);
-        if (bytes != null) {
-            String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
-            for (String installEntry : installEntries) {
-                removeKeys.add(installEntry);
-            }
-        }
+        uninstallLibs(extensionName);
         if (!removeKeys.isEmpty()) {
             for (String key : removeKeys) {
                 zipEntries.remove(key);
             }
         }
-        zipEntries.remove(extensionInstLogEntryPath);
         String extensionConfigPath = Constants.CONFIG_DIR + extensionName + Constants.EXTENSION_CONFIG_FILE_ENDING;
         zipEntries.remove(extensionConfigPath);
     }
@@ -569,17 +561,15 @@ public class BackEnd {
                             while ((lze = lin.getNextEntry()) != null) {
                                 String lzeName = lze.getName();
                                 if (!lzeName.startsWith(Constants.META_INF_DIR) && !lzeName.endsWith("/")) {
-                                    if (zipEntries.containsKey(lzeName)) {
-                                        throw new Exception(
-                                                "Can not install from file '" + lafFile + "'\n" +
-                                                "LAF pack conflict! Conflicting resource: " + lzeName);
-                                    } else {
+                                    if (!zipEntries.containsKey(lzeName)) {
                                         ByteArrayOutputStream lout = new ByteArrayOutputStream();
                                         while ((b = lin.read()) != -1) {
                                             lout.write(b);
                                         }
                                         lout.close();
                                         libsMap.put(lzeName, lout.toByteArray());
+                                    } else {
+                                        libsMap.put(lzeName, null);
                                     }
                                 }
                             }
@@ -610,7 +600,9 @@ public class BackEnd {
                         String lafInstLogEntryPath = Constants.CONFIG_DIR + lafName + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
                         StringBuffer sb = new StringBuffer();
                         for (Entry<String, byte[]> entry : libsMap.entrySet()) {
-                            zipEntries.put(entry.getKey(), entry.getValue());
+                            if (entry.getValue() != null) {
+                                zipEntries.put(entry.getKey(), entry.getValue());
+                            }
                             sb.append(entry.getKey() + Constants.NEW_LINE);
                         }
                         zipEntries.put(lafInstLogEntryPath, sb.toString().getBytes());
@@ -632,22 +624,59 @@ public class BackEnd {
                 removeKeys.add(key);
             }
         }
-        String lafInstLogEntryPath = Constants.CONFIG_DIR + lafName + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
-        byte[] bytes = zipEntries.get(lafInstLogEntryPath);
-        if (bytes != null) {
-            String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
-            for (String installEntry : installEntries) {
-                removeKeys.add(installEntry);
-            }
-        }
+        uninstallLibs(lafName);
         if (!removeKeys.isEmpty()) {
             for (String key : removeKeys) {
                 zipEntries.remove(key);
             }
         }
-        zipEntries.remove(lafInstLogEntryPath);
         String lafConfigPath = Constants.CONFIG_DIR + lafName + Constants.LAF_CONFIG_FILE_ENDING;
         zipEntries.remove(lafConfigPath);
+    }
+    
+    private void uninstallLibs(String addOn) {
+        Collection<String> addOnLibEntries = getAddOnLibEntries(addOn);
+        Collection<String> nonAddOnLibEntries = getNonAddOnLibEntries(addOn);
+        addOnLibEntries.removeAll(nonAddOnLibEntries);
+        for (String path : addOnLibEntries) {
+            zipEntries.remove(path);
+        }
+        zipEntries.remove(Constants.CONFIG_DIR + addOn + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING);
+        zipEntries.remove(Constants.CONFIG_DIR + addOn + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING);
+    }
+    
+    private Collection<String> getAddOnLibEntries(String addOn) {
+        Collection<String> entries = new ArrayList<String>();
+        String path = Constants.CONFIG_DIR + addOn + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING;
+        if (!zipEntries.containsKey(path)) {
+            path = Constants.CONFIG_DIR + addOn + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
+        }
+        byte[] bytes = zipEntries.get(path);
+        if (bytes != null) {
+            String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
+            for (String installEntry : installEntries) {
+                entries.add(installEntry);
+            }
+        }
+        return entries;
+    }
+        
+    private Collection<String> getNonAddOnLibEntries(String addOn) {
+        Collection<String> entries = new ArrayList<String>();
+        for (String key : zipEntries.keySet()) {
+            Pattern p = Pattern.compile(Constants.LIB_INSTALL_LOG_FILE_PATTERN);
+            Matcher m = p.matcher(key);
+            if (m.find() && !m.group(1).equals(addOn)) {
+                byte[] bytes = zipEntries.get(key);
+                if (bytes != null) {
+                    String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
+                    for (String installEntry : installEntries) {
+                        entries.add(installEntry);
+                    }
+                }
+            }
+        }
+        return entries;
     }
         
     public Collection<ImageIcon> getIcons() {
