@@ -29,7 +29,6 @@ import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
 
 import bias.annotation.AddOnAnnotation;
 import bias.core.Attachment;
@@ -159,7 +158,12 @@ public class FilePack extends Extension {
 						jScrollPane1 = new JScrollPane();
 						jPanel1.add(jScrollPane1, BorderLayout.CENTER);
 						{
-							TableModel jTable1Model = new DefaultTableModel();
+                            DefaultTableModel jTable1Model = new DefaultTableModel() {
+                                private static final long serialVersionUID = 1L;
+                                public boolean isCellEditable(int rowIndex, int mColIndex) {
+                                    return false;
+                                }
+                            };
 							jTable1 = new JTable();
 							jScrollPane1.setViewportView(jTable1);
 							jTable1.setModel(jTable1Model);

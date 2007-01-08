@@ -20,10 +20,8 @@ import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -42,11 +40,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.TabbedPaneUI;
+import javax.swing.table.DefaultTableModel;
 
 import bias.Constants;
 import bias.annotation.AddOnAnnotation;
@@ -60,6 +60,7 @@ import bias.extension.MissingExtensionInformer;
 import bias.gui.utils.ImageFileChooser;
 import bias.laf.LookAndFeel;
 import bias.utils.BrowserLauncher;
+import bias.utils.Validator;
 
 
 /**
@@ -69,7 +70,7 @@ public class FrontEnd extends JFrame {
 
     private static final long serialVersionUID = 1L;
     
-    private static final String DEFAULT_LOOK_AND_FEEL = "Default Look-&-Feel";
+    private static final String DEFAULT_LOOK_AND_FEEL = "DefaultLAF";
 
     public static final ImageIcon ICON_APP = new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
 
@@ -172,6 +173,8 @@ public class FrontEnd extends JFrame {
             });
         }
     }
+    
+    private static final String ADDON_ANN_FIELD_VALUE_NA = "N/A";
 
     private static FrontEnd instance;
 
@@ -1533,37 +1536,44 @@ public class FrontEnd extends JFrame {
     private Action manageExtensionsAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
-        private Map<String, String> components;
-        private DefaultListModel model;
-        private JList extList;
         private boolean modified;
         
         public void actionPerformed(ActionEvent e) {
             try {
                 JLabel extLabel = new JLabel("Extensions Management");
-                extList = new JList(new DefaultListModel());
-                model = (DefaultListModel) extList.getModel();
-                components = new HashMap<String, String>();
+                final DefaultTableModel model = new DefaultTableModel() {
+                    private static final long serialVersionUID = 1L;
+                    public boolean isCellEditable(int rowIndex, int mColIndex) {
+                        return false;
+                    }
+                };
+                final JTable extList = new JTable(model);
+                model.addColumn("Name");
+                model.addColumn("Version");
+                model.addColumn("Author");
+                model.addColumn("Description");
                 boolean brokenFixed = false;
                 for (String extension : BackEnd.getInstance().getExtensions()) {
-                    String annotationStr;
                     try {
                         Class<?> extClass = Class.forName(extension);
-                        AddOnAnnotation extAnn = 
-                            (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
-                        if (extAnn != null) {
-                            annotationStr = extClass.getSimpleName() + Constants.SPACE_STR 
-                                            + ", version: " + extAnn.version() + Constants.SPACE_STR 
-                                            + ", author: " + extAnn.author() + Constants.SPACE_STR
-                                            + ", description: " + extAnn.description();
-                        } else {
-                            annotationStr = extClass.getSimpleName() + " [ Extension Info Is Missing ]";
-                        }
                         // extension instantiation test
                         ExtensionFactory.getInstance().newExtension(extClass);
                         // extension is ok, add it to the list
-                        model.addElement(annotationStr);
-                        components.put(annotationStr, extClass.getName());
+                        AddOnAnnotation extAnn = 
+                            (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
+                        if (extAnn != null) {
+                            model.addRow(new Object[]{
+                                    extClass.getSimpleName(),
+                                    extAnn.version(),
+                                    extAnn.author(),
+                                    extAnn.description()});
+                        } else {
+                            model.addRow(new Object[]{
+                                    extClass.getSimpleName(),
+                                    ADDON_ANN_FIELD_VALUE_NA,
+                                    ADDON_ANN_FIELD_VALUE_NA,
+                                    ADDON_ANN_FIELD_VALUE_NA});
+                        }
                     } catch (Throwable t) {
                         // broken extension found, inform user about that...
                         String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
@@ -1587,10 +1597,20 @@ public class FrontEnd extends JFrame {
                 JButton configButt = new JButton("Configure selected");
                 configButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (extList.getSelectedValues().length == 1) {
+                        if (extList.getSelectedRowCount() == 1) {
                             try {
-                                String extension = (String) components.get(extList.getSelectedValue());
-                                configureExtension(extension);
+                                String version = (String) extList.getValueAt(extList.getSelectedRow(), 1);
+                                if (Validator.isNullOrBlank(version)) {
+                                    displayMessage(
+                                            "This Extension can not be configured yet.\n" +
+                                            "Restart Bias first.");
+                                } else {
+                                    String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
+                                    String extFullClassName = 
+                                        Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                                + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
+                                    configureExtension(extFullClassName);
+                                }
                             } catch (Exception ex) {
                                 FrontEnd.getInstance().displayErrorMessage(ex);
                             }
@@ -1605,8 +1625,9 @@ public class FrontEnd extends JFrame {
                         if (extensionFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
                                 for (File file : extensionFileChooser.getSelectedFiles()) {
-                                    BackEnd.getInstance().installExtension(file);
-                                    model.addElement("Extension installed from: " + file.getAbsolutePath());
+                                    String installedExt = BackEnd.getInstance().installExtension(file);
+                                    installedExt = installedExt.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                                    model.addRow(new Object[]{installedExt,null,null,file.getName()});
                                     modified = true;
                                 }
                             } catch (Exception ex) {
@@ -1619,18 +1640,16 @@ public class FrontEnd extends JFrame {
                 uninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            if (extList.getSelectedValues().length > 0) {
-                                for (Object extension : extList.getSelectedValues()) {
-                                    String extClassName = components.get(extension);
-                                    if (extClassName == null) {
-                                        displayMessage(
-                                                "This Extension can not be uninstalled now.\n" +
-                                                "Restart Bias first.");
-                                    } else {
-                                        BackEnd.getInstance().uninstallExtension(extClassName);
-                                        model.removeElement(extension);
-                                        modified = true;
-                                    }
+                            if (extList.getSelectedRowCount() != 0) {
+                                int idx;
+                                while ((idx = extList.getSelectedRow()) != -1) {
+                                    String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
+                                    String extFullClassName = 
+                                        Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                                + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
+                                    BackEnd.getInstance().uninstallExtension(extFullClassName);
+                                    model.removeRow(idx);
+                                    modified = true;
                                 }
                                 FrontEnd.getInstance().displayMessage("Extension(s) have been successfully uninstalled!");
                             }
@@ -1667,39 +1686,45 @@ public class FrontEnd extends JFrame {
     private Action manageLAFAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
-        private Map<String, String> components;
-        private DefaultListModel model;
-        private JList lafList;
         private boolean modified;
         
         public void actionPerformed(ActionEvent e) {
             try {
                 JLabel lafLabel = new JLabel("Look-&-Feel Management");
-                lafList = new JList(new DefaultListModel());
-                model = (DefaultListModel) lafList.getModel();
-                model.addElement(DEFAULT_LOOK_AND_FEEL);
-                components = new HashMap<String, String>();
-                components.put(DEFAULT_LOOK_AND_FEEL, null);
+                final DefaultTableModel model = new DefaultTableModel() {
+                    private static final long serialVersionUID = 1L;
+                    public boolean isCellEditable(int rowIndex, int mColIndex) {
+                        return false;
+                    }
+                };
+                final JTable lafList = new JTable(model);
+                model.addColumn("Name");
+                model.addColumn("Version");
+                model.addColumn("Author");
+                model.addColumn("Description");
+                model.addRow(new Object[]{DEFAULT_LOOK_AND_FEEL,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Look-&-Feel"});
                 boolean brokenFixed = false;
                 for (String laf : BackEnd.getInstance().getLAFs().keySet()) {
-                    String annotationStr;
                     try {
                         Class<?> lafClass = Class.forName(laf);
-                        AddOnAnnotation lafAnn = 
-                            (AddOnAnnotation) lafClass.getAnnotation(AddOnAnnotation.class);
-                        if (lafAnn != null) {
-                            annotationStr = lafClass.getSimpleName() + Constants.SPACE_STR 
-                                            + ", version: " + lafAnn.version() + Constants.SPACE_STR 
-                                            + ", author: " + lafAnn.author() + Constants.SPACE_STR
-                                            + ", description: " + lafAnn.description();
-                        } else {
-                            annotationStr = lafClass.getSimpleName() + " [ Look-&-Feel Info Is Missing ]";
-                        }
                         // laf instantiation test
                         lafClass.newInstance();
                         // laf is ok, add it to the list
-                        model.addElement(annotationStr);
-                        components.put(annotationStr, lafClass.getName());
+                        AddOnAnnotation lafAnn = 
+                            (AddOnAnnotation) lafClass.getAnnotation(AddOnAnnotation.class);
+                        if (lafAnn != null) {
+                            model.addRow(new Object[]{
+                                    lafClass.getSimpleName(),
+                                    lafAnn.version(),
+                                    lafAnn.author(),
+                                    lafAnn.description()});
+                        } else {
+                            model.addRow(new Object[]{
+                                    lafClass.getSimpleName(),
+                                    ADDON_ANN_FIELD_VALUE_NA,
+                                    ADDON_ANN_FIELD_VALUE_NA,
+                                    ADDON_ANN_FIELD_VALUE_NA});
+                        }
                     } catch (Throwable t) {
                         // broken laf found, inform user about that...
                         String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
@@ -1723,53 +1748,63 @@ public class FrontEnd extends JFrame {
                 JButton activateButt = new JButton("Activate Look-&-Feel");
                 activateButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (lafList.getSelectedValue() != null) {
-                            String description = (String) lafList.getSelectedValue();
-                            if (DEFAULT_LOOK_AND_FEEL.equals(description)) {
+                        if (lafList.getSelectedRowCount() == 1) {
+                            String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
+                            if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
                                 try {
                                     setActiveLAF(null);
                                 } catch (Exception t) {
                                     displayErrorMessage(t);
                                 }
                             } else {
-                                String lafClassName = components.get(description);
-                                if (lafClassName == null) {
+                                String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
+                                if (Validator.isNullOrBlank(version)) {
                                     displayMessage(
                                             "This Look-&-Feel can not be activated yet.\n" +
                                             "Restart Bias first.");
                                 } else {
                                     try {
-                                        setActiveLAF(lafClassName);
+                                        String fullLAFClassName = 
+                                            Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                                    + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                                        setActiveLAF(fullLAFClassName);
                                     } catch (Exception t) {
                                         displayErrorMessage(t);
                                     }
                                 }
                             }
-                        }
+                        } else {
+                            displayMessage("Please, choose only one look-&-feel from the list");
+                        }    
                     }
                 });
                 JButton configButt = new JButton("Configure Look-&-Feel");
                 configButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (lafList.getSelectedValue() != null) {
-                            if (DEFAULT_LOOK_AND_FEEL.equals(lafList.getSelectedValue())) {
-                                displayErrorMessage(
-                                        "Default Look-&-Feel is not configurable");
+                        if (lafList.getSelectedRowCount() == 1) {
+                            String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
+                            if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
+                                displayErrorMessage("Default Look-&-Feel is not configurable");
                             } else {
-                                String lafClassName = components.get(lafList.getSelectedValue());
-                                if (lafClassName == null) {
+                                String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
+                                if (Validator.isNullOrBlank(version)) {
                                     displayMessage(
                                             "This Look-&-Feel can not be configured yet.\n" +
                                             "Restart Bias first.");
                                 } else {
                                     try {
-                                        configureLAF(lafClassName);
+                                        String fullLAFClassName = 
+                                            Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                                    + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                                        configureLAF(fullLAFClassName);
                                     } catch (Exception t) {
                                         displayErrorMessage(t);
                                     }
                                 }
                             }
-                        }
+                        } else {
+                            displayMessage("Please, choose only one look-&-feel from the list");
+                        }    
                     }
                 });
                 JButton instButt = new JButton("Install new");
@@ -1778,8 +1813,9 @@ public class FrontEnd extends JFrame {
                         if (extensionFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
                                 for (File file : extensionFileChooser.getSelectedFiles()) {
-                                    BackEnd.getInstance().installLAF(file);
-                                    model.addElement("Look-&-Feel installed from: " + file.getAbsolutePath());
+                                    String installedLAF = BackEnd.getInstance().installLAF(file);
+                                    installedLAF = installedLAF.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                                    model.addRow(new Object[]{installedLAF,null,null,file.getName()});
                                     modified = true;
                                 }
                             } catch (Exception ex) {
@@ -1792,32 +1828,30 @@ public class FrontEnd extends JFrame {
                 uninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            if (lafList.getSelectedValues().length > 0) {
+                            if (lafList.getSelectedRowCount() > 0) {
                                 boolean uninstalled = false;
                                 String currentLAF = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
-                                for (Object laf : lafList.getSelectedValues()) {
+                                int idx;
+                                while ((idx = lafList.getSelectedRow()) != -1) {
+                                    String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
                                     if (!DEFAULT_LOOK_AND_FEEL.equals(laf)) {
-                                        String lafClassName = components.get(laf);
-                                        if (lafClassName == null) {
-                                            displayMessage(
-                                                    "This Look-&-Feel can not be uninstalled now.\n" +
-                                                    "Restart Bias first.");
-                                        } else {
-                                            BackEnd.getInstance().uninstallLAF(lafClassName);
-                                            model.removeElement(laf);
-                                            String uninstalledClassName = lafClassName.replaceFirst(
-                                                    Constants.PACKAGE_PREFIX_PATTERN, 
-                                                    Constants.EMPTY_STR);
-                                            // if look-&-feel that has been uninstalled was active one...
-                                            if (uninstalledClassName.equals(currentLAF)) {
-                                                //... unset it (default one will be used)
-                                                settings.remove(Constants.PROPERTY_LOOK_AND_FEEL);
-                                            }
-                                            uninstalled = true;
-                                            modified = true;
+                                        String fullLAFClassName = 
+                                            Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                                    + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                                        BackEnd.getInstance().uninstallLAF(fullLAFClassName);
+                                        model.removeRow(idx);
+                                        // if look-&-feel that has been uninstalled was active one...
+                                        if (laf.equals(currentLAF)) {
+                                            //... unset it (default one will be used)
+                                            settings.remove(Constants.PROPERTY_LOOK_AND_FEEL);
                                         }
+                                        uninstalled = true;
+                                        modified = true;
                                     } else {
-                                        FrontEnd.getInstance().displayMessage("Default Look-&-Feel can not be uninstalled!");
+                                        FrontEnd.getInstance().displayErrorMessage("Default Look-&-Feel can not be uninstalled!");
+                                        if (lafList.getSelectedRowCount() == 1) {
+                                            break;
+                                        }
                                     }
                                 }
                                 if (uninstalled) {

@@ -371,7 +371,8 @@ public class BackEnd {
         }
     }
 
-    public void installExtension(File extensionFile) throws Exception {
+    public String installExtension(File extensionFile) throws Exception {
+        String installedExtensionName = null;
         Set<String> installedExtNames = new HashSet<String>();
         if (extensionFile != null && extensionFile.exists() && !extensionFile.isDirectory()) {
             String name = extensionFile.getName();
@@ -465,10 +466,12 @@ public class BackEnd {
                         zipEntries.put(extensionInstLogEntryPath, sb.toString().getBytes());
                     }
                 }
+                installedExtensionName = fullExtName;
             }
         } else {
             throw new Exception("Invalid extension pack!");
         }
+        return installedExtensionName;
     }
     
     public void uninstallExtension(String extension) throws Exception {
@@ -524,7 +527,8 @@ public class BackEnd {
         }
     }
 
-    public void installLAF(File lafFile) throws Exception {
+    public String installLAF(File lafFile) throws Exception {
+        String installedLAF = null;
         Set<String> installedLAFNames = new HashSet<String>();
         if (lafFile != null && lafFile.exists() && !lafFile.isDirectory()) {
             String name = lafFile.getName();
@@ -608,10 +612,12 @@ public class BackEnd {
                         zipEntries.put(lafInstLogEntryPath, sb.toString().getBytes());
                     }
                 }
+                installedLAF = fullLAFName;
             }
         } else {
             throw new Exception("Invalid LAF pack!");
         }
+        return installedLAF;
     }
     
     public void uninstallLAF(String laf) throws Exception {
