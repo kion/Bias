@@ -433,8 +433,7 @@ public class BackEnd {
                                         } else {
                                             throw new Exception(
                                                     "Extension pack '" + extensionFile.getAbsolutePath() + "' failed to intall!" + Constants.NEW_LINE + 
-                                                    "Detected conflict with following add-on:" + Constants.NEW_LINE 
-                                                    + getConflictingAddOn(lzeName) + Constants.NEW_LINE +
+                                                    "Detected conflict with following add-on: " + getConflictingAddOn(lzeName) + Constants.NEW_LINE +
                                                     "Conflicting resource: " + lzeName + Constants.NEW_LINE + 
                                                     "If you still want to install this extension, you should first uninstall add-on it conflicts with.");
                                         }
@@ -598,8 +597,7 @@ public class BackEnd {
                                         } else {
                                             throw new Exception(
                                                     "LAF pack '" + lafFile.getAbsolutePath() + "' failed to intall!" + Constants.NEW_LINE + 
-                                                    "Detected conflict with following add-on:" + Constants.NEW_LINE 
-                                                    + getConflictingAddOn(lzeName) + Constants.NEW_LINE +
+                                                    "Detected conflict with following add-on: " + getConflictingAddOn(lzeName) + Constants.NEW_LINE +
                                                     "Conflicting resource: " + lzeName + Constants.NEW_LINE + 
                                                     "If you still want to install this look-&-feel, you should first uninstall add-on it conflicts with.");
                                         }
