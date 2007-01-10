@@ -97,6 +97,8 @@ public class FrontEnd extends JFrame {
     public static final ImageIcon ICON_LAF = new ImageIcon(Constants.class.getResource("/bias/res/lafs.png"));
 
     public static final ImageIcon ICON_ICONS = new ImageIcon(Constants.class.getResource("/bias/res/icons.png"));
+    
+    private static final String RESTART_MESSAGE = "Changes will take effect after Bias restart";
 
     private static final Placement[] PLACEMENTS = new Placement[] { new Placement(JTabbedPane.TOP),
             new Placement(JTabbedPane.LEFT), new Placement(JTabbedPane.RIGHT),
@@ -201,7 +203,7 @@ public class FrontEnd extends JFrame {
             if (!lafActivationSuccess) {
                 String laf = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
                 instance.displayErrorMessage(
-                        "Current Look-&-Feel '" + laf + "' is broken (failed to initialize)!\n" +
+                        "Current Look-&-Feel '" + laf + "' is broken (failed to initialize)!" + Constants.NEW_LINE +
                         "It will be uninstalled.", 
                         error);
                 try {
@@ -209,11 +211,9 @@ public class FrontEnd extends JFrame {
                                                 + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
                     BackEnd.getInstance().uninstallLAF(lafFullClassName);
                     settings.remove(Constants.PROPERTY_LOOK_AND_FEEL);
-                    BackEnd.getInstance().store();
                     instance.displayMessage(
-                            "Broken Look-&-Feel '" + laf + "' has been uninstalled ;)\n" +
-                            "Bias needs to be restarted now...");
-                    System.exit(0);
+                            "Broken Look-&-Feel '" + laf + "' has been uninstalled ;)" + Constants.NEW_LINE +
+                            RESTART_MESSAGE);
                 } catch (Exception e) {
                     instance.displayErrorMessage("Broken Look-&-Feel '" + laf + "' failed to uninstall :(", e);
                 }
@@ -370,9 +370,7 @@ public class FrontEnd extends JFrame {
             FrontEnd.getInstance().displayMessage("Selected Look-&-Feel is already active");
         } else {
             configureLAF(laf);
-            store();
-            displayMessage("Changes will take effect after Bias restart");
-            System.exit(0);
+            displayMessage(RESTART_MESSAGE);
         }
     }
     
@@ -384,29 +382,36 @@ public class FrontEnd extends JFrame {
             byte[] settings = lafInstance.configure(lafSettings);
             if (!Arrays.equals(settings,lafSettings)) {
                 BackEnd.getInstance().storeLAFSettings(laf, settings);
-                store();
-                displayMessage("Changes will take effect after Bias restart");
-                System.exit(0);
+                displayMessage(RESTART_MESSAGE);
             }
         }
     }
     
-    private void configureExtension(String extension) throws Exception {
+    private void configureExtension(String extension, boolean showFirstTimeUsageMessage) throws Exception {
         if (extension != null) {
+            if (showFirstTimeUsageMessage) {
+                String extName = extension.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                displayMessage(
+                        "This is first time you use '" + extName + "' extension." + Constants.NEW_LINE +
+                        "If extension is configurable, you can adjust its default settings...");
+            }
             try {
                 Class extensionClass = Class.forName(extension);
                 Extension extensionInstance = ExtensionFactory.getInstance().newExtension(extensionClass);
                 byte[] extensionSettings = BackEnd.getInstance().getExtensionSettings(extension);
                 byte[] settings = extensionInstance.configure(extensionSettings);
+                if (settings == null) {
+                    settings = new byte[]{};
+                }
                 BackEnd.getInstance().storeExtensionSettings(extension, settings);
             } catch (Throwable t) {
                 displayErrorMessage(
-                        "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize just configured settings!\n" +
-                        "Settings that are failed to serialize will be lost! :(\n" + 
-                        "This the most likely is an extension's bug.\n" +
-                        "You can either:\n" +
-                            "* check for new version of extension (the bug may be fixed in new version)\n" +
-                            "* uninstall extension to avoid further instability and data loss\n" + 
+                        "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize just configured settings!" + Constants.NEW_LINE +
+                        "Settings that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
+                        "This the most likely is an extension's bug." + Constants.NEW_LINE +
+                        "You can either:" + Constants.NEW_LINE +
+                            "* check for new version of extension (the bug may be fixed in new version)" + Constants.NEW_LINE +
+                            "* uninstall extension to avoid further instability and data loss" + Constants.NEW_LINE + 
                             "* refer to extension's author for further help", t);
             }
         }
@@ -421,11 +426,11 @@ public class FrontEnd extends JFrame {
             getJTabbedPane().setSelectedIndex(data.getActiveIndex());
         }
         if (brokenExtensionsFound > 0) {
-            displayErrorMessage("Some entries (" + brokenExtensionsFound + ") have not been successfully represented.\n" +
-                    "Corresponding extensions seem to be broken/missing.\n" +
+            displayErrorMessage("Some entries (" + brokenExtensionsFound + ") have not been successfully represented." + Constants.NEW_LINE +
+                    "Corresponding extensions seem to be broken/missing." + Constants.NEW_LINE +
                     "Try to open extensions management dialog, " +
-                    "it will autodetect and remove broken extensions (if any).\n" +
-                    "After that, try to (re)install broken/missing extensions.\n");
+                    "it will autodetect and remove broken extensions (if any)." + Constants.NEW_LINE +
+                    "After that, try to (re)install broken/missing extensions." + Constants.NEW_LINE);
         }
     }
 
@@ -529,12 +534,12 @@ public class FrontEnd extends JFrame {
                     serializedData = extension.serializeData();
                 } catch (Throwable t) {
                     displayErrorMessage(
-                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize some data!\n" +
-                            "Data that are failed to serialize will be lost! :(\n" + 
-                            "This the most likely is an extension's bug.\n" +
-                            "You can either:\n" +
-                                "* check for new version of extension (the bug may be fixed in new version)\n" +
-                                "* uninstall extension to avoid further instability and data loss\n" + 
+                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize some data!" + Constants.NEW_LINE +
+                            "Data that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
+                            "This the most likely is an extension's bug." + Constants.NEW_LINE +
+                            "You can either:" + Constants.NEW_LINE +
+                                "* check for new version of extension (the bug may be fixed in new version)" + Constants.NEW_LINE +
+                                "* uninstall extension to avoid further instability and data loss" + Constants.NEW_LINE + 
                                 "* refer to extension's author for further help", t);
                 }
                 byte[] serializedSettings = null;
@@ -542,12 +547,12 @@ public class FrontEnd extends JFrame {
                     serializedSettings = extension.serializeSettings();
                 } catch (Throwable t) {
                     displayErrorMessage(
-                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize some settings!\n" +
-                            "Settings that are failed to serialize will be lost! :(\n" + 
-                            "This the most likely is an extension's bug.\n" +
-                            "You can either:\n" +
-                                "* check for new version of extension (the bug may be fixed in new version)\n" +
-                                "* uninstall extension to avoid further instability and data loss\n" + 
+                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize some settings!" + Constants.NEW_LINE +
+                            "Settings that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
+                            "This the most likely is an extension's bug." + Constants.NEW_LINE +
+                            "You can either:" + Constants.NEW_LINE +
+                                "* check for new version of extension (the bug may be fixed in new version)" + Constants.NEW_LINE +
+                                "* uninstall extension to avoid further instability and data loss" + Constants.NEW_LINE + 
                                 "* refer to extension's author for further help", t);
                 }
                 DataEntry dataEntry;
@@ -1296,10 +1301,7 @@ public class FrontEnd extends JFrame {
                 byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
                 if (defSettings == null) {
                     // extension's first time usage
-                    displayMessage(
-                            "This is first time you use '" + type.getSimpleName() + "' extension.\n" +
-                            "You can adjust extension's default settings...");
-                    configureExtension(type.getName());
+                    configureExtension(type.getName(), true);
                 }
                 Extension extension = ExtensionFactory.getInstance().newExtension(type);
                 if (extension != null) {
@@ -1312,10 +1314,10 @@ public class FrontEnd extends JFrame {
                 }
             }
         } catch (Throwable t) {
-            displayErrorMessage("Unable to add entry.\n" +
-            					"Some extension(s) may be broken.\n" +
+            displayErrorMessage("Unable to add entry." + Constants.NEW_LINE +
+            					"Some extension(s) may be broken." + Constants.NEW_LINE +
             					"Try to open extensions management dialog, " +
-            					"it will autodetect and remove broken extensions.\n" +
+            					"it will autodetect and remove broken extensions." + Constants.NEW_LINE +
             					"After that, try to add entry again.", t);
         }
     }
@@ -1357,10 +1359,7 @@ public class FrontEnd extends JFrame {
                     byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
                     if (defSettings == null) {
                         // extension's first time usage
-                        displayMessage(
-                                "This is first time you use '" + type.getSimpleName() + "' extension.\n" +
-                                "You can adjust extension's default settings...");
-                        configureExtension(type.getName());
+                        configureExtension(type.getName(), true);
                     }
                     Extension extension = ExtensionFactory.getInstance().newExtension(type);
                     if (extension != null) {
@@ -1373,10 +1372,10 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable t) {
-                displayErrorMessage("Unable to add entry.\n" +
-                                    "Some extension(s) may be broken.\n" +
+                displayErrorMessage("Unable to add entry." + Constants.NEW_LINE +
+                                    "Some extension(s) may be broken." + Constants.NEW_LINE +
                                     "Try to open extensions management dialog, " +
-                                    "it will autodetect and remove broken extensions.\n" +
+                                    "it will autodetect and remove broken extensions." + Constants.NEW_LINE +
                                     "After that, try to add entry again.", t);
             }
         }
@@ -1433,11 +1432,7 @@ public class FrontEnd extends JFrame {
                     DataCategory data = BackEnd.getInstance().importData(jarFile, getVisualEntriesIDs());
                     if (!data.getData().isEmpty()) {
                         representData(data);
-                        store();
-                        displayMessage(
-                                "Some data have been successfully imported.\n" +
-                                "Bias needs to be restarted now...");
-                        System.exit(0);
+                        displayMessage("Data have been successfully imported");
                     } else {
                         displayErrorMessage("Nothing to import!");
                     }
@@ -1502,8 +1497,8 @@ public class FrontEnd extends JFrame {
             try {
                 // show confirmation dialog
                 if (JOptionPane.showConfirmDialog(FrontEnd.getInstance(), 
-                        "The data are going to be saved now.\n" +
-                        "This will finish your current Bias session.\n" +
+                        "The data are going to be saved now." + Constants.NEW_LINE +
+                        "This will finish your current Bias session." + Constants.NEW_LINE +
                         "Are you sure you want save and exit?",
                         "Save data and exit",
                         JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
@@ -1523,7 +1518,7 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             // show confirmation dialog
             if (JOptionPane.showConfirmDialog(FrontEnd.getInstance(), 
-                    "All unsaved data will be lost.\n" +
+                    "All unsaved data will be lost." + Constants.NEW_LINE +
                     "Are you sure you want to discard chages?",
                     "Discard unsaved changes confirmation",
                     JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
@@ -1585,14 +1580,9 @@ public class FrontEnd extends JFrame {
                             brokenFixed = true;
                         } catch (Exception ex2) {
                             // ... if unsuccessfully - inform user about that, do nothing else
-                            displayErrorMessage("Error occured while uninstalling broken extension [ " + extensionName + " ]!\n" + ex2);
+                            displayErrorMessage("Error occured while uninstalling broken extension [ " + extensionName + " ]!" + Constants.NEW_LINE + ex2);
                         }
                     }
-                }
-                if (brokenFixed) {
-                    store();
-                    displayMessage("Bias needs to be restarted now...");
-                    System.exit(0);
                 }
                 JButton configButt = new JButton("Configure selected");
                 configButt.addActionListener(new ActionListener(){
@@ -1602,14 +1592,14 @@ public class FrontEnd extends JFrame {
                                 String version = (String) extList.getValueAt(extList.getSelectedRow(), 1);
                                 if (Validator.isNullOrBlank(version)) {
                                     displayMessage(
-                                            "This Extension can not be configured yet.\n" +
+                                            "This Extension can not be configured yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
                                     String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
                                     String extFullClassName = 
                                         Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                 + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-                                    configureExtension(extFullClassName);
+                                    configureExtension(extFullClassName, false);
                                 }
                             } catch (Exception ex) {
                                 FrontEnd.getInstance().displayErrorMessage(ex);
@@ -1672,8 +1662,8 @@ public class FrontEnd extends JFrame {
                     JOptionPane.INFORMATION_MESSAGE,
                     null
                 );
-                if (modified) {
-                    FrontEnd.getInstance().displayMessage("Changes will take effect after Bias restart");
+                if (modified || brokenFixed) {
+                    FrontEnd.getInstance().displayMessage(RESTART_MESSAGE);
                     store();
                     System.exit(0);
                 }
@@ -1736,14 +1726,9 @@ public class FrontEnd extends JFrame {
                             brokenFixed = true;
                         } catch (Exception ex2) {
                             // ... if unsuccessfully - inform user about that, do nothing else
-                            displayErrorMessage("Error occured while uninstalling broken Look-&-Feel [ " + lafName + " ]!\n" + ex2);
+                            displayErrorMessage("Error occured while uninstalling broken Look-&-Feel [ " + lafName + " ]!" + Constants.NEW_LINE + ex2);
                         }
                     }
-                }
-                if (brokenFixed) {
-                    store();
-                    displayMessage("Bias needs to be restarted now...");
-                    System.exit(0);
                 }
                 JButton activateButt = new JButton("Activate Look-&-Feel");
                 activateButt.addActionListener(new ActionListener(){
@@ -1760,7 +1745,7 @@ public class FrontEnd extends JFrame {
                                 String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
                                 if (Validator.isNullOrBlank(version)) {
                                     displayMessage(
-                                            "This Look-&-Feel can not be activated yet.\n" +
+                                            "This Look-&-Feel can not be activated yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
                                     try {
@@ -1789,7 +1774,7 @@ public class FrontEnd extends JFrame {
                                 String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
                                 if (Validator.isNullOrBlank(version)) {
                                     displayMessage(
-                                            "This Look-&-Feel can not be configured yet.\n" +
+                                            "This Look-&-Feel can not be configured yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
                                     try {
@@ -1878,8 +1863,8 @@ public class FrontEnd extends JFrame {
                     JOptionPane.INFORMATION_MESSAGE,
                     null
                 );
-                if (modified) {
-                    FrontEnd.getInstance().displayMessage("Bias needs to be restarted now...");
+                if (modified || brokenFixed) {
+                    FrontEnd.getInstance().displayMessage(RESTART_MESSAGE);
                     store();
                     System.exit(0);
                 }
@@ -1895,7 +1880,6 @@ public class FrontEnd extends JFrame {
         private Collection<ImageIcon> icons;
         private JList icList;
         private DefaultListModel model;
-        private boolean modified;
         
         public void actionPerformed(ActionEvent e) {
             try {
@@ -1923,7 +1907,6 @@ public class FrontEnd extends JFrame {
                                             model.addElement(icon);
                                         }
                                         added = true;
-                                        modified = true;
                                     }
                                 }
                                 if (added) {
@@ -1945,7 +1928,6 @@ public class FrontEnd extends JFrame {
                                 for (Object icon : icList.getSelectedValues()) {
                                     BackEnd.getInstance().removeIcon((ImageIcon)icon);
                                     model.removeElement(icon);
-                                    modified = true;
                                 }
                                 FrontEnd.getInstance().displayMessage("Icon(s) have been successfully removed!");
                             }
@@ -1954,7 +1936,6 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                modified = false;
                 JOptionPane.showMessageDialog(
                     FrontEnd.this, 
                     new Component[]{
@@ -1967,11 +1948,6 @@ public class FrontEnd extends JFrame {
                     JOptionPane.INFORMATION_MESSAGE,
                     null
                 );
-                if (modified) {
-                    FrontEnd.getInstance().displayMessage("Changes will take effect after Bias restart");
-                    store();
-                    System.exit(0);
-                }
             } catch (Exception ex) {
                 displayErrorMessage(ex);
             }
