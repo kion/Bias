@@ -94,7 +94,7 @@ public class FrontEnd extends JFrame {
 
     public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(Constants.class.getResource("/bias/res/extensions.png"));
 
-    public static final ImageIcon ICON_LAF = new ImageIcon(Constants.class.getResource("/bias/res/laf.png"));
+    public static final ImageIcon ICON_LAF = new ImageIcon(Constants.class.getResource("/bias/res/lafs.png"));
 
     public static final ImageIcon ICON_ICONS = new ImageIcon(Constants.class.getResource("/bias/res/icons.png"));
 
