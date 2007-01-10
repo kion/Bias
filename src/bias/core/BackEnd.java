@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -414,15 +415,29 @@ public class BackEnd {
                             while ((lze = lin.getNextEntry()) != null) {
                                 String lzeName = lze.getName();
                                 if (!lzeName.equals(Constants.MANIFEST_FILE_PATH) && !lzeName.endsWith(Constants.ZIP_PATH_SEPARATOR)) {
+                                    ByteArrayOutputStream lout = new ByteArrayOutputStream();
+                                    while ((b = lin.read()) != -1) {
+                                        lout.write(b);
+                                    }
+                                    lout.close();
                                     if (!zipEntries.containsKey(lzeName)) {
-                                        ByteArrayOutputStream lout = new ByteArrayOutputStream();
-                                        while ((b = lin.read()) != -1) {
-                                            lout.write(b);
-                                        }
-                                        lout.close();
                                         libsMap.put(lzeName, lout.toByteArray());
                                     } else {
-                                        libsMap.put(lzeName, null);
+                                        MessageDigest md = MessageDigest.getInstance(Constants.DIGEST_ALGORITHM);
+                                        md.update(lout.toByteArray());
+                                        byte[] newDigest = md.digest();
+                                        md.update(zipEntries.get(lzeName));
+                                        byte[] existingDigest = md.digest();
+                                        if (MessageDigest.isEqual(newDigest, existingDigest)) {
+                                            libsMap.put(lzeName, null);
+                                        } else {
+                                            throw new Exception(
+                                                    "Extension pack '" + extensionFile.getAbsolutePath() + "' failed to intall!" + Constants.NEW_LINE + 
+                                                    "Detected conflict with following add-on:" + Constants.NEW_LINE 
+                                                    + getConflictingAddOn(lzeName) + Constants.NEW_LINE +
+                                                    "Conflicting resource: " + lzeName + Constants.NEW_LINE + 
+                                                    "If you still want to install this extension, you should first uninstall add-on it conflicts with.");
+                                        }
                                     }
                                 }
                             }
@@ -433,9 +448,9 @@ public class BackEnd {
                 in.close();
             }
             if (installedExtNames.isEmpty()) {
-                throw new Exception("Wrong extension pack: nothing to install!");
+                throw new Exception("Invalid extension pack: nothing to install!");
             } else if (installedExtNames.size() > 1) {
-                throw new Exception("Wrong extension pack: only one extension per pack allowed!");
+                throw new Exception("Invalid extension pack: only one extension per pack allowed!");
             } else {
                 String extName = installedExtNames.iterator().next();
                 String fullExtName = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
@@ -565,15 +580,29 @@ public class BackEnd {
                             while ((lze = lin.getNextEntry()) != null) {
                                 String lzeName = lze.getName();
                                 if (!lzeName.equals(Constants.MANIFEST_FILE_PATH) && !lzeName.endsWith(Constants.ZIP_PATH_SEPARATOR)) {
+                                    ByteArrayOutputStream lout = new ByteArrayOutputStream();
+                                    while ((b = lin.read()) != -1) {
+                                        lout.write(b);
+                                    }
+                                    lout.close();
                                     if (!zipEntries.containsKey(lzeName)) {
-                                        ByteArrayOutputStream lout = new ByteArrayOutputStream();
-                                        while ((b = lin.read()) != -1) {
-                                            lout.write(b);
-                                        }
-                                        lout.close();
                                         libsMap.put(lzeName, lout.toByteArray());
                                     } else {
-                                        libsMap.put(lzeName, null);
+                                        MessageDigest md = MessageDigest.getInstance(Constants.DIGEST_ALGORITHM);
+                                        md.update(lout.toByteArray());
+                                        byte[] newDigest = md.digest();
+                                        md.update(zipEntries.get(lzeName));
+                                        byte[] existingDigest = md.digest();
+                                        if (MessageDigest.isEqual(newDigest, existingDigest)) {
+                                            libsMap.put(lzeName, null);
+                                        } else {
+                                            throw new Exception(
+                                                    "LAF pack '" + lafFile.getAbsolutePath() + "' failed to intall!" + Constants.NEW_LINE + 
+                                                    "Detected conflict with following add-on:" + Constants.NEW_LINE 
+                                                    + getConflictingAddOn(lzeName) + Constants.NEW_LINE +
+                                                    "Conflicting resource: " + lzeName + Constants.NEW_LINE + 
+                                                    "If you still want to install this look-&-feel, you should first uninstall add-on it conflicts with.");
+                                        }
                                     }
                                 }
                             }
@@ -584,9 +613,9 @@ public class BackEnd {
                 in.close();
             }
             if (installedLAFNames.isEmpty()) {
-                throw new Exception("Wrong LAF pack: nothing to install!");
+                throw new Exception("Invalid LAF pack: nothing to install!");
             } else if (installedLAFNames.size() > 1) {
-                throw new Exception("Wrong LAF pack: only one LAF activator per pack allowed!");
+                throw new Exception("Invalid LAF pack: only one LAF activator per pack allowed!");
             } else {
                 String lafName = installedLAFNames.iterator().next();
                 String fullLAFName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
@@ -644,9 +673,7 @@ public class BackEnd {
         Collection<String> addOnLibEntries = getAddOnLibEntries(addOn);
         Collection<String> nonAddOnLibEntries = getNonAddOnLibEntries(addOn);
         addOnLibEntries.removeAll(nonAddOnLibEntries);
-        for (String path : addOnLibEntries) {
-            zipEntries.remove(path);
-        }
+        zipEntries.keySet().removeAll(addOnLibEntries);
         zipEntries.remove(Constants.CONFIG_DIR + addOn + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING);
         zipEntries.remove(Constants.CONFIG_DIR + addOn + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING);
     }
@@ -683,6 +710,25 @@ public class BackEnd {
             }
         }
         return entries;
+    }
+    
+    private String getConflictingAddOn(String conflictingResource) {
+        String conflictingAddOn = null;
+        Pattern p = Pattern.compile(Constants.LIB_INSTALL_LOG_FILE_PATTERN);
+        for (String key : zipEntries.keySet()) {
+            Matcher m = p.matcher(key);
+            if (m.find()) {
+                byte[] bytes = zipEntries.get(key);
+                if (bytes != null) {
+                    String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
+                    if (Arrays.asList(installEntries).contains(conflictingResource)) {
+                        conflictingAddOn = m.group(1);
+                        break;
+                    }
+                }
+            }
+        }
+        return conflictingAddOn;
     }
         
     public Collection<ImageIcon> getIcons() {
