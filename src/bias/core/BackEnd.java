@@ -414,7 +414,7 @@ public class BackEnd {
                             ZipEntry lze;
                             while ((lze = lin.getNextEntry()) != null) {
                                 String lzeName = lze.getName();
-                                if (!lzeName.equals(Constants.MANIFEST_FILE_PATH) && !lzeName.endsWith(Constants.ZIP_PATH_SEPARATOR)) {
+                                if (!lzeName.startsWith(Constants.META_INF_DIR) && !lzeName.endsWith(Constants.ZIP_PATH_SEPARATOR)) {
                                     ByteArrayOutputStream lout = new ByteArrayOutputStream();
                                     while ((b = lin.read()) != -1) {
                                         lout.write(b);
@@ -579,7 +579,7 @@ public class BackEnd {
                             ZipEntry lze;
                             while ((lze = lin.getNextEntry()) != null) {
                                 String lzeName = lze.getName();
-                                if (!lzeName.equals(Constants.MANIFEST_FILE_PATH) && !lzeName.endsWith(Constants.ZIP_PATH_SEPARATOR)) {
+                                if (!lzeName.startsWith(Constants.META_INF_DIR) && !lzeName.endsWith(Constants.ZIP_PATH_SEPARATOR)) {
                                     ByteArrayOutputStream lout = new ByteArrayOutputStream();
                                     while ((b = lin.read()) != -1) {
                                         lout.write(b);

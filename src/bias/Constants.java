@@ -15,7 +15,7 @@ public class Constants {
     
     public static final String FILE_PROTOCOL_PREFIX = "file:";
 
-    public static final String MANIFEST_FILE_PATH = "META-INF/MANIFEST.MF";
+    public static final String META_INF_DIR = "META-INF";
     
     public static final String DIGEST_ALGORITHM = "MD5";
         
