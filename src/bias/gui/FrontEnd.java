@@ -353,28 +353,29 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private void setActiveLAF(String laf) throws Exception {
-        boolean changed = false;
+    private boolean setActiveLAF(String laf) throws Exception {
+        boolean modified = false;
         String currentLAF = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
         if (laf != null) {
             String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             if (!lafName.equals(currentLAF)) {
                 settings.put(Constants.PROPERTY_LOOK_AND_FEEL, lafName);
-                changed = true;
+                modified = true;
             }
         } else if (currentLAF != null) {
             settings.remove(Constants.PROPERTY_LOOK_AND_FEEL);
-            changed = true;
+            modified = true;
         }
-        if (!changed) {
+        if (!modified) {
             FrontEnd.getInstance().displayMessage("Selected Look-&-Feel is already active");
         } else {
             configureLAF(laf);
-            displayMessage(RESTART_MESSAGE);
         }
+        return modified;
     }
     
-    private void configureLAF(String laf) throws Exception {
+    private boolean configureLAF(String laf) throws Exception {
+        boolean modified = false;
         if (laf != null) {
             Class lafClass = Class.forName(laf);
             LookAndFeel lafInstance = ((LookAndFeel)lafClass.newInstance());
@@ -382,9 +383,10 @@ public class FrontEnd extends JFrame {
             byte[] settings = lafInstance.configure(lafSettings);
             if (!Arrays.equals(settings,lafSettings)) {
                 BackEnd.getInstance().storeLAFSettings(laf, settings);
-                displayMessage(RESTART_MESSAGE);
+                modified = true;
             }
         }
+        return modified;
     }
     
     private void configureExtension(String extension, boolean showFirstTimeUsageMessage) throws Exception {
@@ -1752,7 +1754,7 @@ public class FrontEnd extends JFrame {
                                         String fullLAFClassName = 
                                             Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                     + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                                        setActiveLAF(fullLAFClassName);
+                                        modified = setActiveLAF(fullLAFClassName);
                                     } catch (Exception t) {
                                         displayErrorMessage(t);
                                     }
@@ -1781,7 +1783,7 @@ public class FrontEnd extends JFrame {
                                         String fullLAFClassName = 
                                             Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                     + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                                        configureLAF(fullLAFClassName);
+                                        modified = configureLAF(fullLAFClassName);
                                     } catch (Exception t) {
                                         displayErrorMessage(t);
                                     }
