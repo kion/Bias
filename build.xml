@@ -37,7 +37,7 @@
 		</delete>
 		<jar basedir="./bin" destfile="build/bias.jar" includes="bias/**">
 			<manifest>
-				<attribute name="Main-Class" value="bias.Bias" />
+				<attribute name="Main-Class" value="bias.Loader" />
 			</manifest>
 		</jar>
 	</target>
