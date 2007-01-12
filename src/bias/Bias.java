@@ -19,7 +19,7 @@ public class Bias {
         return jarFile;
     }
 
-    public static void main(String[] args) throws Throwable {
+    public static void launchApp() throws Throwable {
         // find out what JAR file application is run from
         URL url = Bias.class.getResource(Bias.class.getSimpleName()+Constants.CLASS_FILE_ENDING);
         String jarFilePath = url.getFile().substring(0, url.getFile().indexOf(Bias.class.getName().replaceAll("\\.", "/")) - 2);
