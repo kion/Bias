@@ -1450,7 +1450,7 @@ public class FrontEnd extends JFrame {
                             passField.requestFocusInWindow();
                         }
                     };
-                    Timer timer = new Timer(1000,al);
+                    Timer timer = new Timer(500,al);
                     timer.setRepeats(false);
                     timer.start();
                     if (JOptionPane.showConfirmDialog(
