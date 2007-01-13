@@ -43,6 +43,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
@@ -1443,7 +1444,15 @@ public class FrontEnd extends JFrame {
                     jarFile = jfc.getSelectedFile();
 
                     JLabel label = new JLabel("password:");
-                    JPasswordField passField = new JPasswordField();
+                    final JPasswordField passField = new JPasswordField();
+                    ActionListener al = new ActionListener(){
+                        public void actionPerformed(ActionEvent ae){
+                            passField.requestFocusInWindow();
+                        }
+                    };
+                    Timer timer = new Timer(1000,al);
+                    timer.setRepeats(false);
+                    timer.start();
                     if (JOptionPane.showConfirmDialog(
                             null, 
                             new Component[]{label, passField}, 

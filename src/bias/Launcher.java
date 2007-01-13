@@ -9,6 +9,8 @@ import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
@@ -16,6 +18,7 @@ import java.net.URL;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
+import javax.swing.Timer;
 
 public class Launcher extends Window {
 
@@ -115,7 +118,15 @@ public class Launcher extends Window {
 
     public static void main(String[] args) throws Throwable {
         JLabel label = new JLabel("password:");
-        JPasswordField passField = new JPasswordField();
+        final JPasswordField passField = new JPasswordField();
+        ActionListener al = new ActionListener(){
+            public void actionPerformed(ActionEvent ae){
+                passField.requestFocusInWindow();
+            }
+        };
+        Timer timer = new Timer(1000,al);
+        timer.setRepeats(false);
+        timer.start();
         if (JOptionPane.showConfirmDialog(
                 null, 
                 new Component[]{label, passField}, 
