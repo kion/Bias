@@ -25,33 +25,29 @@ public class FSUtils {
 	
 	public static byte[] readFile(File file) throws IOException {
 		byte[] data = null;
-		if (file != null && file.exists() && !file.isDirectory()) {
-			FileInputStream fis = new FileInputStream(file);
-			BufferedInputStream bis = new BufferedInputStream(fis);
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			int b;
-			while ((b = bis.read()) != -1) {
-				baos.write(b);
-			}
-			baos.close();
-			bis.close();
-			data = baos.toByteArray();
-		}
+        FileInputStream fis = new FileInputStream(file);
+        BufferedInputStream bis = new BufferedInputStream(fis);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int b;
+        while ((b = bis.read()) != -1) {
+            baos.write(b);
+        }
+        baos.close();
+        bis.close();
+        data = baos.toByteArray();
 		return data;
 	}
 	
 	public static void writeFile(File file, byte[] data) throws IOException {
-		if (file != null && !file.isDirectory()) {
-			ByteArrayInputStream bais = new ByteArrayInputStream(data);
-			FileOutputStream fos = new FileOutputStream(file);
-			BufferedOutputStream bos = new BufferedOutputStream(fos);
-			int b;
-			while ((b = bais.read()) != -1) {
-				bos.write(b);
-			}
-			bos.close();
-			bais.close();
-		}
+        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+        FileOutputStream fos = new FileOutputStream(file);
+        BufferedOutputStream bos = new BufferedOutputStream(fos);
+        int b;
+        while ((b = bais.read()) != -1) {
+            bos.write(b);
+        }
+        bos.close();
+        bais.close();
 	}
 
 }

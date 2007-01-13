@@ -328,7 +328,11 @@ public class BackEnd {
             if (item instanceof DataEntry) {
                 DataEntry de = (DataEntry) item;
                 String dePath = Constants.DATA_DIR + de.getId().toString() + Constants.DATA_FILE_ENDING;
-                byte[] encryptedData = CIPHER_ENCRYPT.doFinal(de.getData());
+                byte[] entryData = de.getData();
+                if (entryData == null) {
+                    entryData = new byte[]{};
+                }
+                byte[] encryptedData = CIPHER_ENCRYPT.doFinal(entryData);
                 zipEntries.put(dePath, encryptedData);
                 storeDataEntrySettings(de);
                 Element entryNode = metadata.createElement(Constants.XML_ELEMENT_ENTRY);
