@@ -62,6 +62,9 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  * @author kion
  */
 public class BackEnd {
+    
+    private static Cipher CIPHER_ENCRYPT;
+    private static Cipher CIPHER_DECRYPT;
 	
 	private static BackEnd instance;
 	
@@ -72,9 +75,29 @@ public class BackEnd {
 	public static BackEnd getInstance() {
 		if (instance == null) {
 			instance = new BackEnd();
+            try {
+                CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, Launcher.PASSWORD);
+                CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, Launcher.PASSWORD);
+            } catch (Exception e) {
+                System.err.println(
+                        "Encryption/decryption ciphers initialization failed!\n" +
+                        "This is most likely some system environment related problem.\n" +
+                        "Bias can not proceed further... :(");
+                System.exit(1);
+            }
 		}
 		return instance;
 	}
+    
+    private static Cipher initCipher(int mode, String password) throws Exception {
+        PBEParameterSpec paramSpec = new PBEParameterSpec(Constants.CIPHER_SALT, 20);
+        PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
+        SecretKeyFactory kf = SecretKeyFactory.getInstance(Constants.CIPHER_ALGORITHM);
+        SecretKey key = kf.generateSecret(keySpec);
+        Cipher cipher = Cipher.getInstance(Constants.CIPHER_ALGORITHM);
+        cipher.init(mode, key, paramSpec);
+        return cipher;
+    }
     
     private Map<String, byte[]> zipEntries;
     
@@ -86,50 +109,42 @@ public class BackEnd {
     
     private Properties settings;
     
-    private Cipher initCipher(int mode, String password) throws Exception {
-        PBEParameterSpec paramSpec = new PBEParameterSpec(Constants.CIPHER_SALT, 20);
-        PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
-        SecretKeyFactory kf = SecretKeyFactory.getInstance(Constants.CIPHER_ALGORITHM);
-        SecretKey key = kf.generateSecret(keySpec);
-        Cipher cipher = Cipher.getInstance(Constants.CIPHER_ALGORITHM);
-        cipher.init(mode, key, paramSpec);
-        return cipher;
-    }
-    
     public void load() throws Exception {
-        Cipher cipher = initCipher(Cipher.DECRYPT_MODE, Launcher.PASSWORD);
         zipEntries = new LinkedHashMap<String, byte[]>();
         identifiedData = new LinkedHashMap<String, DataEntry>();
         settings = new Properties();
         ZipInputStream zis = new ZipInputStream(new FileInputStream(Bias.getJarFile()));
         ZipEntry ze = null;
         while ((ze = zis.getNextEntry()) != null) {
-            String name = ze.getName();
+            String path = ze.getName();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             int c;
             while ((c = zis.read()) != -1) {
                 out.write(c);
             }
             out.close();
-            if (name.matches(Constants.DATA_FILE_PATTERN)) {
-            	String entryIDStr = ze.getName()
+            if (path.matches(Constants.DATA_FILE_PATTERN)) {
+            	String entryIDStr = path
                                         .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
                                         .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
                 DataEntry de = new DataEntry();
-                byte[] decryptedData = cipher.doFinal(out.toByteArray());
+                byte[] decryptedData = CIPHER_DECRYPT.doFinal(out.toByteArray());
                 de.setData(decryptedData);
                 identifiedData.put(entryIDStr, de);
-            } else if (name.equals(Constants.METADATA_FILE_PATH)) {
+            } else if (path.equals(Constants.METADATA_FILE_PATH)) {
                 if (out.size() != 0) {
-                    byte[] decryptedData = cipher.doFinal(out.toByteArray());
+                    byte[] decryptedData = CIPHER_DECRYPT.doFinal(out.toByteArray());
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
                             new ByteArrayInputStream(decryptedData));
                 }
-            } else if (name.equals(Constants.GLOBAL_CONFIG_FILE_PATH)) {
+            } else if (path.equals(Constants.GLOBAL_CONFIG_FILE_PATH)) {
                 settings.load(
                         new ByteArrayInputStream(out.toByteArray()));
+            } else if (path.matches(Constants.ATTACHMENT_FILE_PATH_PATTERN)){
+                byte[] decryptedData = CIPHER_DECRYPT.doFinal(out.toByteArray());
+                zipEntries.put(path, decryptedData);
             } else {
-                zipEntries.put(ze.getName(), out.toByteArray());
+                zipEntries.put(path, out.toByteArray());
             }
         }
         zis.close();
@@ -143,24 +158,28 @@ public class BackEnd {
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
         ZipEntry ze = null;
         while ((ze = zis.getNextEntry()) != null) {
+            String path = ze.getName();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             int c;
             while ((c = zis.read()) != -1) {
                 out.write(c);
             }
-            if (ze.getName().matches(Constants.DATA_FILE_PATTERN)) {
-                String entryIDStr = ze.getName()
+            if (path.matches(Constants.DATA_FILE_PATTERN)) {
+                String entryIDStr = path
                                         .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
                                         .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
                 DataEntry de = new DataEntry();
                 byte[] decryptedData = cipher.doFinal(out.toByteArray());
                 de.setData(decryptedData);
                 importedIdentifiedData.put(entryIDStr, de);
-            } else if (ze.getName().matches(Constants.ICON_FILE_PATH_PATTERN)) {
+            } else if (path.matches(Constants.ICON_FILE_PATH_PATTERN)) {
             	if (!zipEntries.containsKey(ze.getName())) {
             		zipEntries.put(ze.getName(), out.toByteArray());
             	}
-            } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
+            } else if (path.matches(Constants.ATTACHMENT_FILE_PATH_PATTERN)){
+                byte[] decryptedData = cipher.doFinal(out.toByteArray());
+                zipEntries.put(path, decryptedData);
+            } else if (path.equals(Constants.METADATA_FILE_PATH)) {
                 if (out.size() != 0) {
                     byte[] decryptedData = cipher.doFinal(out.toByteArray());
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
@@ -264,14 +283,13 @@ public class BackEnd {
     }
     
     public void store() throws Exception {
-        Cipher cipher = initCipher(Cipher.ENCRYPT_MODE, Launcher.PASSWORD);
         metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         Element rootNode = metadata.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
         rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, data.getPlacement().toString());
         if (data.getActiveIndex() != null) {
             rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, data.getActiveIndex().toString());
         }
-        Collection<UUID> ids = buildNode(rootNode, data, cipher);
+        Collection<UUID> ids = buildNode(rootNode, data);
         cleanUpOrphanedStuff(ids);
         metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
@@ -282,13 +300,16 @@ public class BackEnd {
         of.setIndenting(true);
         of.setIndent(4);
         new XMLSerializer(sw, of).serialize(metadata);
-        byte[] encryptedData = cipher.doFinal(sw.getBuffer().toString().getBytes());
+        byte[] encryptedData = CIPHER_ENCRYPT.doFinal(sw.getBuffer().toString().getBytes());
         zipEntries.put(Constants.METADATA_FILE_PATH, encryptedData);
         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(Bias.getJarFile()));
         for (Entry<String, byte[]> entry : zipEntries.entrySet()) {
             String entryName = entry.getKey();
             ZipEntry zipEntry = new ZipEntry(entryName);
             byte[] entryData = entry.getValue();
+            if (entryName.matches(Constants.ATTACHMENT_FILE_PATH_PATTERN)) {
+                entryData = CIPHER_ENCRYPT.doFinal(entryData);
+            }
             zos.putNextEntry(zipEntry);
             if (entryData != null) {
                 for (byte b : entryData) {
@@ -301,13 +322,13 @@ public class BackEnd {
         zos.close();
     }
     
-    private Collection<UUID> buildNode(Node node, DataCategory data, Cipher cipher) throws Exception {
+    private Collection<UUID> buildNode(Node node, DataCategory data) throws Exception {
         Collection<UUID> ids = new ArrayList<UUID>();
         for (Recognizable item : data.getData()) {
             if (item instanceof DataEntry) {
                 DataEntry de = (DataEntry) item;
                 String dePath = Constants.DATA_DIR + de.getId().toString() + Constants.DATA_FILE_ENDING;
-                byte[] encryptedData = cipher.doFinal(de.getData());
+                byte[] encryptedData = CIPHER_ENCRYPT.doFinal(de.getData());
                 zipEntries.put(dePath, encryptedData);
                 storeDataEntrySettings(de);
                 Element entryNode = metadata.createElement(Constants.XML_ELEMENT_ENTRY);
@@ -339,7 +360,7 @@ public class BackEnd {
                 if (dc.getActiveIndex() != null) {
                     catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, dc.getActiveIndex().toString());
                 }
-                ids.addAll(buildNode(catNode, dc, cipher));
+                ids.addAll(buildNode(catNode, dc));
                 node.appendChild(catNode);
             }
         }
@@ -816,15 +837,14 @@ public class BackEnd {
         zipEntries.remove(Constants.ICONS_DIR + icon.getDescription() + Constants.ICON_FILE_ENDING);
     }
     
-    public Collection<Attachment> getAttachments(UUID dataEntryID) {
+    public Collection<Attachment> getAttachments(UUID dataEntryID) throws Exception {
         Collection<Attachment> atts = new LinkedList<Attachment>();
         for (String name : zipEntries.keySet()) {
             if (name.matches(Constants.ATTACHMENT_FILE_PATH_PATTERN)
                     && name.startsWith(Constants.ATTACHMENTS_DIR + dataEntryID.toString())) {
                 byte[] attData = zipEntries.get(name);
-                String attName;
                 int idx = name.lastIndexOf(Constants.ZIP_PATH_SEPARATOR);
-            	attName = name.substring(idx+1, name.length());
+            	String attName = name.substring(idx+1, name.length());
                 Attachment att = new Attachment(attName, attData);
                 atts.add(att);
             }

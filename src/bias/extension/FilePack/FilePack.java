@@ -75,9 +75,13 @@ public class FilePack extends Extension {
 		super(id, data, settings);
         Properties p = PropertiesUtils.deserializeProperties(data);
         filePack = new LinkedHashMap<Attachment, String>();
-		for (Attachment att : BackEnd.getInstance().getAttachments(getId())) {
-		    String date = p.getProperty(att.getName());
-            filePack.put(att, date);
+		try {
+            for (Attachment att : BackEnd.getInstance().getAttachments(getId())) {
+                String date = p.getProperty(att.getName());
+                filePack.put(att, date);
+            }
+        } catch (Exception e) {
+            FrontEnd.getInstance().displayErrorMessage("Failed to get attachments!", e);
         }
 		initGUI();
 	}
