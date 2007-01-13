@@ -19,6 +19,10 @@ public class Constants {
     
     public static final String DIGEST_ALGORITHM = "MD5";
         
+    public static final String CIPHER_ALGORITHM = "PBEWithMD5AndDES";
+    
+    public static final byte[] CIPHER_SALT = "kn+vk=lv".getBytes();
+    
     public static final String EMPTY_STR = "";
     public static final String SPACE_STR = " ";
     public static final String NEW_LINE = "\n";

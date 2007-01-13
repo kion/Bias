@@ -4,9 +4,8 @@
 package bias.utils;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Properties;
 
 import bias.Constants;
@@ -15,6 +14,8 @@ import bias.Constants;
  * @author kion
  */
 public class PropertiesUtils {
+    
+    private static final String PROPERTIES_COMMNETS_PATTERN = "(?s)#[^\\n]*\\n+\\s*";
     
     private PropertiesUtils(){
         // hidden default constructor
@@ -28,10 +29,13 @@ public class PropertiesUtils {
      * @return normalized settings serialized to byte array
      */
     public static byte[] serializeProperties(Properties properties) {
-        StringWriter sw = new StringWriter();
-        properties.list(new PrintWriter(sw));
-        String nonNormalizedSettings = sw.getBuffer().toString();
-        String normalizedSettings = nonNormalizedSettings.replaceAll("--.*--\\s*", Constants.EMPTY_STR);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            properties.store(baos, null);
+        } catch (IOException e) {}
+        String nonNormalizedSettings = new String(baos.toByteArray());
+        String normalizedSettings = nonNormalizedSettings.replaceAll(
+                PROPERTIES_COMMNETS_PATTERN, Constants.EMPTY_STR);
         return normalizedSettings.getBytes();
     }
     

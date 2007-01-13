@@ -35,6 +35,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
@@ -46,6 +51,7 @@ import org.w3c.dom.NodeList;
 
 import bias.Bias;
 import bias.Constants;
+import bias.Launcher;
 import bias.utils.Validator;
 
 import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
@@ -80,30 +86,44 @@ public class BackEnd {
     
     private Properties settings;
     
+    private Cipher initCipher(int mode, String password) throws Exception {
+        PBEParameterSpec paramSpec = new PBEParameterSpec(Constants.CIPHER_SALT, 20);
+        PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
+        SecretKeyFactory kf = SecretKeyFactory.getInstance(Constants.CIPHER_ALGORITHM);
+        SecretKey key = kf.generateSecret(keySpec);
+        Cipher cipher = Cipher.getInstance(Constants.CIPHER_ALGORITHM);
+        cipher.init(mode, key, paramSpec);
+        return cipher;
+    }
+    
     public void load() throws Exception {
+        Cipher cipher = initCipher(Cipher.DECRYPT_MODE, Launcher.PASSWORD);
         zipEntries = new LinkedHashMap<String, byte[]>();
         identifiedData = new LinkedHashMap<String, DataEntry>();
         settings = new Properties();
         ZipInputStream zis = new ZipInputStream(new FileInputStream(Bias.getJarFile()));
         ZipEntry ze = null;
         while ((ze = zis.getNextEntry()) != null) {
+            String name = ze.getName();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             int c;
             while ((c = zis.read()) != -1) {
                 out.write(c);
             }
-            String name = ze.getName();
+            out.close();
             if (name.matches(Constants.DATA_FILE_PATTERN)) {
             	String entryIDStr = ze.getName()
                                         .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
                                         .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
                 DataEntry de = new DataEntry();
-                de.setData(out.toByteArray());
+                byte[] decryptedData = cipher.doFinal(out.toByteArray());
+                de.setData(decryptedData);
                 identifiedData.put(entryIDStr, de);
             } else if (name.equals(Constants.METADATA_FILE_PATH)) {
                 if (out.size() != 0) {
+                    byte[] decryptedData = cipher.doFinal(out.toByteArray());
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
-                            new ByteArrayInputStream(out.toByteArray()));
+                            new ByteArrayInputStream(decryptedData));
                 }
             } else if (name.equals(Constants.GLOBAL_CONFIG_FILE_PATH)) {
                 settings.load(
@@ -116,7 +136,8 @@ public class BackEnd {
         data = parseMetadata(metadata, identifiedData, null);
     }
     
-    public DataCategory importData(File jarFile, Collection<UUID> existingIDs) throws Exception {
+    public DataCategory importData(File jarFile, Collection<UUID> existingIDs, String password) throws Exception {
+        Cipher cipher = initCipher(Cipher.DECRYPT_MODE, password);
         Map<String,DataEntry> importedIdentifiedData = new LinkedHashMap<String, DataEntry>();
         Document metadata = null;
         ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
@@ -132,7 +153,8 @@ public class BackEnd {
                                         .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
                                         .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
                 DataEntry de = new DataEntry();
-                de.setData(out.toByteArray());
+                byte[] decryptedData = cipher.doFinal(out.toByteArray());
+                de.setData(decryptedData);
                 importedIdentifiedData.put(entryIDStr, de);
             } else if (ze.getName().matches(Constants.ICON_FILE_PATH_PATTERN)) {
             	if (!zipEntries.containsKey(ze.getName())) {
@@ -140,8 +162,9 @@ public class BackEnd {
             	}
             } else if (ze.getName().equals(Constants.METADATA_FILE_PATH)) {
                 if (out.size() != 0) {
+                    byte[] decryptedData = cipher.doFinal(out.toByteArray());
                     metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
-                            new ByteArrayInputStream(out.toByteArray()));
+                            new ByteArrayInputStream(decryptedData));
                 }
             }    
         }
@@ -241,13 +264,14 @@ public class BackEnd {
     }
     
     public void store() throws Exception {
+        Cipher cipher = initCipher(Cipher.ENCRYPT_MODE, Launcher.PASSWORD);
         metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         Element rootNode = metadata.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
         rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, data.getPlacement().toString());
         if (data.getActiveIndex() != null) {
             rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, data.getActiveIndex().toString());
         }
-        Collection<UUID> ids = buildNode(rootNode, data);
+        Collection<UUID> ids = buildNode(rootNode, data, cipher);
         cleanUpOrphanedStuff(ids);
         metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
@@ -258,7 +282,8 @@ public class BackEnd {
         of.setIndenting(true);
         of.setIndent(4);
         new XMLSerializer(sw, of).serialize(metadata);
-        zipEntries.put(Constants.METADATA_FILE_PATH, sw.getBuffer().toString().getBytes());
+        byte[] encryptedData = cipher.doFinal(sw.getBuffer().toString().getBytes());
+        zipEntries.put(Constants.METADATA_FILE_PATH, encryptedData);
         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(Bias.getJarFile()));
         for (Entry<String, byte[]> entry : zipEntries.entrySet()) {
             String entryName = entry.getKey();
@@ -276,14 +301,14 @@ public class BackEnd {
         zos.close();
     }
     
-    private Collection<UUID> buildNode(Node node, DataCategory data) throws Exception {
+    private Collection<UUID> buildNode(Node node, DataCategory data, Cipher cipher) throws Exception {
         Collection<UUID> ids = new ArrayList<UUID>();
         for (Recognizable item : data.getData()) {
             if (item instanceof DataEntry) {
                 DataEntry de = (DataEntry) item;
                 String dePath = Constants.DATA_DIR + de.getId().toString() + Constants.DATA_FILE_ENDING;
-                byte[] value = de.getData();
-                zipEntries.put(dePath, value);
+                byte[] encryptedData = cipher.doFinal(de.getData());
+                zipEntries.put(dePath, encryptedData);
                 storeDataEntrySettings(de);
                 Element entryNode = metadata.createElement(Constants.XML_ELEMENT_ENTRY);
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, de.getId().toString());
@@ -314,7 +339,7 @@ public class BackEnd {
                 if (dc.getActiveIndex() != null) {
                     catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, dc.getActiveIndex().toString());
                 }
-                ids.addAll(buildNode(catNode, dc));
+                ids.addAll(buildNode(catNode, dc, cipher));
                 node.appendChild(catNode);
             }
         }

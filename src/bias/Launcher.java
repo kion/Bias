@@ -1,5 +1,6 @@
 package bias;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Frame;
@@ -11,6 +12,10 @@ import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
+
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPasswordField;
 
 public class Launcher extends Window {
 
@@ -25,6 +30,8 @@ public class Launcher extends Window {
     private Image image;
     
     private boolean painted = false;
+    
+    public static String PASSWORD;
     
     private Launcher() {
         super(new Frame());
@@ -107,9 +114,23 @@ public class Launcher extends Window {
     }
 
     public static void main(String[] args) throws Throwable {
-        showSplash();
-        invokeApp();
-        hideSplash();
+        JLabel label = new JLabel("password:");
+        JPasswordField passField = new JPasswordField();
+        if (JOptionPane.showConfirmDialog(
+                null, 
+                new Component[]{label, passField}, 
+                "Load authentification", 
+                JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            String password = new String(passField.getPassword());            
+            if (password != null) {
+                Launcher.PASSWORD = password;
+                showSplash();
+                invokeApp();
+                hideSplash();
+            } else {
+                System.exit(0);
+            }
+        }
     }
-    
+
 }

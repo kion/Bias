@@ -6,11 +6,7 @@ package bias.extension.FilePack;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -36,6 +32,7 @@ import bias.core.BackEnd;
 import bias.extension.Extension;
 import bias.gui.FrontEnd;
 import bias.utils.FSUtils;
+import bias.utils.PropertiesUtils;
 
 
 /**
@@ -76,12 +73,7 @@ public class FilePack extends Extension {
 
 	public FilePack(UUID id, byte[] data, byte[] settings) {
 		super(id, data, settings);
-        Properties p = new Properties();
-        if (getData() != null) {
-            try {
-                p.load(new ByteArrayInputStream(getData()));
-            } catch (IOException e) {}
-        }
+        Properties p = PropertiesUtils.deserializeProperties(data);
         filePack = new LinkedHashMap<Attachment, String>();
 		for (Attachment att : BackEnd.getInstance().getAttachments(getId())) {
 		    String date = p.getProperty(att.getName());
@@ -99,9 +91,7 @@ public class FilePack extends Extension {
         for (Entry<Attachment, String> fpEntry : filePack.entrySet()) {
             p.setProperty(fpEntry.getKey().getName(), fpEntry.getValue());
         }
-        StringWriter sw = new StringWriter();
-        p.list(new PrintWriter(sw));
-		return sw.getBuffer().toString().getBytes();
+		return PropertiesUtils.serializeProperties(p);
 	}
 	
 	private void initGUI() {

@@ -38,6 +38,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -190,10 +191,11 @@ public class FrontEnd extends JFrame {
 
     public static FrontEnd getInstance() {
         if (instance == null) {
+            preInit();
             boolean lafActivationSuccess;
             Throwable error = null;
             try {
-                preInit();
+                activateLAF();
                 lafActivationSuccess = true;
             } catch (Throwable e) {
                 error = e;
@@ -222,14 +224,22 @@ public class FrontEnd extends JFrame {
         return instance;
     }
     
-    private static void preInit() throws Throwable {
-        BackEnd.getInstance().load();
-        settings = BackEnd.getInstance().getSettings();
-        String laf = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
-        activateLAF(laf);
+    private static void preInit() {
+        try {
+            BackEnd.getInstance().load();
+            settings = BackEnd.getInstance().getSettings();
+        } catch (Throwable t) {
+            System.err.println(
+                    "Bias has failed to load data from Bias JAR :(\n" +
+                    "The reason of that most likely is one of the following:\n" +
+                    "* Bias JAR is broken\n" +
+                    "* invalid password");
+            System.exit(1);
+        }
     }
     
-    private static void activateLAF(String laf) throws Throwable {
+    private static void activateLAF() throws Throwable {
+        String laf = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
         if (laf != null) {
             String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                         + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
@@ -1431,13 +1441,30 @@ public class FrontEnd extends JFrame {
                 int rVal = jfc.showOpenDialog(FrontEnd.this);
                 if (rVal == JFileChooser.APPROVE_OPTION) {
                     jarFile = jfc.getSelectedFile();
-                    DataCategory data = BackEnd.getInstance().importData(jarFile, getVisualEntriesIDs());
-                    if (!data.getData().isEmpty()) {
-                        representData(data);
-                        displayMessage("Data have been successfully imported");
-                    } else {
-                        displayErrorMessage("Nothing to import!");
+
+                    JLabel label = new JLabel("password:");
+                    JPasswordField passField = new JPasswordField();
+                    if (JOptionPane.showConfirmDialog(
+                            null, 
+                            new Component[]{label, passField}, 
+                            "Import authentification", 
+                            JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                        String password = new String(passField.getPassword());            
+                        if (password != null) {
+                            try {
+                                DataCategory data = BackEnd.getInstance().importData(jarFile, getVisualEntriesIDs(), password);
+                                if (!data.getData().isEmpty()) {
+                                    representData(data);
+                                    displayMessage("Data have been successfully imported");
+                                } else {
+                                    displayErrorMessage("Nothing to import!");
+                                }
+                            } catch (Exception ex) {
+                                displayErrorMessage("Failed to import data!", ex);
+                            }
+                        }
                     }
+
                 }
             } catch (Exception ex) {
                 displayErrorMessage(ex);
@@ -1739,7 +1766,7 @@ public class FrontEnd extends JFrame {
                             String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
                             if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
                                 try {
-                                    setActiveLAF(null);
+                                    modified = setActiveLAF(null);
                                 } catch (Exception t) {
                                     displayErrorMessage(t);
                                 }
