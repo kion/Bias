@@ -1997,8 +1997,8 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
         	JLabel aboutLabel = new JLabel(
-        							"<html>Bias Personal Information Manager, version 0.1-beta<br>" +
-        							"(c) kion, 2006<br>"
+        							"<html>Bias Personal Information Manager, version 1.0.0<br>" +
+        							"(c) kion, 2007<br>"
         						);
         	JLabel linkLabel = new JLabel(
         							"<html><u><font color=blue>http://bias.sourceforge.net</font></u>"

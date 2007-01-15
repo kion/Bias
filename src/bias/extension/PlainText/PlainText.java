@@ -48,7 +48,7 @@ import bias.utils.PropertiesUtils;
  */
 
 @AddOnAnnotation(
-        version="1.3",
+        version="0.9.3",
         author="kion",
         description = "Simple plain text editor")
 public class PlainText extends Extension {
