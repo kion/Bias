@@ -1548,6 +1548,7 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent e) {
 
             try {
+                // extensions
                 JLabel extLabel = new JLabel("Extensions Management");
                 final DefaultTableModel extModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
@@ -1662,6 +1663,7 @@ public class FrontEnd extends JFrame {
                     }
                 });
 
+                // look-&-feels
                 JLabel lafLabel = new JLabel("Look-&-Feel Management");
                 final DefaultTableModel lafModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
@@ -1830,6 +1832,7 @@ public class FrontEnd extends JFrame {
                     }
                 });
                 
+                // icons
                 JLabel icLabel = new JLabel("Icons Management");
                 icModel = new DefaultListModel();
                 icList = new JList(icModel);
@@ -1884,6 +1887,7 @@ public class FrontEnd extends JFrame {
                     }
                 });
                 
+                // dialog
                 JTabbedPane addOnsPane = new JTabbedPane();
 
                 JPanel extControlsPanel = new JPanel(new GridLayout(1,3));
@@ -1924,8 +1928,7 @@ public class FrontEnd extends JFrame {
                     FrontEnd.this, 
                     addOnsPane,
                     "Manage Add-Ons",
-                    JOptionPane.INFORMATION_MESSAGE,
-                    ICON_ADDONS
+                    JOptionPane.INFORMATION_MESSAGE
                 );
 
                 if (modified || brokenFixed) {
