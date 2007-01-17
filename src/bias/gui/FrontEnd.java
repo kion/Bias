@@ -141,11 +141,12 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private static ExtensionFileChooser extensionFileChooser = new ExtensionFileChooser();
-    private static class ExtensionFileChooser extends JFileChooser {
+    private static AddOnFileChooser extensionFileChooser = new AddOnFileChooser();
+    private static AddOnFileChooser lafFileChooser = new AddOnFileChooser();
+    private static class AddOnFileChooser extends JFileChooser {
         private static final long serialVersionUID = 1L;
 
-        public ExtensionFileChooser() {
+        public AddOnFileChooser() {
             super();
             setMultiSelectionEnabled(true);
     		setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -1621,7 +1622,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton extInstButt = new JButton("Install new");
+                JButton extInstButt = new JButton("Install more");
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extensionFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
@@ -1772,12 +1773,12 @@ public class FrontEnd extends JFrame {
                         }    
                     }
                 });
-                JButton lafInstButt = new JButton("Install new");
+                JButton lafInstButt = new JButton("Install more");
                 lafInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (extensionFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                        if (lafFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
-                                for (File file : extensionFileChooser.getSelectedFiles()) {
+                                for (File file : lafFileChooser.getSelectedFiles()) {
                                     String installedLAF = BackEnd.getInstance().installLAF(file);
                                     installedLAF = installedLAF.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                                     lafModel.addRow(new Object[]{installedLAF,null,null,file.getName()});
@@ -1840,7 +1841,7 @@ public class FrontEnd extends JFrame {
                 JScrollPane jsp = new JScrollPane(icList);
                 jsp.setPreferredSize(new Dimension(200,200));
                 jsp.setMinimumSize(new Dimension(200,200));
-                JButton addIconButt = new JButton("Add new");
+                JButton addIconButt = new JButton("Add more");
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
