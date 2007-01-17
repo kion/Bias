@@ -95,7 +95,7 @@ public class FrontEnd extends JFrame {
 
     public static final ImageIcon ICON_DISCARD_UNSAVED_CHANGES = new ImageIcon(Constants.class.getResource("/bias/res/discard.png"));
 
-    public static final ImageIcon ICON_ADDONS = new ImageIcon(Constants.class.getResource("/bias/res/extensions.png"));
+    public static final ImageIcon ICON_ADDONS = new ImageIcon(Constants.class.getResource("/bias/res/addons.png"));
 
     public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(Constants.class.getResource("/bias/res/extensions.png"));
 
