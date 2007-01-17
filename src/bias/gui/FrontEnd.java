@@ -10,6 +10,7 @@ import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -94,9 +95,11 @@ public class FrontEnd extends JFrame {
 
     public static final ImageIcon ICON_DISCARD_UNSAVED_CHANGES = new ImageIcon(Constants.class.getResource("/bias/res/discard.png"));
 
+    public static final ImageIcon ICON_ADDONS = new ImageIcon(Constants.class.getResource("/bias/res/extensions.png"));
+
     public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(Constants.class.getResource("/bias/res/extensions.png"));
 
-    public static final ImageIcon ICON_LAF = new ImageIcon(Constants.class.getResource("/bias/res/lafs.png"));
+    public static final ImageIcon ICON_LAFS = new ImageIcon(Constants.class.getResource("/bias/res/lafs.png"));
 
     public static final ImageIcon ICON_ICONS = new ImageIcon(Constants.class.getResource("/bias/res/icons.png"));
     
@@ -283,11 +286,7 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton8 = null;
 
-    private JButton jButton9 = null;
-
     private JButton jButton10 = null;
-
-    private JButton jButton11 = null;
 
     private JButton jButton3 = null;
 
@@ -1103,8 +1102,6 @@ public class FrontEnd extends JFrame {
             jToolBar2.setFloatable(false); // Generated
             jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT); // Generated
             jToolBar2.add(getJButton6()); // Generated
-            jToolBar2.add(getJButton9()); // Generated
-            jToolBar2.add(getJButton11()); // Generated
             jToolBar2.add(getJButton8()); // Generated
         }
         return jToolBar2;
@@ -1145,39 +1142,11 @@ public class FrontEnd extends JFrame {
      */
     private JButton getJButton8() {
         if (jButton8 == null) {
-            jButton8 = new JButton(manageExtensionsAction);
-            jButton8.setToolTipText("manage extensions"); // Generated
-            jButton8.setIcon(ICON_EXTENSIONS);
+            jButton8 = new JButton(manageAddOnsAction);
+            jButton8.setToolTipText("manage add-ons"); // Generated
+            jButton8.setIcon(ICON_ADDONS);
         }
         return jButton8;
-    }
-
-    /**
-     * This method initializes jButton11
-     * 
-     * @return javax.swing.JButton
-     */
-    private JButton getJButton11() {
-        if (jButton11 == null) {
-            jButton11 = new JButton(manageLAFAction);
-            jButton11.setToolTipText("manage look-&-feel"); // Generated
-            jButton11.setIcon(ICON_LAF);
-        }
-        return jButton11;
-    }
-
-    /**
-     * This method initializes jButton9
-     * 
-     * @return javax.swing.JButton
-     */
-    private JButton getJButton9() {
-        if (jButton9 == null) {
-            jButton9 = new JButton(manageIconsAction);
-            jButton9.setToolTipText("manage icons"); // Generated
-            jButton9.setIcon(ICON_ICONS);
-        }
-        return jButton9;
     }
 
     /**
@@ -1566,25 +1535,30 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    private Action manageExtensionsAction = new AbstractAction() {
+    private Action manageAddOnsAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
+        private Collection<ImageIcon> icons;
+        private JList icList;
+        private DefaultListModel icModel;
+        
         private boolean modified;
         
         public void actionPerformed(ActionEvent e) {
+
             try {
                 JLabel extLabel = new JLabel("Extensions Management");
-                final DefaultTableModel model = new DefaultTableModel() {
+                final DefaultTableModel extModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
                         return false;
                     }
                 };
-                final JTable extList = new JTable(model);
-                model.addColumn("Name");
-                model.addColumn("Version");
-                model.addColumn("Author");
-                model.addColumn("Description");
+                final JTable extList = new JTable(extModel);
+                extModel.addColumn("Name");
+                extModel.addColumn("Version");
+                extModel.addColumn("Author");
+                extModel.addColumn("Description");
                 boolean brokenFixed = false;
                 for (String extension : BackEnd.getInstance().getExtensions()) {
                     try {
@@ -1595,13 +1569,13 @@ public class FrontEnd extends JFrame {
                         AddOnAnnotation extAnn = 
                             (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
                         if (extAnn != null) {
-                            model.addRow(new Object[]{
+                            extModel.addRow(new Object[]{
                                     extClass.getSimpleName(),
                                     extAnn.version(),
                                     extAnn.author(),
                                     extAnn.description()});
                         } else {
-                            model.addRow(new Object[]{
+                            extModel.addRow(new Object[]{
                                     extClass.getSimpleName(),
                                     ADDON_ANN_FIELD_VALUE_NA,
                                     ADDON_ANN_FIELD_VALUE_NA,
@@ -1622,8 +1596,8 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 }
-                JButton configButt = new JButton("Configure selected");
-                configButt.addActionListener(new ActionListener(){
+                JButton extConfigButt = new JButton("Configure selected");
+                extConfigButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extList.getSelectedRowCount() == 1) {
                             try {
@@ -1647,15 +1621,15 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton instButt = new JButton("Install new");
-                instButt.addActionListener(new ActionListener(){
+                JButton extInstButt = new JButton("Install new");
+                extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extensionFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
                                 for (File file : extensionFileChooser.getSelectedFiles()) {
                                     String installedExt = BackEnd.getInstance().installExtension(file);
                                     installedExt = installedExt.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                    model.addRow(new Object[]{installedExt,null,null,file.getName()});
+                                    extModel.addRow(new Object[]{installedExt,null,null,file.getName()});
                                     modified = true;
                                 }
                             } catch (Exception ex) {
@@ -1664,8 +1638,8 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton uninstButt = new JButton("Uninstall selected");
-                uninstButt.addActionListener(new ActionListener(){
+                JButton extUninstButt = new JButton("Uninstall selected");
+                extUninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
                             if (extList.getSelectedRowCount() != 0) {
@@ -1676,7 +1650,7 @@ public class FrontEnd extends JFrame {
                                         Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                 + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
                                     BackEnd.getInstance().uninstallExtension(extFullClassName);
-                                    model.removeRow(idx);
+                                    extModel.removeRow(idx);
                                     modified = true;
                                 }
                                 FrontEnd.getInstance().displayMessage("Extension(s) have been successfully uninstalled!");
@@ -1686,52 +1660,20 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                modified = false;
-                JOptionPane.showMessageDialog(
-                    FrontEnd.this, 
-                    new Component[]{
-                            extLabel,
-                            new JScrollPane(extList),
-                            configButt,
-                            instButt,
-                            uninstButt
-                    },
-                    "Manage Extensions",
-                    JOptionPane.INFORMATION_MESSAGE,
-                    null
-                );
-                if (modified || brokenFixed) {
-                    FrontEnd.getInstance().displayMessage(RESTART_MESSAGE);
-                    store();
-                    System.exit(0);
-                }
-            } catch (Exception ex) {
-                displayErrorMessage(ex);
-            }
-        }
-    };
 
-    private Action manageLAFAction = new AbstractAction() {
-        private static final long serialVersionUID = 1L;
-
-        private boolean modified;
-        
-        public void actionPerformed(ActionEvent e) {
-            try {
                 JLabel lafLabel = new JLabel("Look-&-Feel Management");
-                final DefaultTableModel model = new DefaultTableModel() {
+                final DefaultTableModel lafModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
                         return false;
                     }
                 };
-                final JTable lafList = new JTable(model);
-                model.addColumn("Name");
-                model.addColumn("Version");
-                model.addColumn("Author");
-                model.addColumn("Description");
-                model.addRow(new Object[]{DEFAULT_LOOK_AND_FEEL,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Look-&-Feel"});
-                boolean brokenFixed = false;
+                final JTable lafList = new JTable(lafModel);
+                lafModel.addColumn("Name");
+                lafModel.addColumn("Version");
+                lafModel.addColumn("Author");
+                lafModel.addColumn("Description");
+                lafModel.addRow(new Object[]{DEFAULT_LOOK_AND_FEEL,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Look-&-Feel"});
                 for (String laf : BackEnd.getInstance().getLAFs().keySet()) {
                     try {
                         Class<?> lafClass = Class.forName(laf);
@@ -1741,13 +1683,13 @@ public class FrontEnd extends JFrame {
                         AddOnAnnotation lafAnn = 
                             (AddOnAnnotation) lafClass.getAnnotation(AddOnAnnotation.class);
                         if (lafAnn != null) {
-                            model.addRow(new Object[]{
+                            lafModel.addRow(new Object[]{
                                     lafClass.getSimpleName(),
                                     lafAnn.version(),
                                     lafAnn.author(),
                                     lafAnn.description()});
                         } else {
-                            model.addRow(new Object[]{
+                            lafModel.addRow(new Object[]{
                                     lafClass.getSimpleName(),
                                     ADDON_ANN_FIELD_VALUE_NA,
                                     ADDON_ANN_FIELD_VALUE_NA,
@@ -1768,8 +1710,8 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 }
-                JButton activateButt = new JButton("Activate Look-&-Feel");
-                activateButt.addActionListener(new ActionListener(){
+                JButton lafActivateButt = new JButton("Activate Look-&-Feel");
+                lafActivateButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafList.getSelectedRowCount() == 1) {
                             String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
@@ -1801,8 +1743,8 @@ public class FrontEnd extends JFrame {
                         }    
                     }
                 });
-                JButton configButt = new JButton("Configure Look-&-Feel");
-                configButt.addActionListener(new ActionListener(){
+                JButton lafConfigButt = new JButton("Configure Look-&-Feel");
+                lafConfigButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafList.getSelectedRowCount() == 1) {
                             String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
@@ -1830,15 +1772,15 @@ public class FrontEnd extends JFrame {
                         }    
                     }
                 });
-                JButton instButt = new JButton("Install new");
-                instButt.addActionListener(new ActionListener(){
+                JButton lafInstButt = new JButton("Install new");
+                lafInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extensionFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
                                 for (File file : extensionFileChooser.getSelectedFiles()) {
                                     String installedLAF = BackEnd.getInstance().installLAF(file);
                                     installedLAF = installedLAF.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                    model.addRow(new Object[]{installedLAF,null,null,file.getName()});
+                                    lafModel.addRow(new Object[]{installedLAF,null,null,file.getName()});
                                     modified = true;
                                 }
                             } catch (Exception ex) {
@@ -1847,8 +1789,8 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton uninstButt = new JButton("Uninstall selected");
-                uninstButt.addActionListener(new ActionListener(){
+                JButton lafUninstButt = new JButton("Uninstall selected");
+                lafUninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
                             if (lafList.getSelectedRowCount() > 0) {
@@ -1862,7 +1804,7 @@ public class FrontEnd extends JFrame {
                                             Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                     + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
                                         BackEnd.getInstance().uninstallLAF(fullLAFClassName);
-                                        model.removeRow(idx);
+                                        lafModel.removeRow(idx);
                                         // if look-&-feel that has been uninstalled was active one...
                                         if (laf.equals(currentLAF)) {
                                             //... unset it (default one will be used)
@@ -1886,54 +1828,20 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                modified = false;
-                JOptionPane.showMessageDialog(
-                    FrontEnd.this, 
-                    new Component[]{
-                            lafLabel,
-                            new JScrollPane(lafList),
-                            activateButt,
-                            configButt,
-                            instButt,
-                            uninstButt
-                    },
-                    "Manage Look-&-Feel",
-                    JOptionPane.INFORMATION_MESSAGE,
-                    null
-                );
-                if (modified || brokenFixed) {
-                    FrontEnd.getInstance().displayMessage(RESTART_MESSAGE);
-                    store();
-                    System.exit(0);
-                }
-            } catch (Exception ex) {
-                displayErrorMessage(ex);
-            }
-        }
-    };
-
-    private Action manageIconsAction = new AbstractAction() {
-        private static final long serialVersionUID = 1L;
-
-        private Collection<ImageIcon> icons;
-        private JList icList;
-        private DefaultListModel model;
-        
-        public void actionPerformed(ActionEvent e) {
-            try {
+                
                 JLabel icLabel = new JLabel("Icons Management");
-                model = new DefaultListModel();
-                icList = new JList(model);
+                icModel = new DefaultListModel();
+                icList = new JList(icModel);
                 icons = new LinkedList<ImageIcon>();
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-                    model.addElement(icon);
+                    icModel.addElement(icon);
                     icons.add(icon);
                 }
                 JScrollPane jsp = new JScrollPane(icList);
                 jsp.setPreferredSize(new Dimension(200,200));
                 jsp.setMinimumSize(new Dimension(200,200));
-                JButton addButt = new JButton("Add new");
-                addButt.addActionListener(new ActionListener(){
+                JButton addIconButt = new JButton("Add new");
+                addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
                             try {
@@ -1942,7 +1850,7 @@ public class FrontEnd extends JFrame {
                                     Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
                                     if (!icons.isEmpty()) {
                                         for (ImageIcon icon : icons) {
-                                            model.addElement(icon);
+                                            icModel.addElement(icon);
                                         }
                                         added = true;
                                     }
@@ -1958,14 +1866,14 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton removeButt = new JButton("Remove selected");
-                removeButt.addActionListener(new ActionListener(){
+                JButton removeIconButt = new JButton("Remove selected");
+                removeIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
                             if (icList.getSelectedValues().length > 0) {
                                 for (Object icon : icList.getSelectedValues()) {
                                     BackEnd.getInstance().removeIcon((ImageIcon)icon);
-                                    model.removeElement(icon);
+                                    icModel.removeElement(icon);
                                 }
                                 FrontEnd.getInstance().displayMessage("Icon(s) have been successfully removed!");
                             }
@@ -1974,22 +1882,63 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
+                
+                JTabbedPane addOnsPane = new JTabbedPane();
+
+                JPanel extControlsPanel = new JPanel(new GridLayout(1,3));
+                extControlsPanel.add(extConfigButt);
+                extControlsPanel.add(extInstButt);
+                extControlsPanel.add(extUninstButt);
+                JPanel extPanel = new JPanel(new BorderLayout());
+                extPanel.add(extLabel, BorderLayout.NORTH);
+                extPanel.add(new JScrollPane(extList), BorderLayout.CENTER);
+                extPanel.add(extControlsPanel, BorderLayout.SOUTH);
+                
+                addOnsPane.addTab("Extensions", ICON_EXTENSIONS, extPanel);
+                
+                JPanel lafControlsPanel = new JPanel(new GridLayout(1,4));
+                lafControlsPanel.add(lafActivateButt);
+                lafControlsPanel.add(lafConfigButt);
+                lafControlsPanel.add(lafInstButt);
+                lafControlsPanel.add(lafUninstButt);
+                JPanel lafPanel = new JPanel(new BorderLayout());
+                lafPanel.add(lafLabel, BorderLayout.NORTH);
+                lafPanel.add(new JScrollPane(lafList), BorderLayout.CENTER);
+                lafPanel.add(lafControlsPanel, BorderLayout.SOUTH);
+                
+                addOnsPane.addTab("Look-&-Feels", ICON_LAFS, lafPanel);
+                
+                JPanel icControlsPanel = new JPanel(new GridLayout(1,2));
+                icControlsPanel.add(addIconButt);
+                icControlsPanel.add(removeIconButt);
+                JPanel icPanel = new JPanel(new BorderLayout());
+                icPanel.add(icLabel, BorderLayout.NORTH);
+                icPanel.add(new JScrollPane(jsp), BorderLayout.CENTER);
+                icPanel.add(icControlsPanel, BorderLayout.SOUTH);
+                
+                addOnsPane.addTab("Icons", ICON_ICONS, icPanel);
+                
+                modified = false;
                 JOptionPane.showMessageDialog(
                     FrontEnd.this, 
-                    new Component[]{
-                            icLabel,
-                            jsp,
-                            addButt,
-                            removeButt
-                    },
-                    "Manage Icons",
+                    addOnsPane,
+                    "Manage Add-Ons",
                     JOptionPane.INFORMATION_MESSAGE,
-                    null
+                    ICON_ADDONS
                 );
+
+                if (modified || brokenFixed) {
+                    FrontEnd.getInstance().displayMessage(RESTART_MESSAGE);
+                    store();
+                    System.exit(0);
+                }
+                
             } catch (Exception ex) {
                 displayErrorMessage(ex);
             }
+        	
         }
+        
     };
     
     private Action displayAboutInfoAction = new AbstractAction() {
