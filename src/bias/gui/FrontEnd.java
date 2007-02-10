@@ -755,7 +755,7 @@ public class FrontEnd extends JFrame {
                 JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
                 int index = tabbedPane.getSelectedIndex();
                 String caption = tabbedPane.getTitleAt(index);
-                JLabel pLabel = new JLabel("Item's category placement:");
+                JLabel pLabel = new JLabel("Entry's category placement:");
                 JComboBox placementsChooser = new JComboBox();
                 for (Placement placement : PLACEMENTS) {
                     placementsChooser.addItem(placement);
@@ -781,7 +781,7 @@ public class FrontEnd extends JFrame {
                     	}
                     }
                 }
-                JLabel cLabel = new JLabel("Item's caption:");
+                JLabel cLabel = new JLabel("Caption:");
                 caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser, cLabel },
                         caption);
                 if (caption != null) {
@@ -1228,7 +1228,8 @@ public class FrontEnd extends JFrame {
         for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
             iconChooser.addItem(icon);
         }
-        String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser },
+        JLabel cLabel = new JLabel("Caption:");
+        String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser, cLabel },
                 "New root category:", JOptionPane.QUESTION_MESSAGE);
         if (categoryCaption != null) {
             JTabbedPane categoryTabPane = new JTabbedPane();
@@ -1275,7 +1276,8 @@ public class FrontEnd extends JFrame {
             for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                 iconChooser.addItem(icon);
             }
-            String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser },
+            JLabel cLabel = new JLabel("Caption:");
+            String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser, cLabel },
                     "New entry:", JOptionPane.QUESTION_MESSAGE);
             if (caption != null) {
                 String typeDescription = (String) entryTypeComboBox.getSelectedItem();
@@ -1333,7 +1335,8 @@ public class FrontEnd extends JFrame {
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                     iconChooser.addItem(icon);
                 }
-                String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser },
+                JLabel cLabel = new JLabel("Caption:");
+                String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser, cLabel },
                         "New entry:", JOptionPane.QUESTION_MESSAGE);
                 if (caption != null) {
                     String typeDescription = (String) entryTypeComboBox.getSelectedItem();
@@ -1475,7 +1478,8 @@ public class FrontEnd extends JFrame {
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                     iconChooser.addItem(icon);
                 }
-                String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser },
+                JLabel cLabel = new JLabel("Caption:");
+                String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser, cLabel },
                         "New category:", JOptionPane.QUESTION_MESSAGE);
                 if (categoryCaption != null) {
                     JTabbedPane categoryTabPane = new JTabbedPane();
