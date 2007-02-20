@@ -1507,17 +1507,7 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             try {
-                // show confirmation dialog
-                if (JOptionPane.showConfirmDialog(FrontEnd.getInstance(), 
-                        "The data are going to be saved now." + Constants.NEW_LINE +
-                        "This will finish your current Bias session." + Constants.NEW_LINE +
-                        "Are you sure you want save and exit?",
-                        "Save data and exit",
-                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                    // store, then exit
-                    store();
-                    System.exit(0);
-                }
+                store();
             } catch (Exception ex) {
                 displayErrorMessage(ex);
             }
