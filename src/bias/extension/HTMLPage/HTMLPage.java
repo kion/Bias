@@ -687,7 +687,6 @@ public class HTMLPage extends Extension {
                             file = jfc.getSelectedFile();
                             if (!file.getName().matches(HTML_PAGE_FILE_NAME_PATTERN)) {
                                 file = new File(file.getParentFile(), file.getName() + ".html");
-                                System.out.println("stored to: " + file.getAbsolutePath());
                             }
                             Integer option = null;
                             if (file.exists()) {
