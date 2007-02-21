@@ -16,6 +16,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -28,6 +29,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -44,6 +46,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.UndoableEditEvent;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -70,6 +73,7 @@ import bias.extension.Extension;
 import bias.gui.FrontEnd;
 import bias.gui.VisualEntryDescriptor;
 import bias.utils.BrowserLauncher;
+import bias.utils.FSUtils;
 import bias.utils.Validator;
 
 /**
@@ -77,7 +81,7 @@ import bias.utils.Validator;
  */
 
 @AddOnAnnotation(
-        version="0.3",
+        version="0.3.1",
         author="kion",
         description = "WYSIWYG HTML page editor")
 public class HTMLPage extends Extension {
@@ -104,6 +108,11 @@ public class HTMLPage extends Extension {
 
     private static final ImageIcon ICON_SWITCH_MODE = 
         new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/switch_mode.png"));  //  @jve:decl-index=0:
+    
+    private static final ImageIcon ICON_SAVE = 
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/save.png"));
+    
+    private static final String HTML_PAGE_FILE_NAME_PATTERN = "(?i).+\\.(htm|html)$";
     
     private static final Font DEFAULT_FONT = new Font("SansSerif", Font.PLAIN, 12);
     
@@ -361,6 +370,8 @@ public class HTMLPage extends Extension {
 
     }
 
+    private File lastOutputDir = null;
+    
     private JToolBar jToolBar1 = null;
     private JToggleButton jToggleButton = null;
     private JToggleButton jToggleButton1 = null;
@@ -369,6 +380,7 @@ public class HTMLPage extends Extension {
     private JButton jButton = null;
     private JButton jButton1 = null;
     private JButton jButton5 = null;
+    private JButton jButton8 = null;
     private JComboBox jComboBox = null;
     private JComboBox jComboBox1 = null;
     private JTextPane jTextPane = null;
@@ -636,6 +648,71 @@ public class HTMLPage extends Extension {
     }
 
     /**
+     * This method initializes jButton8 
+     *  
+     * @return javax.swing.JButton  
+     */
+    private JButton getJButton8() {
+        if (jButton8 == null) {
+            jButton8 = new JButton();
+            jButton8.setToolTipText("save to file");  // Generated
+            jButton8.setIcon(HTMLPage.ICON_SAVE);  // Generated
+            jButton8.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    try {
+                        JFileChooser jfc;
+                        if (lastOutputDir != null) {
+                            jfc = new JFileChooser(lastOutputDir);
+                        } else {
+                            jfc = new JFileChooser();
+                        }
+                        jfc.setFileFilter(new FileFilter(){
+                            @Override
+                            public boolean accept(File f) {
+                                return f.isFile() && f.getName().matches(HTML_PAGE_FILE_NAME_PATTERN);
+                            }
+                            @Override
+                            public String getDescription() {
+                                return "HTML page (*.htm, *.html)";
+                            }
+                        });
+                        jfc.setMultiSelectionEnabled(false);
+                        File file;
+                        String fileName = FrontEnd.getInstance().getSelectedVisualEntryCaption();
+                        if (!Validator.isNullOrBlank(fileName)) {
+                            file = new File(fileName);
+                            jfc.setSelectedFile(file);
+                        }
+                        if (jfc.showSaveDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                            file = jfc.getSelectedFile();
+                            if (!file.getName().matches(HTML_PAGE_FILE_NAME_PATTERN)) {
+                                file = new File(file.getParentFile(), file.getName() + ".html");
+                                System.out.println("stored to: " + file.getAbsolutePath());
+                            }
+                            Integer option = null;
+                            if (file.exists()) {
+                                option = JOptionPane.showConfirmDialog(
+                                        FrontEnd.getInstance(), 
+                                        "File already exists, overwrite?", 
+                                        "Overwrite existing file", 
+                                        JOptionPane.YES_NO_OPTION);
+                            }
+                            if (option == null || option == JOptionPane.YES_OPTION) {
+                                byte[] data = getJTextPane().getText().getBytes();
+                                FSUtils.writeFile(file, data);
+                                lastOutputDir = file.getParentFile();
+                            }
+                        }
+                    } catch (Exception ex) {
+                        FrontEnd.getInstance().displayErrorMessage(ex);
+                    }
+                }
+            });    
+        }
+        return jButton8;
+    }
+
+    /**
      * This method initializes jButton 
      *  
      * @return javax.swing.JButton  
@@ -887,7 +964,7 @@ public class HTMLPage extends Extension {
             };
             jTextPane.setEditable(false);
             jTextPane.setEditorKit(new HTMLEditorKit());
-
+            
             // set default font for JTextPane instance
             MutableAttributeSet attrs = jTextPane.getInputAttributes();
             StyleConstants.setFontFamily(attrs, DEFAULT_FONT.getFamily());
@@ -937,7 +1014,7 @@ public class HTMLPage extends Extension {
         }
         return jTextPane;
     }
-
+    
     /**
      * This method initializes jPanel   
      *  
@@ -962,6 +1039,7 @@ public class HTMLPage extends Extension {
         if (jToolBar == null) {
             jToolBar = new JToolBar();
             jToolBar.setFloatable(false);  // Generated
+            jToolBar.add(getJButton8());  // Generated
             jToolBar.add(getJToggleButton3());  // Generated
         }
         return jToolBar;

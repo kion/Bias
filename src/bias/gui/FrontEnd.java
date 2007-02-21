@@ -609,6 +609,24 @@ public class FrontEnd extends JFrame {
         return null;
     }
 
+    public String getSelectedVisualEntryCaption() {
+        return getSelectedVisualEntryCaption(getJTabbedPane());
+    }
+
+    private String getSelectedVisualEntryCaption(JTabbedPane tabPane) {
+        if (tabPane.getTabCount() > 0) {
+            if (tabPane.getSelectedIndex() != -1) {
+                Component c = tabPane.getSelectedComponent();
+                if (c instanceof JTabbedPane) {
+                    return getSelectedVisualEntryCaption((JTabbedPane) c);
+                } else if (c instanceof Extension) {
+                    return tabPane.getTitleAt(tabPane.getSelectedIndex());
+                }
+            }
+        }
+        return null;
+    }
+
     private Collection<UUID> getVisualEntriesIDs() {
         return getVisualEntriesIDs(getJTabbedPane());
     }
