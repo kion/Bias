@@ -29,6 +29,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Map.Entry;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -430,18 +433,32 @@ public class BackEnd {
             Map<String, byte[]> classesMap = new HashMap<String, byte[]>();
             Map<String, byte[]> resoursesMap = new HashMap<String, byte[]>();
             Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
+            String extName = null;
             if (name.matches(Constants.ADDON_PACK_PATTERN)) {
-                ZipInputStream in = new ZipInputStream(new FileInputStream(extensionFile));
-                ZipEntry ze = null;
-                while ((ze = in.getNextEntry()) != null) {
-                    String zeName = ze.getName();
+                JarInputStream in = new JarInputStream(new FileInputStream(extensionFile));
+                Manifest manifest = in.getManifest();
+                if (manifest == null) {
+                    throw new Exception(
+                            "Invalid extension pack:\n" +
+                            "MANIFEST.MF file is missing!");
+                }
+                extName = manifest.getMainAttributes().getValue(Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE);
+                if (Validator.isNullOrBlank(extName)) {
+                    throw new Exception(
+                            "Invalid extension pack:\n" +
+                            Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE 
+                            + " attribute in MANIFEST.MF file is missing/empty!");
+                }
+                JarEntry je = null;
+                while ((je = in.getNextJarEntry()) != null) {
+                    String jeName = je.getName();
                     ByteArrayOutputStream out = null;
                     int type = 0;
-                    if (zeName.matches(Constants.ADDON_CLASS_FILE_PATH_PATTERN)) {
+                    if (jeName.matches(Constants.ADDON_CLASS_FILE_PATH_PATTERN)) {
                         type = 1;
-                    } else if (zeName.matches(Constants.RESOURCE_FILE_PATH_PATTERN)) {
+                    } else if (jeName.matches(Constants.RESOURCE_FILE_PATH_PATTERN)) {
                         type = 2;
-                    } else if (zeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
+                    } else if (jeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
                         type = 3;
                     }
                     if (type != 0) {
@@ -452,13 +469,15 @@ public class BackEnd {
                         }
                         out.close();
                         if (type == 1) {
-                            String shortName = zeName.replaceFirst("^.*/", Constants.EMPTY_STR)
-                                                     .replaceFirst("\\.class$", Constants.EMPTY_STR)
-                                                     .replaceFirst("\\$.*$", Constants.EMPTY_STR);
-                            installedExtNames.add(shortName);
-                            classesMap.put(zeName, out.toByteArray());
+                            if (!jeName.matches(Constants.ZIP_ADDITIONAL_CLASS_FILE_PATTERN)) {
+                                String shortName = jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
+                                                     .replaceFirst(Constants.CLASS_FILE_ENDING_PATTERN, Constants.EMPTY_STR)
+                                                     .replaceFirst(Constants.INNER_CLASS_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
+                                installedExtNames.add(shortName);
+                            }
+                            classesMap.put(jeName, out.toByteArray());
                         } else if (type == 2) {
-                            resoursesMap.put(zeName, out.toByteArray());
+                            resoursesMap.put(jeName, out.toByteArray());
                         } else if (type == 3) {
                             ZipInputStream lin = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
                             ZipEntry lze;
@@ -498,25 +517,28 @@ public class BackEnd {
             }
             if (installedExtNames.isEmpty()) {
                 throw new Exception("Invalid extension pack: nothing to install!");
-            } else if (installedExtNames.size() > 1) {
-                throw new Exception("Invalid extension pack: only one extension per pack allowed!");
+            } else if (!installedExtNames.contains(extName)) {
+                throw new Exception(
+                        "Invalid extension pack:\n" +
+                        "class corresponding to declared " 
+                        + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute\n" +
+                        "in MANIFEST.MF file has not been found in package!");
             } else {
-                String extName = installedExtNames.iterator().next();
                 String fullExtName = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                             + extName + Constants.PACKAGE_PATH_SEPARATOR + extName;
-                if (getExtensions().contains(fullExtName)) {
-                    throw new Exception("Can not install extension pack: duplicate extension name!");
+                if (getAddOns().contains(extName)) {
+                    throw new Exception("Can not install Add-On pack: duplicate Add-On name!");
                 } else {
-                    for (Entry<String, byte[]> entry : resoursesMap.entrySet()) {
-                        zipEntries.put(Constants.RESOURCES_DIR + extName + Constants.ZIP_PATH_SEPARATOR 
-                                        + entry.getKey().replaceFirst(Constants.RESOURCE_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
-                                        entry.getValue());
-                    }
                     for (Entry<String, byte[]> entry : classesMap.entrySet()) {
                         zipEntries.put(Constants.EXTENSION_DIR_PATH + Constants.ZIP_PATH_SEPARATOR 
                                 + extName + Constants.ZIP_PATH_SEPARATOR 
                                 + entry.getKey().replaceFirst(Constants.ADDON_CLASS_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
                                 entry.getValue());
+                    }
+                    for (Entry<String, byte[]> entry : resoursesMap.entrySet()) {
+                        zipEntries.put(Constants.RESOURCES_DIR + extName + Constants.ZIP_PATH_SEPARATOR 
+                                        + entry.getKey().replaceFirst(Constants.RESOURCE_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
+                                        entry.getValue());
                     }
                     if (!libsMap.isEmpty()) {
                         String extensionInstLogEntryPath = Constants.CONFIG_DIR + extName + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING;
@@ -597,18 +619,35 @@ public class BackEnd {
         if (lafFile != null && lafFile.exists() && !lafFile.isDirectory()) {
             String name = lafFile.getName();
             Map<String, byte[]> classesMap = new HashMap<String, byte[]>();
+            Map<String, byte[]> resoursesMap = new HashMap<String, byte[]>();
             Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
+            String lafName = null;
             if (name.matches(Constants.ADDON_PACK_PATTERN)) {
-                ZipInputStream in = new ZipInputStream(new FileInputStream(lafFile));
-                ZipEntry ze = null;
-                while ((ze = in.getNextEntry()) != null) {
-                    String zeName = ze.getName();
+                JarInputStream in = new JarInputStream(new FileInputStream(lafFile));
+                Manifest manifest = in.getManifest();
+                if (manifest == null) {
+                    throw new Exception(
+                            "Invalid LAF pack:\n" +
+                            "MANIFEST.MF file is missing!");
+                }
+                lafName = manifest.getMainAttributes().getValue(Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE);
+                if (Validator.isNullOrBlank(lafName)) {
+                    throw new Exception(
+                            "Invalid LAF pack:\n" +
+                            Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE 
+                            + " attribute in MANIFEST.MF file is missing/empty!");
+                }
+                JarEntry je = null;
+                while ((je = in.getNextJarEntry()) != null) {
+                    String jeName = je.getName();
                     ByteArrayOutputStream out = null;
                     int type = 0;
-                    if (zeName.matches(Constants.ADDON_CLASS_FILE_PATH_PATTERN)) {
+                    if (jeName.matches(Constants.ADDON_CLASS_FILE_PATH_PATTERN)) {
                         type = 1;
-                    } else if (zeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
+                    } else if (jeName.matches(Constants.RESOURCE_FILE_PATH_PATTERN)) {
                         type = 2;
+                    } else if (jeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
+                        type = 3;
                     }
                     if (type != 0) {
                         out = new ByteArrayOutputStream();
@@ -618,12 +657,14 @@ public class BackEnd {
                         }
                         out.close();
                         if (type == 1) {
-                            String shortName = zeName.replaceFirst("^.*/", Constants.EMPTY_STR)
-                                                     .replaceFirst("\\.class$", Constants.EMPTY_STR)
-                                                     .replaceFirst("\\$.*$", Constants.EMPTY_STR);
+                            String shortName = jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
+                                                     .replaceFirst(Constants.CLASS_FILE_ENDING_PATTERN, Constants.EMPTY_STR)
+                                                     .replaceFirst(Constants.INNER_CLASS_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
                             installedLAFNames.add(shortName);
-                            classesMap.put(zeName, out.toByteArray());
+                            classesMap.put(jeName, out.toByteArray());
                         } else if (type == 2) {
+                            resoursesMap.put(jeName, out.toByteArray());
+                        } else if (type == 3) {
                             ZipInputStream lin = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
                             ZipEntry lze;
                             while ((lze = lin.getNextEntry()) != null) {
@@ -662,20 +703,28 @@ public class BackEnd {
             }
             if (installedLAFNames.isEmpty()) {
                 throw new Exception("Invalid LAF pack: nothing to install!");
-            } else if (installedLAFNames.size() > 1) {
-                throw new Exception("Invalid LAF pack: only one LAF activator per pack allowed!");
+            } else if (!installedLAFNames.contains(lafName)) {
+                throw new Exception(
+                        "Invalid extension pack:\n" +
+                        "class corresponding to declared " 
+                        + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute\n" +
+                        "in MANIFEST.MF file has not been found in package!");
             } else {
-                String lafName = installedLAFNames.iterator().next();
                 String fullLAFName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                             + lafName + Constants.PACKAGE_PATH_SEPARATOR + lafName;
-                if (getLAFs().keySet().contains(fullLAFName)) {
-                    throw new Exception("Can not install LAF pack: duplicate LAF Manager name!");
+                if (getAddOns().contains(lafName)) {
+                    throw new Exception("Can not install Add-On pack: duplicate Add-On name!");
                 } else {
                     for (Entry<String, byte[]> entry : classesMap.entrySet()) {
                         zipEntries.put(Constants.LAF_DIR_PATH + Constants.ZIP_PATH_SEPARATOR 
                                 + lafName + Constants.ZIP_PATH_SEPARATOR 
                                 + entry.getKey().replaceFirst(Constants.ADDON_CLASS_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
                                 entry.getValue());
+                    }
+                    for (Entry<String, byte[]> entry : resoursesMap.entrySet()) {
+                        zipEntries.put(Constants.RESOURCES_DIR + lafName + Constants.ZIP_PATH_SEPARATOR 
+                                        + entry.getKey().replaceFirst(Constants.RESOURCE_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
+                                        entry.getValue());
                     }
                     if (!libsMap.isEmpty()) {
                         String lafInstLogEntryPath = Constants.CONFIG_DIR + lafName + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
@@ -703,7 +752,10 @@ public class BackEnd {
         lafPath = lafPath.substring(0, lafPath.lastIndexOf(Constants.ZIP_PATH_SEPARATOR));
         Collection<String> removeKeys = new HashSet<String>();
         for (String key : zipEntries.keySet()) {
-            if (key.startsWith(lafPath)) {
+            if (key.startsWith(lafPath)
+                || key.matches(Constants.RESOURCES_DIR 
+                        + lafName 
+                        + Constants.ANY_CHARACTERS_PATTERN)) {
                 removeKeys.add(key);
             }
         }
@@ -724,6 +776,19 @@ public class BackEnd {
         zipEntries.keySet().removeAll(addOnLibEntries);
         zipEntries.remove(Constants.CONFIG_DIR + addOn + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING);
         zipEntries.remove(Constants.CONFIG_DIR + addOn + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING);
+    }
+    
+    private Collection<String> getAddOns() {
+        Collection<String> addOns = new ArrayList<String>();
+        for (String name : zipEntries.keySet()) {
+            if (name.matches(Constants.EXTENSION_PATTERN) || name.matches(Constants.LAF_PATTERN)) {
+                String addOn = 
+                    name.substring(0, name.length() - Constants.CLASS_FILE_ENDING.length())
+                    .replaceAll(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR);
+                addOns.add(addOn);
+            }
+        }
+        return addOns;
     }
     
     private Collection<String> getAddOnLibEntries(String addOn) {

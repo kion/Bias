@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -1267,61 +1268,68 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
-            if (getJTabbedPane().getTabCount() == 0) {
-                if (defineRootPlacement()) {
-                    addRootEntryAction();
+            try {
+                Map<String, Class> extensions = ExtensionFactory.getInstance().getAnnotatedExtensions();
+                if (extensions.isEmpty()) {
+                    displayMessage(
+                            "You have no any extensions installed currently.\n" +
+                            "You can't add entries before you have at least one extension installed.");
+                } else {
+                    if (getJTabbedPane().getTabCount() == 0) {
+                        if (defineRootPlacement()) {
+                            addRootEntryAction(extensions);
+                        }
+                    } else {
+                        addRootEntryAction(extensions);
+                    }
                 }
-            } else {
-                addRootEntryAction();
+            } catch (Throwable t) {
+                displayErrorMessage("Unable to add entry." + Constants.NEW_LINE +
+                        "Some extension(s) may be broken." + Constants.NEW_LINE +
+                        "Try to open extensions management dialog, " +
+                        "it will autodetect and remove broken extensions." + Constants.NEW_LINE +
+                        "After that, try to add entry again.", t);
             }
         }
     };
 
-    private void addRootEntryAction() {
-        try {
-            JLabel entryTypeLabel = new JLabel("Type:");
-            JComboBox entryTypeComboBox = new JComboBox();
-            for (String entryType : ExtensionFactory.getInstance().getAnnotatedExtensions().keySet()) {
-                entryTypeComboBox.addItem(entryType);
+    private void addRootEntryAction(Map<String, Class> extensions) throws Throwable {
+        JLabel entryTypeLabel = new JLabel("Type:");
+        JComboBox entryTypeComboBox = new JComboBox();
+        for (String entryType : extensions.keySet()) {
+            entryTypeComboBox.addItem(entryType);
+        }
+        if (lastAddedEntryType != null) {
+            entryTypeComboBox.setSelectedItem(lastAddedEntryType);
+        }
+        entryTypeComboBox.setEditable(false);
+        JLabel icLabel = new JLabel("Choose icon:");
+        JComboBox iconChooser = new JComboBox();
+        iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
+        for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+            iconChooser.addItem(icon);
+        }
+        JLabel cLabel = new JLabel("Caption:");
+        String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser, cLabel },
+                "New entry:", JOptionPane.QUESTION_MESSAGE);
+        if (caption != null) {
+            String typeDescription = (String) entryTypeComboBox.getSelectedItem();
+            lastAddedEntryType = typeDescription;
+            Class type = extensions.get(typeDescription);
+            byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
+            if (defSettings == null) {
+                // extension's first time usage
+                configureExtension(type.getName(), true);
             }
-            if (lastAddedEntryType != null) {
-                entryTypeComboBox.setSelectedItem(lastAddedEntryType);
-            }
-            entryTypeComboBox.setEditable(false);
-            JLabel icLabel = new JLabel("Choose icon:");
-            JComboBox iconChooser = new JComboBox();
-            iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
-            for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-                iconChooser.addItem(icon);
-            }
-            JLabel cLabel = new JLabel("Caption:");
-            String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser, cLabel },
-                    "New entry:", JOptionPane.QUESTION_MESSAGE);
-            if (caption != null) {
-                String typeDescription = (String) entryTypeComboBox.getSelectedItem();
-                lastAddedEntryType = typeDescription;
-                Class type = ExtensionFactory.getInstance().getAnnotatedExtensions().get(typeDescription);
-                byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
-                if (defSettings == null) {
-                    // extension's first time usage
-                    configureExtension(type.getName(), true);
-                }
-                Extension extension = ExtensionFactory.getInstance().newExtension(type);
-                if (extension != null) {
-                    getJTabbedPane().addTab(caption, extension);
-                    getJTabbedPane().setSelectedComponent(extension);
-                    ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
-                    if (icon != null) {
-                    	getJTabbedPane().setIconAt(getJTabbedPane().getSelectedIndex(), icon);
-                    }
+            Extension extension = ExtensionFactory.getInstance().newExtension(type);
+            if (extension != null) {
+                getJTabbedPane().addTab(caption, extension);
+                getJTabbedPane().setSelectedComponent(extension);
+                ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+                if (icon != null) {
+                    getJTabbedPane().setIconAt(getJTabbedPane().getSelectedIndex(), icon);
                 }
             }
-        } catch (Throwable t) {
-            displayErrorMessage("Unable to add entry." + Constants.NEW_LINE +
-            					"Some extension(s) may be broken." + Constants.NEW_LINE +
-            					"Try to open extensions management dialog, " +
-            					"it will autodetect and remove broken extensions." + Constants.NEW_LINE +
-            					"After that, try to add entry again.", t);
         }
     }
     
@@ -1330,48 +1338,55 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             try {
-                if (getJTabbedPane().getTabCount() == 0) {
-                    if (!defineRootPlacement()) {
-                        return;
+                Map<String, Class> extensions = ExtensionFactory.getInstance().getAnnotatedExtensions();
+                if (extensions.isEmpty()) {
+                    displayMessage(
+                            "You have no any extensions installed currently.\n" +
+                            "You can't add entries before you have at least one extension installed.");
+                } else {
+                    if (getJTabbedPane().getTabCount() == 0) {
+                        if (!defineRootPlacement()) {
+                            return;
+                        }
                     }
-                }
-                if (getJTabbedPane().getTabCount() == 0 || getJTabbedPane().getSelectedIndex() == -1) {
-                    currentTabPane = getJTabbedPane();
-                }
-                JLabel entryTypeLabel = new JLabel("Type:");
-                JComboBox entryTypeComboBox = new JComboBox();
-                for (String entryType : ExtensionFactory.getInstance().getAnnotatedExtensions().keySet()) {
-                    entryTypeComboBox.addItem(entryType);
-                }
-                if (lastAddedEntryType != null) {
-                    entryTypeComboBox.setSelectedItem(lastAddedEntryType);
-                }
-                entryTypeComboBox.setEditable(false);
-                JLabel icLabel = new JLabel("Choose icon:");
-                JComboBox iconChooser = new JComboBox();
-                iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
-                for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-                    iconChooser.addItem(icon);
-                }
-                JLabel cLabel = new JLabel("Caption:");
-                String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser, cLabel },
-                        "New entry:", JOptionPane.QUESTION_MESSAGE);
-                if (caption != null) {
-                    String typeDescription = (String) entryTypeComboBox.getSelectedItem();
-                    lastAddedEntryType = typeDescription;
-                    Class type = ExtensionFactory.getInstance().getAnnotatedExtensions().get(typeDescription);
-                    byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
-                    if (defSettings == null) {
-                        // extension's first time usage
-                        configureExtension(type.getName(), true);
+                    if (getJTabbedPane().getTabCount() == 0 || getJTabbedPane().getSelectedIndex() == -1) {
+                        currentTabPane = getJTabbedPane();
                     }
-                    Extension extension = ExtensionFactory.getInstance().newExtension(type);
-                    if (extension != null) {
-                        currentTabPane.addTab(caption, extension);
-                        currentTabPane.setSelectedComponent(extension);
-                        ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
-                        if (icon != null) {
-                            currentTabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
+                    JLabel entryTypeLabel = new JLabel("Type:");
+                    JComboBox entryTypeComboBox = new JComboBox();
+                    for (String entryType : extensions.keySet()) {
+                        entryTypeComboBox.addItem(entryType);
+                    }
+                    if (lastAddedEntryType != null) {
+                        entryTypeComboBox.setSelectedItem(lastAddedEntryType);
+                    }
+                    entryTypeComboBox.setEditable(false);
+                    JLabel icLabel = new JLabel("Choose icon:");
+                    JComboBox iconChooser = new JComboBox();
+                    iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
+                    for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+                        iconChooser.addItem(icon);
+                    }
+                    JLabel cLabel = new JLabel("Caption:");
+                    String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser, cLabel },
+                            "New entry:", JOptionPane.QUESTION_MESSAGE);
+                    if (caption != null) {
+                        String typeDescription = (String) entryTypeComboBox.getSelectedItem();
+                        lastAddedEntryType = typeDescription;
+                        Class type = extensions.get(typeDescription);
+                        byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
+                        if (defSettings == null) {
+                            // extension's first time usage
+                            configureExtension(type.getName(), true);
+                        }
+                        Extension extension = ExtensionFactory.getInstance().newExtension(type);
+                        if (extension != null) {
+                            currentTabPane.addTab(caption, extension);
+                            currentTabPane.setSelectedComponent(extension);
+                            ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+                            if (icon != null) {
+                                currentTabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
+                            }
                         }
                     }
                 }
