@@ -6,11 +6,7 @@ package bias.extension.Graffiti;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.GridBagLayout;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +24,8 @@ import javax.swing.border.LineBorder;
 
 import bias.annotation.AddOnAnnotation;
 import bias.extension.Extension;
+import bias.extension.Graffiti.brush.LiveBrush;
+import bias.extension.Graffiti.brush.PaintBrush;
 
 import com.sun.image.codec.jpeg.ImageFormatException;
 
@@ -57,157 +55,24 @@ public class Graffiti extends Extension {
     private static final ImageIcon ICON_COLOR = 
         new ImageIcon(Graffiti.class.getResource("/bias/res/Graffiti/color.png"));
 
-    private class PaintingPanel extends JPanel implements MouseListener, MouseMotionListener {
-
-        private static final long serialVersionUID = 1L;
-        
-        Dimension dimension;
-
-        BufferedImage backbuffer;
-
-        Graphics backg;
-        
-        public PaintingPanel(Dimension dimension) {
-            super();
-            this.dimension = dimension;
-            init();
-        }
-        
-        public void init() {
-            setPreferredSize(dimension);
-            setMinimumSize(dimension);
-            setMaximumSize(dimension);
-            backbuffer = new BufferedImage(dimension.width, dimension.height, BufferedImage.TYPE_INT_RGB);
-            backg = backbuffer.getGraphics();
-            clear();
-            currentBrush = getSimpleBrushInstance();
-            addMouseListener(this);
-            addMouseMotionListener(this);
-        }
-
-        public void mouseClicked(MouseEvent e) {
-            if (currentBrush != null) {
-                currentBrush.mousePaint(backg, e);
-            }
-            repaint();
-            e.consume();
-        }
-
-        public void mouseEntered(MouseEvent arg0) {
-        }
-
-        public void mouseExited(MouseEvent arg0) {
-        }
-
-        public void mousePressed(MouseEvent arg0) {
-        }
-
-        public void mouseReleased(MouseEvent arg0) {
-        }
-
-        public void mouseMoved(MouseEvent e) {
-        }
-
-        public void mouseDragged(MouseEvent e) {
-            if (currentBrush != null) {
-                currentBrush.mousePaint(backg, e);
-            }
-            repaint();
-            e.consume();
-        }
-
-        public void update(Graphics g) {
-            g.drawImage(backbuffer, 0, 0, this);
-        }
-
-        public void paint(Graphics g) {
-            update(g);
-        }
-        
-        public void clear() {
-            backg.setColor(Color.white);
-            backg.fillRect(0, 0, dimension.width, dimension.height);
-            backg.setColor(currentColor);
-            repaint();
-        }
-
-        public BufferedImage getImage() {
-            return backbuffer;
-        }
-        
-        public void setImage(BufferedImage image) {
-            backbuffer = image;
-            backg = backbuffer.getGraphics();
-        }
-        
-    }
-    
     private PaintingPanel pp;
-    
-    private Color currentColor = Color.black;
-    
-    private static interface Brush {
-        void mousePaint(Graphics graphics, MouseEvent event);
-    }
-    
-    private Brush currentBrush;
     
     private PaintBrush paintBrush;
     
-    private PaintBrush getSimpleBrushInstance() {
+    private LiveBrush liveBrush;
+    
+    public PaintBrush getSimpleBrushInstance() {
         if (paintBrush == null) {
             paintBrush = new PaintBrush();
         }
         return paintBrush;
     }
     
-    private class PaintBrush implements Brush {
-        
-        /* (non-Javadoc)
-         * @see drafts.Painting.PaintingTool#paint(java.awt.Image, java.awt.event.MouseEvent)
-         */
-        public void mousePaint(Graphics graphics, MouseEvent event) {
-            int x = event.getX();
-            int y = event.getY();
-            graphics.setColor(currentColor);
-            graphics.fillOval(x - 5, y - 5, 10, 10);
-        }
-
-    }
-    
-    private LiveBrush liveBrush;
-    
-    private LiveBrush getLiveBrushInstance() {
+    public LiveBrush getLiveBrushInstance() {
         if (liveBrush == null) {
             liveBrush = new LiveBrush();
         }
         return liveBrush;
-    }
-    
-    private class LiveBrush implements Brush {
-
-        private int mx, my;
-
-        private double t = 0;
-        
-        /* (non-Javadoc)
-         * @see drafts.Painting.PaintingTool#paint(java.awt.Image, java.awt.event.MouseEvent)
-         */
-        public void mousePaint(Graphics graphics, MouseEvent event) {
-            int x = event.getX();
-            int y = event.getY();
-            int dx = x - mx;
-            int dy = y - my;
-            t += Math.sqrt(dx * dx + dy * dy) / 20;
-            if (t > 2 * Math.PI) {
-                t -= 2 * Math.PI;
-            }
-            graphics.setColor(currentColor);
-            graphics.drawLine(x, y, x + (int) (15 * Math.cos(t)), y + (int) (15 * Math.sin(t)));
-            mx = x;
-            my = y;
-        }
-
     }
     
     private JToolBar jToolBar = null;
@@ -242,7 +107,7 @@ public class Graffiti extends Extension {
         JPanel panel = new JPanel(new GridBagLayout());
         Dimension d = new Dimension(300,300);
         JPanel cp = new JPanel();
-        pp = new PaintingPanel(d);
+        pp = new PaintingPanel(d, getSimpleBrushInstance(), Color.BLACK);
         cp.add(pp);
         cp.setBorder(new LineBorder(Color.black));
         panel.add(cp);
@@ -296,7 +161,7 @@ public class Graffiti extends Extension {
             jButton.setIcon(ICON_PAINT_BRUSH);
             jButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    currentBrush = getSimpleBrushInstance();
+                    pp.setCurrentBrush(getSimpleBrushInstance());
                 }
             });
         }
@@ -315,7 +180,7 @@ public class Graffiti extends Extension {
             jButton1.setIcon(ICON_LIVE_BRUSH);
             jButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    currentBrush = getLiveBrushInstance();
+                    pp.setCurrentBrush(getLiveBrushInstance());
                 }
             });
         }
@@ -334,7 +199,7 @@ public class Graffiti extends Extension {
             jButton4.setIcon(ICON_COLOR);
             jButton4.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    currentColor = JColorChooser.showDialog(Graffiti.this, "select text color", Color.BLACK);
+                    pp.setCurrentColor(JColorChooser.showDialog(Graffiti.this, "select text color", Color.BLACK));
                 }
             });
         }

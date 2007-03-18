@@ -13,7 +13,6 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
@@ -38,20 +37,14 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
-import javax.swing.SwingUtilities;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.event.UndoableEditEvent;
 import javax.swing.filechooser.FileFilter;
-import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
-import javax.swing.text.JTextComponent;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
@@ -61,11 +54,6 @@ import javax.swing.text.AbstractDocument.BranchElement;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.HTML.Tag;
-import javax.swing.undo.CannotUndoException;
-import javax.swing.undo.CompoundEdit;
-import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
 
 import bias.Constants;
 import bias.annotation.AddOnAnnotation;
@@ -138,236 +126,6 @@ public class HTMLPage extends Extension {
         fontSizes.put("x-large", FONT_SIZE_X_LARGE);
         fontSizes.put("xx-large", FONT_SIZE_XX_LARGE);
         return fontSizes;
-    }
-
-    private static class UndoRedoManager extends UndoManager implements DocumentListener {
-
-        private static final long serialVersionUID = 1L;
-
-        public CompoundEdit compoundEdit;
-
-        private JTextComponent editor;
-
-        private int lastOffset;
-
-        private int lastLength;
-
-        public UndoRedoManager(JTextComponent editor) {
-            this.editor = editor;
-            this.editor.addKeyListener(new UndoRedoKeyListener());
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.undo.UndoManager#undo()
-         */
-        public void undo() {
-            super.undo();
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.undo.UndoManager#redo()
-         */
-        public void redo() {
-            super.redo();
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.undo.UndoManager#undoableEditHappened(javax.swing.event.UndoableEditEvent)
-         */
-        public void undoableEditHappened(UndoableEditEvent e) {
-            if (compoundEdit == null) {
-                compoundEdit = startCompoundEdit(e.getEdit());
-                lastLength = editor.getDocument().getLength();
-                return;
-            }
-
-            AbstractDocument.DefaultDocumentEvent event = (AbstractDocument.DefaultDocumentEvent) e.getEdit();
-
-            if (event.getType().equals(DocumentEvent.EventType.CHANGE)) {
-                compoundEdit.addEdit(e.getEdit());
-                return;
-            }
-
-            int offsetChange = editor.getCaretPosition() - lastOffset;
-            int lengthChange = editor.getDocument().getLength() - lastLength;
-
-            if (Math.abs(offsetChange) == 1 && Math.abs(lengthChange) == 1) {
-                compoundEdit.addEdit(e.getEdit());
-                lastOffset = editor.getCaretPosition();
-                lastLength = editor.getDocument().getLength();
-                return;
-            }
-
-            compoundEdit.end();
-            compoundEdit = startCompoundEdit(e.getEdit());
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.event.DocumentListener#insertUpdate(javax.swing.event.DocumentEvent)
-         */
-        public void insertUpdate(final DocumentEvent e) {
-            SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                    int offset = e.getOffset() + e.getLength();
-                    offset = Math.min(offset, editor.getDocument().getLength());
-                    editor.setCaretPosition(offset);
-                }
-            });
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.event.DocumentListener#removeUpdate(javax.swing.event.DocumentEvent)
-         */
-        public void removeUpdate(DocumentEvent e) {
-            editor.setCaretPosition(e.getOffset());
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.event.DocumentListener#changedUpdate(javax.swing.event.DocumentEvent)
-         */
-        public void changedUpdate(DocumentEvent e) {}
-
-        private CompoundEdit startCompoundEdit(UndoableEdit anEdit) {
-            lastOffset = editor.getCaretPosition();
-            lastLength = editor.getDocument().getLength();
-
-            compoundEdit = new CustomCompoundEdit();
-            compoundEdit.addEdit(anEdit);
-
-            addEdit(compoundEdit);
-            return compoundEdit;
-        }
-
-        private class CustomCompoundEdit extends CompoundEdit {
-
-            private static final long serialVersionUID = 1L;
-            
-            /* (non-Javadoc)
-             * @see javax.swing.undo.CompoundEdit#isInProgress()
-             */
-            public boolean isInProgress() {
-                return false;
-            }
-            
-            /* (non-Javadoc)
-             * @see javax.swing.undo.CompoundEdit#undo()
-             */
-            public void undo() throws CannotUndoException {
-                if (compoundEdit != null) {
-                    compoundEdit.end();
-                }
-                super.undo();
-                compoundEdit = null;
-            }
-            
-        }
-
-        private class UndoRedoKeyListener extends KeyAdapter {
-            
-            /* (non-Javadoc)
-             * @see java.awt.event.KeyAdapter#keyReleased(java.awt.event.KeyEvent)
-             */
-            public void keyReleased(java.awt.event.KeyEvent e) {
-                if (editor.isEditable()) {
-                    if (e.getModifiers() == KeyEvent.CTRL_MASK && e.getKeyCode() == KeyEvent.VK_Z) {
-                        if (canUndo()) {
-                            undo();
-                        }
-                    } else if (e.getModifiers() == KeyEvent.CTRL_MASK && e.getKeyCode() == KeyEvent.VK_Y) {
-                        if (canRedo()) {
-                            redo();
-                        }
-                    }
-                }
-            };
-            
-        }
-
-    }
-    
-    private static class HTMLPageEditor {
-
-        public static void insertHTML(JTextPane editor, String htmlText, Tag tag) throws BadLocationException, IOException {
-            if (editor.getEditorKit() instanceof HTMLEditorKit && editor.getDocument() instanceof HTMLDocument) {
-                
-                // remove editor's selected text if any 
-                if (editor.getSelectedText() != null) {
-                    editor.replaceSelection(Constants.EMPTY_STR);
-                }
-
-                HTMLEditorKit editorKit = (HTMLEditorKit) editor.getEditorKit();
-                HTMLDocument document = (HTMLDocument) editor.getDocument();
-
-                int caret = editor.getCaretPosition();
-                Element pEl = document.getParagraphElement(caret);
-                
-                // insert space after inserted html if needed
-                boolean insertSpace = true;
-                if (caret < document.getLength()) {
-                    if (document.getText(caret, 1).matches("\\s+")) {
-                        insertSpace = false;
-                    }
-                }
-                if (insertSpace) {
-                    htmlText += "&nbsp;";
-                }
-                
-                boolean isBreakingTag = tag.breaksFlow() || tag.isBlock();
-                boolean isParagraphBegining = caret == pEl.getStartOffset();
-
-                if (isBreakingTag && !isParagraphBegining) {
-                    editorKit.insertHTML(document, caret, htmlText, 1, 0, tag);
-                } else if (!isBreakingTag && !isParagraphBegining) {
-                    editorKit.insertHTML(document, caret, htmlText, 0, 0, tag);
-                } else if (isBreakingTag && isParagraphBegining) {
-                    // insert blank char to avoid incorrect caret positioning
-                    // after html text is inserted in the begining of the paragraph 
-                    document.insertBeforeStart(pEl, "&nbsp;");
-                    // insert html text actually
-                    editorKit.insertHTML(document, caret + 1, htmlText, 1, 0, tag);
-                    // remove blank char added before
-                    document.remove(caret, 1);
-                } else if (!isBreakingTag && isParagraphBegining) {
-                    // insert blank char to avoid incorrect caret positioning
-                    // after html text is inserted in the begining of the paragraph 
-                    document.insertAfterStart(pEl, "&nbsp;");
-                    // insert html text actually
-                    editorKit.insertHTML(document, caret + 1, htmlText, 0, 0, tag);
-                    // remove blank char added before
-                    document.remove(caret, 1);
-                }
-                
-            }
-        }
-        
-        /**
-         * inserts HTML-line-break as response to user's Enter-key pressing;
-         * should be called immediately after Enter-key has been released
-         * 
-         * @param editor editor to insert line break to
-         * @throws BadLocationException
-         * @throws IOException
-         */
-        public static void insertLineBreakOnEnter(JTextPane editor) throws BadLocationException, IOException {
-            if (editor.getEditorKit() instanceof HTMLEditorKit && editor.getDocument() instanceof HTMLDocument) {
-                HTMLEditorKit editorKit = (HTMLEditorKit) editor.getEditorKit();
-                HTMLDocument document = (HTMLDocument) editor.getDocument();
-
-                int caret = editor.getCaretPosition();
-                Element pEl = document.getParagraphElement(caret-1);
-                boolean isParagraphBegining = caret-1 == pEl.getStartOffset();
-
-                // insert HTML-line-break
-                editorKit.insertHTML(document, caret-1, "<br>", 0, 0, HTML.Tag.BR);
-
-                if (!isParagraphBegining) {
-                    // remove plain line break
-                    document.remove(caret-1, 1);
-                }
-                
-            }
-        }
-
     }
 
     private File lastOutputDir = null;
