@@ -23,14 +23,15 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableModel;
 
+import bias.Constants;
 import bias.annotation.AddOnAnnotation;
 import bias.core.Attachment;
 import bias.core.BackEnd;
 import bias.extension.Extension;
 import bias.gui.FrontEnd;
+import bias.utils.AppManager;
 import bias.utils.FSUtils;
 import bias.utils.PropertiesUtils;
 
@@ -41,18 +42,24 @@ import bias.utils.PropertiesUtils;
  */
 
 @AddOnAnnotation(
-        version="0.1.2",
+        version="0.2.0",
         author="kion",
         description = "Simple file pack")
 public class FilePack extends Extension {
 
 	private static final long serialVersionUID = 1L;
-	
+    
     private static final ImageIcon ICON_ADD = 
         new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/add.png"));
     
     private static final ImageIcon ICON_DELETE = 
         new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/delete.png"));
+    
+    private static final ImageIcon ICON_VIEW = 
+        new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/view.png"));
+    
+    private static final ImageIcon ICON_APPLY = 
+        new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/apply.png"));
     
     private static final ImageIcon ICON_SAVE = 
         new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/save.png"));
@@ -69,6 +76,8 @@ public class FilePack extends Extension {
 	private JTable jTable1;
 	private JScrollPane jScrollPane1;
 	private JButton jButton3;
+    private JButton jButton4;
+    private JButton jButton5;
 	private JButton jButton1;
 
 	public FilePack(UUID id, byte[] data, byte[] settings) {
@@ -131,6 +140,28 @@ public class FilePack extends Extension {
 							}
 						});
 					}
+                    {
+                        jButton4 = new JButton();
+                        jToolBar1.add(jButton4);
+                        jButton4.setIcon(ICON_VIEW);
+                        jButton4.setToolTipText("view file using default application");
+                        jButton4.addActionListener(new ActionListener() {
+                            public void actionPerformed(ActionEvent evt) {
+                                viewFileAction(evt);
+                            }
+                        });
+                    }
+                    {
+                        jButton5 = new JButton();
+                        jToolBar1.add(jButton5);
+                        jButton5.setIcon(ICON_APPLY);
+                        jButton5.setToolTipText("apply changes made to file(s)");
+                        jButton5.addActionListener(new ActionListener() {
+                            public void actionPerformed(ActionEvent evt) {
+                                applyChangesAction(evt);
+                            }
+                        });
+                    }
 					{
 						jButton3 = new JButton();
 						jToolBar1.add(jButton3);
@@ -183,19 +214,6 @@ public class FilePack extends Extension {
             }
 			jfc.setMultiSelectionEnabled(true);
 			jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-			jfc.setFileFilter(new FileFilter(){
-
-				@Override
-				public boolean accept(File f) {
-					return true;
-				}
-
-				@Override
-				public String getDescription() {
-					return "Any file";
-				}
-				
-			});
 			if (jfc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 				File[] files = jfc.getSelectedFiles();
 				try {
@@ -228,6 +246,41 @@ public class FilePack extends Extension {
 		}
 	}
 	
+    private synchronized void viewFileAction(ActionEvent evt) {
+        try {
+            if (jTable1.getSelectedRows().length > 0) {
+                DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+                for (int i : jTable1.getSelectedRows()) {
+                    String fileName = (String) model.getValueAt(i, 0);
+                    final File file = new File(Constants.SESSION_TMP_DIR, fileName);
+                    if (!file.exists()) {
+                        byte[] data = getFileData(fileName);
+                        FSUtils.writeFile(file, data);
+                    }
+                    AppManager.getInstance().handleFile(file);
+                }
+            }
+        } catch (Exception e) {
+            FrontEnd.getInstance().displayErrorMessage(e);
+        }
+    }
+    
+    private synchronized void applyChangesAction(ActionEvent evt) {
+        try {
+            DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+            for (int i = 0; i < jTable1.getRowCount(); i++) {
+                String fileName = (String) model.getValueAt(i, 0);
+                File file = new File(Constants.SESSION_TMP_DIR, fileName);
+                if (file.exists()) {
+                    removeFile(fileName, i);
+                    addFile(file);
+                }
+            }
+        } catch (Exception e) {
+            FrontEnd.getInstance().displayErrorMessage(e);
+        }
+    }
+    
 	private void saveFileAction(ActionEvent evt) {
 		try {
 			if (jTable1.getSelectedRows().length > 0) {
@@ -326,6 +379,7 @@ public class FilePack extends Extension {
 		}
 		if (toRemove != null) {
 			filePack.remove(toRemove);
+            BackEnd.getInstance().removeAttachment(getId(), toRemove.getName());
 			// update grid
 			removeRow(rowIdx);
 		}

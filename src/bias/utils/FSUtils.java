@@ -49,5 +49,17 @@ public class FSUtils {
         bos.close();
         bais.close();
 	}
+    
+    public static void delete(File file) {
+        if (file != null && file.exists()) {
+            if (file.isDirectory()) {
+                File[] files = file.listFiles();
+                for (File f : files) {
+                    delete(f);
+                }
+            }
+            file.delete();
+        }
+    }
 
 }

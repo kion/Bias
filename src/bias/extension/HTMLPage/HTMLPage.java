@@ -8,9 +8,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
@@ -60,7 +57,7 @@ import bias.annotation.AddOnAnnotation;
 import bias.extension.Extension;
 import bias.gui.FrontEnd;
 import bias.gui.VisualEntryDescriptor;
-import bias.utils.BrowserLauncher;
+import bias.utils.AppManager;
 import bias.utils.FSUtils;
 import bias.utils.Validator;
 
@@ -709,16 +706,7 @@ public class HTMLPage extends Extension {
      */
     private JTextPane getJTextPane() {
         if (jTextPane == null) {
-            jTextPane = new JTextPane(){
-                private static final long serialVersionUID = 1L;
-                @Override
-                public void paint(Graphics g) {
-                    // enable font anti-aliasing
-                    ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                            RenderingHints.VALUE_ANTIALIAS_ON);
-                    super.paint(g);
-                }
-            };
+            jTextPane = new JTextPane();
             jTextPane.setEditable(false);
             jTextPane.setEditorKit(new HTMLEditorKit());
             
@@ -760,7 +748,7 @@ public class HTMLPage extends Extension {
                             FrontEnd.getInstance().switchToVisualEntry(UUID.fromString(idStr));
                         } else {
                             try {
-                                BrowserLauncher.openURL(e.getDescription());
+                                AppManager.getInstance().handleAddress(e.getDescription());
                             } catch (Exception ex) {
                                 FrontEnd.getInstance().displayErrorMessage(ex);
                             }

@@ -72,22 +72,21 @@ public class BackEnd {
 	private static BackEnd instance;
 	
 	private BackEnd() {
-		// constructor without parameters is hidden for singleton
+        try {
+            CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, Launcher.PASSWORD);
+            CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, Launcher.PASSWORD);
+        } catch (Exception e) {
+            System.err.println(
+                    "Encryption/decryption ciphers initialization failed!" + Constants.NEW_LINE +
+                    "This is most likely some system environment related problem." + Constants.NEW_LINE +
+                    "Bias can not proceed further... :(");
+            System.exit(1);
+        }
 	}
 	
 	public static BackEnd getInstance() {
 		if (instance == null) {
 			instance = new BackEnd();
-            try {
-                CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, Launcher.PASSWORD);
-                CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, Launcher.PASSWORD);
-            } catch (Exception e) {
-                System.err.println(
-                        "Encryption/decryption ciphers initialization failed!\n" +
-                        "This is most likely some system environment related problem.\n" +
-                        "Bias can not proceed further... :(");
-                System.exit(1);
-            }
 		}
 		return instance;
 	}
@@ -439,13 +438,13 @@ public class BackEnd {
                 Manifest manifest = in.getManifest();
                 if (manifest == null) {
                     throw new Exception(
-                            "Invalid extension pack:\n" +
+                            "Invalid extension pack:" + Constants.NEW_LINE +
                             "MANIFEST.MF file is missing!");
                 }
                 extName = manifest.getMainAttributes().getValue(Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE);
                 if (Validator.isNullOrBlank(extName)) {
                     throw new Exception(
-                            "Invalid extension pack:\n" +
+                            "Invalid extension pack:" + Constants.NEW_LINE +
                             Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE 
                             + " attribute in MANIFEST.MF file is missing/empty!");
                 }
@@ -519,9 +518,9 @@ public class BackEnd {
                 throw new Exception("Invalid extension pack: nothing to install!");
             } else if (!installedExtNames.contains(extName)) {
                 throw new Exception(
-                        "Invalid extension pack:\n" +
+                        "Invalid extension pack:" + Constants.NEW_LINE +
                         "class corresponding to declared " 
-                        + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute\n" +
+                        + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute" + Constants.NEW_LINE +
                         "in MANIFEST.MF file has not been found in package!");
             } else {
                 String fullExtName = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
@@ -627,13 +626,13 @@ public class BackEnd {
                 Manifest manifest = in.getManifest();
                 if (manifest == null) {
                     throw new Exception(
-                            "Invalid LAF pack:\n" +
+                            "Invalid LAF pack:" + Constants.NEW_LINE +
                             "MANIFEST.MF file is missing!");
                 }
                 lafName = manifest.getMainAttributes().getValue(Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE);
                 if (Validator.isNullOrBlank(lafName)) {
                     throw new Exception(
-                            "Invalid LAF pack:\n" +
+                            "Invalid LAF pack:" + Constants.NEW_LINE +
                             Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE 
                             + " attribute in MANIFEST.MF file is missing/empty!");
                 }
@@ -705,9 +704,9 @@ public class BackEnd {
                 throw new Exception("Invalid LAF pack: nothing to install!");
             } else if (!installedLAFNames.contains(lafName)) {
                 throw new Exception(
-                        "Invalid extension pack:\n" +
+                        "Invalid extension pack:" + Constants.NEW_LINE +
                         "class corresponding to declared " 
-                        + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute\n" +
+                        + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute" + Constants.NEW_LINE +
                         "in MANIFEST.MF file has not been found in package!");
             } else {
                 String fullLAFName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 

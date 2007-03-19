@@ -12,6 +12,8 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Rectangle;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -44,13 +46,19 @@ import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.RowFilter;
 import javax.swing.Timer;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.TabbedPaneUI;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import bias.Constants;
 import bias.annotation.AddOnAnnotation;
@@ -63,7 +71,8 @@ import bias.extension.ExtensionFactory;
 import bias.extension.MissingExtensionInformer;
 import bias.gui.utils.ImageFileChooser;
 import bias.laf.LookAndFeel;
-import bias.utils.BrowserLauncher;
+import bias.utils.AppManager;
+import bias.utils.FSUtils;
 import bias.utils.Validator;
 
 
@@ -210,10 +219,10 @@ public class FrontEnd extends JFrame {
             instance = new FrontEnd();
             if (!lafActivationSuccess) {
                 String laf = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
-                instance.displayErrorMessage(
+                System.err.println(
                         "Current Look-&-Feel '" + laf + "' is broken (failed to initialize)!" + Constants.NEW_LINE +
-                        "It will be uninstalled.", 
-                        error);
+                        "It will be uninstalled." + Constants.NEW_LINE + "Error details: " + Constants.NEW_LINE);
+                error.printStackTrace(System.err);
                 try {
                     String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                 + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
@@ -223,7 +232,33 @@ public class FrontEnd extends JFrame {
                             "Broken Look-&-Feel '" + laf + "' has been uninstalled ;)" + Constants.NEW_LINE +
                             RESTART_MESSAGE);
                 } catch (Exception e) {
-                    instance.displayErrorMessage("Broken Look-&-Feel '" + laf + "' failed to uninstall :(", e);
+                    System.err.println("Broken Look-&-Feel '" + laf + "' failed to uninstall :(" + Constants.NEW_LINE 
+                            + "Error details: " + Constants.NEW_LINE);
+                    e.printStackTrace(System.err);
+                }
+            }
+            // setup system tray and tray icon
+            if (!SystemTray.isSupported()) {
+                System.err.println("System tray API is not available on this platform!");
+            } else {
+                try {
+                    SystemTray sysTray = SystemTray.getSystemTray();
+                    TrayIcon trayIcon = new TrayIcon(
+                            ICON_APP.getImage(), 
+                            "Bias :: Personal Information Manager");
+                    trayIcon.setImageAutoSize(true);
+                    trayIcon.addMouseListener(new MouseAdapter(){
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            instance.setVisible(!instance.isVisible());
+                        }
+                    });
+                    sysTray.add(trayIcon);
+                } catch (Exception ex) {
+                    System.err.println(
+                            "Failed to initialize system tray!" + Constants.NEW_LINE 
+                            + "Error details: " + Constants.NEW_LINE);
+                    ex.printStackTrace(System.err);
                 }
             }
         }
@@ -236,11 +271,19 @@ public class FrontEnd extends JFrame {
             settings = BackEnd.getInstance().getSettings();
         } catch (Throwable t) {
             System.err.println(
-                    "Bias has failed to load data from Bias JAR :(\n" +
-                    "The reason of that most likely is one of the following:\n" +
-                    "* Bias JAR is broken\n" +
+                    "Bias has failed to load data from Bias JAR :(" + Constants.NEW_LINE +
+                    "The reason of that most likely is one of the following:" + Constants.NEW_LINE +
+                    "* Bias JAR is broken" + Constants.NEW_LINE +
                     "* invalid password");
             System.exit(1);
+        }
+        if (!Constants.SESSION_TMP_DIR.mkdir()) {
+            System.err.println(
+                    "Failed to create session temporary directory!" + Constants.NEW_LINE +
+                    "Problem may be caused by wrong permissions on your home directory" + Constants.NEW_LINE +
+                    "'" + Constants.SESSION_TMP_DIR.getParent() + "'" + Constants.NEW_LINE +
+                    "Please fix the problem, because it may cause" + Constants.NEW_LINE +
+                    "unstable/non-fully-functional Bias execution.");
         }
     }
     
@@ -401,6 +444,7 @@ public class FrontEnd extends JFrame {
         return modified;
     }
     
+    @SuppressWarnings("unchecked")
     private void configureExtension(String extension, boolean showFirstTimeUsageMessage) throws Exception {
         if (extension != null) {
             if (showFirstTimeUsageMessage) {
@@ -410,7 +454,7 @@ public class FrontEnd extends JFrame {
                         "If extension is configurable, you can adjust its default settings...");
             }
             try {
-                Class extensionClass = Class.forName(extension);
+                Class<Extension> extensionClass = (Class<Extension>) Class.forName(extension);
                 Extension extensionInstance = ExtensionFactory.getInstance().newExtension(extensionClass);
                 byte[] extensionSettings = BackEnd.getInstance().getExtensionSettings(extension);
                 byte[] settings = extensionInstance.configure(extensionSettings);
@@ -490,8 +534,13 @@ public class FrontEnd extends JFrame {
         }
         return brokenExtensionsFound;
     }
+    
+    private void cleanUp() {
+        FSUtils.delete(Constants.SESSION_TMP_DIR);
+    }
 
     private void store() throws Exception {
+        cleanUp();
         collectProperties();
         collectData();
         BackEnd.getInstance().store();
@@ -1269,10 +1318,10 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             try {
-                Map<String, Class> extensions = ExtensionFactory.getInstance().getAnnotatedExtensions();
+                Map<String, Class<Extension>> extensions = ExtensionFactory.getInstance().getAnnotatedExtensions();
                 if (extensions.isEmpty()) {
                     displayMessage(
-                            "You have no any extensions installed currently.\n" +
+                            "You have no any extensions installed currently." + Constants.NEW_LINE +
                             "You can't add entries before you have at least one extension installed.");
                 } else {
                     if (getJTabbedPane().getTabCount() == 0) {
@@ -1293,7 +1342,7 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    private void addRootEntryAction(Map<String, Class> extensions) throws Throwable {
+    private void addRootEntryAction(Map<String, Class<Extension>> extensions) throws Throwable {
         JLabel entryTypeLabel = new JLabel("Type:");
         JComboBox entryTypeComboBox = new JComboBox();
         for (String entryType : extensions.keySet()) {
@@ -1315,7 +1364,7 @@ public class FrontEnd extends JFrame {
         if (caption != null) {
             String typeDescription = (String) entryTypeComboBox.getSelectedItem();
             lastAddedEntryType = typeDescription;
-            Class type = extensions.get(typeDescription);
+            Class<Extension> type = extensions.get(typeDescription);
             byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
             if (defSettings == null) {
                 // extension's first time usage
@@ -1338,10 +1387,10 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             try {
-                Map<String, Class> extensions = ExtensionFactory.getInstance().getAnnotatedExtensions();
+                Map<String, Class<Extension>> extensions = ExtensionFactory.getInstance().getAnnotatedExtensions();
                 if (extensions.isEmpty()) {
                     displayMessage(
-                            "You have no any extensions installed currently.\n" +
+                            "You have no any extensions installed currently." + Constants.NEW_LINE +
                             "You can't add entries before you have at least one extension installed.");
                 } else {
                     if (getJTabbedPane().getTabCount() == 0) {
@@ -1373,7 +1422,7 @@ public class FrontEnd extends JFrame {
                     if (caption != null) {
                         String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                         lastAddedEntryType = typeDescription;
-                        Class type = extensions.get(typeDescription);
+                        Class<Extension> type = extensions.get(typeDescription);
                         byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
                         if (defSettings == null) {
                             // extension's first time usage
@@ -1568,6 +1617,7 @@ public class FrontEnd extends JFrame {
                     "Discard unsaved changes confirmation",
                     JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 // store nothing, just exit
+                cleanUp();
                 System.exit(0);
             }
         }
@@ -1582,6 +1632,7 @@ public class FrontEnd extends JFrame {
         
         private boolean modified;
         
+        @SuppressWarnings("unchecked")
         public void actionPerformed(ActionEvent e) {
 
             try {
@@ -1594,6 +1645,8 @@ public class FrontEnd extends JFrame {
                     }
                 };
                 final JTable extList = new JTable(extModel);
+                final TableRowSorter<TableModel> extSorter = new TableRowSorter<TableModel>(extModel);
+                extList.setRowSorter(extSorter);
                 extModel.addColumn("Name");
                 extModel.addColumn("Version");
                 extModel.addColumn("Author");
@@ -1601,7 +1654,7 @@ public class FrontEnd extends JFrame {
                 boolean brokenFixed = false;
                 for (String extension : BackEnd.getInstance().getExtensions()) {
                     try {
-                        Class<?> extClass = Class.forName(extension);
+                        Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
                         // extension instantiation test
                         ExtensionFactory.getInstance().newExtension(extClass);
                         // extension is ok, add it to the list
@@ -1701,7 +1754,7 @@ public class FrontEnd extends JFrame {
                 });
 
                 // look-&-feels
-                JLabel lafLabel = new JLabel("Look-&-Feel Management");
+                JLabel lafLabel = new JLabel("Look-&-Feels Management");
                 final DefaultTableModel lafModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
@@ -1709,6 +1762,8 @@ public class FrontEnd extends JFrame {
                     }
                 };
                 final JTable lafList = new JTable(lafModel);
+                final TableRowSorter<TableModel> lafSorter = new TableRowSorter<TableModel>(lafModel);
+                lafList.setRowSorter(lafSorter);
                 lafModel.addColumn("Name");
                 lafModel.addColumn("Version");
                 lafModel.addColumn("Author");
@@ -1931,8 +1986,18 @@ public class FrontEnd extends JFrame {
                 extControlsPanel.add(extConfigButt);
                 extControlsPanel.add(extInstButt);
                 extControlsPanel.add(extUninstButt);
+                JPanel extTopPanel = new JPanel(new BorderLayout());
+                extTopPanel.add(extLabel, BorderLayout.NORTH);
+                extTopPanel.add(new JLabel("Filter:"), BorderLayout.CENTER);
+                final JTextField extFilterText = new JTextField();
+                extFilterText.addCaretListener(new CaretListener(){
+                    public void caretUpdate(CaretEvent e) {
+                        extSorter.setRowFilter(RowFilter.regexFilter(extFilterText.getText()));
+                    }
+                });
+                extTopPanel.add(extFilterText, BorderLayout.SOUTH);
                 JPanel extPanel = new JPanel(new BorderLayout());
-                extPanel.add(extLabel, BorderLayout.NORTH);
+                extPanel.add(extTopPanel, BorderLayout.NORTH);
                 extPanel.add(new JScrollPane(extList), BorderLayout.CENTER);
                 extPanel.add(extControlsPanel, BorderLayout.SOUTH);
                 
@@ -1943,8 +2008,18 @@ public class FrontEnd extends JFrame {
                 lafControlsPanel.add(lafConfigButt);
                 lafControlsPanel.add(lafInstButt);
                 lafControlsPanel.add(lafUninstButt);
+                JPanel lafTopPanel = new JPanel(new BorderLayout());
+                lafTopPanel.add(lafLabel, BorderLayout.NORTH);
+                lafTopPanel.add(new JLabel("Filter:"), BorderLayout.CENTER);
+                final JTextField lafFilterText = new JTextField();
+                lafFilterText.addCaretListener(new CaretListener(){
+                    public void caretUpdate(CaretEvent e) {
+                        lafSorter.setRowFilter(RowFilter.regexFilter(lafFilterText.getText()));
+                    }
+                });
+                lafTopPanel.add(lafFilterText, BorderLayout.SOUTH);
                 JPanel lafPanel = new JPanel(new BorderLayout());
-                lafPanel.add(lafLabel, BorderLayout.NORTH);
+                lafPanel.add(lafTopPanel, BorderLayout.NORTH);
                 lafPanel.add(new JScrollPane(lafList), BorderLayout.CENTER);
                 lafPanel.add(lafControlsPanel, BorderLayout.SOUTH);
                 
@@ -1998,7 +2073,7 @@ public class FrontEnd extends JFrame {
 				@Override
 				public void mouseClicked(MouseEvent e) {
 					try {
-						BrowserLauncher.openURL("http://bias.sourceforge.net");
+						AppManager.getInstance().handleAddress("http://bias.sourceforge.net");
 					} catch (Exception ex) {
 						// do nothing
 					}

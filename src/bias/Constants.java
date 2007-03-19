@@ -3,6 +3,9 @@
  */
 package bias;
 
+import java.io.File;
+import java.util.UUID;
+
 import bias.extension.Extension;
 import bias.laf.LookAndFeel;
 
@@ -22,6 +25,11 @@ public class Constants {
     public static final String CIPHER_ALGORITHM = "PBEWithMD5AndDES";
     
     public static final byte[] CIPHER_SALT = "kn+kv=lv".getBytes();
+    
+    public static final File SESSION_TMP_DIR = 
+        new File(
+                System.getProperty("java.io.tmpdir"),
+                UUID.randomUUID().toString());
     
     public static final String EMPTY_STR = "";
     public static final String SPACE_STR = " ";
