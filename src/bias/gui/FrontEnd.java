@@ -484,7 +484,7 @@ public class FrontEnd extends JFrame {
             getJTabbedPane().setSelectedIndex(data.getActiveIndex());
         }
         if (brokenExtensionsFound > 0) {
-            displayErrorMessage("Some entries (" + brokenExtensionsFound + ") have not been successfully represented." + Constants.NEW_LINE +
+            System.err.println("Some entries (" + brokenExtensionsFound + ") have not been successfully represented." + Constants.NEW_LINE +
                     "Corresponding extensions seem to be broken/missing." + Constants.NEW_LINE +
                     "Try to open extensions management dialog, " +
                     "it will autodetect and remove broken extensions (if any)." + Constants.NEW_LINE +
