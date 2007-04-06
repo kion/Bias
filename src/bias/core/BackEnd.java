@@ -55,6 +55,7 @@ import org.w3c.dom.NodeList;
 import bias.Bias;
 import bias.Constants;
 import bias.Launcher;
+import bias.Preferences;
 import bias.utils.Validator;
 
 import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
@@ -109,12 +110,14 @@ public class BackEnd {
     
     private Document metadata;
     
-    private Properties settings;
+    private Document prefs;
+    
+    private Properties config;
     
     public void load() throws Exception {
         zipEntries = new LinkedHashMap<String, byte[]>();
         identifiedData = new LinkedHashMap<String, DataEntry>();
-        settings = new Properties();
+        config = new Properties();
         ZipInputStream zis = new ZipInputStream(new FileInputStream(Bias.getJarFile()));
         ZipEntry ze = null;
         while ((ze = zis.getNextEntry()) != null) {
@@ -140,8 +143,14 @@ public class BackEnd {
                             new ByteArrayInputStream(decryptedData));
                 }
             } else if (path.equals(Constants.GLOBAL_CONFIG_FILE_PATH)) {
-                settings.load(
+                config.load(
                         new ByteArrayInputStream(out.toByteArray()));
+            } else if (path.equals(Constants.PREFERENCES_FILE_PATH)) {
+                if (out.size() != 0) {
+                    byte[] decryptedData = CIPHER_DECRYPT.doFinal(out.toByteArray());
+                    prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
+                            new ByteArrayInputStream(decryptedData));
+                }
             } else if (path.matches(Constants.ATTACHMENT_FILE_PATH_PATTERN)){
                 byte[] decryptedData = CIPHER_DECRYPT.doFinal(out.toByteArray());
                 zipEntries.put(path, decryptedData);
@@ -295,14 +304,19 @@ public class BackEnd {
         cleanUpOrphanedStuff(ids);
         metadata.appendChild(rootNode);
         StringWriter sw = new StringWriter();
-        settings.list(new PrintWriter(sw));
+        config.list(new PrintWriter(sw));
         zipEntries.put(Constants.GLOBAL_CONFIG_FILE_PATH, sw.getBuffer().toString().getBytes());
         sw = new StringWriter();
+        prefs = Preferences.getInstance().serialize();
         OutputFormat of = new OutputFormat();
         of.setIndenting(true);
         of.setIndent(4);
-        new XMLSerializer(sw, of).serialize(metadata);
+        new XMLSerializer(sw, of).serialize(prefs);
         byte[] encryptedData = CIPHER_ENCRYPT.doFinal(sw.getBuffer().toString().getBytes());
+        zipEntries.put(Constants.PREFERENCES_FILE_PATH, encryptedData);
+        sw = new StringWriter();
+        new XMLSerializer(sw, of).serialize(metadata);
+        encryptedData = CIPHER_ENCRYPT.doFinal(sw.getBuffer().toString().getBytes());
         zipEntries.put(Constants.METADATA_FILE_PATH, encryptedData);
         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(Bias.getJarFile()));
         for (Entry<String, byte[]> entry : zipEntries.entrySet()) {
@@ -995,12 +1009,20 @@ public class BackEnd {
         this.data = data;
     }
 
-    public Properties getSettings() {
-        return settings;
+    public Properties getConfig() {
+        return config;
     }
 
-    public void setSettings(Properties settings) {
-        this.settings = settings;
+    public void setConfig(Properties config) {
+        this.config = config;
+    }
+
+    public Document getPrefs() {
+        return prefs;
+    }
+
+    public void setPrefs(Document prefs) {
+        this.prefs = prefs;
     }
 
 }

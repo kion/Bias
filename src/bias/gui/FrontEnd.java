@@ -21,6 +21,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -35,6 +36,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -61,7 +63,9 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import bias.Constants;
+import bias.Preferences;
 import bias.annotation.AddOnAnnotation;
+import bias.annotation.PreferenceAnnotation;
 import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
@@ -106,6 +110,8 @@ public class FrontEnd extends JFrame {
     public static final ImageIcon ICON_DISCARD_UNSAVED_CHANGES = new ImageIcon(Constants.class.getResource("/bias/res/discard.png"));
 
     public static final ImageIcon ICON_ADDONS = new ImageIcon(Constants.class.getResource("/bias/res/addons.png"));
+
+    public static final ImageIcon ICON_PREFERENCES = new ImageIcon(Constants.class.getResource("/bias/res/prefs.png"));
 
     public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(Constants.class.getResource("/bias/res/extensions.png"));
 
@@ -218,7 +224,7 @@ public class FrontEnd extends JFrame {
             }
             instance = new FrontEnd();
             if (!lafActivationSuccess) {
-                String laf = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+                String laf = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
                 System.err.println(
                         "Current Look-&-Feel '" + laf + "' is broken (failed to initialize)!" + Constants.NEW_LINE +
                         "It will be uninstalled." + Constants.NEW_LINE + "Error details: " + Constants.NEW_LINE);
@@ -227,7 +233,7 @@ public class FrontEnd extends JFrame {
                     String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                 + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
                     BackEnd.getInstance().uninstallLAF(lafFullClassName);
-                    settings.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+                    config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
                     instance.displayMessage(
                             "Broken Look-&-Feel '" + laf + "' has been uninstalled ;)" + Constants.NEW_LINE +
                             RESTART_MESSAGE);
@@ -237,28 +243,30 @@ public class FrontEnd extends JFrame {
                     e.printStackTrace(System.err);
                 }
             }
-            // setup system tray and tray icon
-            if (!SystemTray.isSupported()) {
-                System.err.println("System tray API is not available on this platform!");
-            } else {
-                try {
-                    SystemTray sysTray = SystemTray.getSystemTray();
-                    TrayIcon trayIcon = new TrayIcon(
-                            ICON_APP.getImage(), 
-                            "Bias :: Personal Information Manager");
-                    trayIcon.setImageAutoSize(true);
-                    trayIcon.addMouseListener(new MouseAdapter(){
-                        @Override
-                        public void mouseClicked(MouseEvent e) {
-                            instance.setVisible(!instance.isVisible());
-                        }
-                    });
-                    sysTray.add(trayIcon);
-                } catch (Exception ex) {
-                    System.err.println(
-                            "Failed to initialize system tray!" + Constants.NEW_LINE 
-                            + "Error details: " + Constants.NEW_LINE);
-                    ex.printStackTrace(System.err);
+            if (Preferences.getInstance().useSysTrayIcon) {
+                // setup system tray and tray icon
+                if (!SystemTray.isSupported()) {
+                    System.err.println("System tray API is not available on this platform!");
+                } else {
+                    try {
+                        SystemTray sysTray = SystemTray.getSystemTray();
+                        TrayIcon trayIcon = new TrayIcon(
+                                ICON_APP.getImage(), 
+                                "Bias :: Personal Information Manager");
+                        trayIcon.setImageAutoSize(true);
+                        trayIcon.addMouseListener(new MouseAdapter(){
+                            @Override
+                            public void mouseClicked(MouseEvent e) {
+                                instance.setVisible(!instance.isVisible());
+                            }
+                        });
+                        sysTray.add(trayIcon);
+                    } catch (Exception ex) {
+                        System.err.println(
+                                "Failed to initialize system tray!" + Constants.NEW_LINE 
+                                + "Error details: " + Constants.NEW_LINE);
+                        ex.printStackTrace(System.err);
+                    }
                 }
             }
         }
@@ -268,7 +276,7 @@ public class FrontEnd extends JFrame {
     private static void preInit() {
         try {
             BackEnd.getInstance().load();
-            settings = BackEnd.getInstance().getSettings();
+            config = BackEnd.getInstance().getConfig();
         } catch (Throwable t) {
             System.err.println(
                     "Bias has failed to load data from Bias JAR :(" + Constants.NEW_LINE +
@@ -288,7 +296,7 @@ public class FrontEnd extends JFrame {
     }
     
     private static void activateLAF() throws Throwable {
-        String laf = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+        String laf = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
         if (laf != null) {
             String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                         + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
@@ -299,7 +307,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private static Properties settings;
+    private static Properties config;
     
     private String lastAddedEntryType = null;
 
@@ -331,6 +339,8 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton8 = null;
 
+    private JButton jButton9 = null;
+
     private JButton jButton10 = null;
 
     private JButton jButton3 = null;
@@ -352,7 +362,7 @@ public class FrontEnd extends JFrame {
             int wpyValue;
             int wwValue;
             int whValue;
-            String wpx = settings.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_X);
+            String wpx = config.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_X);
             if (wpx == null) {
                 wpxValue = getToolkit().getScreenSize().width / 4;
             } else {
@@ -361,21 +371,21 @@ public class FrontEnd extends JFrame {
                 wpxValue = Math.round(Float
                         .valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getWidth() * Double.valueOf(wpx))));
             }
-            String wpy = settings.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_Y);
+            String wpy = config.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_Y);
             if (wpy == null) {
                 wpyValue = getToolkit().getScreenSize().height / 4;
             } else {
                 wpyValue = Math.round(Float.valueOf(Constants.EMPTY_STR
                         + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wpy))));
             }
-            String ww = settings.getProperty(Constants.PROPERTY_WINDOW_WIDTH);
+            String ww = config.getProperty(Constants.PROPERTY_WINDOW_WIDTH);
             if (ww == null) {
                 wwValue = (getToolkit().getScreenSize().width / 4) * 2;
             } else {
                 wwValue = Math
                         .round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(ww))));
             }
-            String wh = settings.getProperty(Constants.PROPERTY_WINDOW_HEIGHT);
+            String wh = config.getProperty(Constants.PROPERTY_WINDOW_HEIGHT);
             if (wh == null) {
                 whValue = (getToolkit().getScreenSize().height / 4) * 2;
             } else {
@@ -388,7 +398,7 @@ public class FrontEnd extends JFrame {
 
             representData(BackEnd.getInstance().getData());
 
-            String lsid = settings.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
+            String lsid = config.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
             if (lsid != null) {
                 switchToVisualEntry(UUID.fromString(lsid));
             }
@@ -410,15 +420,15 @@ public class FrontEnd extends JFrame {
     
     private boolean setActiveLAF(String laf) throws Exception {
         boolean modified = false;
-        String currentLAF = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+        String currentLAF = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
         if (laf != null) {
             String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             if (!lafName.equals(currentLAF)) {
-                settings.put(Constants.PROPERTY_LOOK_AND_FEEL, lafName);
+                config.put(Constants.PROPERTY_LOOK_AND_FEEL, lafName);
                 modified = true;
             }
         } else if (currentLAF != null) {
-            settings.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+            config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
             modified = true;
         }
         if (!modified) {
@@ -547,19 +557,19 @@ public class FrontEnd extends JFrame {
     }
 
     private void collectProperties() {
-        settings.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR + getLocation().getX()
+        config.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR + getLocation().getX()
                 / getToolkit().getScreenSize().getWidth());
-        settings.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR + getLocation().getY()
+        config.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR + getLocation().getY()
                 / getToolkit().getScreenSize().getHeight());
-        settings.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR + getSize().getWidth()
+        config.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR + getSize().getWidth()
                 / getToolkit().getScreenSize().getHeight());
-        settings.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR + getSize().getHeight()
+        config.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR + getSize().getHeight()
                 / getToolkit().getScreenSize().getHeight());
         UUID lsid = getSelectedVisualEntryID();
         if (lsid != null) {
-            settings.put(Constants.PROPERTY_LAST_SELECTED_ID, lsid.toString());
+            config.put(Constants.PROPERTY_LAST_SELECTED_ID, lsid.toString());
         }
-        BackEnd.getInstance().setSettings(settings);
+        BackEnd.getInstance().setConfig(config);
     }
 
     private void collectData() throws Exception {
@@ -1172,6 +1182,7 @@ public class FrontEnd extends JFrame {
             jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT); // Generated
             jToolBar2.add(getJButton6()); // Generated
             jToolBar2.add(getJButton8()); // Generated
+            jToolBar2.add(getJButton9()); // Generated
         }
         return jToolBar2;
     }
@@ -1216,6 +1227,20 @@ public class FrontEnd extends JFrame {
             jButton8.setIcon(ICON_ADDONS);
         }
         return jButton8;
+    }
+
+    /**
+     * This method initializes jButton9
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton9() {
+        if (jButton9 == null) {
+            jButton9 = new JButton(preferencesAction);
+            jButton9.setToolTipText("preferences"); // Generated
+            jButton9.setIcon(ICON_PREFERENCES);
+        }
+        return jButton9;
     }
 
     /**
@@ -1623,6 +1648,59 @@ public class FrontEnd extends JFrame {
         }
     };
     
+    private Action preferencesAction = new AbstractAction() {
+
+        private static final long serialVersionUID = 1L;
+
+        public void actionPerformed(ActionEvent e) {
+            JPanel prefsPanel = null;
+            Collection<Component> prefComponents = new LinkedList<Component>();
+            Field[] fields = Preferences.class.getDeclaredFields();
+            for (final Field field : fields) {
+                PreferenceAnnotation prefAnn = field.getAnnotation(PreferenceAnnotation.class);
+                if (prefAnn != null) {
+                    JLabel prefTitle = new JLabel(prefAnn.title());
+                    prefTitle.setToolTipText(prefAnn.description());
+                    JPanel prefPanel = new JPanel(new BorderLayout());
+                    prefPanel.add(prefTitle, BorderLayout.WEST);
+                    Component prefControl = null;
+                    String type = field.getType().getSimpleName().toLowerCase();
+                    if ("boolean".equals(type)) {
+                        prefControl = new JCheckBox();
+                        try {
+                            ((JCheckBox) prefControl).setSelected(field.getBoolean(Preferences.getInstance()));
+                            ((JCheckBox) prefControl).addActionListener(new ActionListener(){
+                                public void actionPerformed(ActionEvent e) {
+                                    try {
+                                        field.setBoolean(Preferences.getInstance(), ((JCheckBox) e.getSource()).isSelected());
+                                    } catch (Exception ex) {
+                                        FrontEnd.getInstance().displayErrorMessage(
+                                                "Failed to change preference!", ex);
+                                    }
+                                }
+                            });
+                        } catch (Exception ex) {
+                            prefControl = null;
+                            FrontEnd.getInstance().displayErrorMessage(
+                                    "Failed to get preference!", ex);
+                        }
+                    }
+                    if (prefControl != null) {
+                        prefPanel.add(prefControl, BorderLayout.CENTER);
+                        prefComponents.add(prefPanel);
+                    }
+                }
+            }
+            prefsPanel = new JPanel(new GridLayout(prefComponents.size(), 1));
+            for (Component prefComponent : prefComponents) {
+                prefsPanel.add(prefComponent);
+            }
+            JOptionPane.showConfirmDialog(FrontEnd.getInstance(), prefsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION);
+            displayMessage(RESTART_MESSAGE);
+        }
+        
+    };
+    
     private Action manageAddOnsAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
@@ -1890,7 +1968,7 @@ public class FrontEnd extends JFrame {
                         try {
                             if (lafList.getSelectedRowCount() > 0) {
                                 boolean uninstalled = false;
-                                String currentLAF = settings.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+                                String currentLAF = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
                                 int idx;
                                 while ((idx = lafList.getSelectedRow()) != -1) {
                                     String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
@@ -1903,7 +1981,7 @@ public class FrontEnd extends JFrame {
                                         // if look-&-feel that has been uninstalled was active one...
                                         if (laf.equals(currentLAF)) {
                                             //... unset it (default one will be used)
-                                            settings.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+                                            config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
                                         }
                                         uninstalled = true;
                                         modified = true;

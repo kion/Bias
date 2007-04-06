@@ -52,6 +52,7 @@ public class Constants {
     
     public static final String CONFIG_DIR = "conf/";
     public static final String GLOBAL_CONFIG_FILE_PATH = CONFIG_DIR + "config.properties";
+    public static final String PREFERENCES_FILE_PATH = CONFIG_DIR + "preferences.properties";
     public static final String CONFIG_DIR_PATTERN = "^conf/";
     public static final String CONFIG_FILE_PATH_PATTERN = CONFIG_DIR_PATTERN + "([^\\.]+).+\\.conf";
     public static final String DATA_DIR = "data/";
@@ -102,6 +103,7 @@ public class Constants {
     public static final String ENTRY_PROTOCOL_PREFIX = "entry://";
     
     public static final String XML_ELEMENT_ROOT_CONTAINER = "root-container";
+    public static final String XML_ELEMENT_PREFERENCE = "preference";
     public static final String XML_ELEMENT_CATEGORY = "category";
     public static final String XML_ELEMENT_ENTRY = "entry";
     public static final String XML_ELEMENT_ATTRIBUTE_ID = "id";
@@ -110,5 +112,6 @@ public class Constants {
     public static final String XML_ELEMENT_ATTRIBUTE_TYPE = "type";
     public static final String XML_ELEMENT_ATTRIBUTE_PLACEMENT = "placement";
     public static final String XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX = "active-idx";
+    public static final String XML_ELEMENT_ATTRIBUTE_VALUE = "value";
 
 }
