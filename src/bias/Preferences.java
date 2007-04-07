@@ -87,8 +87,7 @@ public class Preferences {
     
     @PreferenceAnnotation(
             title="Show system tray icon",
-            description="Defines if application can allocate space in system tray,\n" +
-                        "allows to hide/restore application to/from system tray icon.")
+            description="Defines if application can allocate space in system tray, allows to hide/restore application to/from system tray icon.")
     public boolean useSysTrayIcon;
 
 }
