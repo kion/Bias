@@ -306,14 +306,11 @@ public class BackEnd {
         StringWriter sw = new StringWriter();
         config.list(new PrintWriter(sw));
         zipEntries.put(Constants.GLOBAL_CONFIG_FILE_PATH, sw.getBuffer().toString().getBytes());
-        sw = new StringWriter();
-        prefs = Preferences.getInstance().serialize();
+        byte[] encryptedData = CIPHER_ENCRYPT.doFinal(Preferences.getInstance().serialize());
+        zipEntries.put(Constants.PREFERENCES_FILE_PATH, encryptedData);
         OutputFormat of = new OutputFormat();
         of.setIndenting(true);
         of.setIndent(4);
-        new XMLSerializer(sw, of).serialize(prefs);
-        byte[] encryptedData = CIPHER_ENCRYPT.doFinal(sw.getBuffer().toString().getBytes());
-        zipEntries.put(Constants.PREFERENCES_FILE_PATH, encryptedData);
         sw = new StringWriter();
         new XMLSerializer(sw, of).serialize(metadata);
         encryptedData = CIPHER_ENCRYPT.doFinal(sw.getBuffer().toString().getBytes());

@@ -3,6 +3,7 @@
  */
 package bias;
 
+import java.io.StringWriter;
 import java.lang.reflect.Field;
 
 import org.w3c.dom.Document;
@@ -15,6 +16,8 @@ import bias.core.BackEnd;
 import bias.gui.FrontEnd;
 
 import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
+import com.sun.org.apache.xml.internal.serialize.OutputFormat;
+import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
 /**
  * @author kion
@@ -56,7 +59,7 @@ public class Preferences {
         return instance;
     }
     
-    public Document serialize() throws Exception {
+    public byte[] serialize() throws Exception {
         prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         Element rootNode = prefs.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
         prefs.appendChild(rootNode);
@@ -80,7 +83,13 @@ public class Preferences {
                 }
             }
         }
-        return prefs;
+        OutputFormat of = new OutputFormat();
+        of.setIndenting(true);
+        of.setIndent(4);
+        StringWriter sw = new StringWriter();
+        new XMLSerializer(sw, of).serialize(prefs);
+        System.out.println(sw.getBuffer().toString());
+        return sw.getBuffer().toString().getBytes();
     }
     
     /* PREFERENCES DECLARATION SECTION */

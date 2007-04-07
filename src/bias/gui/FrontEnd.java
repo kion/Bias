@@ -1653,50 +1653,58 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent e) {
-            JPanel prefsPanel = null;
-            Collection<Component> prefComponents = new LinkedList<Component>();
-            Field[] fields = Preferences.class.getDeclaredFields();
-            for (final Field field : fields) {
-                PreferenceAnnotation prefAnn = field.getAnnotation(PreferenceAnnotation.class);
-                if (prefAnn != null) {
-                    JLabel prefTitle = new JLabel(prefAnn.title());
-                    prefTitle.setToolTipText(prefAnn.description());
-                    JPanel prefPanel = new JPanel(new BorderLayout());
-                    prefPanel.add(prefTitle, BorderLayout.WEST);
-                    Component prefControl = null;
-                    String type = field.getType().getSimpleName().toLowerCase();
-                    if ("boolean".equals(type)) {
-                        prefControl = new JCheckBox();
-                        try {
-                            ((JCheckBox) prefControl).setSelected(field.getBoolean(Preferences.getInstance()));
-                            ((JCheckBox) prefControl).addActionListener(new ActionListener(){
-                                public void actionPerformed(ActionEvent e) {
-                                    try {
-                                        field.setBoolean(Preferences.getInstance(), ((JCheckBox) e.getSource()).isSelected());
-                                    } catch (Exception ex) {
-                                        FrontEnd.getInstance().displayErrorMessage(
-                                                "Failed to change preference!", ex);
+            try {
+                byte[] before = Preferences.getInstance().serialize();
+                JPanel prefsPanel = null;
+                Collection<Component> prefComponents = new LinkedList<Component>();
+                Field[] fields = Preferences.class.getDeclaredFields();
+                for (final Field field : fields) {
+                    PreferenceAnnotation prefAnn = field.getAnnotation(PreferenceAnnotation.class);
+                    if (prefAnn != null) {
+                        JLabel prefTitle = new JLabel(prefAnn.title());
+                        prefTitle.setToolTipText(prefAnn.description());
+                        JPanel prefPanel = new JPanel(new BorderLayout());
+                        prefPanel.add(prefTitle, BorderLayout.WEST);
+                        Component prefControl = null;
+                        String type = field.getType().getSimpleName().toLowerCase();
+                        if ("boolean".equals(type)) {
+                            prefControl = new JCheckBox();
+                            try {
+                                ((JCheckBox) prefControl).setSelected(field.getBoolean(Preferences.getInstance()));
+                                ((JCheckBox) prefControl).addActionListener(new ActionListener(){
+                                    public void actionPerformed(ActionEvent e) {
+                                        try {
+                                            field.setBoolean(Preferences.getInstance(), ((JCheckBox) e.getSource()).isSelected());
+                                        } catch (Exception ex) {
+                                            FrontEnd.getInstance().displayErrorMessage(
+                                                    "Failed to change preference!", ex);
+                                        }
                                     }
-                                }
-                            });
-                        } catch (Exception ex) {
-                            prefControl = null;
-                            FrontEnd.getInstance().displayErrorMessage(
-                                    "Failed to get preference!", ex);
+                                });
+                            } catch (Exception ex) {
+                                prefControl = null;
+                                FrontEnd.getInstance().displayErrorMessage(
+                                        "Failed to get preference!", ex);
+                            }
+                        }
+                        if (prefControl != null) {
+                            prefPanel.add(prefControl, BorderLayout.CENTER);
+                            prefComponents.add(prefPanel);
                         }
                     }
-                    if (prefControl != null) {
-                        prefPanel.add(prefControl, BorderLayout.CENTER);
-                        prefComponents.add(prefPanel);
-                    }
                 }
+                prefsPanel = new JPanel(new GridLayout(prefComponents.size(), 1));
+                for (Component prefComponent : prefComponents) {
+                    prefsPanel.add(prefComponent);
+                }
+                JOptionPane.showConfirmDialog(FrontEnd.getInstance(), prefsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION);
+                byte[] after = Preferences.getInstance().serialize();
+                if (!Arrays.equals(after, before)) {
+                    displayMessage(RESTART_MESSAGE);
+                }
+            } catch (Exception ex) {
+                displayErrorMessage(ex);
             }
-            prefsPanel = new JPanel(new GridLayout(prefComponents.size(), 1));
-            for (Component prefComponent : prefComponents) {
-                prefsPanel.add(prefComponent);
-            }
-            JOptionPane.showConfirmDialog(FrontEnd.getInstance(), prefsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION);
-            displayMessage(RESTART_MESSAGE);
         }
         
     };
