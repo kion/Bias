@@ -88,7 +88,6 @@ public class Preferences {
         of.setIndent(4);
         StringWriter sw = new StringWriter();
         new XMLSerializer(sw, of).serialize(prefs);
-        System.out.println(sw.getBuffer().toString());
         return sw.getBuffer().toString().getBytes();
     }
     
