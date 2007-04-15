@@ -74,6 +74,7 @@ import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.MissingExtensionInformer;
 import bias.gui.utils.ImageFileChooser;
+import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 import bias.utils.AppManager;
 import bias.utils.FSUtils;
@@ -89,36 +90,11 @@ public class FrontEnd extends JFrame {
     
     private static final String DEFAULT_LOOK_AND_FEEL = "DefaultLAF";
 
+    /**
+     * Application icon
+     */
     public static final ImageIcon ICON_APP = new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
 
-    public static final ImageIcon ICON_ABOUT = new ImageIcon(Constants.class.getResource("/bias/res/about.png"));
-
-    public static final ImageIcon ICON_IMPORT_DATA = new ImageIcon(Constants.class.getResource("/bias/res/import_data.png"));
-
-    public static final ImageIcon ICON_DELETE = new ImageIcon(Constants.class.getResource("/bias/res/delete.png"));
-
-    public static final ImageIcon ICON_ADD_CATEGORY = new ImageIcon(Constants.class.getResource("/bias/res/add_category.png"));
-
-    public static final ImageIcon ICON_ADD_ROOT_CATEGORY = new ImageIcon(Constants.class.getResource("/bias/res/add_root_category.png"));
-
-    public static final ImageIcon ICON_ADD_ENTRY = new ImageIcon(Constants.class.getResource("/bias/res/add_entry.png"));
-
-    public static final ImageIcon ICON_ADD_ROOT_ENTRY = new ImageIcon(Constants.class.getResource("/bias/res/add_root_entry.png"));
-
-    public static final ImageIcon ICON_SAVE = new ImageIcon(Constants.class.getResource("/bias/res/save.png"));
-
-    public static final ImageIcon ICON_DISCARD_UNSAVED_CHANGES = new ImageIcon(Constants.class.getResource("/bias/res/discard.png"));
-
-    public static final ImageIcon ICON_ADDONS = new ImageIcon(Constants.class.getResource("/bias/res/addons.png"));
-
-    public static final ImageIcon ICON_PREFERENCES = new ImageIcon(Constants.class.getResource("/bias/res/prefs.png"));
-
-    public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(Constants.class.getResource("/bias/res/extensions.png"));
-
-    public static final ImageIcon ICON_LAFS = new ImageIcon(Constants.class.getResource("/bias/res/lafs.png"));
-
-    public static final ImageIcon ICON_ICONS = new ImageIcon(Constants.class.getResource("/bias/res/icons.png"));
-    
     private static final String RESTART_MESSAGE = "Changes will take effect after Bias restart";
 
     private static final Placement[] PLACEMENTS = new Placement[] { new Placement(JTabbedPane.TOP),
@@ -199,6 +175,8 @@ public class FrontEnd extends JFrame {
     }
     
     private static final String ADDON_ANN_FIELD_VALUE_NA = "N/A";
+    
+    private static ControlIcons controlIcons;
 
     private static FrontEnd instance;
 
@@ -304,6 +282,11 @@ public class FrontEnd extends JFrame {
             LookAndFeel lafInstance = (LookAndFeel) lafClass.newInstance();
             byte[] lafSettings = BackEnd.getInstance().getLAFSettings(lafFullClassName);
             lafInstance.activate(lafSettings);
+            // use control icons defined by LAF
+            controlIcons = lafInstance.getControlIcons();
+        } else {
+            // use default control icons
+            controlIcons = new ControlIcons();
         }
     }
     
@@ -1108,7 +1091,7 @@ public class FrontEnd extends JFrame {
         if (jButton == null) {
             jButton = new JButton(addRootEntryAction);
             jButton.setToolTipText("add root entry"); // Generated
-            jButton.setIcon(ICON_ADD_ROOT_ENTRY);
+            jButton.setIcon(controlIcons.getIconRootEntry());
         }
         return jButton;
     }
@@ -1122,7 +1105,7 @@ public class FrontEnd extends JFrame {
         if (jButton5 == null) {
             jButton5 = new JButton(addEntryAction);
             jButton5.setToolTipText("add entry"); // Generated
-            jButton5.setIcon(ICON_ADD_ENTRY);
+            jButton5.setIcon(controlIcons.getIconEntry());
         }
         return jButton5;
     }
@@ -1136,7 +1119,7 @@ public class FrontEnd extends JFrame {
         if (jButton1 == null) {
             jButton1 = new JButton(deleteEntryOrCategoryAction);
             jButton1.setToolTipText("delete active item"); // Generated
-            jButton1.setIcon(ICON_DELETE);
+            jButton1.setIcon(controlIcons.getIconDelete());
         }
         return jButton1;
     }
@@ -1150,7 +1133,7 @@ public class FrontEnd extends JFrame {
         if (jButton2 == null) {
             jButton2 = new JButton(importDataAction);
             jButton2.setToolTipText("import data from another Bias JAR"); // Generated
-            jButton2.setIcon(ICON_IMPORT_DATA);
+            jButton2.setIcon(controlIcons.getIconImport());
         }
         return jButton2;
     }
@@ -1196,7 +1179,7 @@ public class FrontEnd extends JFrame {
         if (jButton6 == null) {
             jButton6 = new JButton(displayAboutInfoAction);
             jButton6.setToolTipText("about Bias"); // Generated
-            jButton6.setIcon(ICON_ABOUT);
+            jButton6.setIcon(controlIcons.getIconAbout());
         }
         return jButton6;
     }
@@ -1210,7 +1193,7 @@ public class FrontEnd extends JFrame {
         if (jButton7 == null) {
             jButton7 = new JButton(saveAction);
             jButton7.setToolTipText("save & exit"); // Generated
-            jButton7.setIcon(ICON_SAVE);
+            jButton7.setIcon(controlIcons.getIconSave());
         }
         return jButton7;
     }
@@ -1224,7 +1207,7 @@ public class FrontEnd extends JFrame {
         if (jButton8 == null) {
             jButton8 = new JButton(manageAddOnsAction);
             jButton8.setToolTipText("manage add-ons"); // Generated
-            jButton8.setIcon(ICON_ADDONS);
+            jButton8.setIcon(controlIcons.getIconAddOns());
         }
         return jButton8;
     }
@@ -1238,7 +1221,7 @@ public class FrontEnd extends JFrame {
         if (jButton9 == null) {
             jButton9 = new JButton(preferencesAction);
             jButton9.setToolTipText("preferences"); // Generated
-            jButton9.setIcon(ICON_PREFERENCES);
+            jButton9.setIcon(controlIcons.getIconPreferences());
         }
         return jButton9;
     }
@@ -1252,7 +1235,7 @@ public class FrontEnd extends JFrame {
         if (jButton10 == null) {
             jButton10 = new JButton(discardUnsavedChangesAction);
             jButton10.setToolTipText("exit & discard unsaved changes"); // Generated
-            jButton10.setIcon(ICON_DISCARD_UNSAVED_CHANGES);
+            jButton10.setIcon(controlIcons.getIconDiscard());
         }
         return jButton10;
     }
@@ -1266,7 +1249,7 @@ public class FrontEnd extends JFrame {
         if (jButton3 == null) {
             jButton3 = new JButton(addRootCategoryAction);
             jButton3.setToolTipText("add root category"); // Generated
-            jButton3.setIcon(ICON_ADD_ROOT_CATEGORY);
+            jButton3.setIcon(controlIcons.getIconRootCategory());
         }
         return jButton3;
     }
@@ -1274,7 +1257,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton4() {
         if (jButton4 == null) {
             jButton4 = new JButton(addCategoryAction);
-            jButton4.setIcon(ICON_ADD_CATEGORY);
+            jButton4.setIcon(controlIcons.getIconCategory());
             jButton4.setToolTipText("add category");
         }
         return jButton4;
@@ -2087,7 +2070,7 @@ public class FrontEnd extends JFrame {
                 extPanel.add(new JScrollPane(extList), BorderLayout.CENTER);
                 extPanel.add(extControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Extensions", ICON_EXTENSIONS, extPanel);
+                addOnsPane.addTab("Extensions", controlIcons.getIconExtensions(), extPanel);
                 
                 JPanel lafControlsPanel = new JPanel(new GridLayout(1,4));
                 lafControlsPanel.add(lafActivateButt);
@@ -2109,7 +2092,7 @@ public class FrontEnd extends JFrame {
                 lafPanel.add(new JScrollPane(lafList), BorderLayout.CENTER);
                 lafPanel.add(lafControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Look-&-Feels", ICON_LAFS, lafPanel);
+                addOnsPane.addTab("Look-&-Feels", controlIcons.getIconLAFs(), lafPanel);
                 
                 JPanel icControlsPanel = new JPanel(new GridLayout(1,2));
                 icControlsPanel.add(addIconButt);
@@ -2119,7 +2102,7 @@ public class FrontEnd extends JFrame {
                 icPanel.add(new JScrollPane(jsp), BorderLayout.CENTER);
                 icPanel.add(icControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Icons", ICON_ICONS, icPanel);
+                addOnsPane.addTab("Icons", controlIcons.getIconIcons(), icPanel);
                 
                 modified = false;
                 JOptionPane.showMessageDialog(

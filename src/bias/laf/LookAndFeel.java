@@ -3,6 +3,7 @@
  */
 package bias.laf;
 
+
 /**
  * @author kion
  */
@@ -26,6 +27,17 @@ public abstract class LookAndFeel {
      */
     public byte[] configure(byte[] settings) {
         return null;
+    }
+    
+    /**
+     * Defines icons of controls.
+     * By default returns default ControlIcons structure.
+     * Should be overriden to return control icons for concrete Look-&-Feel.
+
+     * @return ControlIcons structure
+     */
+    public ControlIcons getControlIcons() {
+        return new ControlIcons();
     }
 
 }
