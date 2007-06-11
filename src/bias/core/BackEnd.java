@@ -216,9 +216,11 @@ public class BackEnd {
         if (iconsListFile.exists()) {
             String[] iconsList = new String(FSUtils.readFile(iconsListFile)).split(Constants.NEW_LINE);
             for (String iconId : iconsList) {
-                File iconFile = new File(iconsDir, iconId + Constants.ICON_FILE_SUFFIX);
-                data = FSUtils.readFile(iconFile);
-                icons.put(UUID.fromString(iconId), data);
+                if (!Validator.isNullOrBlank(iconId)) {
+                    File iconFile = new File(iconsDir, iconId + Constants.ICON_FILE_SUFFIX);
+                    data = FSUtils.readFile(iconFile);
+                    icons.put(UUID.fromString(iconId), data);
+                }
             }
         }
         // attachements
