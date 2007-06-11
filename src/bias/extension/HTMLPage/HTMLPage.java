@@ -433,12 +433,12 @@ public class HTMLPage extends Extension {
                         });
                         jfc.setMultiSelectionEnabled(false);
                         File file;
-                        String fileName = FrontEnd.getInstance().getSelectedVisualEntryCaption();
+                        String fileName = FrontEnd.getSelectedVisualEntryCaption();
                         if (!Validator.isNullOrBlank(fileName)) {
                             file = new File(fileName);
                             jfc.setSelectedFile(file);
                         }
-                        if (jfc.showSaveDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                        if (jfc.showSaveDialog(HTMLPage.this) == JFileChooser.APPROVE_OPTION) {
                             file = jfc.getSelectedFile();
                             if (!file.getName().matches(HTML_PAGE_FILE_NAME_PATTERN)) {
                                 file = new File(file.getParentFile(), file.getName() + ".html");
@@ -446,7 +446,7 @@ public class HTMLPage extends Extension {
                             Integer option = null;
                             if (file.exists()) {
                                 option = JOptionPane.showConfirmDialog(
-                                        FrontEnd.getInstance(), 
+                                        HTMLPage.this, 
                                         "File already exists, overwrite?", 
                                         "Overwrite existing file", 
                                         JOptionPane.YES_NO_OPTION);
@@ -458,7 +458,7 @@ public class HTMLPage extends Extension {
                             }
                         }
                     } catch (Exception ex) {
-                        FrontEnd.getInstance().displayErrorMessage(ex);
+                        FrontEnd.displayErrorMessage(ex);
                     }
                 }
             });    
@@ -520,7 +520,7 @@ public class HTMLPage extends Extension {
                     VisualEntryDescriptor currDescriptor = null;
                     JLabel entryLabel = new JLabel("entry:");
                     JComboBox hrefComboBox = new JComboBox();
-                    for (VisualEntryDescriptor veDescriptor : FrontEnd.getInstance().getVisualEntryDescriptors()) {
+                    for (VisualEntryDescriptor veDescriptor : FrontEnd.getVisualEntryDescriptors()) {
                         hrefComboBox.addItem(veDescriptor);
                         if (veDescriptor.getId().toString().equals(id)) {
                             currDescriptor = veDescriptor;
@@ -530,7 +530,8 @@ public class HTMLPage extends Extension {
                         hrefComboBox.setSelectedItem(currDescriptor);
                     }
                     JLabel textLabel = new JLabel("text:");
-                    text = JOptionPane.showInputDialog(FrontEnd.getInstance(), 
+                    text = JOptionPane.showInputDialog(
+                            HTMLPage.this, 
                             new Component[]{entryLabel, hrefComboBox, textLabel}, text);
                     if (text != null) {
                         try {
@@ -550,9 +551,9 @@ public class HTMLPage extends Extension {
                             linkHTML.append("&nbsp;");
                             HTMLPageEditor.insertHTML(getJTextPane(), linkHTML.toString(), HTML.Tag.A);
                         } catch (BadLocationException exception) {
-                            FrontEnd.getInstance().displayErrorMessage(exception);
+                            FrontEnd.displayErrorMessage(exception);
                         } catch (IOException exception) {
-                            FrontEnd.getInstance().displayErrorMessage(exception);
+                            FrontEnd.displayErrorMessage(exception);
                         }
                     }
                     getJTextPane().requestFocusInWindow();
@@ -613,7 +614,8 @@ public class HTMLPage extends Extension {
                     if (Validator.isNullOrBlank(href)) {
                         href = text;
                     }
-                    href = JOptionPane.showInputDialog(FrontEnd.getInstance(), 
+                    href = JOptionPane.showInputDialog(
+                            HTMLPage.this, 
                             new Component[]{textLabel, textField, urlLabel}, href);
                     if (href != null) {
                         try {
@@ -629,9 +631,9 @@ public class HTMLPage extends Extension {
                             linkHTML.append("</a>");
                             HTMLPageEditor.insertHTML(getJTextPane(), linkHTML.toString(), HTML.Tag.A);
                         } catch (BadLocationException exception) {
-                            FrontEnd.getInstance().displayErrorMessage(exception);
+                            FrontEnd.displayErrorMessage(exception);
                         } catch (IOException exception) {
-                            FrontEnd.getInstance().displayErrorMessage(exception);
+                            FrontEnd.displayErrorMessage(exception);
                         }
                     }
                     getJTextPane().requestFocusInWindow();
@@ -735,7 +737,7 @@ public class HTMLPage extends Extension {
                         try {
                             HTMLPageEditor.insertLineBreakOnEnter(getJTextPane());
                         } catch (Exception exception) {
-                            FrontEnd.getInstance().displayErrorMessage(exception);
+                            FrontEnd.displayErrorMessage(exception);
                         }
                     }
                 }
@@ -745,12 +747,12 @@ public class HTMLPage extends Extension {
                     if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
                         if (e.getDescription().startsWith(Constants.ENTRY_PROTOCOL_PREFIX)) {
                             String idStr = e.getDescription().substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
-                            FrontEnd.getInstance().switchToVisualEntry(UUID.fromString(idStr));
+                            FrontEnd.switchToVisualEntry(UUID.fromString(idStr));
                         } else {
                             try {
                                 AppManager.getInstance().handleAddress(e.getDescription());
                             } catch (Exception ex) {
-                                FrontEnd.getInstance().displayErrorMessage(ex);
+                                FrontEnd.displayErrorMessage(ex);
                             }
                         }
                     }

@@ -63,6 +63,7 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import bias.Constants;
+import bias.Launcher;
 import bias.Preferences;
 import bias.annotation.AddOnAnnotation;
 import bias.annotation.PreferenceAnnotation;
@@ -93,7 +94,7 @@ public class FrontEnd extends JFrame {
     /**
      * Application icon
      */
-    public static final ImageIcon ICON_APP = new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
+    private static final ImageIcon ICON_APP = new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
 
     private static final String RESTART_MESSAGE = "Changes will take effect after Bias restart";
 
@@ -176,7 +177,8 @@ public class FrontEnd extends JFrame {
     
     private static final String ADDON_ANN_FIELD_VALUE_NA = "N/A";
     
-    private static ControlIcons controlIcons;
+    // use default control icons initially
+    private static ControlIcons controlIcons = new ControlIcons();
 
     private static FrontEnd instance;
 
@@ -188,7 +190,11 @@ public class FrontEnd extends JFrame {
         initialize();
     }
 
-    public static FrontEnd getInstance() {
+    public static void display() {
+        getInstance().setVisible(true);
+    }
+    
+    private static FrontEnd getInstance() {
         if (instance == null) {
             preInit();
             boolean lafActivationSuccess;
@@ -212,7 +218,7 @@ public class FrontEnd extends JFrame {
                                                 + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
                     BackEnd.getInstance().uninstallLAF(lafFullClassName);
                     config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
-                    instance.displayMessage(
+                    System.out.println(
                             "Broken Look-&-Feel '" + laf + "' has been uninstalled ;)" + Constants.NEW_LINE +
                             RESTART_MESSAGE);
                 } catch (Exception e) {
@@ -261,15 +267,8 @@ public class FrontEnd extends JFrame {
                     "The reason of that most likely is one of the following:" + Constants.NEW_LINE +
                     "* Bias JAR is broken" + Constants.NEW_LINE +
                     "* invalid password");
+            t.printStackTrace();
             System.exit(1);
-        }
-        if (!Constants.SESSION_TMP_DIR.mkdir()) {
-            System.err.println(
-                    "Failed to create session temporary directory!" + Constants.NEW_LINE +
-                    "Problem may be caused by wrong permissions on your home directory" + Constants.NEW_LINE +
-                    "'" + Constants.SESSION_TMP_DIR.getParent() + "'" + Constants.NEW_LINE +
-                    "Please fix the problem, because it may cause" + Constants.NEW_LINE +
-                    "unstable/non-fully-functional Bias execution.");
         }
     }
     
@@ -282,11 +281,10 @@ public class FrontEnd extends JFrame {
             LookAndFeel lafInstance = (LookAndFeel) lafClass.newInstance();
             byte[] lafSettings = BackEnd.getInstance().getLAFSettings(lafFullClassName);
             lafInstance.activate(lafSettings);
-            // use control icons defined by LAF
-            controlIcons = lafInstance.getControlIcons();
-        } else {
-            // use default control icons
-            controlIcons = new ControlIcons();
+            // use control icons defined by LAF if available
+            if (lafInstance.getControlIcons() != null) {
+                controlIcons = lafInstance.getControlIcons();
+            }
         }
     }
     
@@ -383,13 +381,14 @@ public class FrontEnd extends JFrame {
 
             String lsid = config.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
             if (lsid != null) {
-                switchToVisualEntry(UUID.fromString(lsid));
+                this.switchToVisualEntry(getJTabbedPane(), UUID.fromString(lsid), new LinkedList<Component>());
             }
 
             this.addWindowListener(new java.awt.event.WindowAdapter() {
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
                         store();
+                        cleanUp();
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
                     }
@@ -415,7 +414,7 @@ public class FrontEnd extends JFrame {
             modified = true;
         }
         if (!modified) {
-            FrontEnd.getInstance().displayMessage("Selected Look-&-Feel is already active");
+            displayMessage("Selected Look-&-Feel is already active");
         } else {
             configureLAF(laf);
         }
@@ -449,8 +448,7 @@ public class FrontEnd extends JFrame {
             try {
                 Class<Extension> extensionClass = (Class<Extension>) Class.forName(extension);
                 Extension extensionInstance = ExtensionFactory.getInstance().newExtension(extensionClass);
-                byte[] extensionSettings = BackEnd.getInstance().getExtensionSettings(extension);
-                byte[] settings = extensionInstance.configure(extensionSettings);
+                byte[] settings = extensionInstance.configure(null);
                 if (settings == null) {
                     settings = new byte[]{};
                 }
@@ -522,18 +520,13 @@ public class FrontEnd extends JFrame {
                 }
             }
         } catch (Exception ex) {
-            displayErrorMessage("Critical error! :( Bias can not proceed further...", ex);
+            displayErrorMessage("Critical error! :( Bias can not proceed further...");
             System.exit(1);
         }
         return brokenExtensionsFound;
     }
     
-    private void cleanUp() {
-        FSUtils.delete(Constants.SESSION_TMP_DIR);
-    }
-
     private void store() throws Exception {
-        cleanUp();
         collectProperties();
         collectData();
         BackEnd.getInstance().store();
@@ -626,9 +619,13 @@ public class FrontEnd extends JFrame {
         }
         return data;
     }
+    
+    private void cleanUp() {
+        FSUtils.delete(Constants.TMP_DIR);
+    }
 
-    public UUID getSelectedVisualEntryID() {
-        return getSelectedVisualEntryID(getJTabbedPane());
+    public static UUID getSelectedVisualEntryID() {
+        return instance.getSelectedVisualEntryID(instance.getJTabbedPane());
     }
 
     private UUID getSelectedVisualEntryID(JTabbedPane tabPane) {
@@ -652,8 +649,8 @@ public class FrontEnd extends JFrame {
         return null;
     }
 
-    public String getSelectedVisualEntryCaption() {
-        return getSelectedVisualEntryCaption(getJTabbedPane());
+    public static String getSelectedVisualEntryCaption() {
+        return instance.getSelectedVisualEntryCaption(instance.getJTabbedPane());
     }
 
     private String getSelectedVisualEntryCaption(JTabbedPane tabPane) {
@@ -693,8 +690,8 @@ public class FrontEnd extends JFrame {
         return ids;
     }
 
-    public Collection<VisualEntryDescriptor> getVisualEntryDescriptors() {
-        return getVisualEntryDescriptors(getJTabbedPane(), new LinkedList<String>());
+    public static Collection<VisualEntryDescriptor> getVisualEntryDescriptors() {
+        return instance.getVisualEntryDescriptors(instance.getJTabbedPane(), new LinkedList<String>());
     }
 
     private Collection<VisualEntryDescriptor> getVisualEntryDescriptors(JTabbedPane rootTabPane, LinkedList<String> captionsPath) {
@@ -721,8 +718,8 @@ public class FrontEnd extends JFrame {
         return vDescriptors;
     }
 
-    public boolean switchToVisualEntry(UUID id) {
-        return switchToVisualEntry(getJTabbedPane(), id, new LinkedList<Component>());
+    public static boolean switchToVisualEntry(UUID id) {
+        return instance.switchToVisualEntry(instance.getJTabbedPane(), id, new LinkedList<Component>());
     }
 
     private boolean switchToVisualEntry(JTabbedPane rootTabPane, UUID id, LinkedList<Component> path) {
@@ -779,22 +776,26 @@ public class FrontEnd extends JFrame {
         return rootTabPane;
     }
 
-    public void displayErrorMessage(Throwable t) {
-        JOptionPane.showMessageDialog(FrontEnd.this, "Details: " + t, "Error", JOptionPane.ERROR_MESSAGE);
+    public static void displayErrorMessage(Throwable t) {
+        Launcher.hideSplash();
+        JOptionPane.showMessageDialog(instance, "Details: " + t, "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace();
     }
 
-    public void displayErrorMessage(String message, Throwable t) {
-        JOptionPane.showMessageDialog(FrontEnd.this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    public static void displayErrorMessage(String message, Throwable t) {
+        Launcher.hideSplash();
+        JOptionPane.showMessageDialog(instance, message, "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace();
     }
 
-    public void displayErrorMessage(String message) {
-        JOptionPane.showMessageDialog(FrontEnd.this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    public static void displayErrorMessage(String message) {
+        Launcher.hideSplash();
+        JOptionPane.showMessageDialog(instance, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
     
-    public void displayMessage(String message) {
-        JOptionPane.showMessageDialog(FrontEnd.this, message, "Information", JOptionPane.INFORMATION_MESSAGE);
+    public static void displayMessage(String message) {
+        Launcher.hideSplash();
+        JOptionPane.showMessageDialog(instance, message, "Information", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void addTabPaneListeners(JTabbedPane tabPane) {
@@ -1486,25 +1487,21 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             try {
                 JFileChooser jfc = new JFileChooser();
-                jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 jfc.setFileFilter(new FileFilter() {
                     @Override
                     public boolean accept(File file) {
-                        if (file.isDirectory() || file.getName().endsWith(".jar")) {
-                            return true;
-                        }
-                        return false;
+                        return file.isDirectory();
                     }
-
                     @Override
                     public String getDescription() {
-                        return "Java Archive File (*.jar)";
+                        return "Bias working directory";
                     }
                 });
-                File jarFile = null;
+                File importDir = null;
                 int rVal = jfc.showOpenDialog(FrontEnd.this);
                 if (rVal == JFileChooser.APPROVE_OPTION) {
-                    jarFile = jfc.getSelectedFile();
+                    importDir = jfc.getSelectedFile();
 
                     JLabel label = new JLabel("password:");
                     final JPasswordField passField = new JPasswordField();
@@ -1524,7 +1521,7 @@ public class FrontEnd extends JFrame {
                         String password = new String(passField.getPassword());            
                         if (password != null) {
                             try {
-                                DataCategory data = BackEnd.getInstance().importData(jarFile, getVisualEntriesIDs(), password);
+                                DataCategory data = BackEnd.getInstance().importData(importDir, getVisualEntriesIDs(), password);
                                 if (!data.getData().isEmpty()) {
                                     representData(data);
                                     displayMessage("Data have been successfully imported");
@@ -1597,17 +1594,7 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             try {
-                // show confirmation dialog
-                if (JOptionPane.showConfirmDialog(FrontEnd.getInstance(), 
-                        "The data are going to be saved now." + Constants.NEW_LINE +
-                        "This will finish your current Bias session." + Constants.NEW_LINE +
-                        "Are you sure you want save and exit?",
-                        "Save data and exit",
-                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                    // store, then exit
-                    store();
-                    System.exit(0);
-                }
+                store();
             } catch (Exception ex) {
                 displayErrorMessage(ex);
             }
@@ -1619,9 +1606,9 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             // show confirmation dialog
-            if (JOptionPane.showConfirmDialog(FrontEnd.getInstance(), 
-                    "All unsaved data will be lost." + Constants.NEW_LINE +
-                    "Are you sure you want to discard chages?",
+            if (JOptionPane.showConfirmDialog(FrontEnd.this, 
+                    "All unsaved changes will be lost." + Constants.NEW_LINE +
+                    "Are you sure you want to discard unsaved chages?",
                     "Discard unsaved changes confirmation",
                     JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 // store nothing, just exit
@@ -1659,14 +1646,14 @@ public class FrontEnd extends JFrame {
                                         try {
                                             field.setBoolean(Preferences.getInstance(), ((JCheckBox) e.getSource()).isSelected());
                                         } catch (Exception ex) {
-                                            FrontEnd.getInstance().displayErrorMessage(
+                                            displayErrorMessage(
                                                     "Failed to change preference!", ex);
                                         }
                                     }
                                 });
                             } catch (Exception ex) {
                                 prefControl = null;
-                                FrontEnd.getInstance().displayErrorMessage(
+                                displayErrorMessage(
                                         "Failed to get preference!", ex);
                             }
                         }
@@ -1680,7 +1667,7 @@ public class FrontEnd extends JFrame {
                 for (Component prefComponent : prefComponents) {
                     prefsPanel.add(prefComponent);
                 }
-                JOptionPane.showConfirmDialog(FrontEnd.getInstance(), prefsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION);
+                JOptionPane.showConfirmDialog(FrontEnd.this, prefsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION);
                 byte[] after = Preferences.getInstance().serialize();
                 if (!Arrays.equals(after, before)) {
                     displayMessage(RESTART_MESSAGE);
@@ -1775,7 +1762,7 @@ public class FrontEnd extends JFrame {
                                     configureExtension(extFullClassName, false);
                                 }
                             } catch (Exception ex) {
-                                FrontEnd.getInstance().displayErrorMessage(ex);
+                                displayErrorMessage(ex);
                             }
                         } else {
                             displayMessage("Please, choose only one extension from the list");
@@ -1785,7 +1772,7 @@ public class FrontEnd extends JFrame {
                 JButton extInstButt = new JButton("Install more");
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (extensionFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                        if (extensionFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
                             try {
                                 for (File file : extensionFileChooser.getSelectedFiles()) {
                                     String installedExt = BackEnd.getInstance().installExtension(file);
@@ -1794,7 +1781,7 @@ public class FrontEnd extends JFrame {
                                     modified = true;
                                 }
                             } catch (Exception ex) {
-                                FrontEnd.getInstance().displayErrorMessage(ex);
+                                displayErrorMessage(ex);
                             }
                         }
                     }
@@ -1814,10 +1801,10 @@ public class FrontEnd extends JFrame {
                                     extModel.removeRow(idx);
                                     modified = true;
                                 }
-                                FrontEnd.getInstance().displayMessage("Extension(s) have been successfully uninstalled!");
+                                displayMessage("Extension(s) have been successfully uninstalled!");
                             }
                         } catch (Exception ex) {
-                            FrontEnd.getInstance().displayErrorMessage(ex);
+                            displayErrorMessage(ex);
                         }
                     }
                 });
@@ -1939,7 +1926,7 @@ public class FrontEnd extends JFrame {
                 JButton lafInstButt = new JButton("Install more");
                 lafInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (lafFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                        if (lafFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
                             try {
                                 for (File file : lafFileChooser.getSelectedFiles()) {
                                     String installedLAF = BackEnd.getInstance().installLAF(file);
@@ -1948,7 +1935,7 @@ public class FrontEnd extends JFrame {
                                     modified = true;
                                 }
                             } catch (Exception ex) {
-                                FrontEnd.getInstance().displayErrorMessage(ex);
+                                displayErrorMessage(ex);
                             }
                         }
                     }
@@ -1977,18 +1964,18 @@ public class FrontEnd extends JFrame {
                                         uninstalled = true;
                                         modified = true;
                                     } else {
-                                        FrontEnd.getInstance().displayErrorMessage("Default Look-&-Feel can not be uninstalled!");
+                                        displayErrorMessage("Default Look-&-Feel can not be uninstalled!");
                                         if (lafList.getSelectedRowCount() == 1) {
                                             break;
                                         }
                                     }
                                 }
                                 if (uninstalled) {
-                                    FrontEnd.getInstance().displayMessage("Look-&-Feel(s) have been successfully uninstalled!");
+                                    displayMessage("Look-&-Feel(s) have been successfully uninstalled!");
                                 }
                             }
                         } catch (Exception ex) {
-                            FrontEnd.getInstance().displayErrorMessage(ex);
+                            displayErrorMessage(ex);
                         }
                     }
                 });
@@ -2008,7 +1995,7 @@ public class FrontEnd extends JFrame {
                 JButton addIconButt = new JButton("Add more");
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (iconsFileChooser.showOpenDialog(FrontEnd.getInstance()) == JFileChooser.APPROVE_OPTION) {
+                        if (iconsFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
                             try {
                                 boolean added = false;
                                 for (File file : iconsFileChooser.getSelectedFiles()) {
@@ -2021,12 +2008,12 @@ public class FrontEnd extends JFrame {
                                     }
                                 }
                                 if (added) {
-                                    FrontEnd.getInstance().displayMessage("Icon(s) have been successfully installed!");
+                                    displayMessage("Icon(s) have been successfully installed!");
                                 } else {
-                                    FrontEnd.getInstance().displayErrorMessage("Nothing to install!");
+                                    displayErrorMessage("Nothing to install!");
                                 }
                             } catch (Exception ex) {
-                                FrontEnd.getInstance().displayErrorMessage(ex);
+                                displayErrorMessage(ex);
                             }
                         }
                     }
@@ -2040,10 +2027,10 @@ public class FrontEnd extends JFrame {
                                     BackEnd.getInstance().removeIcon((ImageIcon)icon);
                                     icModel.removeElement(icon);
                                 }
-                                FrontEnd.getInstance().displayMessage("Icon(s) have been successfully removed!");
+                                displayMessage("Icon(s) have been successfully removed!");
                             }
                         } catch (Exception ex) {
-                            FrontEnd.getInstance().displayErrorMessage(ex);
+                            displayErrorMessage(ex);
                         }
                     }
                 });
@@ -2113,8 +2100,9 @@ public class FrontEnd extends JFrame {
                 );
 
                 if (modified || brokenFixed) {
-                    FrontEnd.getInstance().displayMessage(RESTART_MESSAGE);
+                    displayMessage(RESTART_MESSAGE);
                     store();
+                    cleanUp();
                     System.exit(0);
                 }
                 

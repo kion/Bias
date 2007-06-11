@@ -32,8 +32,6 @@ import java.util.Map.Entry;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -56,6 +54,7 @@ import bias.Bias;
 import bias.Constants;
 import bias.Launcher;
 import bias.Preferences;
+import bias.utils.FSUtils;
 import bias.utils.Validator;
 
 import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
@@ -102,7 +101,9 @@ public class BackEnd {
         return cipher;
     }
     
-    private Map<String, byte[]> zipEntries;
+    private Map<String, byte[]> zipEntries = new HashMap<String, byte[]>();
+    
+    private Map<UUID, byte[]> icons = new LinkedHashMap<UUID, byte[]>();
     
     private Map<String, DataEntry> identifiedData;
     
@@ -115,9 +116,9 @@ public class BackEnd {
     private Properties config;
     
     public void load() throws Exception {
-        zipEntries = new LinkedHashMap<String, byte[]>();
         identifiedData = new LinkedHashMap<String, DataEntry>();
         config = new Properties();
+        
         ZipInputStream zis = new ZipInputStream(new FileInputStream(Bias.getJarFile()));
         ZipEntry ze = null;
         while ((ze = zis.getNextEntry()) != null) {
@@ -128,79 +129,119 @@ public class BackEnd {
                 out.write(c);
             }
             out.close();
-            if (path.matches(Constants.DATA_FILE_PATTERN)) {
-            	String entryIDStr = path
-                                        .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
-                                        .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
-                DataEntry de = new DataEntry();
-                byte[] decryptedData = CIPHER_DECRYPT.doFinal(out.toByteArray());
-                de.setData(decryptedData);
-                identifiedData.put(entryIDStr, de);
-            } else if (path.equals(Constants.METADATA_FILE_PATH)) {
-                if (out.size() != 0) {
-                    byte[] decryptedData = CIPHER_DECRYPT.doFinal(out.toByteArray());
-                    metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
-                            new ByteArrayInputStream(decryptedData));
-                }
-            } else if (path.equals(Constants.GLOBAL_CONFIG_FILE_PATH)) {
-                config.load(
-                        new ByteArrayInputStream(out.toByteArray()));
-            } else if (path.equals(Constants.PREFERENCES_FILE_PATH)) {
-                if (out.size() != 0) {
-                    byte[] decryptedData = CIPHER_DECRYPT.doFinal(out.toByteArray());
-                    prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
-                            new ByteArrayInputStream(decryptedData));
-                }
-            } else if (path.matches(Constants.ATTACHMENT_FILE_PATH_PATTERN)){
-                byte[] decryptedData = CIPHER_DECRYPT.doFinal(out.toByteArray());
-                zipEntries.put(path, decryptedData);
-            } else {
-                zipEntries.put(path, out.toByteArray());
-            }
+            zipEntries.put(path, out.toByteArray());
         }
         zis.close();
-        data = parseMetadata(metadata, identifiedData, null);
+        
+        byte[] data = null;
+        byte[] decryptedData = null;
+        if (Constants.DATA_DIR.exists()) {
+            // data files
+            for (File dataFile : Constants.DATA_DIR.listFiles()) {
+                if (dataFile.getName().endsWith(Constants.DATA_FILE_SUFFIX)) {
+                    data = FSUtils.readFile(dataFile);
+                    decryptedData = CIPHER_DECRYPT.doFinal(data);
+                    String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    DataEntry de = new DataEntry();
+                    de.setData(decryptedData);
+                    identifiedData.put(entryIDStr, de);
+                }
+            }
+        }
+        File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE);
+        if (metadataFile.exists()) {
+            // metadata file
+            data = FSUtils.readFile(metadataFile);
+            decryptedData = CIPHER_DECRYPT.doFinal(data);
+            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
+        }
+        // global config file
+        File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
+        if (configFile.exists()) {
+            data = FSUtils.readFile(configFile);
+            config.load(new ByteArrayInputStream(data));
+        }
+        // preferences file
+        File prefsFile = new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE);
+        if (prefsFile.exists()) {
+            data = FSUtils.readFile(prefsFile);
+            if (data.length != 0) {
+                prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(data));
+            }
+        }
+        if (Constants.ICONS_DIR.exists()) {
+            // icon files
+            File iconsListFile = new File(Constants.CONFIG_DIR, Constants.ICONS_CONFIG_FILE);
+            if (iconsListFile.exists()) {
+                String[] iconsList = new String(FSUtils.readFile(iconsListFile)).split(Constants.NEW_LINE);
+                for (String iconId : iconsList) {
+                    if (!Validator.isNullOrBlank(iconId)) {
+                        File iconFile = new File(Constants.ICONS_DIR, iconId + Constants.ICON_FILE_SUFFIX);
+                        data = FSUtils.readFile(iconFile);
+                        icons.put(UUID.fromString(iconId), data);
+                    }
+                }
+            }
+        }
+        // parse metadata file
+        this.data = parseMetadata(metadata, identifiedData, null);
     }
     
-    public DataCategory importData(File jarFile, Collection<UUID> existingIDs, String password) throws Exception {
+    public DataCategory importData(File importDir, Collection<UUID> existingIDs, String password) throws Exception {
         Cipher cipher = initCipher(Cipher.DECRYPT_MODE, password);
         Map<String,DataEntry> importedIdentifiedData = new LinkedHashMap<String, DataEntry>();
         Document metadata = null;
-        ZipInputStream zis = new ZipInputStream(new FileInputStream(jarFile));
-        ZipEntry ze = null;
-        while ((ze = zis.getNextEntry()) != null) {
-            String path = ze.getName();
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            int c;
-            while ((c = zis.read()) != -1) {
-                out.write(c);
-            }
-            if (path.matches(Constants.DATA_FILE_PATTERN)) {
-                String entryIDStr = path
-                                        .replaceFirst(Constants.DATA_DIR_PATTERN, Constants.EMPTY_STR)
-                                        .replaceFirst(Constants.DATA_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
+        byte[] data = null;
+        byte[] decryptedData = null;
+        // data files
+        File dataDir = new File(importDir, Constants.DATA_DIR.getName());
+        for (File dataFile : dataDir.listFiles()) {
+            if (dataFile.getName().endsWith(Constants.DATA_FILE_SUFFIX)) {
+                data = FSUtils.readFile(dataFile);
+                String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                 DataEntry de = new DataEntry();
-                byte[] decryptedData = cipher.doFinal(out.toByteArray());
+                decryptedData = cipher.doFinal(data);
                 de.setData(decryptedData);
                 importedIdentifiedData.put(entryIDStr, de);
-            } else if (path.matches(Constants.ICON_FILE_PATH_PATTERN)) {
-            	if (!zipEntries.containsKey(ze.getName())) {
-            		zipEntries.put(ze.getName(), out.toByteArray());
-            	}
-            } else if (path.matches(Constants.ATTACHMENT_FILE_PATH_PATTERN)){
-                byte[] decryptedData = cipher.doFinal(out.toByteArray());
-                zipEntries.put(path, decryptedData);
-            } else if (path.equals(Constants.METADATA_FILE_PATH)) {
-                if (out.size() != 0) {
-                    byte[] decryptedData = cipher.doFinal(out.toByteArray());
-                    metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(
-                            new ByteArrayInputStream(decryptedData));
-                }
-            }    
+            }
         }
-        zis.close();
+        // metadata file
+        data = FSUtils.readFile(new File(dataDir, Constants.METADATA_FILE));
+        decryptedData = cipher.doFinal(data);
+        metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
+        // read icon files
+        File iconsDir = new File(importDir, Constants.ICONS_DIR.getName());
+        File configDir = new File(importDir, Constants.CONFIG_DIR.getName());
+        File iconsListFile = new File(configDir, Constants.ICONS_CONFIG_FILE);
+        if (iconsListFile.exists()) {
+            String[] iconsList = new String(FSUtils.readFile(iconsListFile)).split(Constants.NEW_LINE);
+            for (String iconId : iconsList) {
+                File iconFile = new File(iconsDir, iconId + Constants.ICON_FILE_SUFFIX);
+                data = FSUtils.readFile(iconFile);
+                icons.put(UUID.fromString(iconId), data);
+            }
+        }
+        // attachements
+        File attsDir = new File(importDir, Constants.ATTACHMENTS_DIR.getName());
+        if (attsDir.exists()) {
+            for (File entryAttsDir : attsDir.listFiles()) {
+                for (File attFile : entryAttsDir.listFiles()) {
+                    data = FSUtils.readFile(attFile);
+                    decryptedData = cipher.doFinal(data);
+                    byte[] encryptedData = CIPHER_ENCRYPT.doFinal(decryptedData);
+                    entryAttsDir = new File(Constants.ATTACHMENTS_DIR, entryAttsDir.getName());
+                    if (!entryAttsDir.exists()) {
+                        entryAttsDir.mkdir();
+                    }
+                    attFile = new File(entryAttsDir, attFile.getName());
+                    FSUtils.writeFile(attFile, encryptedData);
+                }
+            }
+        }
+        // parse metadata file
         DataCategory importedData = parseMetadata(metadata, importedIdentifiedData, existingIDs);
-        data.addDataItems(importedData.getData());
+        // add imported data to existing data
+        this.data.addDataItems(importedData.getData());
         return importedData;
     }
     
@@ -243,7 +284,7 @@ public class BackEnd {
                 Node attIcon = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ICON);
                 if (attIcon != null) {
                 	String iconID = attIcon.getNodeValue();
-                	byte[] imageData = zipEntries.get(Constants.ICONS_DIR + iconID + Constants.ICON_FILE_ENDING);
+                    byte[] imageData = icons.get(UUID.fromString(iconID));
                 	if (imageData != null) {
                     	ImageIcon icon = new ImageIcon(imageData, iconID);
                     	dc.setIcon(icon);
@@ -278,7 +319,7 @@ public class BackEnd {
                 Node attIcon = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ICON);
                 if (attIcon != null) {
                 	String iconID = attIcon.getNodeValue();
-                	byte[] imageData = zipEntries.get(Constants.ICONS_DIR + iconID + Constants.ICON_FILE_ENDING);
+                	byte[] imageData = icons.get(UUID.fromString(iconID));
                 	if (imageData != null) {
                     	ImageIcon icon = new ImageIcon(imageData, iconID);
                     	dataEntry.setIcon(icon);
@@ -294,6 +335,9 @@ public class BackEnd {
     }
     
     public void store() throws Exception {
+        // clear data dir before writing updated files
+        FSUtils.clearDirectory(Constants.DATA_DIR);
+        // metadata file and data entries
         metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         Element rootNode = metadata.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
         rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, data.getPlacement().toString());
@@ -303,26 +347,35 @@ public class BackEnd {
         Collection<UUID> ids = buildNode(rootNode, data);
         cleanUpOrphanedStuff(ids);
         metadata.appendChild(rootNode);
-        StringWriter sw = new StringWriter();
-        config.list(new PrintWriter(sw));
-        zipEntries.put(Constants.GLOBAL_CONFIG_FILE_PATH, sw.getBuffer().toString().getBytes());
-        byte[] encryptedData = CIPHER_ENCRYPT.doFinal(Preferences.getInstance().serialize());
-        zipEntries.put(Constants.PREFERENCES_FILE_PATH, encryptedData);
         OutputFormat of = new OutputFormat();
         of.setIndenting(true);
         of.setIndent(4);
-        sw = new StringWriter();
+        StringWriter sw = new StringWriter();
         new XMLSerializer(sw, of).serialize(metadata);
-        encryptedData = CIPHER_ENCRYPT.doFinal(sw.getBuffer().toString().getBytes());
-        zipEntries.put(Constants.METADATA_FILE_PATH, encryptedData);
+        byte[] encryptedData = CIPHER_ENCRYPT.doFinal(sw.getBuffer().toString().getBytes());
+        FSUtils.writeFile(new File(Constants.DATA_DIR, Constants.METADATA_FILE), encryptedData);
+        // icons
+        StringBuffer iconsList = new StringBuffer();
+        for (Entry<UUID, byte[]> icon : icons.entrySet()) {
+            File iconFile = new File(Constants.ICONS_DIR, icon.getKey().toString() + Constants.ICON_FILE_SUFFIX);
+            FSUtils.writeFile(iconFile, icon.getValue());
+            iconsList.append(icon.getKey().toString());
+            iconsList.append(Constants.NEW_LINE);
+        }
+        File iconsListFile = new File(Constants.CONFIG_DIR, Constants.ICONS_CONFIG_FILE);
+        FSUtils.writeFile(iconsListFile, iconsList.toString().getBytes());
+        // global config file
+        sw = new StringWriter();
+        config.list(new PrintWriter(sw));
+        FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE), sw.getBuffer().toString().getBytes());
+        // preferences file
+        FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
+        // jar file itself (extensions & lafs)
         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(Bias.getJarFile()));
         for (Entry<String, byte[]> entry : zipEntries.entrySet()) {
             String entryName = entry.getKey();
             ZipEntry zipEntry = new ZipEntry(entryName);
             byte[] entryData = entry.getValue();
-            if (entryName.matches(Constants.ATTACHMENT_FILE_PATH_PATTERN)) {
-                entryData = CIPHER_ENCRYPT.doFinal(entryData);
-            }
             zos.putNextEntry(zipEntry);
             if (entryData != null) {
                 for (byte b : entryData) {
@@ -340,22 +393,22 @@ public class BackEnd {
         for (Recognizable item : data.getData()) {
             if (item instanceof DataEntry) {
                 DataEntry de = (DataEntry) item;
-                String dePath = Constants.DATA_DIR + de.getId().toString() + Constants.DATA_FILE_ENDING;
+                File deFile = new File(Constants.DATA_DIR, de.getId().toString() + Constants.DATA_FILE_SUFFIX);
                 byte[] entryData = de.getData();
                 if (entryData == null) {
                     entryData = new byte[]{};
                 }
                 byte[] encryptedData = CIPHER_ENCRYPT.doFinal(entryData);
-                zipEntries.put(dePath, encryptedData);
+                FSUtils.writeFile(deFile, encryptedData);
                 storeDataEntrySettings(de);
                 Element entryNode = metadata.createElement(Constants.XML_ELEMENT_ENTRY);
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, de.getId().toString());
                 String encodedCaption = URLEncoder.encode(de.getCaption(), Constants.UNICODE_ENCODING);
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);
                 if (de.getIcon() != null) {
-                	String iconPath = ((ImageIcon)de.getIcon()).getDescription();
-                	if (!Validator.isNullOrBlank(iconPath)) {
-                        entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ICON, iconPath);
+                	String iconId = ((ImageIcon)de.getIcon()).getDescription();
+                	if (!Validator.isNullOrBlank(iconId)) {
+                        entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ICON, iconId);
                 	}
                 }
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_TYPE, de.getType());
@@ -368,9 +421,9 @@ public class BackEnd {
                 String encodedCaption = URLEncoder.encode(dc.getCaption(), Constants.UNICODE_ENCODING);
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);
                 if (dc.getIcon() != null) {
-                	String iconPath = ((ImageIcon)dc.getIcon()).getDescription();
-                	if (!Validator.isNullOrBlank(iconPath)) {
-                        catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ICON, iconPath);
+                	String iconId = ((ImageIcon)dc.getIcon()).getDescription();
+                	if (!Validator.isNullOrBlank(iconId)) {
+                        catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ICON, iconId);
                 	}
                 }
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, dc.getPlacement().toString());
@@ -384,9 +437,13 @@ public class BackEnd {
         return ids;
     }
     
-    private void setDataEntrySettings(DataEntry dataEntry) {
+    private void setDataEntrySettings(DataEntry dataEntry) throws Exception {
         if (dataEntry != null) {
-            byte[] settings = zipEntries.get(Constants.CONFIG_DIR + dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_ENDING);
+            byte[] settings = null;
+            File dataEntryConfigFile = new File(Constants.CONFIG_DIR, dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX);
+            if (dataEntryConfigFile.exists()) {
+                settings = FSUtils.readFile(dataEntryConfigFile);
+            }
             if (settings == null) {
                 settings = getExtensionSettings(dataEntry.getType());
             }
@@ -397,11 +454,11 @@ public class BackEnd {
     private void storeDataEntrySettings(DataEntry dataEntry) throws Exception {
         if (dataEntry != null && dataEntry.getSettings() != null) {
             byte[] defSettings = getExtensionSettings(dataEntry.getType());
+            File deConfigFile = new File(Constants.CONFIG_DIR, dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX);
             if (!Arrays.equals(defSettings,dataEntry.getSettings())) {
-                zipEntries.put(Constants.CONFIG_DIR + dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_ENDING, 
-                        dataEntry.getSettings());
+                FSUtils.writeFile(deConfigFile, dataEntry.getSettings());
             } else {
-                zipEntries.remove(Constants.CONFIG_DIR + dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_ENDING);
+                FSUtils.delete(deConfigFile);
             }
         }
     }
@@ -411,7 +468,7 @@ public class BackEnd {
         for (String name : zipEntries.keySet()) {
             if (name.matches(Constants.EXTENSION_PATTERN)) {
                 String extension = 
-                    name.substring(0, name.length() - Constants.CLASS_FILE_ENDING.length())
+                    name.substring(0, name.length() - Constants.CLASS_FILE_SUFFIX.length())
                     .replaceAll(Constants.ZIP_PATH_SEPARATOR, Constants.PACKAGE_PATH_SEPARATOR);
                 extensions.add(extension);
             }
@@ -419,11 +476,14 @@ public class BackEnd {
         return extensions;
     }
 
-    public byte[] getExtensionSettings(String extension) {
+    public byte[] getExtensionSettings(String extension) throws Exception {
         byte[] settings = null;
         if (!Validator.isNullOrBlank(extension)) {
             String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            settings = zipEntries.get(Constants.CONFIG_DIR + extensionName + Constants.EXTENSION_CONFIG_FILE_ENDING);
+            File extConfigFile = new File(Constants.CONFIG_DIR, extensionName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
+            if (extConfigFile.exists()) {
+                settings = FSUtils.readFile(extConfigFile);
+            }
         }
         return settings;
     }
@@ -431,7 +491,8 @@ public class BackEnd {
     public void storeExtensionSettings(String extension, byte[] settings) throws Exception {
         if (!Validator.isNullOrBlank(extension) && settings != null) {
             String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            zipEntries.put(Constants.CONFIG_DIR + extensionName + Constants.EXTENSION_CONFIG_FILE_ENDING, settings);
+            File extConfigFile = new File(Constants.CONFIG_DIR, extensionName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
+            FSUtils.writeFile(extConfigFile, settings);
         }
     }
 
@@ -481,8 +542,8 @@ public class BackEnd {
                         if (type == 1) {
                             if (!jeName.matches(Constants.ZIP_ADDITIONAL_CLASS_FILE_PATTERN)) {
                                 String shortName = jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
-                                                     .replaceFirst(Constants.CLASS_FILE_ENDING_PATTERN, Constants.EMPTY_STR)
-                                                     .replaceFirst(Constants.INNER_CLASS_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
+                                                     .replaceFirst(Constants.CLASS_FILE_SUFFIX_PATTERN, Constants.EMPTY_STR)
+                                                     .replaceFirst(Constants.INNER_CLASS_FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                                 installedExtNames.add(shortName);
                             }
                             classesMap.put(jeName, out.toByteArray());
@@ -551,7 +612,7 @@ public class BackEnd {
                                         entry.getValue());
                     }
                     if (!libsMap.isEmpty()) {
-                        String extensionInstLogEntryPath = Constants.CONFIG_DIR + extName + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING;
+                        File extensionInstLogFile = new File(Constants.CONFIG_DIR, extName + Constants.EXT_LIB_INSTALL_LOG_FILE_SUFFIX);
                         StringBuffer sb = new StringBuffer();
                         for (Entry<String, byte[]> entry : libsMap.entrySet()) {
                             if (entry.getValue() != null) {
@@ -559,7 +620,7 @@ public class BackEnd {
                             }
                             sb.append(entry.getKey() + Constants.NEW_LINE);
                         }
-                        zipEntries.put(extensionInstLogEntryPath, sb.toString().getBytes());
+                        FSUtils.writeFile(extensionInstLogFile, sb.toString().getBytes());
                     }
                 }
                 installedExtensionName = fullExtName;
@@ -589,16 +650,16 @@ public class BackEnd {
                 zipEntries.remove(key);
             }
         }
-        String extensionConfigPath = Constants.CONFIG_DIR + extensionName + Constants.EXTENSION_CONFIG_FILE_ENDING;
-        zipEntries.remove(extensionConfigPath);
+        File extensionConfigFile = new File(Constants.CONFIG_DIR, extensionName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
+        FSUtils.delete(extensionConfigFile);
     }
         
-    public Map<String, byte[]> getLAFs() {
+    public Map<String, byte[]> getLAFs() throws Exception {
         Map<String, byte[]> lafs = new LinkedHashMap<String, byte[]>();
         for (String name : zipEntries.keySet()) {
             if (name.matches(Constants.LAF_PATTERN)) {
                 String laf = 
-                    name.substring(0, name.length() - Constants.CLASS_FILE_ENDING.length())
+                    name.substring(0, name.length() - Constants.CLASS_FILE_SUFFIX.length())
                     .replaceAll(Constants.ZIP_PATH_SEPARATOR, Constants.PACKAGE_PATH_SEPARATOR);
                 byte[] settings = getLAFSettings(laf);
                 lafs.put(laf, settings);
@@ -607,11 +668,14 @@ public class BackEnd {
         return lafs;
     }
     
-    public byte[] getLAFSettings(String laf) {
+    public byte[] getLAFSettings(String laf) throws Exception {
         byte[] settings = null;
         if (!Validator.isNullOrBlank(laf)) {
             String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            settings = zipEntries.get(Constants.CONFIG_DIR + lafName + Constants.LAF_CONFIG_FILE_ENDING);
+            File lafConfigFile = new File(Constants.CONFIG_DIR, lafName + Constants.LAF_CONFIG_FILE_SUFFIX);
+            if (lafConfigFile.exists()) {
+                settings = FSUtils.readFile(lafConfigFile);
+            }
         }
         return settings;
     }
@@ -619,7 +683,8 @@ public class BackEnd {
     public void storeLAFSettings(String laf, byte[] settings) throws Exception {
         if (!Validator.isNullOrBlank(laf) && settings != null) {
             String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            zipEntries.put(Constants.CONFIG_DIR + lafName + Constants.LAF_CONFIG_FILE_ENDING, settings);
+            File lafConfigFile = new File(Constants.CONFIG_DIR, lafName + Constants.LAF_CONFIG_FILE_SUFFIX);
+            FSUtils.writeFile(lafConfigFile, settings);
         }
     }
 
@@ -668,8 +733,8 @@ public class BackEnd {
                         out.close();
                         if (type == 1) {
                             String shortName = jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
-                                                     .replaceFirst(Constants.CLASS_FILE_ENDING_PATTERN, Constants.EMPTY_STR)
-                                                     .replaceFirst(Constants.INNER_CLASS_FILE_ENDING_PATTERN, Constants.EMPTY_STR);
+                                                     .replaceFirst(Constants.CLASS_FILE_SUFFIX_PATTERN, Constants.EMPTY_STR)
+                                                     .replaceFirst(Constants.INNER_CLASS_FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                             installedLAFNames.add(shortName);
                             classesMap.put(jeName, out.toByteArray());
                         } else if (type == 2) {
@@ -737,7 +802,7 @@ public class BackEnd {
                                         entry.getValue());
                     }
                     if (!libsMap.isEmpty()) {
-                        String lafInstLogEntryPath = Constants.CONFIG_DIR + lafName + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
+                        File lafInstLogFile = new File(Constants.CONFIG_DIR, lafName + Constants.LAF_LIB_INSTALL_LOG_FILE_SUFFIX);
                         StringBuffer sb = new StringBuffer();
                         for (Entry<String, byte[]> entry : libsMap.entrySet()) {
                             if (entry.getValue() != null) {
@@ -745,7 +810,7 @@ public class BackEnd {
                             }
                             sb.append(entry.getKey() + Constants.NEW_LINE);
                         }
-                        zipEntries.put(lafInstLogEntryPath, sb.toString().getBytes());
+                        FSUtils.writeFile(lafInstLogFile, sb.toString().getBytes());
                     }
                 }
                 installedLAF = fullLAFName;
@@ -775,17 +840,17 @@ public class BackEnd {
                 zipEntries.remove(key);
             }
         }
-        String lafConfigPath = Constants.CONFIG_DIR + lafName + Constants.LAF_CONFIG_FILE_ENDING;
-        zipEntries.remove(lafConfigPath);
+        File lafConfigFile = new File(Constants.CONFIG_DIR, lafName + Constants.LAF_CONFIG_FILE_SUFFIX);
+        zipEntries.remove(lafConfigFile);
     }
     
-    private void uninstallLibs(String addOn) {
+    private void uninstallLibs(String addOn) throws Exception {
         Collection<String> addOnLibEntries = getAddOnLibEntries(addOn);
         Collection<String> nonAddOnLibEntries = getNonAddOnLibEntries(addOn);
         addOnLibEntries.removeAll(nonAddOnLibEntries);
         zipEntries.keySet().removeAll(addOnLibEntries);
-        zipEntries.remove(Constants.CONFIG_DIR + addOn + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING);
-        zipEntries.remove(Constants.CONFIG_DIR + addOn + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING);
+        FSUtils.delete(new File(Constants.CONFIG_DIR, addOn + Constants.EXT_LIB_INSTALL_LOG_FILE_SUFFIX));
+        FSUtils.delete(new File(Constants.CONFIG_DIR, addOn + Constants.LAF_LIB_INSTALL_LOG_FILE_SUFFIX));
     }
     
     private Collection<String> getAddOns() {
@@ -793,7 +858,7 @@ public class BackEnd {
         for (String name : zipEntries.keySet()) {
             if (name.matches(Constants.EXTENSION_PATTERN) || name.matches(Constants.LAF_PATTERN)) {
                 String addOn = 
-                    name.substring(0, name.length() - Constants.CLASS_FILE_ENDING.length())
+                    name.substring(0, name.length() - Constants.CLASS_FILE_SUFFIX.length())
                     .replaceAll(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR);
                 addOns.add(addOn);
             }
@@ -801,13 +866,13 @@ public class BackEnd {
         return addOns;
     }
     
-    private Collection<String> getAddOnLibEntries(String addOn) {
+    private Collection<String> getAddOnLibEntries(String addOn) throws Exception {
         Collection<String> entries = new ArrayList<String>();
-        String path = Constants.CONFIG_DIR + addOn + Constants.EXT_LIB_INSTALL_LOG_FILE_ENDING;
-        if (!zipEntries.containsKey(path)) {
-            path = Constants.CONFIG_DIR + addOn + Constants.LAF_LIB_INSTALL_LOG_FILE_ENDING;
+        File logFile = new File(Constants.CONFIG_DIR, addOn + Constants.EXT_LIB_INSTALL_LOG_FILE_SUFFIX);
+        if (!logFile.exists()) {
+            logFile = new File(Constants.CONFIG_DIR, addOn + Constants.LAF_LIB_INSTALL_LOG_FILE_SUFFIX);
         }
-        byte[] bytes = zipEntries.get(path);
+        byte[] bytes = FSUtils.readFile(logFile);
         if (bytes != null) {
             String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
             for (String installEntry : installEntries) {
@@ -817,13 +882,12 @@ public class BackEnd {
         return entries;
     }
         
-    private Collection<String> getNonAddOnLibEntries(String addOn) {
+    private Collection<String> getNonAddOnLibEntries(String addOn) throws Exception {
         Collection<String> entries = new ArrayList<String>();
-        for (String key : zipEntries.keySet()) {
-            Pattern p = Pattern.compile(Constants.LIB_INSTALL_LOG_FILE_PATTERN);
-            Matcher m = p.matcher(key);
-            if (m.find() && !m.group(1).equals(addOn)) {
-                byte[] bytes = zipEntries.get(key);
+        for (File f : Constants.CONFIG_DIR.listFiles()) {
+            if (f.getName().endsWith(Constants.EXT_LIB_INSTALL_LOG_FILE_SUFFIX)
+                    || f.getName().endsWith(Constants.LAF_LIB_INSTALL_LOG_FILE_SUFFIX)) {
+                byte[] bytes = FSUtils.readFile(f);
                 if (bytes != null) {
                     String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
                     for (String installEntry : installEntries) {
@@ -835,17 +899,16 @@ public class BackEnd {
         return entries;
     }
     
-    private String getConflictingAddOn(String conflictingResource) {
+    private String getConflictingAddOn(String conflictingResource) throws Exception {
         String conflictingAddOn = null;
-        Pattern p = Pattern.compile(Constants.LIB_INSTALL_LOG_FILE_PATTERN);
-        for (String key : zipEntries.keySet()) {
-            Matcher m = p.matcher(key);
-            if (m.find()) {
-                byte[] bytes = zipEntries.get(key);
+        for (File f : Constants.CONFIG_DIR.listFiles()) {
+            if (f.getName().endsWith(Constants.EXT_LIB_INSTALL_LOG_FILE_SUFFIX)
+                    || f.getName().endsWith(Constants.LAF_LIB_INSTALL_LOG_FILE_SUFFIX)) {
+                byte[] bytes = FSUtils.readFile(f);
                 if (bytes != null) {
                     String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
                     if (Arrays.asList(installEntries).contains(conflictingResource)) {
-                        conflictingAddOn = m.group(1);
+                        conflictingAddOn = f.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                         break;
                     }
                 }
@@ -856,13 +919,9 @@ public class BackEnd {
         
     public Collection<ImageIcon> getIcons() {
         Collection<ImageIcon> icons = new LinkedHashSet<ImageIcon>();
-        for (String name : zipEntries.keySet()) {
-            if (name.matches(Constants.ICON_FILE_PATH_PATTERN)) {
-            	String id = name.replaceFirst(Constants.ICONS_DIR_PATTERN, Constants.EMPTY_STR);
-            	id = id.substring(0, id.length() - Constants.ICON_FILE_ENDING.length());
-                ImageIcon icon = new ImageIcon(zipEntries.get(name), id);
-                icons.add(icon);
-            }
+        for (Entry<UUID, byte[]> iconEntry : this.icons.entrySet()) {
+            ImageIcon icon = new ImageIcon(iconEntry.getValue(), iconEntry.getKey().toString());
+            icons.add(icon);
         }
         return icons;
     }
@@ -872,20 +931,21 @@ public class BackEnd {
         if (file != null && file.exists() && !file.isDirectory()) {
             if (file.getName().matches(Constants.ADDON_PACK_PATTERN)) {
                 ZipInputStream in = new ZipInputStream(new FileInputStream(file));
-                while (in.getNextEntry() != null) {
+                ZipEntry zEntry;                     
+                while ((zEntry = in.getNextEntry()) != null) {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     int b;
                     while ((b = in.read()) != -1) {
                         out.write(b);
                     }
                     out.close();
-                    ImageIcon icon = addIcon(new ByteArrayInputStream(out.toByteArray()));
+                    ImageIcon icon = addIcon(zEntry.getName(), new ByteArrayInputStream(out.toByteArray()));
                     if (icon != null) {
                         icons.add(icon);
                     }
                 }
             } else {
-                ImageIcon icon = addIcon(new FileInputStream(file));
+                ImageIcon icon = addIcon(file.getName(), new FileInputStream(file));
                 if (icon != null) {
                     icons.add(icon);
                 }
@@ -896,35 +956,45 @@ public class BackEnd {
         return icons;
     }
     
-    private ImageIcon addIcon(InputStream is) throws IOException {
+    private ImageIcon addIcon(String idStr, InputStream is) throws IOException {
         ImageIcon icon = null;
         BufferedImage image = ImageIO.read(is);
         if (image != null) {
             icon = new ImageIcon(image);
             if (icon != null) {
-                String id = UUID.randomUUID().toString();
-                icon.setDescription(id);
+                UUID id = null;
+                try {
+                    // try to get id from entry name
+                    id = UUID.fromString(idStr);
+                } catch (Exception ex) {
+                    // ignore, if id can't be generated from entry name, it will be autogenerated
+                }
+                if (id == null) {
+                    id = UUID.randomUUID();
+                }
+                icon.setDescription(idStr.toString());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(image, Constants.ICON_FORMAT, baos);
-                zipEntries.put(Constants.ICONS_DIR + id + Constants.ICON_FILE_ENDING, baos.toByteArray());
+                this.icons.put(id, baos.toByteArray());
             }
         }
         return icon;
     }
 
     public void removeIcon(ImageIcon icon) throws Exception {
-        zipEntries.remove(Constants.ICONS_DIR + icon.getDescription() + Constants.ICON_FILE_ENDING);
+        File iconFile = new File(Constants.ICONS_DIR, icon.getDescription() + Constants.ICON_FILE_SUFFIX);
+        FSUtils.delete(iconFile);
     }
     
     public Collection<Attachment> getAttachments(UUID dataEntryID) throws Exception {
         Collection<Attachment> atts = new LinkedList<Attachment>();
-        for (String name : zipEntries.keySet()) {
-            if (name.matches(Constants.ATTACHMENT_FILE_PATH_PATTERN)
-                    && name.startsWith(Constants.ATTACHMENTS_DIR + dataEntryID.toString())) {
-                byte[] attData = zipEntries.get(name);
-                int idx = name.lastIndexOf(Constants.ZIP_PATH_SEPARATOR);
-            	String attName = name.substring(idx+1, name.length());
-                Attachment att = new Attachment(attName, attData);
+        File entryAttsDir = new File(Constants.ATTACHMENTS_DIR, dataEntryID.toString());
+        if (entryAttsDir.exists()) {
+            File[] entryAtts = entryAttsDir.listFiles();
+            for (File entryAtt : entryAtts) {
+                byte[] data = FSUtils.readFile(entryAtt);
+                byte[] decryptedData = CIPHER_DECRYPT.doFinal(data);
+                Attachment att = new Attachment(entryAtt.getName(), decryptedData);
                 atts.add(att);
             }
         }
@@ -933,67 +1003,67 @@ public class BackEnd {
     
     public void addAttachment(UUID dataEntryID, Attachment attachment) throws Exception {
         if (dataEntryID != null && attachment != null) {
-            String attPath = Constants.ATTACHMENTS_DIR + dataEntryID + Constants.ZIP_PATH_SEPARATOR + attachment.getName();
-            if (zipEntries.get(attPath) != null) {
+            File entryAttsDir = new File(Constants.ATTACHMENTS_DIR, dataEntryID.toString());
+            if (!entryAttsDir.exists()) {
+                entryAttsDir.mkdir();
+            }
+            File att = new File(entryAttsDir, attachment.getName());
+            if (att.exists()) {
             	throw new Exception("Duplicate attachment name!");
             }
-            zipEntries.put(attPath, attachment.getData());
+            byte[] encryptedData = CIPHER_ENCRYPT.doFinal(attachment.getData());
+            FSUtils.writeFile(att, encryptedData);
         } else {
             throw new Exception("Invalid parameters!");
         }
     }
 
     public void removeAttachment(UUID dataEntryID, String attachmentName) {
-        String attPath = Constants.ATTACHMENTS_DIR + dataEntryID + Constants.ZIP_PATH_SEPARATOR + attachmentName;
-        zipEntries.remove(attPath);
+        File attDir = new File(Constants.ATTACHMENTS_DIR, dataEntryID.toString());
+        File att = new File(attDir, attachmentName);
+        FSUtils.delete(att);
+        if (attDir.listFiles().length == 0) {
+            attDir.delete();
+        }
     }
     
     public void removeAttachments(UUID dataEntryID) {
-        String attsPath = Constants.ATTACHMENTS_DIR + dataEntryID;
-        Collection<String> removeKeys = new HashSet<String>();
-        for (String path : zipEntries.keySet()) {
-            if (path.startsWith(attsPath)) {
-                removeKeys.add(path);
-            }
+        File entryAttsDir = new File(Constants.ATTACHMENTS_DIR, dataEntryID.toString());
+        for (File attFile : entryAttsDir.listFiles()) {
+            FSUtils.delete(attFile);
         }
-        if (!removeKeys.isEmpty()) {
-            for (String key : removeKeys) {
-                zipEntries.remove(key);
-            }
+        if (entryAttsDir.listFiles().length == 0) {
+            entryAttsDir.delete();
         }
     }
     
-    private void cleanUpOrphanedStuff(Collection<UUID> ids) {
-        Collection<UUID> foundAttIds = new ArrayList<UUID>();
-        Collection<UUID> foundConfIds = new ArrayList<UUID>();
-        Pattern p1 = Pattern.compile(Constants.ATTACHMENT_FILE_PATH_PATTERN);
-        Pattern p2 = Pattern.compile(Constants.CONFIG_FILE_PATH_PATTERN);
-        for (String path : zipEntries.keySet()) {
-            Matcher m = p1.matcher(path);
-            if (m.find()) {
-                try {
-                    UUID id = UUID.fromString(m.group(1));
-                    foundAttIds.add(id);
-                } catch (IllegalArgumentException iae) {}
+    private void cleanUpOrphanedStuff(Collection<UUID> ids) throws Exception {
+        if (Constants.ATTACHMENTS_DIR.exists()) {
+            Collection<UUID> foundAttIds = new ArrayList<UUID>();
+            for (File attFile : Constants.ATTACHMENTS_DIR.listFiles()) {
+                UUID id = UUID.fromString(attFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
+                foundAttIds.add(id);
             }
-            m = p2.matcher(path);
-            if (m.find()) {
-                try {
-                    UUID id = UUID.fromString(m.group(1));
+            for (UUID id : foundAttIds) {
+                if (!ids.contains(id)) {
+                    // orphaned attachments found, remove 'em
+                    removeAttachments(id);
+                }
+            }
+        }
+        if (Constants.CONFIG_DIR.exists()) {
+            Collection<UUID> foundConfIds = new ArrayList<UUID>();
+            for (File configFile : Constants.CONFIG_DIR.listFiles()) {
+                if (configFile.getName().endsWith(Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX)) {
+                    UUID id = UUID.fromString(configFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
                     foundConfIds.add(id);
-                } catch (IllegalArgumentException iae) {}
+                }
             }
-        }
-        for (UUID id : foundAttIds) {
-            if (!ids.contains(id)) {
-                // orphaned attachments found, remove 'em
-                removeAttachments(id);
-            }
-        }
-        for (UUID id : foundConfIds) {
-            if (!ids.contains(id)) {
-                // orphaned config found, remove it
-                zipEntries.remove(Constants.CONFIG_DIR + id.toString() + Constants.DATA_ENTRY_CONFIG_FILE_ENDING);
+            for (UUID id : foundConfIds) {
+                if (!ids.contains(id)) {
+                    // orphaned config found, remove it
+                    FSUtils.delete(new File(Constants.CONFIG_DIR, id.toString() + Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX));
+                }
             }
         }
     }

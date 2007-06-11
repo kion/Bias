@@ -62,4 +62,10 @@ public class FSUtils {
         }
     }
 
+    public static void clearDirectory(File dir) {
+        for (File f : dir.listFiles()) {
+            delete(f);
+        }
+    }
+    
 }

@@ -25,7 +25,6 @@ import javax.swing.event.ChangeListener;
 
 import bias.annotation.AddOnAnnotation;
 import bias.extension.Extension;
-import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
 
 /**
@@ -102,7 +101,7 @@ public class PlainText extends Extension {
             }
         });
         JOptionPane.showMessageDialog(
-                FrontEnd.getInstance(), 
+                this, 
                 new Component[]{ffLb, ffCb, fsLb, fsSl, cfsLb}, 
                 "Settings for " + this.getClass().getSimpleName() + " extension", 
                 JOptionPane.INFORMATION_MESSAGE);

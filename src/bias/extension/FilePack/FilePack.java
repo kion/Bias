@@ -90,7 +90,7 @@ public class FilePack extends Extension {
                 filePack.put(att, date);
             }
         } catch (Exception e) {
-            FrontEnd.getInstance().displayErrorMessage("Failed to get attachments!", e);
+            FrontEnd.displayErrorMessage("Failed to get attachments!", e);
         }
 		initGUI();
 	}
@@ -200,7 +200,7 @@ public class FilePack extends Extension {
 				}
 			}
 		} catch (Exception e) {
-			FrontEnd.getInstance().displayErrorMessage(e);
+			FrontEnd.displayErrorMessage(e);
 		}
 	}
 	
@@ -222,11 +222,11 @@ public class FilePack extends Extension {
 					}
                     lastInputDir = files[0].getParentFile();
 				} catch (Exception e) {
-					FrontEnd.getInstance().displayErrorMessage(e);
+					FrontEnd.displayErrorMessage(e);
 				}
 			}
 		} catch (Exception e) {
-			FrontEnd.getInstance().displayErrorMessage(e);
+			FrontEnd.displayErrorMessage(e);
 		}
 	}
 	
@@ -237,12 +237,11 @@ public class FilePack extends Extension {
 				while (jTable1.getSelectedRow() != -1) {
 					int i = jTable1.getSelectedRow();
 					String fileName = (String) model.getValueAt(i, 0);
-					BackEnd.getInstance().removeAttachment(getId(), fileName);
 					removeFile(fileName, i);
 				}
 			}
 		} catch (Exception e) {
-			FrontEnd.getInstance().displayErrorMessage(e);
+			FrontEnd.displayErrorMessage(e);
 		}
 	}
 	
@@ -252,7 +251,7 @@ public class FilePack extends Extension {
                 DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
                 for (int i : jTable1.getSelectedRows()) {
                     String fileName = (String) model.getValueAt(i, 0);
-                    final File file = new File(Constants.SESSION_TMP_DIR, fileName);
+                    final File file = new File(Constants.TMP_DIR, fileName);
                     if (!file.exists()) {
                         byte[] data = getFileData(fileName);
                         FSUtils.writeFile(file, data);
@@ -261,7 +260,7 @@ public class FilePack extends Extension {
                 }
             }
         } catch (Exception e) {
-            FrontEnd.getInstance().displayErrorMessage(e);
+            FrontEnd.displayErrorMessage(e);
         }
     }
     
@@ -270,14 +269,14 @@ public class FilePack extends Extension {
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
             for (int i = 0; i < jTable1.getRowCount(); i++) {
                 String fileName = (String) model.getValueAt(i, 0);
-                File file = new File(Constants.SESSION_TMP_DIR, fileName);
+                File file = new File(Constants.TMP_DIR, fileName);
                 if (file.exists()) {
                     removeFile(fileName, i);
                     addFile(file);
                 }
             }
         } catch (Exception e) {
-            FrontEnd.getInstance().displayErrorMessage(e);
+            FrontEnd.displayErrorMessage(e);
         }
     }
     
@@ -315,7 +314,7 @@ public class FilePack extends Extension {
 				}
 			}
 		} catch (Exception e) {
-			FrontEnd.getInstance().displayErrorMessage(e);
+			FrontEnd.displayErrorMessage(e);
 		}
 	}
 	
@@ -379,10 +378,10 @@ public class FilePack extends Extension {
 		}
 		if (toRemove != null) {
 			filePack.remove(toRemove);
-            BackEnd.getInstance().removeAttachment(getId(), toRemove.getName());
 			// update grid
 			removeRow(rowIdx);
 		}
+        BackEnd.getInstance().removeAttachment(getId(), fileName);
 	}
 	
 	private void removeRow(int rowIdx) {

@@ -45,7 +45,7 @@ public class Preferences {
                                 field.setBoolean(this, Boolean.parseBoolean(value));
                         }
                     } catch (Exception ex) {
-                        FrontEnd.getInstance().displayErrorMessage(ex);
+                        FrontEnd.displayErrorMessage(ex);
                     }
                 }
             }

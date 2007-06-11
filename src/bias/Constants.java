@@ -4,7 +4,6 @@
 package bias;
 
 import java.io.File;
-import java.util.UUID;
 
 import bias.extension.Extension;
 import bias.laf.LookAndFeel;
@@ -13,6 +12,31 @@ import bias.laf.LookAndFeel;
  * @author kion
  */
 public class Constants {
+    
+    public static final File ROOT_DIR = Bias.getJarFile().getParentFile();
+    public static final File CONFIG_DIR = new File(ROOT_DIR, "conf");
+    public static final File DATA_DIR = new File(ROOT_DIR, "data");
+    public static final File ATTACHMENTS_DIR = new File(ROOT_DIR, "atts");
+    public static final File ICONS_DIR = new File(ROOT_DIR, "icons");
+    public static final File TMP_DIR = new File(ROOT_DIR, "tmp");
+    
+    static {
+        if (!CONFIG_DIR.exists()) {
+            CONFIG_DIR.mkdir();
+        }
+        if (!DATA_DIR.exists()) {
+            DATA_DIR.mkdir();
+        }
+        if (!ATTACHMENTS_DIR.exists()) {
+            ATTACHMENTS_DIR.mkdir();
+        }
+        if (!ICONS_DIR.exists()) {
+            ICONS_DIR.mkdir();
+        }
+        if (!TMP_DIR.exists()) {
+            TMP_DIR.mkdir();
+        }
+    }
     
     public static final String UNICODE_ENCODING = "UTF-8";
     
@@ -25,11 +49,6 @@ public class Constants {
     public static final String CIPHER_ALGORITHM = "PBEWithMD5AndDES";
     
     public static final byte[] CIPHER_SALT = "kn+kv=lv".getBytes();
-    
-    public static final File SESSION_TMP_DIR = 
-        new File(
-                System.getProperty("java.io.tmpdir"),
-                UUID.randomUUID().toString());
     
     public static final String EMPTY_STR = "";
     public static final String SPACE_STR = " ";
@@ -50,48 +69,37 @@ public class Constants {
 
     public static final String ANY_CHARACTERS_PATTERN = ".*";
     
-    public static final String CONFIG_DIR = "conf/";
-    public static final String GLOBAL_CONFIG_FILE_PATH = CONFIG_DIR + "config.properties";
-    public static final String PREFERENCES_FILE_PATH = CONFIG_DIR + "preferences.properties";
-    public static final String CONFIG_DIR_PATTERN = "^conf/";
-    public static final String CONFIG_FILE_PATH_PATTERN = CONFIG_DIR_PATTERN + "([^\\.]+).+\\.conf";
-    public static final String DATA_DIR = "data/";
-    public static final String DATA_DIR_PATTERN = "^data/";
-    public static final String METADATA_FILE_PATH = DATA_DIR + "metadata.xml";
-    public static final String DATA_FILE_ENDING = ".data";
-    public static final String DATA_FILE_ENDING_PATTERN = "\\" + DATA_FILE_ENDING + "$";
-    public static final String DATA_FILE_PATTERN = DATA_DIR_PATTERN + ".+\\" + DATA_FILE_ENDING;
-    public static final String CLASS_FILE_ENDING = ".class";
-    public static final String CLASS_FILE_ENDING_PATTERN = "\\.class$";
-    public static final String INNER_CLASS_FILE_ENDING_PATTERN = "\\$.*$";
+    public static final String GLOBAL_CONFIG_FILE = "config.properties";
+    public static final String PREFERENCES_FILE = "preferences.properties";
+    public static final String CONFIG_FILE_SUFFIX = ".conf";
+    public static final String METADATA_FILE = "metadata.xml";
+    public static final String ICONS_CONFIG_FILE = "icons.conf";
+    public static final String DATA_FILE_SUFFIX = ".data";
+    public static final String FILE_SUFFIX_PATTERN = "\\..*$";
+    public static final String CLASS_FILE_SUFFIX = ".class";
+    public static final String CLASS_FILE_SUFFIX_PATTERN = "\\.class$";
+    public static final String INNER_CLASS_FILE_SUFFIX_PATTERN = "\\$.*$";
     public static final String ADDON_CLASS_FILE_PREFIX_PATTERN = "^cls/";
-    public static final String ADDON_CLASS_FILE_PATH_PATTERN = ADDON_CLASS_FILE_PREFIX_PATTERN + ".+\\" + CLASS_FILE_ENDING;
+    public static final String ADDON_CLASS_FILE_PATH_PATTERN = ADDON_CLASS_FILE_PREFIX_PATTERN + ".+\\" + CLASS_FILE_SUFFIX;
     public static final String MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE = "Bias-Add-On-Name";
     public static final String EXTENSION_DIR_PACKAGE_NAME = Extension.class.getPackage().getName();
     public static final String EXTENSION_DIR_PATH = EXTENSION_DIR_PACKAGE_NAME.replaceAll("\\.", ZIP_PATH_SEPARATOR);
-    public static final String EXTENSION_PATTERN = EXTENSION_DIR_PATH + "/(\\w+)/\\1\\" + CLASS_FILE_ENDING;
+    public static final String EXTENSION_PATTERN = EXTENSION_DIR_PATH + "/(\\w+)/\\1\\" + CLASS_FILE_SUFFIX;
     public static final String RESOURCE_FILE_PATH_PATTERN = "^res/.+";
     public static final String RESOURCE_FILE_PREFIX_PATTERN = "^res/";
     public static final String RESOURCES_DIR = "bias/res/";
     public static final String ICON_FORMAT = "PNG";
-    public static final String ICON_FILE_ENDING = ".png";
-    public static final String ICONS_DIR = "icons/";
-    public static final String ICONS_DIR_PATTERN = "^icons/";
-    public static final String ICON_FILE_PATH_PATTERN = ICONS_DIR_PATTERN + ".+\\" + ICON_FILE_ENDING;
-    public static final String ATTACHMENTS_DIR = "atts/";
-    public static final String ATTACHMENTS_DIR_PATTERN = "^atts/";
-    public static final String ATTACHMENT_FILE_PATH_PATTERN = ATTACHMENTS_DIR_PATTERN + "(.+)/.+";
+    public static final String ICON_FILE_SUFFIX = ".png";
     public static final String LIB_DIR_PATTERN = "^lib/";
     public static final String LIB_FILE_PATH_PATTERN = "(?i)" + LIB_DIR_PATTERN + "[^/]+\\.jar$";
     public static final String LAF_DIR_PACKAGE_NAME = LookAndFeel.class.getPackage().getName();
     public static final String LAF_DIR_PATH = LAF_DIR_PACKAGE_NAME.replaceAll("\\.", ZIP_PATH_SEPARATOR);
-    public static final String LAF_PATTERN = LAF_DIR_PATH + "/(\\w+)/\\1\\" + CLASS_FILE_ENDING;
-    public static final String EXT_LIB_INSTALL_LOG_FILE_ENDING = ".ext.lib.inst.log";
-    public static final String LAF_LIB_INSTALL_LOG_FILE_ENDING = ".laf.lib.inst.log";
-    public static final String LIB_INSTALL_LOG_FILE_PATTERN = CONFIG_DIR_PATTERN + "(.+)\\.(ext|laf)\\.lib\\.inst\\.log";
-    public static final String EXTENSION_CONFIG_FILE_ENDING = ".ext.conf";
-    public static final String LAF_CONFIG_FILE_ENDING = ".laf.conf";
-    public static final String DATA_ENTRY_CONFIG_FILE_ENDING = ".data.conf";
+    public static final String LAF_PATTERN = LAF_DIR_PATH + "/(\\w+)/\\1\\" + CLASS_FILE_SUFFIX;
+    public static final String EXT_LIB_INSTALL_LOG_FILE_SUFFIX = ".ext.lib.inst.log";
+    public static final String LAF_LIB_INSTALL_LOG_FILE_SUFFIX = ".laf.lib.inst.log";
+    public static final String EXTENSION_CONFIG_FILE_SUFFIX = ".ext.conf";
+    public static final String LAF_CONFIG_FILE_SUFFIX = ".laf.conf";
+    public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
     
     public static final String PROPERTY_LOOK_AND_FEEL = "LOOK_AND_FEEL";
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";

@@ -73,7 +73,7 @@ public class Launcher extends Window {
         addMouseListener(disposeOnClick);
     }
     
-    private static void showSplash() {
+    public static void showSplash() {
         if (instance == null) {
             instance = new Launcher();
             instance.setVisible(true);
@@ -90,7 +90,7 @@ public class Launcher extends Window {
         }
     }
     
-    private static void hideSplash() {
+    public static void hideSplash() {
         if (instance != null) {
             instance.getOwner().dispose();
             instance = null;
