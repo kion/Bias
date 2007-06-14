@@ -76,53 +76,48 @@ import bias.utils.Validator;
  * @author kion
  */
 
-@AddOnAnnotation(
-        version="0.4.0",
-        author="kion",
-        description = "WYSIWYG HTML page editor")
+@AddOnAnnotation(version = "0.4.1", author = "kion", description = "WYSIWYG HTML page editor")
 public class HTMLPage extends Extension {
 
     private static final long serialVersionUID = 1L;
 
-    private static final ImageIcon ICON_ENTRY_LINK = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/entry_link.png"));
+    private static final ImageIcon ICON_ENTRY_LINK = new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/entry_link.png"));
 
-    private static final ImageIcon ICON_URL_LINK = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/url_link.png"));
+    private static final ImageIcon ICON_URL_LINK = new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/url_link.png"));
 
-    private static final ImageIcon ICON_IMAGE = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/image.png"));
+    private static final ImageIcon ICON_IMAGE = new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/image.png"));
 
-    private static final ImageIcon ICON_COLOR = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/color.png"));
+    private static final ImageIcon ICON_COLOR = new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/color.png"));
 
-    private static final ImageIcon ICON_TEXT_UNDERLINE = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/text_underlined.png"));
+    private static final ImageIcon ICON_TEXT_UNDERLINE = new ImageIcon(HTMLPage.class
+            .getResource("/bias/res/HTMLPage/text_underlined.png"));
 
-    private static final ImageIcon ICON_TEXT_ITALIC = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/text_italic.png"));
+    private static final ImageIcon ICON_TEXT_ITALIC = new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/text_italic.png"));
 
-    private static final ImageIcon ICON_TEXT_BOLD = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/text_bold.png"));
+    private static final ImageIcon ICON_TEXT_BOLD = new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/text_bold.png"));
 
-    private static final ImageIcon ICON_SWITCH_MODE = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/switch_mode.png"));  //  @jve:decl-index=0:
-    
-    private static final ImageIcon ICON_SAVE = 
-        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/save.png"));
-    
+    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/switch_mode.png")); // @jve:decl-index=0:
+
+    private static final ImageIcon ICON_SAVE = new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/save.png"));
+
     private static final String HTML_PAGE_FILE_NAME_PATTERN = "(?i).+\\.(htm|html)$";
-    
+
     private static final Font DEFAULT_FONT = new Font("SansSerif", Font.PLAIN, 12);
-    
+
     private static final String[] FONT_FAMILY_NAMES = new String[] { "SansSerif", "Serif", "Monospaced" };
 
     private static final int FONT_SIZE_XX_LARGE = 36;
+
     private static final int FONT_SIZE_X_LARGE = 24;
+
     private static final int FONT_SIZE_LARGE = 18;
+
     private static final int FONT_SIZE_MEDIUM = 14;
+
     private static final int FONT_SIZE_SMALL = 12;
+
     private static final int FONT_SIZE_X_SMALL = 10;
+
     private static final int FONT_SIZE_XX_SMALL = 8;
 
     private static final Map<String, Integer> FONT_SIZES = fontSizes();
@@ -140,22 +135,37 @@ public class HTMLPage extends Extension {
     }
 
     private File lastOutputDir = null;
-    
+
     private JToolBar jToolBar1 = null;
+
     private JToggleButton jToggleButton = null;
+
     private JToggleButton jToggleButton1 = null;
+
     private JToggleButton jToggleButton2 = null;
+
     private JToggleButton jToggleButton3 = null;
+
     private JButton jButton = null;
+
     private JButton jButton1 = null;
+
     private JButton jButton2 = null;
+
     private JButton jButton5 = null;
+
     private JButton jButton8 = null;
+
     private JComboBox jComboBox = null;
+
     private JComboBox jComboBox1 = null;
+
     private JTextPane jTextPane = null;
+
     private JPanel jPanel = null;
+
     private JToolBar jToolBar = null;
+
     private JScrollPane jScrollPane = null;
 
     /**
@@ -166,14 +176,16 @@ public class HTMLPage extends Extension {
         initialize();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see bias.extension.Extension#serializeData()
      */
     @Override
     public byte[] serializeData() throws Throwable {
-        return parseCodeOnSave(getJTextPane().getText()).getBytes();
+        return processOnSave(getJTextPane().getText()).getBytes();
     }
-    
+
     private void synchronizeEditNoteControlsStates(JTextPane textPane) {
         if (textPane.isEditable()) {
             boolean boldSelected = false;
@@ -271,8 +283,20 @@ public class HTMLPage extends Extension {
             }
         }
     }
-    
-    private String parseCodeOnSave(String htmlCode) {
+
+    private String processOnLoad(String htmlCode) {
+        StringBuffer parsedHtmlCode = new StringBuffer();
+        Pattern p = Pattern.compile("<img src=\"att://([^\"]+)\"");
+        Matcher m = p.matcher(htmlCode);
+        while (m.find()) {
+            File f = extractAttachmentImage(m.group(1));
+            m.appendReplacement(parsedHtmlCode, "<img src=\"file://" + f.getAbsolutePath() + "\"");
+        }
+        m.appendTail(parsedHtmlCode);
+        return parsedHtmlCode.toString();
+    }
+
+    private String processOnSave(String htmlCode) {
         Collection<String> usedAttachmentNames = new ArrayList<String>();
         StringBuffer parsedHtmlCode = new StringBuffer();
         Pattern p = Pattern.compile("<img src=\"file://([^\"]+)+/([^\"]+)\"");
@@ -286,7 +310,58 @@ public class HTMLPage extends Extension {
         cleanUpUnUsedAttachments(usedAttachmentNames);
         return parsedHtmlCode.toString();
     }
-    
+
+    private void saveToFile(File htmlFile, String htmlCode) throws Exception {
+        StringBuffer parsedHtmlCode = new StringBuffer();
+        Pattern p = Pattern.compile("<img src=\"file://([^\"]+)+/([^\"]+)\"");
+        Matcher m = p.matcher(htmlCode);
+        while (m.find()) {
+            String attName = m.group(2);
+            File attsDir = new File(htmlFile.getParentFile(), htmlFile.getName() + "_images/");
+            saveAttachmentExternally(attsDir, attName);
+            m.appendReplacement(parsedHtmlCode, "<img src=\"" + attsDir.getName() + "/" + attName + "\"");
+        }
+        m.appendTail(parsedHtmlCode);
+        FSUtils.writeFile(htmlFile, parsedHtmlCode.toString().getBytes());
+    }
+
+    private File extractAttachmentImage(String attName) {
+        File f = null;
+        try {
+            UUID id = HTMLPage.this.getId();
+            // get attachment and store it to temporary directory
+            // (need to do so, because attachments are stored in ecrypted form,
+            // so have to be decrypted before use)
+            Attachment att = BackEnd.getInstance().getAttachment(id, attName);
+            File idDir = new File(Constants.TMP_DIR, id.toString());
+            if (!idDir.exists()) {
+                idDir.mkdir();
+            }
+            f = new File(idDir, att.getName());
+            FSUtils.writeFile(f, att.getData());
+        } catch (Exception ex) {
+            FrontEnd.displayErrorMessage("Failed to extract image from data entry attachment!", ex);
+        }
+        return f;
+    }
+
+    private void saveAttachmentExternally(File attsDir, String attName) {
+        try {
+            UUID id = HTMLPage.this.getId();
+            // get attachments and store to external directory
+            // (need to do so, because attachments are stored in ecrypted form,
+            // so have to be decrypted before use)
+            for (Attachment att : BackEnd.getInstance().getAttachments(id)) {
+                if (!attsDir.exists()) {
+                    attsDir.mkdir();
+                }
+                FSUtils.writeFile(new File(attsDir, att.getName()), att.getData());
+            }
+        } catch (Exception ex) {
+            FrontEnd.displayErrorMessage("Failed to extract image(s) from data entry attachment!", ex);
+        }
+    }
+
     private void cleanUpUnUsedAttachments(Collection<String> usedAttachmentNames) {
         try {
             UUID id = HTMLPage.this.getId();
@@ -303,38 +378,6 @@ public class HTMLPage extends Extension {
         }
     }
 
-    private String parseCodeOnLoad(String htmlCode) {
-        StringBuffer parsedHtmlCode = new StringBuffer();
-        Pattern p = Pattern.compile("<img src=\"att://([^\"]+)\"");
-        Matcher m = p.matcher(htmlCode);
-        while (m.find()) {
-            File f = extractAttachmentImage(m.group(1));
-            m.appendReplacement(parsedHtmlCode, "<img src=\"file://" + f.getAbsolutePath() + "\"");
-        }
-        m.appendTail(parsedHtmlCode);
-        return parsedHtmlCode.toString();
-   }
-    
-    private File extractAttachmentImage(String attName) {
-        File f = null;
-        try {
-            UUID id = HTMLPage.this.getId();
-            // get attachment and store it to temporary directory
-            // (need to do so, because attachments are stored in ecrypted form, 
-            // so have to be decrypted before use)
-            Attachment att = BackEnd.getInstance().getAttachment(id, attName);
-            File idDir = new File(Constants.TMP_DIR, id.toString());
-            if (!idDir.exists()) {
-                idDir.mkdir();
-            }
-            f = new File(idDir, att.getName());
-            FSUtils.writeFile(f, att.getData());
-        } catch (Exception ex) {
-            FrontEnd.displayErrorMessage("Failed to extract image from data entry attachment!", ex);
-        }
-        return f;
-    }
-
     /**
      * This method initializes this
      * 
@@ -343,46 +386,46 @@ public class HTMLPage extends Extension {
     private void initialize() {
         this.setSize(776, 532);
         this.setLayout(new BorderLayout());
-        this.add(getJScrollPane(), BorderLayout.CENTER);  // Generated
-        this.add(getJPanel(), BorderLayout.SOUTH);  // Generated
-        getJTextPane().setText(parseCodeOnLoad(new String(getData())));
+        this.add(getJScrollPane(), BorderLayout.CENTER); // Generated
+        this.add(getJPanel(), BorderLayout.SOUTH); // Generated
+        getJTextPane().setText(processOnLoad(new String(getData())));
         getJTextPane().getDocument().addUndoableEditListener(new UndoRedoManager(jTextPane));
     }
 
     /**
-     * This method initializes jToolBar1    
-     *  
-     * @return javax.swing.JToolBar 
+     * This method initializes jToolBar1
+     * 
+     * @return javax.swing.JToolBar
      */
     private JToolBar getJToolBar1() {
         if (jToolBar1 == null) {
             jToolBar1 = new JToolBar();
-            jToolBar1.setFloatable(false);  // Generated
-            jToolBar1.setBorder(null);  // Generated
-            jToolBar1.add(getJButton1());  // Generated
-            jToolBar1.add(getJButton());  // Generated
-            jToolBar1.add(getJButton2());  // Generated
-            jToolBar1.add(getJButton5());  // Generated
-            jToolBar1.add(getJToggleButton());  // Generated
-            jToolBar1.add(getJToggleButton1());  // Generated
-            jToolBar1.add(getJToggleButton2());  // Generated
-            jToolBar1.add(getJComboBox());  // Generated
-            jToolBar1.add(getJComboBox1());  // Generated
-            jToolBar1.setVisible(false);  // Generated
+            jToolBar1.setFloatable(false); // Generated
+            jToolBar1.setBorder(null); // Generated
+            jToolBar1.add(getJButton1()); // Generated
+            jToolBar1.add(getJButton()); // Generated
+            jToolBar1.add(getJButton2()); // Generated
+            jToolBar1.add(getJButton5()); // Generated
+            jToolBar1.add(getJToggleButton()); // Generated
+            jToolBar1.add(getJToggleButton1()); // Generated
+            jToolBar1.add(getJToggleButton2()); // Generated
+            jToolBar1.add(getJComboBox()); // Generated
+            jToolBar1.add(getJComboBox1()); // Generated
+            jToolBar1.setVisible(false); // Generated
         }
         return jToolBar1;
     }
 
     /**
-     * This method initializes jToggleButton    
-     *  
-     * @return javax.swing.JToggleButton    
+     * This method initializes jToggleButton
+     * 
+     * @return javax.swing.JToggleButton
      */
     private JToggleButton getJToggleButton() {
         if (jToggleButton == null) {
             jToggleButton = new JToggleButton();
-            jToggleButton.setToolTipText("bold");  // Generated
-            jToggleButton.setIcon(HTMLPage.ICON_TEXT_BOLD);  // Generated
+            jToggleButton.setToolTipText("bold"); // Generated
+            jToggleButton.setIcon(HTMLPage.ICON_TEXT_BOLD); // Generated
             jToggleButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     new StyledEditorKit.BoldAction().actionPerformed(e);
@@ -394,15 +437,15 @@ public class HTMLPage extends Extension {
     }
 
     /**
-     * This method initializes jToggleButton1   
-     *  
-     * @return javax.swing.JToggleButton    
+     * This method initializes jToggleButton1
+     * 
+     * @return javax.swing.JToggleButton
      */
     private JToggleButton getJToggleButton1() {
         if (jToggleButton1 == null) {
             jToggleButton1 = new JToggleButton();
-            jToggleButton1.setToolTipText("italic");  // Generated
-            jToggleButton1.setIcon(HTMLPage.ICON_TEXT_ITALIC);  // Generated
+            jToggleButton1.setToolTipText("italic"); // Generated
+            jToggleButton1.setIcon(HTMLPage.ICON_TEXT_ITALIC); // Generated
             jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     new StyledEditorKit.ItalicAction().actionPerformed(e);
@@ -414,15 +457,15 @@ public class HTMLPage extends Extension {
     }
 
     /**
-     * This method initializes jToggleButton2   
-     *  
-     * @return javax.swing.JToggleButton    
+     * This method initializes jToggleButton2
+     * 
+     * @return javax.swing.JToggleButton
      */
     private JToggleButton getJToggleButton2() {
         if (jToggleButton2 == null) {
             jToggleButton2 = new JToggleButton();
-            jToggleButton2.setToolTipText("underline");  // Generated
-            jToggleButton2.setIcon(HTMLPage.ICON_TEXT_UNDERLINE);  // Generated
+            jToggleButton2.setToolTipText("underline"); // Generated
+            jToggleButton2.setIcon(HTMLPage.ICON_TEXT_UNDERLINE); // Generated
             jToggleButton2.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     new StyledEditorKit.UnderlineAction().actionPerformed(e);
@@ -435,13 +478,13 @@ public class HTMLPage extends Extension {
 
     /**
      * This method initializes jToggleButton3
-     *  
-     * @return javax.swing.JToggleButton  
+     * 
+     * @return javax.swing.JToggleButton
      */
     private JToggleButton getJToggleButton3() {
         if (jToggleButton3 == null) {
             jToggleButton3 = new JToggleButton();
-            jToggleButton3.setToolTipText("switch mode");  // Generated
+            jToggleButton3.setToolTipText("switch mode"); // Generated
             jToggleButton3.setIcon(HTMLPage.ICON_SWITCH_MODE);
             jToggleButton3.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -462,35 +505,35 @@ public class HTMLPage extends Extension {
     }
 
     /**
-     * This method initializes jButton5 
-     *  
-     * @return javax.swing.JButton  
+     * This method initializes jButton5
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton5() {
         if (jButton5 == null) {
             jButton5 = new JButton();
-            jButton5.setToolTipText("text color");  // Generated
-            jButton5.setIcon(HTMLPage.ICON_COLOR);  // Generated
+            jButton5.setToolTipText("text color"); // Generated
+            jButton5.setIcon(HTMLPage.ICON_COLOR); // Generated
             jButton5.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     Color color = JColorChooser.showDialog(HTMLPage.this, "select text color", Color.BLACK);
                     new StyledEditorKit.ForegroundAction("Color", color).actionPerformed(e);
                 }
-            });    
+            });
         }
         return jButton5;
     }
 
     /**
-     * This method initializes jButton8 
-     *  
-     * @return javax.swing.JButton  
+     * This method initializes jButton8
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton8() {
         if (jButton8 == null) {
             jButton8 = new JButton();
-            jButton8.setToolTipText("save to file");  // Generated
-            jButton8.setIcon(HTMLPage.ICON_SAVE);  // Generated
+            jButton8.setToolTipText("save to file"); // Generated
+            jButton8.setIcon(HTMLPage.ICON_SAVE); // Generated
             jButton8.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
@@ -500,11 +543,12 @@ public class HTMLPage extends Extension {
                         } else {
                             jfc = new JFileChooser();
                         }
-                        jfc.setFileFilter(new FileFilter(){
+                        jfc.setFileFilter(new FileFilter() {
                             @Override
                             public boolean accept(File f) {
                                 return f.isFile() && f.getName().matches(HTML_PAGE_FILE_NAME_PATTERN);
                             }
+
                             @Override
                             public String getDescription() {
                                 return "HTML page (*.htm, *.html)";
@@ -524,15 +568,11 @@ public class HTMLPage extends Extension {
                             }
                             Integer option = null;
                             if (file.exists()) {
-                                option = JOptionPane.showConfirmDialog(
-                                        HTMLPage.this, 
-                                        "File already exists, overwrite?", 
-                                        "Overwrite existing file", 
-                                        JOptionPane.YES_NO_OPTION);
+                                option = JOptionPane.showConfirmDialog(HTMLPage.this, "File already exists, overwrite?",
+                                        "Overwrite existing file", JOptionPane.YES_NO_OPTION);
                             }
                             if (option == null || option == JOptionPane.YES_OPTION) {
-                                byte[] data = getJTextPane().getText().getBytes();
-                                FSUtils.writeFile(file, data);
+                                saveToFile(file, getJTextPane().getText());
                                 lastOutputDir = file.getParentFile();
                             }
                         }
@@ -540,20 +580,20 @@ public class HTMLPage extends Extension {
                         FrontEnd.displayErrorMessage(ex);
                     }
                 }
-            });    
+            });
         }
         return jButton8;
     }
 
     /**
-     * This method initializes jButton 
-     *  
-     * @return javax.swing.JButton  
+     * This method initializes jButton
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton() {
         if (jButton == null) {
             jButton = new JButton();
-            jButton.setToolTipText("entry link");  // Generated
+            jButton.setToolTipText("entry link"); // Generated
             jButton.setIcon(HTMLPage.ICON_ENTRY_LINK);
             jButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -609,15 +649,13 @@ public class HTMLPage extends Extension {
                         hrefComboBox.setSelectedItem(currDescriptor);
                     }
                     JLabel textLabel = new JLabel("text:");
-                    text = JOptionPane.showInputDialog(
-                            HTMLPage.this, 
-                            new Component[]{entryLabel, hrefComboBox, textLabel}, text);
+                    text = JOptionPane.showInputDialog(HTMLPage.this, new Component[] { entryLabel, hrefComboBox, textLabel }, text);
                     if (text != null) {
                         try {
                             StringBuffer linkHTML = new StringBuffer("<a ");
                             linkHTML.append("href=\"" + Constants.ENTRY_PROTOCOL_PREFIX);
                             if (!Validator.isNullOrBlank(hrefComboBox.getSelectedItem())) {
-                                linkHTML.append(((VisualEntryDescriptor)hrefComboBox.getSelectedItem()).getId());
+                                linkHTML.append(((VisualEntryDescriptor) hrefComboBox.getSelectedItem()).getId());
                             } else {
                                 linkHTML.append("#");
                             }
@@ -637,20 +675,20 @@ public class HTMLPage extends Extension {
                     }
                     getJTextPane().requestFocusInWindow();
                 }
-            });    
+            });
         }
         return jButton;
     }
 
     /**
-     * This method initializes jButton1 
-     *  
-     * @return javax.swing.JButton  
+     * This method initializes jButton1
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton1() {
         if (jButton1 == null) {
             jButton1 = new JButton();
-            jButton1.setToolTipText("URL link");  // Generated
+            jButton1.setToolTipText("URL link"); // Generated
             jButton1.setIcon(HTMLPage.ICON_URL_LINK);
             jButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -688,14 +726,12 @@ public class HTMLPage extends Extension {
                     JTextField textField = new JTextField();
                     if (text != null) {
                         textField.setText(text);
-                    } 
+                    }
                     JLabel urlLabel = new JLabel("URL:");
                     if (Validator.isNullOrBlank(href)) {
                         href = text;
                     }
-                    href = JOptionPane.showInputDialog(
-                            HTMLPage.this, 
-                            new Component[]{textLabel, textField, urlLabel}, href);
+                    href = JOptionPane.showInputDialog(HTMLPage.this, new Component[] { textLabel, textField, urlLabel }, href);
                     if (href != null) {
                         try {
                             StringBuffer linkHTML = new StringBuffer("<a ");
@@ -717,20 +753,20 @@ public class HTMLPage extends Extension {
                     }
                     getJTextPane().requestFocusInWindow();
                 }
-            });    
+            });
         }
         return jButton1;
     }
-    
+
     /**
-     * This method initializes jButton1 
-     *  
-     * @return javax.swing.JButton  
+     * This method initializes jButton1
+     * 
+     * @return javax.swing.JButton
      */
     private JButton getJButton2() {
         if (jButton2 == null) {
             jButton2 = new JButton();
-            jButton2.setToolTipText("image");  // Generated
+            jButton2.setToolTipText("image"); // Generated
             jButton2.setIcon(HTMLPage.ICON_IMAGE);
             jButton2.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -805,9 +841,9 @@ public class HTMLPage extends Extension {
                     srcPanel.add(new JLabel("source: "), BorderLayout.WEST);
                     srcPanel.add(srcTF, BorderLayout.CENTER);
                     JButton browseButton = new JButton("...");
-                    browseButton.addActionListener(new ActionListener(){
+                    browseButton.addActionListener(new ActionListener() {
                         public void actionPerformed(ActionEvent e) {
-                            JFileChooser jFileChooser = new ImageFileChooser(false);  
+                            JFileChooser jFileChooser = new ImageFileChooser(false);
                             jFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                             int rVal = jFileChooser.showOpenDialog(HTMLPage.this);
                             if (rVal == JFileChooser.APPROVE_OPTION) {
@@ -840,19 +876,9 @@ public class HTMLPage extends Extension {
                     JPanel alignPanel = new JPanel(new BorderLayout());
                     alignPanel.add(new JLabel("align: "), BorderLayout.WEST);
                     alignPanel.add(alignCB, BorderLayout.CENTER);
-                    int opt = JOptionPane.showConfirmDialog(
-                            HTMLPage.this, 
-                            new Component[]{
-                                    srcPanel,
-                                    altPanel,
-                                    hrefPanel,
-                                    widthPanel,
-                                    heightPanel,
-                                    hSpacePanel,
-                                    vSpacePanel,
-                                    borderPanel,
-                                    alignPanel
-                            }, "Image properties", JOptionPane.OK_CANCEL_OPTION);
+                    int opt = JOptionPane.showConfirmDialog(HTMLPage.this, new Component[] { srcPanel, altPanel, hrefPanel, widthPanel,
+                            heightPanel, hSpacePanel, vSpacePanel, borderPanel, alignPanel }, "Image properties",
+                            JOptionPane.OK_CANCEL_OPTION);
                     if (opt == JOptionPane.OK_OPTION) {
                         try {
                             StringBuffer imgHTML = new StringBuffer();
@@ -938,23 +964,23 @@ public class HTMLPage extends Extension {
                     }
                     getJTextPane().requestFocusInWindow();
                 }
-            });    
+            });
         }
         return jButton2;
     }
 
     /**
-     * This method initializes jComboBox    
-     *  
-     * @return javax.swing.JComboBox    
+     * This method initializes jComboBox
+     * 
+     * @return javax.swing.JComboBox
      */
     private JComboBox getJComboBox() {
         if (jComboBox == null) {
             jComboBox = new JComboBox();
-            jComboBox.setMaximumSize(new Dimension(150, 20));  // Generated
-            jComboBox.setPreferredSize(new Dimension(150, 20));  // Generated
-            jComboBox.setToolTipText("font size");  // Generated
-            jComboBox.setMinimumSize(new Dimension(150, 20));  // Generated
+            jComboBox.setMaximumSize(new Dimension(150, 20)); // Generated
+            jComboBox.setPreferredSize(new Dimension(150, 20)); // Generated
+            jComboBox.setToolTipText("font size"); // Generated
+            jComboBox.setMinimumSize(new Dimension(150, 20)); // Generated
             Iterator it = HTMLPage.FONT_SIZES.keySet().iterator();
             while (it.hasNext()) {
                 jComboBox.addItem((String) it.next());
@@ -964,8 +990,8 @@ public class HTMLPage extends Extension {
                     String selectedFontSizeStr = (String) getJComboBox().getSelectedItem();
                     int selectedFontSize = HTMLPage.FONT_SIZES.get(selectedFontSizeStr);
                     String actionName = "font size";
-                    new StyledEditorKit.FontSizeAction(actionName, selectedFontSize).actionPerformed(
-                            new ActionEvent(e.getSource(), e.getID(), actionName));
+                    new StyledEditorKit.FontSizeAction(actionName, selectedFontSize).actionPerformed(new ActionEvent(e.getSource(), e
+                            .getID(), actionName));
                     getJTextPane().requestFocusInWindow();
                 }
             });
@@ -974,17 +1000,17 @@ public class HTMLPage extends Extension {
     }
 
     /**
-     * This method initializes jComboBox1   
-     *  
-     * @return javax.swing.JComboBox    
+     * This method initializes jComboBox1
+     * 
+     * @return javax.swing.JComboBox
      */
     private JComboBox getJComboBox1() {
         if (jComboBox1 == null) {
             jComboBox1 = new JComboBox();
-            jComboBox1.setMaximumSize(new Dimension(150, 20));  // Generated
-            jComboBox1.setPreferredSize(new Dimension(150, 20));  // Generated
-            jComboBox1.setToolTipText("font family");  // Generated
-            jComboBox1.setMinimumSize(new Dimension(150, 20));  // Generated
+            jComboBox1.setMaximumSize(new Dimension(150, 20)); // Generated
+            jComboBox1.setPreferredSize(new Dimension(150, 20)); // Generated
+            jComboBox1.setToolTipText("font family"); // Generated
+            jComboBox1.setMinimumSize(new Dimension(150, 20)); // Generated
             for (int i = 0; i < FONT_FAMILY_NAMES.length; i++) {
                 jComboBox1.addItem(FONT_FAMILY_NAMES[i]);
             }
@@ -1002,16 +1028,16 @@ public class HTMLPage extends Extension {
     }
 
     /**
-     * This method initializes jTextPane    
-     *  
-     * @return javax.swing.JTextPane    
+     * This method initializes jTextPane
+     * 
+     * @return javax.swing.JTextPane
      */
     private JTextPane getJTextPane() {
         if (jTextPane == null) {
             jTextPane = new JTextPane();
             jTextPane.setEditable(false);
             jTextPane.setEditorKit(new HTMLEditorKit());
-            
+
             // set default font for JTextPane instance
             MutableAttributeSet attrs = jTextPane.getInputAttributes();
             StyleConstants.setFontFamily(attrs, DEFAULT_FONT.getFamily());
@@ -1021,17 +1047,19 @@ public class HTMLPage extends Extension {
             StyledDocument doc = jTextPane.getStyledDocument();
             doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
 
-            jTextPane.addCaretListener(new CaretListener(){
+            jTextPane.addCaretListener(new CaretListener() {
                 public void caretUpdate(CaretEvent e) {
                     JTextPane textPane = (JTextPane) e.getSource();
                     synchronizeEditNoteControlsStates(textPane);
                 }
             });
-            jTextPane.addKeyListener(new KeyListener(){
+            jTextPane.addKeyListener(new KeyListener() {
                 public void keyTyped(KeyEvent e) {
                 }
+
                 public void keyPressed(KeyEvent e) {
                 }
+
                 public void keyReleased(KeyEvent e) {
                     if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                         try {
@@ -1042,7 +1070,7 @@ public class HTMLPage extends Extension {
                     }
                 }
             });
-            jTextPane.addHyperlinkListener(new HyperlinkListener(){
+            jTextPane.addHyperlinkListener(new HyperlinkListener() {
                 public void hyperlinkUpdate(HyperlinkEvent e) {
                     if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
                         if (e.getDescription().startsWith(Constants.ENTRY_PROTOCOL_PREFIX)) {
@@ -1061,48 +1089,48 @@ public class HTMLPage extends Extension {
         }
         return jTextPane;
     }
-    
+
     /**
-     * This method initializes jPanel   
-     *  
-     * @return javax.swing.JPanel   
+     * This method initializes jPanel
+     * 
+     * @return javax.swing.JPanel
      */
     private JPanel getJPanel() {
         if (jPanel == null) {
             jPanel = new JPanel();
-            jPanel.setLayout(new BorderLayout());  // Generated
-            jPanel.add(getJToolBar1(), BorderLayout.CENTER);  // Generated
-            jPanel.add(getJToolBar(), BorderLayout.WEST);  // Generated
+            jPanel.setLayout(new BorderLayout()); // Generated
+            jPanel.add(getJToolBar1(), BorderLayout.CENTER); // Generated
+            jPanel.add(getJToolBar(), BorderLayout.WEST); // Generated
         }
         return jPanel;
     }
 
     /**
-     * This method initializes jToolBar 
-     *  
-     * @return javax.swing.JToolBar 
+     * This method initializes jToolBar
+     * 
+     * @return javax.swing.JToolBar
      */
     private JToolBar getJToolBar() {
         if (jToolBar == null) {
             jToolBar = new JToolBar();
-            jToolBar.setFloatable(false);  // Generated
-            jToolBar.add(getJButton8());  // Generated
-            jToolBar.add(getJToggleButton3());  // Generated
+            jToolBar.setFloatable(false); // Generated
+            jToolBar.add(getJButton8()); // Generated
+            jToolBar.add(getJToggleButton3()); // Generated
         }
         return jToolBar;
     }
 
     /**
-     * This method initializes jScrollPane  
-     *  
-     * @return javax.swing.JScrollPane  
+     * This method initializes jScrollPane
+     * 
+     * @return javax.swing.JScrollPane
      */
     private JScrollPane getJScrollPane() {
         if (jScrollPane == null) {
             jScrollPane = new JScrollPane();
-            jScrollPane.setViewportView(getJTextPane());  // Generated
+            jScrollPane.setViewportView(getJTextPane()); // Generated
         }
         return jScrollPane;
     }
 
-}  //  @jve:decl-index=0:visual-constraint="10,10"
+} // @jve:decl-index=0:visual-constraint="10,10"
