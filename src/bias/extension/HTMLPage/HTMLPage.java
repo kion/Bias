@@ -9,18 +9,25 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
@@ -51,12 +58,16 @@ import javax.swing.text.AbstractDocument.BranchElement;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.HTML.Tag;
 
 import bias.Constants;
 import bias.annotation.AddOnAnnotation;
+import bias.core.Attachment;
+import bias.core.BackEnd;
 import bias.extension.Extension;
 import bias.gui.FrontEnd;
 import bias.gui.VisualEntryDescriptor;
+import bias.gui.utils.ImageFileChooser;
 import bias.utils.AppManager;
 import bias.utils.FSUtils;
 import bias.utils.Validator;
@@ -66,7 +77,7 @@ import bias.utils.Validator;
  */
 
 @AddOnAnnotation(
-        version="0.3.1",
+        version="0.4.0",
         author="kion",
         description = "WYSIWYG HTML page editor")
 public class HTMLPage extends Extension {
@@ -78,6 +89,9 @@ public class HTMLPage extends Extension {
 
     private static final ImageIcon ICON_URL_LINK = 
         new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/url_link.png"));
+
+    private static final ImageIcon ICON_IMAGE = 
+        new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/image.png"));
 
     private static final ImageIcon ICON_COLOR = 
         new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/color.png"));
@@ -134,6 +148,7 @@ public class HTMLPage extends Extension {
     private JToggleButton jToggleButton3 = null;
     private JButton jButton = null;
     private JButton jButton1 = null;
+    private JButton jButton2 = null;
     private JButton jButton5 = null;
     private JButton jButton8 = null;
     private JComboBox jComboBox = null;
@@ -156,7 +171,7 @@ public class HTMLPage extends Extension {
      */
     @Override
     public byte[] serializeData() throws Throwable {
-        return getJTextPane().getText().getBytes();
+        return parseCodeOnSave(getJTextPane().getText()).getBytes();
     }
     
     private void synchronizeEditNoteControlsStates(JTextPane textPane) {
@@ -256,6 +271,69 @@ public class HTMLPage extends Extension {
             }
         }
     }
+    
+    private String parseCodeOnSave(String htmlCode) {
+        Collection<String> usedAttachmentNames = new ArrayList<String>();
+        StringBuffer parsedHtmlCode = new StringBuffer();
+        Pattern p = Pattern.compile("<img src=\"file://([^\"]+)+/([^\"]+)\"");
+        Matcher m = p.matcher(htmlCode);
+        while (m.find()) {
+            String attName = m.group(2);
+            m.appendReplacement(parsedHtmlCode, "<img src=\"att://" + attName + "\"");
+            usedAttachmentNames.add(attName);
+        }
+        m.appendTail(parsedHtmlCode);
+        cleanUpUnUsedAttachments(usedAttachmentNames);
+        return parsedHtmlCode.toString();
+    }
+    
+    private void cleanUpUnUsedAttachments(Collection<String> usedAttachmentNames) {
+        try {
+            UUID id = HTMLPage.this.getId();
+            Collection<Attachment> atts = BackEnd.getInstance().getAttachments(id);
+            for (Attachment att : atts) {
+                if (!usedAttachmentNames.contains(att.getName())) {
+                    BackEnd.getInstance().removeAttachment(id, att.getName());
+                }
+            }
+        } catch (Exception ex) {
+            // if some error occured while cleaning up unused attachments,
+            // ignore it, these attachments will be removed next time Bias persists data
+            ex.printStackTrace();
+        }
+    }
+
+    private String parseCodeOnLoad(String htmlCode) {
+        StringBuffer parsedHtmlCode = new StringBuffer();
+        Pattern p = Pattern.compile("<img src=\"att://([^\"]+)\"");
+        Matcher m = p.matcher(htmlCode);
+        while (m.find()) {
+            File f = extractAttachmentImage(m.group(1));
+            m.appendReplacement(parsedHtmlCode, "<img src=\"file://" + f.getAbsolutePath() + "\"");
+        }
+        m.appendTail(parsedHtmlCode);
+        return parsedHtmlCode.toString();
+   }
+    
+    private File extractAttachmentImage(String attName) {
+        File f = null;
+        try {
+            UUID id = HTMLPage.this.getId();
+            // get attachment and store it to temporary directory
+            // (need to do so, because attachments are stored in ecrypted form, 
+            // so have to be decrypted before use)
+            Attachment att = BackEnd.getInstance().getAttachment(id, attName);
+            File idDir = new File(Constants.TMP_DIR, id.toString());
+            if (!idDir.exists()) {
+                idDir.mkdir();
+            }
+            f = new File(idDir, att.getName());
+            FSUtils.writeFile(f, att.getData());
+        } catch (Exception ex) {
+            FrontEnd.displayErrorMessage("Failed to extract image from data entry attachment!", ex);
+        }
+        return f;
+    }
 
     /**
      * This method initializes this
@@ -267,7 +345,7 @@ public class HTMLPage extends Extension {
         this.setLayout(new BorderLayout());
         this.add(getJScrollPane(), BorderLayout.CENTER);  // Generated
         this.add(getJPanel(), BorderLayout.SOUTH);  // Generated
-        getJTextPane().setText(new String(getData()));
+        getJTextPane().setText(parseCodeOnLoad(new String(getData())));
         getJTextPane().getDocument().addUndoableEditListener(new UndoRedoManager(jTextPane));
     }
 
@@ -283,6 +361,7 @@ public class HTMLPage extends Extension {
             jToolBar1.setBorder(null);  // Generated
             jToolBar1.add(getJButton1());  // Generated
             jToolBar1.add(getJButton());  // Generated
+            jToolBar1.add(getJButton2());  // Generated
             jToolBar1.add(getJButton5());  // Generated
             jToolBar1.add(getJToggleButton());  // Generated
             jToolBar1.add(getJToggleButton1());  // Generated
@@ -643,6 +722,227 @@ public class HTMLPage extends Extension {
         return jButton1;
     }
     
+    /**
+     * This method initializes jButton1 
+     *  
+     * @return javax.swing.JButton  
+     */
+    private JButton getJButton2() {
+        if (jButton2 == null) {
+            jButton2 = new JButton();
+            jButton2.setToolTipText("image");  // Generated
+            jButton2.setIcon(HTMLPage.ICON_IMAGE);
+            jButton2.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    final JTextField srcTF = new JTextField();
+                    JTextField altTF = new JTextField();
+                    JTextField hrefTF = new JTextField();
+                    JTextField widthTF = new JTextField();
+                    JTextField heightTF = new JTextField();
+                    JTextField hSpaceTF = new JTextField();
+                    JTextField vSpaceTF = new JTextField();
+                    JTextField borderTF = new JTextField();
+                    JComboBox alignCB = new JComboBox();
+                    alignCB.addItem(Constants.EMPTY_STR);
+                    alignCB.addItem("left");
+                    alignCB.addItem("right");
+                    alignCB.addItem("middle");
+                    alignCB.addItem("absmiddle");
+                    alignCB.addItem("top");
+                    alignCB.addItem("texttop");
+                    alignCB.addItem("bottom");
+                    alignCB.addItem("absbottom");
+                    alignCB.addItem("center");
+                    alignCB.addItem("baseline");
+                    int pos;
+                    if (getJTextPane().getCaret().getDot() > getJTextPane().getCaret().getMark()) {
+                        pos = getJTextPane().getCaret().getMark();
+                    } else {
+                        pos = getJTextPane().getCaret().getDot();
+                    }
+                    HTMLDocument document = (HTMLDocument) getJTextPane().getDocument();
+                    BranchElement pEl = (BranchElement) document.getParagraphElement(pos);
+                    Element el = pEl.positionToElement(pos);
+                    AttributeSet attrs = el.getAttributes();
+                    String elName = attrs.getAttribute(StyleConstants.NameAttribute).toString().toUpperCase();
+                    if (elName.equalsIgnoreCase("IMG")) {
+                        if (attrs.isDefined(HTML.Attribute.SRC)) {
+                            srcTF.setText(attrs.getAttribute(HTML.Attribute.SRC).toString());
+                        }
+                        if (attrs.isDefined(HTML.Attribute.ALT)) {
+                            altTF.setText(attrs.getAttribute(HTML.Attribute.ALT).toString());
+                        }
+                        if (attrs.isDefined(HTML.Attribute.WIDTH)) {
+                            widthTF.setText(attrs.getAttribute(HTML.Attribute.WIDTH).toString());
+                        }
+                        if (attrs.isDefined(HTML.Attribute.HEIGHT)) {
+                            heightTF.setText(attrs.getAttribute(HTML.Attribute.HEIGHT).toString());
+                        }
+                        if (attrs.isDefined(HTML.Attribute.HSPACE)) {
+                            hSpaceTF.setText(attrs.getAttribute(HTML.Attribute.HSPACE).toString());
+                        }
+                        if (attrs.isDefined(HTML.Attribute.VSPACE)) {
+                            vSpaceTF.setText(attrs.getAttribute(HTML.Attribute.VSPACE).toString());
+                        }
+                        if (attrs.isDefined(HTML.Attribute.BORDER)) {
+                            borderTF.setText(attrs.getAttribute(HTML.Attribute.BORDER).toString());
+                        }
+                        if (attrs.isDefined(HTML.Attribute.ALIGN)) {
+                            alignCB.setSelectedItem(attrs.getAttribute(HTML.Attribute.ALIGN).toString());
+                        }
+                        for (Enumeration en = attrs.getAttributeNames(); en.hasMoreElements();) {
+                            Object attr = en.nextElement();
+                            if (attr.toString().equalsIgnoreCase("a")) {
+                                Object attrValue = attrs.getAttribute(attr);
+                                if (attrValue != null && attrValue.toString().startsWith("href=")) {
+                                    hrefTF.setText(attrValue.toString().split("=")[1]);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    JPanel srcPanel = new JPanel(new BorderLayout());
+                    srcPanel.add(new JLabel("source: "), BorderLayout.WEST);
+                    srcPanel.add(srcTF, BorderLayout.CENTER);
+                    JButton browseButton = new JButton("...");
+                    browseButton.addActionListener(new ActionListener(){
+                        public void actionPerformed(ActionEvent e) {
+                            JFileChooser jFileChooser = new ImageFileChooser(false);  
+                            jFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                            int rVal = jFileChooser.showOpenDialog(HTMLPage.this);
+                            if (rVal == JFileChooser.APPROVE_OPTION) {
+                                srcTF.setText(jFileChooser.getSelectedFile().getAbsolutePath());
+                            }
+                        }
+                    });
+                    srcPanel.add(browseButton, BorderLayout.EAST);
+                    JPanel altPanel = new JPanel(new BorderLayout());
+                    altPanel.add(new JLabel("alt: "), BorderLayout.WEST);
+                    altPanel.add(altTF, BorderLayout.CENTER);
+                    JPanel hrefPanel = new JPanel(new BorderLayout());
+                    hrefPanel.add(new JLabel("href: "), BorderLayout.WEST);
+                    hrefPanel.add(hrefTF, BorderLayout.CENTER);
+                    JPanel widthPanel = new JPanel(new BorderLayout());
+                    widthPanel.add(new JLabel("width: "), BorderLayout.WEST);
+                    widthPanel.add(widthTF, BorderLayout.CENTER);
+                    JPanel heightPanel = new JPanel(new BorderLayout());
+                    heightPanel.add(new JLabel("height: "), BorderLayout.WEST);
+                    heightPanel.add(heightTF, BorderLayout.CENTER);
+                    JPanel hSpacePanel = new JPanel(new BorderLayout());
+                    hSpacePanel.add(new JLabel("h-space: "), BorderLayout.WEST);
+                    hSpacePanel.add(hSpaceTF, BorderLayout.CENTER);
+                    JPanel vSpacePanel = new JPanel(new BorderLayout());
+                    vSpacePanel.add(new JLabel("v-space: "), BorderLayout.WEST);
+                    vSpacePanel.add(vSpaceTF, BorderLayout.CENTER);
+                    JPanel borderPanel = new JPanel(new BorderLayout());
+                    borderPanel.add(new JLabel("border: "), BorderLayout.WEST);
+                    borderPanel.add(borderTF, BorderLayout.CENTER);
+                    JPanel alignPanel = new JPanel(new BorderLayout());
+                    alignPanel.add(new JLabel("align: "), BorderLayout.WEST);
+                    alignPanel.add(alignCB, BorderLayout.CENTER);
+                    int opt = JOptionPane.showConfirmDialog(
+                            HTMLPage.this, 
+                            new Component[]{
+                                    srcPanel,
+                                    altPanel,
+                                    hrefPanel,
+                                    widthPanel,
+                                    heightPanel,
+                                    hSpacePanel,
+                                    vSpacePanel,
+                                    borderPanel,
+                                    alignPanel
+                            }, "Image properties", JOptionPane.OK_CANCEL_OPTION);
+                    if (opt == JOptionPane.OK_OPTION) {
+                        try {
+                            StringBuffer imgHTML = new StringBuffer();
+                            boolean isLink = !Validator.isNullOrBlank(hrefTF.getText()) ? true : false;
+                            if (isLink) {
+                                imgHTML.append("<a href=\"");
+                                imgHTML.append(hrefTF.getText());
+                                imgHTML.append("\">");
+                            }
+                            imgHTML.append("<img src=\"");
+                            if (srcTF.getText().startsWith("http://")) {
+                                imgHTML.append(srcTF.getText());
+                            } else {
+                                File file = new File(srcTF.getText());
+                                if (file.exists()) {
+                                    try {
+                                        UUID id = HTMLPage.this.getId();
+                                        // try to read file as image first
+                                        ImageIO.read(new FileInputStream(file));
+                                        // attach image-file (will be encrypted)
+                                        Attachment att = new Attachment(file);
+                                        BackEnd.getInstance().addAttachment(id, att);
+                                        // now get it back (in decrypted form) and extract actual image-file
+                                        File f = extractAttachmentImage(att.getName());
+                                        imgHTML.append("file://" + f.getAbsolutePath());
+                                    } catch (Exception ex) {
+                                        FrontEnd.displayErrorMessage("Failed to attach image to data entry!", ex);
+                                    }
+                                }
+                            }
+                            imgHTML.append("\"");
+                            if (!Validator.isNullOrBlank((String) alignCB.getSelectedItem())) {
+                                imgHTML.append(" align=\"");
+                                imgHTML.append((String) alignCB.getSelectedItem());
+                                imgHTML.append("\"");
+                            }
+                            if (!Validator.isNullOrBlank(altTF.getText())) {
+                                imgHTML.append(" alt=\"");
+                                imgHTML.append(altTF.getText());
+                                imgHTML.append("\"");
+                            }
+                            if (!Validator.isNullOrBlank(widthTF.getText())) {
+                                imgHTML.append(" width=\"");
+                                imgHTML.append(widthTF.getText());
+                                imgHTML.append("\"");
+                            }
+                            if (!Validator.isNullOrBlank(heightTF.getText())) {
+                                imgHTML.append(" height=\"");
+                                imgHTML.append(heightTF.getText());
+                                imgHTML.append("\"");
+                            }
+                            if (!Validator.isNullOrBlank(hSpaceTF.getText())) {
+                                imgHTML.append(" hspace=\"");
+                                imgHTML.append(hSpaceTF.getText());
+                                imgHTML.append("\"");
+                            }
+                            if (!Validator.isNullOrBlank(vSpaceTF.getText())) {
+                                imgHTML.append(" vspace=\"");
+                                imgHTML.append(vSpaceTF.getText());
+                                imgHTML.append("\"");
+                            }
+                            if (!Validator.isNullOrBlank(borderTF.getText())) {
+                                imgHTML.append(" border=\"");
+                                imgHTML.append(borderTF.getText());
+                                imgHTML.append("\"");
+                            }
+                            imgHTML.append(">");
+                            if (isLink) {
+                                imgHTML.append("</a>");
+                            }
+                            Tag tag;
+                            if (imgHTML.toString().startsWith("<a")) {
+                                tag = HTML.Tag.A;
+                            } else {
+                                tag = HTML.Tag.IMG;
+                            }
+                            HTMLPageEditor.insertHTML(getJTextPane(), imgHTML.toString(), tag);
+                        } catch (BadLocationException exception) {
+                            FrontEnd.displayErrorMessage(exception);
+                        } catch (IOException exception) {
+                            FrontEnd.displayErrorMessage(exception);
+                        }
+                    }
+                    getJTextPane().requestFocusInWindow();
+                }
+            });    
+        }
+        return jButton2;
+    }
+
     /**
      * This method initializes jComboBox    
      *  

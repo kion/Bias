@@ -1003,6 +1003,22 @@ public class BackEnd {
         return atts;
     }
     
+    public Attachment getAttachment(UUID dataEntryID, String attName) throws Exception {
+        Attachment att = null;
+        File entryAttsDir = new File(Constants.ATTACHMENTS_DIR, dataEntryID.toString());
+        if (entryAttsDir.exists()) {
+            File[] entryAtts = entryAttsDir.listFiles();
+            for (File entryAtt : entryAtts) {
+                if (entryAtt.getName().equals(attName)) {
+                    byte[] data = FSUtils.readFile(entryAtt);
+                    byte[] decryptedData = CIPHER_DECRYPT.doFinal(data);
+                    att = new Attachment(entryAtt.getName(), decryptedData);
+                }
+            }
+        }
+        return att;
+    }
+    
     public void addAttachment(UUID dataEntryID, Attachment attachment) throws Exception {
         if (dataEntryID != null && attachment != null) {
             File entryAttsDir = new File(Constants.ATTACHMENTS_DIR, dataEntryID.toString());
