@@ -16,6 +16,7 @@ import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -76,7 +77,7 @@ import bias.utils.Validator;
  * @author kion
  */
 
-@AddOnAnnotation(version = "0.4.1", author = "kion", description = "WYSIWYG HTML page editor")
+@AddOnAnnotation(version = "0.4.3", author = "kion", description = "WYSIWYG HTML page editor")
 public class HTMLPage extends Extension {
 
     private static final long serialVersionUID = 1L;
@@ -89,8 +90,7 @@ public class HTMLPage extends Extension {
 
     private static final ImageIcon ICON_COLOR = new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/color.png"));
 
-    private static final ImageIcon ICON_TEXT_UNDERLINE = new ImageIcon(HTMLPage.class
-            .getResource("/bias/res/HTMLPage/text_underlined.png"));
+    private static final ImageIcon ICON_TEXT_UNDERLINE = new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/text_underlined.png"));
 
     private static final ImageIcon ICON_TEXT_ITALIC = new ImageIcon(HTMLPage.class.getResource("/bias/res/HTMLPage/text_italic.png"));
 
@@ -286,11 +286,13 @@ public class HTMLPage extends Extension {
 
     private String processOnLoad(String htmlCode) {
         StringBuffer parsedHtmlCode = new StringBuffer();
-        Pattern p = Pattern.compile("<img src=\"att://([^\"]+)\"");
+        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")+\\s+src=)\"att://([^\"]+)\"");
         Matcher m = p.matcher(htmlCode);
         while (m.find()) {
-            File f = extractAttachmentImage(m.group(1));
-            m.appendReplacement(parsedHtmlCode, "<img src=\"file://" + f.getAbsolutePath() + "\"");
+            File f = extractAttachmentImage(m.group(3));
+            if (f != null) {
+                m.appendReplacement(parsedHtmlCode, m.group(1) + "\"file://" + f.getAbsolutePath() + "\"");
+            }
         }
         m.appendTail(parsedHtmlCode);
         return parsedHtmlCode.toString();
@@ -299,11 +301,12 @@ public class HTMLPage extends Extension {
     private String processOnSave(String htmlCode) {
         Collection<String> usedAttachmentNames = new ArrayList<String>();
         StringBuffer parsedHtmlCode = new StringBuffer();
-        Pattern p = Pattern.compile("<img src=\"file://([^\"]+)+/([^\"]+)\"");
+        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")+\\s+src=)\"(file://[^\"]+)\"");
         Matcher m = p.matcher(htmlCode);
         while (m.find()) {
-            String attName = m.group(2);
-            m.appendReplacement(parsedHtmlCode, "<img src=\"att://" + attName + "\"");
+            String attName = m.group(3);
+            attName = attName.substring(attName.lastIndexOf("/")+1);
+            m.appendReplacement(parsedHtmlCode, m.group(1) + "\"att://" + attName + "\"");
             usedAttachmentNames.add(attName);
         }
         m.appendTail(parsedHtmlCode);
@@ -313,13 +316,17 @@ public class HTMLPage extends Extension {
 
     private void saveToFile(File htmlFile, String htmlCode) throws Exception {
         StringBuffer parsedHtmlCode = new StringBuffer();
-        Pattern p = Pattern.compile("<img src=\"file://([^\"]+)+/([^\"]+)\"");
+        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")+\\s+src=)\"(file://[^\"]+)\"");
         Matcher m = p.matcher(htmlCode);
         while (m.find()) {
-            String attName = m.group(2);
-            File attsDir = new File(htmlFile.getParentFile(), htmlFile.getName() + "_images/");
-            saveAttachmentExternally(attsDir, attName);
-            m.appendReplacement(parsedHtmlCode, "<img src=\"" + attsDir.getName() + "/" + attName + "\"");
+            String attName = m.group(3);
+            attName = attName.substring(attName.lastIndexOf("/")+1);
+            File attsDir = new File(htmlFile.getParentFile(), htmlFile.getName().substring(0, htmlFile.getName().indexOf(".")) + "_files/");
+            File attFile = saveAttachmentExternally(attsDir, attName);
+            if (attFile != null) {
+                URI uri = attFile.getParentFile().getParentFile().toURI().relativize(attFile.toURI());
+                m.appendReplacement(parsedHtmlCode, m.group(1) + "\"" + uri.toASCIIString() + "\"");
+            }
         }
         m.appendTail(parsedHtmlCode);
         FSUtils.writeFile(htmlFile, parsedHtmlCode.toString().getBytes());
@@ -340,12 +347,13 @@ public class HTMLPage extends Extension {
             f = new File(idDir, att.getName());
             FSUtils.writeFile(f, att.getData());
         } catch (Exception ex) {
-            FrontEnd.displayErrorMessage("Failed to extract image from data entry attachment!", ex);
+            // ignore, broken images on page will inform about missing image-attachments
         }
         return f;
     }
 
-    private void saveAttachmentExternally(File attsDir, String attName) {
+    private File saveAttachmentExternally(File attsDir, String attName) {
+        File attFile = null;
         try {
             UUID id = HTMLPage.this.getId();
             // get attachments and store to external directory
@@ -355,11 +363,13 @@ public class HTMLPage extends Extension {
                 if (!attsDir.exists()) {
                     attsDir.mkdir();
                 }
-                FSUtils.writeFile(new File(attsDir, att.getName()), att.getData());
+                attFile = new File(attsDir, att.getName());
+                FSUtils.writeFile(attFile, att.getData());
             }
         } catch (Exception ex) {
-            FrontEnd.displayErrorMessage("Failed to extract image(s) from data entry attachment!", ex);
+            // ignore, broken images on page will inform about missing image-attachments
         }
+        return attFile;
     }
 
     private void cleanUpUnUsedAttachments(Collection<String> usedAttachmentNames) {
