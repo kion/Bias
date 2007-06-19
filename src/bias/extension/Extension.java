@@ -85,9 +85,13 @@ public abstract class Extension extends JPanel {
 
     /**
      * Serializes extension data to array of bytes.
+     * By default returns null (no data).
+     * Should be overriden to return data for certain extension's instance
      * 
      * @return array of bytes representing serialized data of extension's instance
      */
-    abstract public byte[] serializeData() throws Throwable;
+    public byte[] serializeData() throws Throwable {
+        return null;
+    }
 
 }

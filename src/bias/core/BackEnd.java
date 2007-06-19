@@ -209,9 +209,22 @@ public class BackEnd {
         data = FSUtils.readFile(new File(dataDir, Constants.METADATA_FILE));
         decryptedData = cipher.doFinal(data);
         metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
+        // config files
+        File configDir = new File(importDir, Constants.CONFIG_DIR.getName());
+        if (configDir.exists()) {
+            for (File configFile : configDir.listFiles()) {
+                File localConfigFile = new File(Constants.CONFIG_DIR, configFile.getName());
+                // if local config file does not exist, use imported one, 
+                // otherwise - skip it (already existing local configuration will be used)
+                if (!localConfigFile.exists()) {
+                    localConfigFile.createNewFile();
+                    byte[] configData = FSUtils.readFile(configFile);
+                    FSUtils.writeFile(localConfigFile, configData);
+                }
+            }
+        }
         // read icon files
         File iconsDir = new File(importDir, Constants.ICONS_DIR.getName());
-        File configDir = new File(importDir, Constants.CONFIG_DIR.getName());
         File iconsListFile = new File(configDir, Constants.ICONS_CONFIG_FILE);
         if (iconsListFile.exists()) {
             String[] iconsList = new String(FSUtils.readFile(iconsListFile)).split(Constants.NEW_LINE);
@@ -336,7 +349,7 @@ public class BackEnd {
         }
     }
     
-    public void store() throws Exception {
+    public void store(boolean storeDataOnly) throws Exception {
         // clear data dir before writing updated files
         FSUtils.clearDirectory(Constants.DATA_DIR);
         // metadata file and data entries
@@ -372,22 +385,24 @@ public class BackEnd {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE), sw.getBuffer().toString().getBytes());
         // preferences file
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
-        // jar file itself (extensions & lafs)
-        ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(Bias.getJarFile()));
-        for (Entry<String, byte[]> entry : zipEntries.entrySet()) {
-            String entryName = entry.getKey();
-            ZipEntry zipEntry = new ZipEntry(entryName);
-            byte[] entryData = entry.getValue();
-            zos.putNextEntry(zipEntry);
-            if (entryData != null) {
-                for (byte b : entryData) {
-                    zos.write(b);
+        if (!storeDataOnly) {
+            // jar file itself (extensions & lafs)
+            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(Bias.getJarFile()));
+            for (Entry<String, byte[]> entry : zipEntries.entrySet()) {
+                String entryName = entry.getKey();
+                ZipEntry zipEntry = new ZipEntry(entryName);
+                byte[] entryData = entry.getValue();
+                zos.putNextEntry(zipEntry);
+                if (entryData != null) {
+                    for (byte b : entryData) {
+                        zos.write(b);
+                    }
                 }
+                zos.closeEntry();
             }
-            zos.closeEntry();
+            zos.flush();
+            zos.close();
         }
-        zos.flush();
-        zos.close();
     }
     
     private Collection<UUID> buildNode(Node node, DataCategory data) throws Exception {

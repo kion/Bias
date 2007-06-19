@@ -387,7 +387,7 @@ public class FrontEnd extends JFrame {
             this.addWindowListener(new java.awt.event.WindowAdapter() {
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
-                        store();
+                        store(false);
                         cleanUp();
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
@@ -526,10 +526,10 @@ public class FrontEnd extends JFrame {
         return brokenExtensionsFound;
     }
     
-    private void store() throws Exception {
+    private void store(boolean storeDataOnly) throws Exception {
         collectProperties();
         collectData();
-        BackEnd.getInstance().store();
+        BackEnd.getInstance().store(storeDataOnly);
     }
 
     private void collectProperties() {
@@ -1594,7 +1594,7 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             try {
-                store();
+                store(true);
             } catch (Exception ex) {
                 displayErrorMessage(ex);
             }
@@ -2101,7 +2101,7 @@ public class FrontEnd extends JFrame {
 
                 if (modified || brokenFixed) {
                     displayMessage(RESTART_MESSAGE);
-                    store();
+                    store(false);
                     cleanUp();
                     System.exit(0);
                 }
@@ -2120,7 +2120,7 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
         	JLabel aboutLabel = new JLabel(
         							"<html>Bias Personal Information Manager, version 1.0.0<br>" +
-        							"(c) kion, 2007<br>"
+        							"(c) R. Kasianenko, 2007<br>"
         						);
         	JLabel linkLabel = new JLabel(
         							"<html><u><font color=blue>http://bias.sourceforge.net</font></u>"
