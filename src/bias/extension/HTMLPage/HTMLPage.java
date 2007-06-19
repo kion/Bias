@@ -340,12 +340,14 @@ public class HTMLPage extends Extension {
             // (need to do so, because attachments are stored in ecrypted form,
             // so have to be decrypted before use)
             Attachment att = BackEnd.getInstance().getAttachment(id, attName);
-            File idDir = new File(Constants.TMP_DIR, id.toString());
-            if (!idDir.exists()) {
-                idDir.mkdir();
+            if (att != null) {
+                File idDir = new File(Constants.TMP_DIR, id.toString());
+                if (!idDir.exists()) {
+                    idDir.mkdir();
+                }
+                f = new File(idDir, att.getName());
+                FSUtils.writeFile(f, att.getData());
             }
-            f = new File(idDir, att.getName());
-            FSUtils.writeFile(f, att.getData());
         } catch (Exception ex) {
             // ignore, broken images on page will inform about missing image-attachments
         }
@@ -915,7 +917,7 @@ public class HTMLPage extends Extension {
                                         File f = extractAttachmentImage(att.getName());
                                         imgHTML.append("file://" + f.getAbsolutePath());
                                     } catch (Exception ex) {
-                                        FrontEnd.displayErrorMessage("Failed to attach image to data entry!", ex);
+                                        FrontEnd.displayErrorMessage("Failed to attach image to data entry!\n" + ex.getMessage(), ex);
                                     }
                                 }
                             }

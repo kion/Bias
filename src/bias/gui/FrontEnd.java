@@ -387,7 +387,7 @@ public class FrontEnd extends JFrame {
             this.addWindowListener(new java.awt.event.WindowAdapter() {
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
-                        store(false);
+                        store(true);
                         cleanUp();
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
