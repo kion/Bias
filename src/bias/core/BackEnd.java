@@ -223,7 +223,7 @@ public class BackEnd {
                 }
             }
         }
-        // read icon files
+        // icon files
         File iconsDir = new File(importDir, Constants.ICONS_DIR.getName());
         File iconsListFile = new File(configDir, Constants.ICONS_CONFIG_FILE);
         if (iconsListFile.exists()) {

@@ -24,6 +24,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -79,6 +80,7 @@ import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 import bias.utils.AppManager;
 import bias.utils.FSUtils;
+import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 
 
@@ -197,36 +199,8 @@ public class FrontEnd extends JFrame {
     private static FrontEnd getInstance() {
         if (instance == null) {
             preInit();
-            boolean lafActivationSuccess;
-            Throwable error = null;
-            try {
-                activateLAF();
-                lafActivationSuccess = true;
-            } catch (Throwable e) {
-                error = e;
-                lafActivationSuccess = false;
-            }
+            activateLAF();
             instance = new FrontEnd();
-            if (!lafActivationSuccess) {
-                String laf = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
-                System.err.println(
-                        "Current Look-&-Feel '" + laf + "' is broken (failed to initialize)!" + Constants.NEW_LINE +
-                        "It will be uninstalled." + Constants.NEW_LINE + "Error details: " + Constants.NEW_LINE);
-                error.printStackTrace(System.err);
-                try {
-                    String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
-                                                + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                    BackEnd.getInstance().uninstallLAF(lafFullClassName);
-                    config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
-                    System.out.println(
-                            "Broken Look-&-Feel '" + laf + "' has been uninstalled ;)" + Constants.NEW_LINE +
-                            RESTART_MESSAGE);
-                } catch (Exception e) {
-                    System.err.println("Broken Look-&-Feel '" + laf + "' failed to uninstall :(" + Constants.NEW_LINE 
-                            + "Error details: " + Constants.NEW_LINE);
-                    e.printStackTrace(System.err);
-                }
-            }
             if (Preferences.getInstance().useSysTrayIcon) {
                 // setup system tray and tray icon
                 if (!SystemTray.isSupported()) {
@@ -272,23 +246,44 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private static void activateLAF() throws Throwable {
+    private static void activateLAF() {
         String laf = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
         if (laf != null) {
-            String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
-                                        + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-            Class lafClass = Class.forName(lafFullClassName);
-            LookAndFeel lafInstance = (LookAndFeel) lafClass.newInstance();
-            byte[] lafSettings = BackEnd.getInstance().getLAFSettings(lafFullClassName);
-            lafInstance.activate(lafSettings);
-            // use control icons defined by LAF if available
-            if (lafInstance.getControlIcons() != null) {
-                controlIcons = lafInstance.getControlIcons();
+            try {
+                String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                Class lafClass = Class.forName(lafFullClassName);
+                LookAndFeel lafInstance = (LookAndFeel) lafClass.newInstance();
+                byte[] lafSettings = BackEnd.getInstance().getLAFSettings(lafFullClassName);
+                lafInstance.activate(lafSettings);
+                // use control icons defined by LAF if available
+                if (lafInstance.getControlIcons() != null) {
+                    controlIcons = lafInstance.getControlIcons();
+                }
+            } catch (Throwable t) {
+                System.err.println(
+                        "Current Look-&-Feel '" + laf + "' is broken (failed to initialize)!" + Constants.NEW_LINE +
+                        "It will be uninstalled." + Constants.NEW_LINE + "Error details: " + Constants.NEW_LINE);
+                t.printStackTrace();
+                try {
+                    String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                    BackEnd.getInstance().uninstallLAF(lafFullClassName);
+                    config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+                    System.out.println(
+                            "Broken Look-&-Feel '" + laf + "' has been uninstalled ;)" + Constants.NEW_LINE +
+                            RESTART_MESSAGE);
+                } catch (Throwable t2) {
+                    System.err.println("Broken Look-&-Feel '" + laf + "' failed to uninstall :(" + Constants.NEW_LINE 
+                            + "Error details: " + Constants.NEW_LINE);
+                    t2.printStackTrace();
+                }
             }
         }
     }
     
     private static Properties config;
+    
+    private static Map<String, byte[]> initialLAFSettings = new HashMap<String, byte[]>();
     
     private String lastAddedEntryType = null;
 
@@ -401,39 +396,44 @@ public class FrontEnd extends JFrame {
     }
     
     private boolean setActiveLAF(String laf) throws Exception {
-        boolean modified = false;
+        boolean lafChanged = false;
         String currentLAF = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
         if (laf != null) {
             String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             if (!lafName.equals(currentLAF)) {
                 config.put(Constants.PROPERTY_LOOK_AND_FEEL, lafName);
-                modified = true;
+                configureLAF(laf);
+                lafChanged = true;
+            } else {
+                lafChanged = configureLAF(laf);
             }
         } else if (currentLAF != null) {
             config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
-            modified = true;
+            lafChanged = true;
         }
-        if (!modified) {
-            displayMessage("Selected Look-&-Feel is already active");
-        } else {
-            configureLAF(laf);
-        }
-        return modified;
+        return lafChanged;
     }
     
     private boolean configureLAF(String laf) throws Exception {
-        boolean modified = false;
+        boolean lafChanged = false;
         if (laf != null) {
             Class lafClass = Class.forName(laf);
             LookAndFeel lafInstance = ((LookAndFeel)lafClass.newInstance());
             byte[] lafSettings = BackEnd.getInstance().getLAFSettings(laf);
             byte[] settings = lafInstance.configure(lafSettings);
-            if (!Arrays.equals(settings,lafSettings)) {
+            // store if differs from stored version
+            if (!PropertiesUtils.deserializeProperties(settings).equals(PropertiesUtils.deserializeProperties(lafSettings))) {
                 BackEnd.getInstance().storeLAFSettings(laf, settings);
-                modified = true;
             }
+            // find out if differs from initial version
+            byte[] initialSettings = initialLAFSettings.get(laf);
+            if (initialSettings == null) {
+                initialLAFSettings.put(laf, settings);
+                initialSettings = settings;
+            }
+            lafChanged = !PropertiesUtils.deserializeProperties(settings).equals(PropertiesUtils.deserializeProperties(initialSettings));
         }
-        return modified;
+        return lafChanged;
     }
     
     @SuppressWarnings("unchecked")
@@ -1687,6 +1687,7 @@ public class FrontEnd extends JFrame {
         private DefaultListModel icModel;
         
         private boolean modified;
+        private boolean lafChanged;
         
         @SuppressWarnings("unchecked")
         public void actionPerformed(ActionEvent e) {
@@ -1861,14 +1862,14 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 }
-                JButton lafActivateButt = new JButton("Activate Look-&-Feel");
+                JButton lafActivateButt = new JButton("(Re)Activate Look-&-Feel");
                 lafActivateButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafList.getSelectedRowCount() == 1) {
                             String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
                             if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
                                 try {
-                                    modified = setActiveLAF(null);
+                                    lafChanged = setActiveLAF(null);
                                 } catch (Exception t) {
                                     displayErrorMessage(t);
                                 }
@@ -1883,36 +1884,7 @@ public class FrontEnd extends JFrame {
                                         String fullLAFClassName = 
                                             Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                     + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                                        modified = setActiveLAF(fullLAFClassName);
-                                    } catch (Exception t) {
-                                        displayErrorMessage(t);
-                                    }
-                                }
-                            }
-                        } else {
-                            displayMessage("Please, choose only one look-&-feel from the list");
-                        }    
-                    }
-                });
-                JButton lafConfigButt = new JButton("Configure Look-&-Feel");
-                lafConfigButt.addActionListener(new ActionListener(){
-                    public void actionPerformed(ActionEvent e) {
-                        if (lafList.getSelectedRowCount() == 1) {
-                            String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
-                            if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
-                                displayErrorMessage("Default Look-&-Feel is not configurable");
-                            } else {
-                                String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
-                                if (Validator.isNullOrBlank(version)) {
-                                    displayMessage(
-                                            "This Look-&-Feel can not be configured yet." + Constants.NEW_LINE +
-                                            "Restart Bias first.");
-                                } else {
-                                    try {
-                                        String fullLAFClassName = 
-                                            Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
-                                                                    + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                                        modified = configureLAF(fullLAFClassName);
+                                        lafChanged = setActiveLAF(fullLAFClassName);
                                     } catch (Exception t) {
                                         displayErrorMessage(t);
                                     }
@@ -2061,7 +2033,6 @@ public class FrontEnd extends JFrame {
                 
                 JPanel lafControlsPanel = new JPanel(new GridLayout(1,4));
                 lafControlsPanel.add(lafActivateButt);
-                lafControlsPanel.add(lafConfigButt);
                 lafControlsPanel.add(lafInstButt);
                 lafControlsPanel.add(lafUninstButt);
                 JPanel lafTopPanel = new JPanel(new BorderLayout());
@@ -2099,9 +2070,9 @@ public class FrontEnd extends JFrame {
                     JOptionPane.INFORMATION_MESSAGE
                 );
 
-                if (modified || brokenFixed) {
+                if (modified || brokenFixed || lafChanged) {
                     displayMessage(RESTART_MESSAGE);
-                    store(false);
+                    store(lafChanged);
                     cleanUp();
                     System.exit(0);
                 }
