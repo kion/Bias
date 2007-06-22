@@ -286,7 +286,7 @@ public class HTMLPage extends Extension {
 
     private String processOnLoad(String htmlCode) {
         StringBuffer parsedHtmlCode = new StringBuffer();
-        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")+\\s+src=)\"att://([^\"]+)\"");
+        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")*\\s+src=)\"att://([^\"]+)\"");
         Matcher m = p.matcher(htmlCode);
         while (m.find()) {
             File f = extractAttachmentImage(m.group(3));
@@ -301,7 +301,7 @@ public class HTMLPage extends Extension {
     private String processOnSave(String htmlCode) {
         Collection<String> usedAttachmentNames = new ArrayList<String>();
         StringBuffer parsedHtmlCode = new StringBuffer();
-        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")+\\s+src=)\"(file://[^\"]+)\"");
+        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")*\\s+src=)\"(file://[^\"]+)\"");
         Matcher m = p.matcher(htmlCode);
         while (m.find()) {
             String attName = m.group(3);
@@ -316,7 +316,7 @@ public class HTMLPage extends Extension {
 
     private void saveToFile(File htmlFile, String htmlCode) throws Exception {
         StringBuffer parsedHtmlCode = new StringBuffer();
-        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")+\\s+src=)\"(file://[^\"]+)\"");
+        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")*\\s+src=)\"(file://[^\"]+)\"");
         Matcher m = p.matcher(htmlCode);
         while (m.find()) {
             String attName = m.group(3);
