@@ -382,7 +382,7 @@ public class FrontEnd extends JFrame {
             this.addWindowListener(new java.awt.event.WindowAdapter() {
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
-                        store(true);
+                        store();
                         cleanUp();
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
@@ -526,10 +526,10 @@ public class FrontEnd extends JFrame {
         return brokenExtensionsFound;
     }
     
-    private void store(boolean storeDataOnly) throws Exception {
+    private void store() throws Exception {
         collectProperties();
         collectData();
-        BackEnd.getInstance().store(storeDataOnly);
+        BackEnd.getInstance().store();
     }
 
     private void collectProperties() {
@@ -1594,7 +1594,7 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             try {
-                store(true);
+                store();
             } catch (Exception ex) {
                 displayErrorMessage(ex);
             }
@@ -1687,7 +1687,6 @@ public class FrontEnd extends JFrame {
         private DefaultListModel icModel;
         
         private boolean modified;
-        private boolean lafChanged;
         
         @SuppressWarnings("unchecked")
         public void actionPerformed(ActionEvent e) {
@@ -1826,7 +1825,7 @@ public class FrontEnd extends JFrame {
                 lafModel.addColumn("Author");
                 lafModel.addColumn("Description");
                 lafModel.addRow(new Object[]{DEFAULT_LOOK_AND_FEEL,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Look-&-Feel"});
-                for (String laf : BackEnd.getInstance().getLAFs().keySet()) {
+                for (String laf : BackEnd.getInstance().getLAFs()) {
                     try {
                         Class<?> lafClass = Class.forName(laf);
                         // laf instantiation test
@@ -1869,7 +1868,7 @@ public class FrontEnd extends JFrame {
                             String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
                             if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
                                 try {
-                                    lafChanged = setActiveLAF(null);
+                                    modified = setActiveLAF(null);
                                 } catch (Exception t) {
                                     displayErrorMessage(t);
                                 }
@@ -1884,7 +1883,7 @@ public class FrontEnd extends JFrame {
                                         String fullLAFClassName = 
                                             Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                     + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                                        lafChanged = setActiveLAF(fullLAFClassName);
+                                        modified = setActiveLAF(fullLAFClassName);
                                     } catch (Exception t) {
                                         displayErrorMessage(t);
                                     }
@@ -2070,11 +2069,8 @@ public class FrontEnd extends JFrame {
                     JOptionPane.INFORMATION_MESSAGE
                 );
 
-                if (modified || brokenFixed || lafChanged) {
+                if (modified || brokenFixed) {
                     displayMessage(RESTART_MESSAGE);
-                    store(lafChanged);
-                    cleanUp();
-                    System.exit(0);
                 }
                 
             } catch (Exception ex) {

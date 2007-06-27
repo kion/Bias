@@ -8,25 +8,21 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.UUID;
 import java.util.Map.Entry;
 import java.util.jar.JarEntry;
@@ -34,7 +30,6 @@ import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -50,7 +45,6 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import bias.Bias;
 import bias.Constants;
 import bias.Launcher;
 import bias.Preferences;
@@ -71,7 +65,10 @@ public class BackEnd {
 	
 	private static BackEnd instance;
 	
-	private BackEnd() {
+    Collection<String> extensions = null;
+    Collection<String> lafs = null;
+
+    private BackEnd() {
         try {
             CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, Launcher.PASSWORD);
             CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, Launcher.PASSWORD);
@@ -101,8 +98,6 @@ public class BackEnd {
         return cipher;
     }
     
-    private Map<String, byte[]> zipEntries = new HashMap<String, byte[]>();
-    
     private Map<UUID, byte[]> icons = new LinkedHashMap<UUID, byte[]>();
     
     private Map<String, DataEntry> identifiedData;
@@ -118,21 +113,6 @@ public class BackEnd {
     public void load() throws Exception {
         identifiedData = new LinkedHashMap<String, DataEntry>();
         config = new Properties();
-        
-        ZipInputStream zis = new ZipInputStream(new FileInputStream(Bias.getJarFile()));
-        ZipEntry ze = null;
-        while ((ze = zis.getNextEntry()) != null) {
-            String path = ze.getName();
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            int c;
-            while ((c = zis.read()) != -1) {
-                out.write(c);
-            }
-            out.close();
-            zipEntries.put(path, out.toByteArray());
-        }
-        zis.close();
-        
         byte[] data = null;
         byte[] decryptedData = null;
         if (Constants.DATA_DIR.exists()) {
@@ -349,7 +329,7 @@ public class BackEnd {
         }
     }
     
-    public void store(boolean storeDataOnly) throws Exception {
+    public void store() throws Exception {
         // clear data dir before writing updated files
         FSUtils.clearDirectory(Constants.DATA_DIR);
         // metadata file and data entries
@@ -385,24 +365,6 @@ public class BackEnd {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE), sw.getBuffer().toString().getBytes());
         // preferences file
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
-        if (!storeDataOnly) {
-            // jar file itself (extensions & lafs)
-            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(Bias.getJarFile()));
-            for (Entry<String, byte[]> entry : zipEntries.entrySet()) {
-                String entryName = entry.getKey();
-                ZipEntry zipEntry = new ZipEntry(entryName);
-                byte[] entryData = entry.getValue();
-                zos.putNextEntry(zipEntry);
-                if (entryData != null) {
-                    for (byte b : entryData) {
-                        zos.write(b);
-                    }
-                }
-                zos.closeEntry();
-            }
-            zos.flush();
-            zos.close();
-        }
     }
     
     private Collection<UUID> buildNode(Node node, DataCategory data) throws Exception {
@@ -481,13 +443,16 @@ public class BackEnd {
     }
 
     public Collection<String> getExtensions() {
-        Collection<String> extensions = new LinkedHashSet<String>();
-        for (String name : zipEntries.keySet()) {
-            if (name.matches(Constants.EXTENSION_PATTERN)) {
-                String extension = 
-                    name.substring(0, name.length() - Constants.CLASS_FILE_SUFFIX.length())
-                    .replaceAll(Constants.ZIP_PATH_SEPARATOR, Constants.PACKAGE_PATH_SEPARATOR);
-                extensions.add(extension);
+        if (extensions == null) {
+            extensions = new LinkedHashSet<String>();
+            for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
+                String name = addonFile.getName();
+                if (name.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
+                    String extension = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
+                    extensions.add(extension);
+                }
             }
         }
         return extensions;
@@ -515,11 +480,11 @@ public class BackEnd {
 
     public String installExtension(File extensionFile) throws Exception {
         String installedExtensionName = null;
-        Set<String> installedExtNames = new HashSet<String>();
         if (extensionFile != null && extensionFile.exists() && !extensionFile.isDirectory()) {
+            boolean jarFound = false;
+            boolean error = false;
             String name = extensionFile.getName();
-            Map<String, byte[]> classesMap = new HashMap<String, byte[]>();
-            Map<String, byte[]> resoursesMap = new HashMap<String, byte[]>();
+            byte[] installedExtensionJAR = null;
             Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
             String extName = null;
             if (name.matches(Constants.ADDON_PACK_PATTERN)) {
@@ -542,12 +507,23 @@ public class BackEnd {
                     String jeName = je.getName();
                     ByteArrayOutputStream out = null;
                     int type = 0;
-                    if (jeName.matches(Constants.ADDON_CLASS_FILE_PATH_PATTERN)) {
-                        type = 1;
-                    } else if (jeName.matches(Constants.RESOURCE_FILE_PATH_PATTERN)) {
+                    if (jeName.matches(Constants.EXTENSION_JAR_FILE_PATH_PATTERN)) {
+                        if (!jarFound) {
+                            if (extName.equals(
+                                    jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
+                                          .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR))) {
+                                type = 1;
+                            } else {
+                                error = true;
+                                break;
+                            }
+                            jarFound = true;
+                        } else {
+                            error = true;
+                            break;
+                        }
+                    } else if (jeName.matches(Constants.LIBS_FILE_PATH_PATTERN)) {
                         type = 2;
-                    } else if (jeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
-                        type = 3;
                     }
                     if (type != 0) {
                         out = new ByteArrayOutputStream();
@@ -556,88 +532,42 @@ public class BackEnd {
                             out.write(b);
                         }
                         out.close();
+                        String installedName = jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
+                                                     .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                         if (type == 1) {
-                            if (!jeName.matches(Constants.ZIP_ADDITIONAL_CLASS_FILE_PATTERN)) {
-                                String shortName = jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
-                                                     .replaceFirst(Constants.CLASS_FILE_SUFFIX_PATTERN, Constants.EMPTY_STR)
-                                                     .replaceFirst(Constants.INNER_CLASS_FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                                installedExtNames.add(shortName);
-                            }
-                            classesMap.put(jeName, out.toByteArray());
+                            installedExtensionName = installedName;
+                            installedExtensionJAR = out.toByteArray();
                         } else if (type == 2) {
-                            resoursesMap.put(jeName, out.toByteArray());
-                        } else if (type == 3) {
-                            ZipInputStream lin = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
-                            ZipEntry lze;
-                            while ((lze = lin.getNextEntry()) != null) {
-                                String lzeName = lze.getName();
-                                if (!lzeName.startsWith(Constants.META_INF_DIR) && !lzeName.endsWith(Constants.ZIP_PATH_SEPARATOR)) {
-                                    ByteArrayOutputStream lout = new ByteArrayOutputStream();
-                                    while ((b = lin.read()) != -1) {
-                                        lout.write(b);
-                                    }
-                                    lout.close();
-                                    if (!zipEntries.containsKey(lzeName)) {
-                                        libsMap.put(lzeName, lout.toByteArray());
-                                    } else {
-                                        MessageDigest md = MessageDigest.getInstance(Constants.DIGEST_ALGORITHM);
-                                        md.update(lout.toByteArray());
-                                        byte[] newDigest = md.digest();
-                                        md.update(zipEntries.get(lzeName));
-                                        byte[] existingDigest = md.digest();
-                                        if (MessageDigest.isEqual(newDigest, existingDigest)) {
-                                            libsMap.put(lzeName, null);
-                                        } else {
-                                            throw new Exception(
-                                                    "Extension pack '" + extensionFile.getAbsolutePath() + "' failed to intall!" + Constants.NEW_LINE + 
-                                                    "Detected conflict with following add-on: " + getConflictingAddOn(lzeName) + Constants.NEW_LINE +
-                                                    "Conflicting resource: " + lzeName + Constants.NEW_LINE + 
-                                                    "If you still want to install this extension, you should first uninstall add-on it conflicts with.");
-                                        }
-                                    }
-                                }
-                            }
-                            lin.close();
+                            String libName = installedName + Constants.ADDON_LIB_FILENAME_SEPARATOR + extName + Constants.EXTENSION_JAR_FILE_SUFFIX; 
+                            libsMap.put(libName, out.toByteArray());
                         }
                     }
                 }
                 in.close();
             }
-            if (installedExtNames.isEmpty()) {
+            if (Validator.isNullOrBlank(installedExtensionName)) {
                 throw new Exception("Invalid extension pack: nothing to install!");
-            } else if (!installedExtNames.contains(extName)) {
+            } else if (error) {
                 throw new Exception(
                         "Invalid extension pack:" + Constants.NEW_LINE +
-                        "class corresponding to declared " 
+                        "Extension add-on pack should contain only one extension JAR file with name corresponding to declared " 
                         + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute" + Constants.NEW_LINE +
-                        "in MANIFEST.MF file has not been found in package!");
+                        "in MANIFEST.MF file and \"jar\" file extension!");
             } else {
                 String fullExtName = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                             + extName + Constants.PACKAGE_PATH_SEPARATOR + extName;
-                if (getAddOns().contains(extName)) {
-                    throw new Exception("Can not install Add-On pack: duplicate Add-On name!");
+                if (getExtensions().contains(extName)) {
+                    throw new Exception("Can not install Extension add-on pack: duplicate extension name!");
                 } else {
-                    for (Entry<String, byte[]> entry : classesMap.entrySet()) {
-                        zipEntries.put(Constants.EXTENSION_DIR_PATH + Constants.ZIP_PATH_SEPARATOR 
-                                + extName + Constants.ZIP_PATH_SEPARATOR 
-                                + entry.getKey().replaceFirst(Constants.ADDON_CLASS_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
-                                entry.getValue());
-                    }
-                    for (Entry<String, byte[]> entry : resoursesMap.entrySet()) {
-                        zipEntries.put(Constants.RESOURCES_DIR + extName + Constants.ZIP_PATH_SEPARATOR 
-                                        + entry.getKey().replaceFirst(Constants.RESOURCE_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
-                                        entry.getValue());
-                    }
+                    File installedExtensionFile = new File(Constants.ADDONS_DIR, installedExtensionName + Constants.EXTENSION_JAR_FILE_SUFFIX);
+                    FSUtils.writeFile(installedExtensionFile, installedExtensionJAR);
                     if (!libsMap.isEmpty()) {
-                        File extensionInstLogFile = new File(Constants.CONFIG_DIR, extName + Constants.EXT_LIB_INSTALL_LOG_FILE_SUFFIX);
-                        StringBuffer sb = new StringBuffer();
                         for (Entry<String, byte[]> entry : libsMap.entrySet()) {
                             if (entry.getValue() != null) {
-                                zipEntries.put(entry.getKey(), entry.getValue());
+                                File libFile = new File(Constants.LIBS_DIR, entry.getKey());
+                                FSUtils.writeFile(libFile, entry.getValue());
                             }
-                            sb.append(entry.getKey() + Constants.NEW_LINE);
                         }
-                        FSUtils.writeFile(extensionInstLogFile, sb.toString().getBytes());
                     }
                 }
                 installedExtensionName = fullExtName;
@@ -650,36 +580,33 @@ public class BackEnd {
     
     public void uninstallExtension(String extension) throws Exception {
         String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-        String extensionPath = extension.replaceAll(Constants.PACKAGE_PATH_SEPARATOR_PATTERN, Constants.ZIP_PATH_SEPARATOR);
-        extensionPath = extensionPath.substring(0, extensionPath.lastIndexOf(Constants.ZIP_PATH_SEPARATOR));
-        Collection<String> removeKeys = new HashSet<String>();
-        for (String key : zipEntries.keySet()) {
-            if (key.startsWith(extensionPath)
-                    || key.matches(Constants.RESOURCES_DIR 
-                            + extensionName 
-                            + Constants.ANY_CHARACTERS_PATTERN)) {
-                removeKeys.add(key);
+        for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
+            if (addonFile.getName().matches(Constants.EXTENSION_JAR_FILE_PATTERN)
+                    && addonFile.getName().contains(extensionName)) {
+                FSUtils.delete(addonFile);
             }
         }
-        uninstallLibs(extensionName);
-        if (!removeKeys.isEmpty()) {
-            for (String key : removeKeys) {
-                zipEntries.remove(key);
+        for (File addonLibFile : Constants.LIBS_DIR.listFiles()) {
+            if (addonLibFile.getName().matches(Constants.EXTENSION_JAR_FILE_PATTERN)
+                    && addonLibFile.getName().contains(extensionName)) {
+                FSUtils.delete(addonLibFile);
             }
         }
         File extensionConfigFile = new File(Constants.CONFIG_DIR, extensionName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
         FSUtils.delete(extensionConfigFile);
     }
         
-    public Map<String, byte[]> getLAFs() throws Exception {
-        Map<String, byte[]> lafs = new LinkedHashMap<String, byte[]>();
-        for (String name : zipEntries.keySet()) {
-            if (name.matches(Constants.LAF_PATTERN)) {
-                String laf = 
-                    name.substring(0, name.length() - Constants.CLASS_FILE_SUFFIX.length())
-                    .replaceAll(Constants.ZIP_PATH_SEPARATOR, Constants.PACKAGE_PATH_SEPARATOR);
-                byte[] settings = getLAFSettings(laf);
-                lafs.put(laf, settings);
+    public Collection<String> getLAFs() {
+        if (lafs == null) {
+            lafs = new LinkedHashSet<String>();
+            for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
+                String name = addonFile.getName();
+                if (name.matches(Constants.LAF_JAR_FILE_PATTERN)) {
+                    String laf = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                    lafs.add(laf);
+                }
             }
         }
         return lafs;
@@ -706,12 +633,12 @@ public class BackEnd {
     }
 
     public String installLAF(File lafFile) throws Exception {
-        String installedLAF = null;
-        Set<String> installedLAFNames = new HashSet<String>();
+        String installedLAFName = null;
         if (lafFile != null && lafFile.exists() && !lafFile.isDirectory()) {
+            boolean jarFound = false;
+            boolean error = false;
             String name = lafFile.getName();
-            Map<String, byte[]> classesMap = new HashMap<String, byte[]>();
-            Map<String, byte[]> resoursesMap = new HashMap<String, byte[]>();
+            byte[] installedLAFJAR = null;
             Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
             String lafName = null;
             if (name.matches(Constants.ADDON_PACK_PATTERN)) {
@@ -734,12 +661,23 @@ public class BackEnd {
                     String jeName = je.getName();
                     ByteArrayOutputStream out = null;
                     int type = 0;
-                    if (jeName.matches(Constants.ADDON_CLASS_FILE_PATH_PATTERN)) {
-                        type = 1;
-                    } else if (jeName.matches(Constants.RESOURCE_FILE_PATH_PATTERN)) {
+                    if (jeName.matches(Constants.LAF_JAR_FILE_PATH_PATTERN)) {
+                        if (!jarFound) {
+                            if (lafName.equals(
+                                    jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
+                                          .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR))) {
+                                type = 1;
+                            } else {
+                                error = true;
+                                break;
+                            }
+                            jarFound = true;
+                        } else {
+                            error = true;
+                            break;
+                        }
+                    } else if (jeName.matches(Constants.LIBS_FILE_PATH_PATTERN)) {
                         type = 2;
-                    } else if (jeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
-                        type = 3;
                     }
                     if (type != 0) {
                         out = new ByteArrayOutputStream();
@@ -748,192 +686,70 @@ public class BackEnd {
                             out.write(b);
                         }
                         out.close();
+                        String installedName = jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
+                                                     .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                         if (type == 1) {
-                            String shortName = jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
-                                                     .replaceFirst(Constants.CLASS_FILE_SUFFIX_PATTERN, Constants.EMPTY_STR)
-                                                     .replaceFirst(Constants.INNER_CLASS_FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                            installedLAFNames.add(shortName);
-                            classesMap.put(jeName, out.toByteArray());
+                            installedLAFName = installedName;
+                            installedLAFJAR = out.toByteArray();
                         } else if (type == 2) {
-                            resoursesMap.put(jeName, out.toByteArray());
-                        } else if (type == 3) {
-                            ZipInputStream lin = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()));
-                            ZipEntry lze;
-                            while ((lze = lin.getNextEntry()) != null) {
-                                String lzeName = lze.getName();
-                                if (!lzeName.startsWith(Constants.META_INF_DIR) && !lzeName.endsWith(Constants.ZIP_PATH_SEPARATOR)) {
-                                    ByteArrayOutputStream lout = new ByteArrayOutputStream();
-                                    while ((b = lin.read()) != -1) {
-                                        lout.write(b);
-                                    }
-                                    lout.close();
-                                    if (!zipEntries.containsKey(lzeName)) {
-                                        libsMap.put(lzeName, lout.toByteArray());
-                                    } else {
-                                        MessageDigest md = MessageDigest.getInstance(Constants.DIGEST_ALGORITHM);
-                                        md.update(lout.toByteArray());
-                                        byte[] newDigest = md.digest();
-                                        md.update(zipEntries.get(lzeName));
-                                        byte[] existingDigest = md.digest();
-                                        if (MessageDigest.isEqual(newDigest, existingDigest)) {
-                                            libsMap.put(lzeName, null);
-                                        } else {
-                                            throw new Exception(
-                                                    "LAF pack '" + lafFile.getAbsolutePath() + "' failed to intall!" + Constants.NEW_LINE + 
-                                                    "Detected conflict with following add-on: " + getConflictingAddOn(lzeName) + Constants.NEW_LINE +
-                                                    "Conflicting resource: " + lzeName + Constants.NEW_LINE + 
-                                                    "If you still want to install this look-&-feel, you should first uninstall add-on it conflicts with.");
-                                        }
-                                    }
-                                }
-                            }
-                            lin.close();
+                            String libName = installedName + Constants.ADDON_LIB_FILENAME_SEPARATOR + lafName + Constants.EXTENSION_JAR_FILE_SUFFIX; 
+                            libsMap.put(libName, out.toByteArray());
                         }
                     }
                 }
                 in.close();
             }
-            if (installedLAFNames.isEmpty()) {
+            if (Validator.isNullOrBlank(installedLAFName)) {
                 throw new Exception("Invalid LAF pack: nothing to install!");
-            } else if (!installedLAFNames.contains(lafName)) {
+            } else if (error) {
                 throw new Exception(
-                        "Invalid extension pack:" + Constants.NEW_LINE +
-                        "class corresponding to declared " 
+                        "Invalid LAF pack:" + Constants.NEW_LINE +
+                        "LAF add-on pack should contain only one LAF JAR file with name corresponding to declared " 
                         + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute" + Constants.NEW_LINE +
-                        "in MANIFEST.MF file has not been found in package!");
+                        "in MANIFEST.MF file and \"jar\" file extension!");
             } else {
                 String fullLAFName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                             + lafName + Constants.PACKAGE_PATH_SEPARATOR + lafName;
-                if (getAddOns().contains(lafName)) {
-                    throw new Exception("Can not install Add-On pack: duplicate Add-On name!");
+                if (getLAFs().contains(lafName)) {
+                    throw new Exception("Can not install LAF add-on pack: duplicate look-&-feel name!");
                 } else {
-                    for (Entry<String, byte[]> entry : classesMap.entrySet()) {
-                        zipEntries.put(Constants.LAF_DIR_PATH + Constants.ZIP_PATH_SEPARATOR 
-                                + lafName + Constants.ZIP_PATH_SEPARATOR 
-                                + entry.getKey().replaceFirst(Constants.ADDON_CLASS_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
-                                entry.getValue());
-                    }
-                    for (Entry<String, byte[]> entry : resoursesMap.entrySet()) {
-                        zipEntries.put(Constants.RESOURCES_DIR + lafName + Constants.ZIP_PATH_SEPARATOR 
-                                        + entry.getKey().replaceFirst(Constants.RESOURCE_FILE_PREFIX_PATTERN, Constants.EMPTY_STR), 
-                                        entry.getValue());
-                    }
+                    File installedLAFFile = new File(Constants.ADDONS_DIR, installedLAFName + Constants.LAF_JAR_FILE_SUFFIX);
+                    FSUtils.writeFile(installedLAFFile, installedLAFJAR);
                     if (!libsMap.isEmpty()) {
-                        File lafInstLogFile = new File(Constants.CONFIG_DIR, lafName + Constants.LAF_LIB_INSTALL_LOG_FILE_SUFFIX);
-                        StringBuffer sb = new StringBuffer();
                         for (Entry<String, byte[]> entry : libsMap.entrySet()) {
                             if (entry.getValue() != null) {
-                                zipEntries.put(entry.getKey(), entry.getValue());
+                                File libFile = new File(Constants.LIBS_DIR, entry.getKey());
+                                FSUtils.writeFile(libFile, entry.getValue());
                             }
-                            sb.append(entry.getKey() + Constants.NEW_LINE);
                         }
-                        FSUtils.writeFile(lafInstLogFile, sb.toString().getBytes());
                     }
                 }
-                installedLAF = fullLAFName;
+                installedLAFName = fullLAFName;
             }
         } else {
             throw new Exception("Invalid LAF pack!");
         }
-        return installedLAF;
+        return installedLAFName;
     }
     
     public void uninstallLAF(String laf) throws Exception {
         String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-        String lafPath = laf.replaceAll(Constants.PACKAGE_PATH_SEPARATOR_PATTERN, Constants.ZIP_PATH_SEPARATOR);
-        lafPath = lafPath.substring(0, lafPath.lastIndexOf(Constants.ZIP_PATH_SEPARATOR));
-        Collection<String> removeKeys = new HashSet<String>();
-        for (String key : zipEntries.keySet()) {
-            if (key.startsWith(lafPath)
-                || key.matches(Constants.RESOURCES_DIR 
-                        + lafName 
-                        + Constants.ANY_CHARACTERS_PATTERN)) {
-                removeKeys.add(key);
+        for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
+            if (addonFile.getName().matches(Constants.LAF_JAR_FILE_PATTERN)
+                    && addonFile.getName().contains(lafName)) {
+                FSUtils.delete(addonFile);
             }
         }
-        uninstallLibs(lafName);
-        if (!removeKeys.isEmpty()) {
-            for (String key : removeKeys) {
-                zipEntries.remove(key);
+        for (File addonLibFile : Constants.LIBS_DIR.listFiles()) {
+            if (addonLibFile.getName().matches(Constants.LAF_JAR_FILE_PATTERN)
+                    && addonLibFile.getName().contains(lafName)) {
+                FSUtils.delete(addonLibFile);
             }
         }
         File lafConfigFile = new File(Constants.CONFIG_DIR, lafName + Constants.LAF_CONFIG_FILE_SUFFIX);
-        zipEntries.remove(lafConfigFile);
+        FSUtils.delete(lafConfigFile);
     }
     
-    private void uninstallLibs(String addOn) throws Exception {
-        Collection<String> addOnLibEntries = getAddOnLibEntries(addOn);
-        Collection<String> nonAddOnLibEntries = getNonAddOnLibEntries(addOn);
-        addOnLibEntries.removeAll(nonAddOnLibEntries);
-        zipEntries.keySet().removeAll(addOnLibEntries);
-        FSUtils.delete(new File(Constants.CONFIG_DIR, addOn + Constants.EXT_LIB_INSTALL_LOG_FILE_SUFFIX));
-        FSUtils.delete(new File(Constants.CONFIG_DIR, addOn + Constants.LAF_LIB_INSTALL_LOG_FILE_SUFFIX));
-    }
-    
-    private Collection<String> getAddOns() {
-        Collection<String> addOns = new ArrayList<String>();
-        for (String name : zipEntries.keySet()) {
-            if (name.matches(Constants.EXTENSION_PATTERN) || name.matches(Constants.LAF_PATTERN)) {
-                String addOn = 
-                    name.substring(0, name.length() - Constants.CLASS_FILE_SUFFIX.length())
-                    .replaceAll(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR);
-                addOns.add(addOn);
-            }
-        }
-        return addOns;
-    }
-    
-    private Collection<String> getAddOnLibEntries(String addOn) throws Exception {
-        Collection<String> entries = new ArrayList<String>();
-        File logFile = new File(Constants.CONFIG_DIR, addOn + Constants.EXT_LIB_INSTALL_LOG_FILE_SUFFIX);
-        if (!logFile.exists()) {
-            logFile = new File(Constants.CONFIG_DIR, addOn + Constants.LAF_LIB_INSTALL_LOG_FILE_SUFFIX);
-        }
-        byte[] bytes = FSUtils.readFile(logFile);
-        if (bytes != null) {
-            String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
-            for (String installEntry : installEntries) {
-                entries.add(installEntry);
-            }
-        }
-        return entries;
-    }
-        
-    private Collection<String> getNonAddOnLibEntries(String addOn) throws Exception {
-        Collection<String> entries = new ArrayList<String>();
-        for (File f : Constants.CONFIG_DIR.listFiles()) {
-            if (f.getName().endsWith(Constants.EXT_LIB_INSTALL_LOG_FILE_SUFFIX)
-                    || f.getName().endsWith(Constants.LAF_LIB_INSTALL_LOG_FILE_SUFFIX)) {
-                byte[] bytes = FSUtils.readFile(f);
-                if (bytes != null) {
-                    String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
-                    for (String installEntry : installEntries) {
-                        entries.add(installEntry);
-                    }
-                }
-            }
-        }
-        return entries;
-    }
-    
-    private String getConflictingAddOn(String conflictingResource) throws Exception {
-        String conflictingAddOn = null;
-        for (File f : Constants.CONFIG_DIR.listFiles()) {
-            if (f.getName().endsWith(Constants.EXT_LIB_INSTALL_LOG_FILE_SUFFIX)
-                    || f.getName().endsWith(Constants.LAF_LIB_INSTALL_LOG_FILE_SUFFIX)) {
-                byte[] bytes = FSUtils.readFile(f);
-                if (bytes != null) {
-                    String[] installEntries = new String(bytes).split(Constants.NEW_LINE);
-                    if (Arrays.asList(installEntries).contains(conflictingResource)) {
-                        conflictingAddOn = f.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                        break;
-                    }
-                }
-            }
-        }
-        return conflictingAddOn;
-    }
-        
     public Collection<ImageIcon> getIcons() {
         Collection<ImageIcon> icons = new LinkedHashSet<ImageIcon>();
         for (Entry<UUID, byte[]> iconEntry : this.icons.entrySet()) {

@@ -16,30 +16,86 @@
           target: ExecuteJarPackage              
          ================================= -->
 	<target name="ExecuteJarPackage">
-		<exec command="java -jar build/bias.jar" />
+		<exec command="java -cp build/bias.jar:build/addons/'*':build/libs/'*' bias.Launcher" />
 	</target>
 
 	<!-- ================================= 
           target: BuildAndExecuteJarPackage              
          ================================= -->
-	<target name="BuildAndExecuteJarPackage" depends="BuildJarPackage">
-		<exec command="java -jar build/bias.jar" />
-	</target>
+	<target name="BuildAndExecuteJarPackage" depends="BuildJarPackage,ExecuteJarPackage" />
 
 	<!-- ================================= 
           target: BuildJarPackage              
          ================================= -->
-	<target name="BuildJarPackage" description="Bias JAR with default extensions bundled">
+	<target name="BuildJarPackage" description="Bias JAR">
 		<delete>
 			<fileset dir="build">
 				<include name="bias.jar" />
 			</fileset>
 		</delete>
-		<jar basedir="./bin" destfile="build/bias.jar" includes="bias/**">
+		<jar basedir="bin" destfile="build/bias.jar" 
+			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/** bias/utils/**" />
+	</target>
+
+	<!-- ================================= 
+          target: BuildAddOn_FilePack
+         ================================= -->
+	<target name="BuildAddOn_FilePack" description="FilePack Add-On" depends="prepare">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/extension/FilePack/** bias/res/FilePack/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/ext/FilePack.jar" 
+			includes="*/**" />
+		<jar basedir="tmp" destfile="build/FilePack.jar" includes="ext/**">
 			<manifest>
-				<attribute name="Main-Class" value="bias.Launcher" />
+				<attribute name="Bias-Add-On-Name" value="FilePack" />
 			</manifest>
-		</jar>
+		</jar>	
+	</target>
+	<!-- ================================= 
+          target: BuildAddOn_Graffiti              
+         ================================= -->
+	<target name="BuildAddOn_Graffiti" description="Graffiti Add-On" depends="prepare">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/extension/Graffiti/** bias/res/Graffiti/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/ext/Graffiti.jar" 
+			includes="*/**" />
+		<jar basedir="tmp" destfile="build/Graffiti.jar" includes="ext/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="Graffiti" />
+			</manifest>
+		</jar>	
+	</target>
+	<!-- ================================= 
+          target: BuildAddOn_HTMLPage              
+         ================================= -->
+	<target name="BuildAddOn_HTMLPage" description="HTMLPage Add-On" depends="prepare">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/extension/HTMLPage/** bias/res/HTMLPage/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/ext/HTMLPage.jar" 
+			includes="*/**" />
+		<jar basedir="tmp" destfile="build/HTMLPage.jar" includes="ext/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="HTMLPage" />
+			</manifest>
+		</jar>	
+	</target>
+	<!-- ================================= 
+          target: BuildAddOn_PlainText
+         ================================= -->
+	<target name="BuildAddOn_PlainText" description="PlainText Add-On" depends="prepare">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/extension/PlainText/** bias/res/PlainText/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/ext/PlainText.jar" 
+			includes="*/**" />
+		<jar basedir="tmp" destfile="build/PlainText.jar" includes="ext/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="PlainText" />
+			</manifest>
+		</jar>	
 	</target>
 
 	<!-- ================================= 
@@ -51,7 +107,17 @@
 				<include name="bias-sdk.jar" />
 			</fileset>
 		</delete>
-		<jar basedir="./bin" destfile="build/bias-sdk.jar" includes="bias/**" />
+		<jar basedir="bin" destfile="build/bias-sdk.jar" 
+			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/** bias/utils/**" />
+	</target>
+
+	<!-- ================================= 
+          target: prepare
+    	 ================================= -->
+	<target name="prepare">
+		<deltree dir="tmp"/>
+		<mkdir dir="tmp/tmp"/>
+		<mkdir dir="tmp/ext"/>
 	</target>
 
 </project>
