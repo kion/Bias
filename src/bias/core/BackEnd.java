@@ -695,7 +695,7 @@ public class BackEnd {
                             installedLAFName = installedName;
                             installedLAFJAR = out.toByteArray();
                         } else if (type == 2) {
-                            String libName = installedName + Constants.ADDON_LIB_FILENAME_SEPARATOR + lafName + Constants.EXTENSION_JAR_FILE_SUFFIX; 
+                            String libName = installedName + Constants.ADDON_LIB_FILENAME_SEPARATOR + lafName + Constants.LAF_JAR_FILE_SUFFIX; 
                             libsMap.put(libName, out.toByteArray());
                         }
                     }
