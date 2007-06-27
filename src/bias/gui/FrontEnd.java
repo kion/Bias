@@ -79,6 +79,7 @@ import bias.gui.utils.ImageFileChooser;
 import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 import bias.utils.AppManager;
+import bias.utils.FSUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 
@@ -382,6 +383,7 @@ public class FrontEnd extends JFrame {
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
                         store();
+                        cleanUp();
                     } catch (Exception ex) {
                         displayErrorMessage(ex);
                     }
@@ -618,6 +620,10 @@ public class FrontEnd extends JFrame {
         return data;
     }
     
+    private void cleanUp() {
+        FSUtils.delete(Constants.TMP_DIR);
+    }
+
     public static UUID getSelectedVisualEntryID() {
         return instance.getSelectedVisualEntryID(instance.getJTabbedPane());
     }
@@ -1606,6 +1612,7 @@ public class FrontEnd extends JFrame {
                     "Discard unsaved changes confirmation",
                     JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 // store nothing, just exit
+                cleanUp();
                 System.exit(0);
             }
         }
