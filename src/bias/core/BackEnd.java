@@ -165,6 +165,9 @@ public class BackEnd {
         }
         // parse metadata file
         this.data = parseMetadata(metadata, identifiedData, null);
+        // initialize lists of extensions and lafs
+        getExtensions();
+        getLAFs();
     }
     
     public DataCategory importData(File importDir, Collection<UUID> existingIDs, String password) throws Exception {
