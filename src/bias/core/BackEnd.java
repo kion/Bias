@@ -65,9 +65,6 @@ public class BackEnd {
 	
 	private static BackEnd instance;
 	
-    Collection<String> extensions = null;
-    Collection<String> lafs = null;
-
     private BackEnd() {
         try {
             CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, Launcher.PASSWORD);
@@ -165,9 +162,6 @@ public class BackEnd {
         }
         // parse metadata file
         this.data = parseMetadata(metadata, identifiedData, null);
-        // initialize lists of extensions and lafs
-        getExtensions();
-        getLAFs();
     }
     
     public DataCategory importData(File importDir, Collection<UUID> existingIDs, String password) throws Exception {
@@ -446,16 +440,14 @@ public class BackEnd {
     }
 
     public Collection<String> getExtensions() {
-        if (extensions == null) {
-            extensions = new LinkedHashSet<String>();
-            for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
-                String name = addonFile.getName();
-                if (name.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
-                    String extension = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                    extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-                    extensions.add(extension);
-                }
+        Collection<String> extensions = new LinkedHashSet<String>();
+        for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
+            String name = addonFile.getName();
+            if (name.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
+                String extension = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                            + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
+                extensions.add(extension);
             }
         }
         return extensions;
@@ -600,16 +592,14 @@ public class BackEnd {
     }
         
     public Collection<String> getLAFs() {
-        if (lafs == null) {
-            lafs = new LinkedHashSet<String>();
-            for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
-                String name = addonFile.getName();
-                if (name.matches(Constants.LAF_JAR_FILE_PATTERN)) {
-                    String laf = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                    laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                    lafs.add(laf);
-                }
+        Collection<String> lafs = new LinkedHashSet<String>();
+        for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
+            String name = addonFile.getName();
+            if (name.matches(Constants.LAF_JAR_FILE_PATTERN)) {
+                String laf = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                            + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                lafs.add(laf);
             }
         }
         return lafs;
