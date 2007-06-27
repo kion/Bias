@@ -34,7 +34,20 @@
 			</fileset>
 		</delete>
 		<jar basedir="bin" destfile="build/bias.jar" 
-			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/** bias/utils/**" />
+			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/**" />
+	</target>
+
+	<!-- ================================= 
+          target: BuildSDKJarPackage              
+         ================================= -->
+	<target name="BuildSDKJarPackage" description="Bias SDK">
+		<delete>
+			<fileset dir="build">
+				<include name="bias-sdk.jar" />
+			</fileset>
+		</delete>
+		<jar basedir="bin" destfile="build/bias-sdk.jar" 
+			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/**" />
 	</target>
 
 	<!-- ================================= 
@@ -96,19 +109,6 @@
 				<attribute name="Bias-Add-On-Name" value="PlainText" />
 			</manifest>
 		</jar>	
-	</target>
-
-	<!-- ================================= 
-          target: BuildSDKJarPackage              
-         ================================= -->
-	<target name="BuildSDKJarPackage" description="Bias SDK">
-		<delete>
-			<fileset dir="build">
-				<include name="bias-sdk.jar" />
-			</fileset>
-		</delete>
-		<jar basedir="bin" destfile="build/bias-sdk.jar" 
-			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/** bias/utils/**" />
 	</target>
 
 	<!-- ================================= 
