@@ -238,12 +238,10 @@ public class FrontEnd extends JFrame {
             BackEnd.getInstance().load();
             config = BackEnd.getInstance().getConfig();
         } catch (Throwable t) {
-            System.err.println(
-                    "Bias has failed to load data from Bias JAR :(" + Constants.NEW_LINE +
-                    "The reason of that most likely is one of the following:" + Constants.NEW_LINE +
-                    "* Bias JAR is broken" + Constants.NEW_LINE +
-                    "* invalid password");
-            t.printStackTrace();
+            displayErrorMessage(
+                    "Bias has failed to load data!" + Constants.NEW_LINE +
+                    "It seems that you have typed wrong password...",
+                    t);
             System.exit(1);
         }
     }
