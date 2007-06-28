@@ -46,7 +46,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import bias.Constants;
-import bias.Launcher;
 import bias.Preferences;
 import bias.utils.FSUtils;
 import bias.utils.Validator;
@@ -62,13 +61,15 @@ public class BackEnd {
     
     private static Cipher CIPHER_ENCRYPT;
     private static Cipher CIPHER_DECRYPT;
-	
+    
+    private static String password;
+    
 	private static BackEnd instance;
-	
+    
     private BackEnd() {
         try {
-            CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, Launcher.PASSWORD);
-            CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, Launcher.PASSWORD);
+            CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, password);
+            CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, password);
         } catch (Exception e) {
             System.err.println(
                     "Encryption/decryption ciphers initialization failed!" + Constants.NEW_LINE +
@@ -84,6 +85,26 @@ public class BackEnd {
 		}
 		return instance;
 	}
+    
+    public static void setPassword(String currentPassword, String newPassword) throws Exception {
+        if ((password != null ? currentPassword != null : currentPassword == null) && newPassword != null) {
+            if ((password == null && currentPassword == null) || currentPassword.equals(password)) {
+                password = newPassword;
+                // changing ecryption cipher
+                CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, password);
+                if (currentPassword != null) {
+                    // the rest of the data will be encrypted with new password automatically on save, 
+                    // but attachments have to be decrypted and encrypted back with new password explicitly
+                    // because they are stored on FS and not kept in memory like the rest of the data
+                    reencryptAttachments();
+                }
+                // now decryption cipher can be changed as well
+                CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, password);
+            } else {
+                throw new Exception("Current password is wrong!");
+            }
+        }
+    }
     
     private static Cipher initCipher(int mode, String password) throws Exception {
         PBEParameterSpec paramSpec = new PBEParameterSpec(Constants.CIPHER_SALT, 20);
@@ -810,6 +831,18 @@ public class BackEnd {
     public void removeIcon(ImageIcon icon) throws Exception {
         File iconFile = new File(Constants.ICONS_DIR, icon.getDescription() + Constants.ICON_FILE_SUFFIX);
         FSUtils.delete(iconFile);
+    }
+    
+    private static void reencryptAttachments() throws Exception {
+        for (File entryAttsDir : Constants.ATTACHMENTS_DIR.listFiles()) {
+            File[] entryAtts = entryAttsDir.listFiles();
+            for (File entryAtt : entryAtts) {
+                byte[] data = FSUtils.readFile(entryAtt);
+                byte[] decryptedData = CIPHER_DECRYPT.doFinal(data);
+                byte[] encryptedData = CIPHER_ENCRYPT.doFinal(decryptedData);
+                FSUtils.writeFile(entryAtt, encryptedData);
+            }
+        }
     }
     
     public Collection<Attachment> getAttachments(UUID dataEntryID) throws Exception {

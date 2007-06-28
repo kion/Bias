@@ -20,6 +20,7 @@ public class ControlIcons {
     public static final ImageIcon ICON_ROOT_CATEGORY = new ImageIcon(ControlIcons.class.getResource("/bias/res/add_root_category.png"));
     public static final ImageIcon ICON_ENTRY = new ImageIcon(ControlIcons.class.getResource("/bias/res/add_entry.png"));
     public static final ImageIcon ICON_ROOT_ENTRY = new ImageIcon(ControlIcons.class.getResource("/bias/res/add_root_entry.png"));
+    public static final ImageIcon ICON_CHANGE_PASSWORD = new ImageIcon(ControlIcons.class.getResource("/bias/res/change_password.png"));
     public static final ImageIcon ICON_SAVE = new ImageIcon(ControlIcons.class.getResource("/bias/res/save.png"));
     public static final ImageIcon ICON_DISCARD = new ImageIcon(ControlIcons.class.getResource("/bias/res/discard.png"));
     public static final ImageIcon ICON_ADDONS = new ImageIcon(ControlIcons.class.getResource("/bias/res/addons.png"));
@@ -34,6 +35,7 @@ public class ControlIcons {
     private ImageIcon iconCategory;
     private ImageIcon iconRootEntry;
     private ImageIcon iconEntry;
+    private ImageIcon iconChangePassword;
     private ImageIcon iconDelete;
     private ImageIcon iconDiscard;
     private ImageIcon iconPreferences;
@@ -54,6 +56,7 @@ public class ControlIcons {
         this.iconCategory = ICON_CATEGORY;
         this.iconRootEntry = ICON_ROOT_ENTRY; 
         this.iconEntry = ICON_ENTRY;
+        this.iconChangePassword = ICON_CHANGE_PASSWORD;
         this.iconDelete = ICON_DELETE;
         this.iconDiscard = ICON_DISCARD; 
         this.iconPreferences = ICON_PREFERENCES;
@@ -71,7 +74,8 @@ public class ControlIcons {
             ImageIcon iconCategory, 
             ImageIcon iconRootEntry, 
             ImageIcon iconEntry, 
-            ImageIcon iconDelete, 
+            ImageIcon iconDelete,
+            ImageIcon iconChangePassword,
             ImageIcon iconDiscard, 
             ImageIcon iconPreferences, 
             ImageIcon iconAddOns, 
@@ -86,6 +90,7 @@ public class ControlIcons {
         this.iconRootEntry = iconRootEntry;
         this.iconEntry = iconEntry;
         this.iconDelete = iconDelete;
+        this.iconChangePassword = iconChangePassword;
         this.iconDiscard = iconDiscard;
         this.iconPreferences = iconPreferences;
         this.iconAddOns = iconAddOns;
@@ -205,6 +210,14 @@ public class ControlIcons {
 
     public void setIconSave(ImageIcon iconSave) {
         this.iconSave = iconSave;
+    }
+
+    public ImageIcon getIconChangePassword() {
+        return iconChangePassword;
+    }
+
+    public void setIconChangePassword(ImageIcon iconChangePassword) {
+        this.iconChangePassword = iconChangePassword;
     }
 
 }

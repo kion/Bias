@@ -34,8 +34,6 @@ public class Launcher extends Window {
     
     private boolean painted = false;
     
-    public static String PASSWORD;
-    
     private Launcher() {
         super(new Frame());
         this.image = Toolkit.getDefaultToolkit().createImage(SPLASH_IMAGE_RESOURCE_URL);
@@ -111,9 +109,9 @@ public class Launcher extends Window {
         }
     }
 
-    private static void invokeApp() throws Throwable {
+    private static void invokeApp(String password) throws Throwable {
         Class.forName(APP_MAIN_CLASS).getMethod(
-                "launchApp", new Class[]{}).invoke(null, new Object[]{});
+                "launchApp", new Class[]{String.class}).invoke(null, new Object[]{password});
     }
 
     public static void main(String[] args) throws Throwable {
@@ -134,9 +132,8 @@ public class Launcher extends Window {
                 JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
             String password = new String(passField.getPassword());            
             if (password != null) {
-                Launcher.PASSWORD = password;
                 showSplash();
-                invokeApp();
+                invokeApp(password);
                 hideSplash();
             } else {
                 System.exit(0);

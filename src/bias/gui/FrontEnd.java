@@ -319,6 +319,8 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton5 = null;
 
+    private JButton jButton11 = null;
+    
     private JPanel jPanel = null;
 
     private JToolBar jToolBar2 = null;
@@ -1091,6 +1093,7 @@ public class FrontEnd extends JFrame {
             jToolBar.add(getJButton4());
             jToolBar.add(getJButton()); // Generated
             jToolBar.add(getJButton5()); // Generated
+            jToolBar.add(getJButton11()); // Generated
             jToolBar.add(getJButton1()); // Generated
             jToolBar.add(getJButton10());
         }
@@ -1123,6 +1126,20 @@ public class FrontEnd extends JFrame {
             jButton5.setIcon(controlIcons.getIconEntry());
         }
         return jButton5;
+    }
+
+    /**
+     * This method initializes jButton11
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton11() {
+        if (jButton11 == null) {
+            jButton11 = new JButton(changePasswordAction);
+            jButton11.setToolTipText("change password"); // Generated
+            jButton11.setIcon(controlIcons.getIconChangePassword());
+        }
+        return jButton11;
     }
 
     /**
@@ -1405,6 +1422,49 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private Action changePasswordAction = new AbstractAction() {
+        private static final long serialVersionUID = 1L;
+        public void actionPerformed(ActionEvent evt) {
+            JLabel currPassLabel = new JLabel("current password:");
+            final JPasswordField currPassField = new JPasswordField();
+            JLabel newPassLabel = new JLabel("new password:");
+            final JPasswordField newPassField = new JPasswordField();
+            JLabel newPassConfirmLabel = new JLabel("confirm new password:");
+            final JPasswordField newPassConfirmField = new JPasswordField();
+            ActionListener al = new ActionListener(){
+                public void actionPerformed(ActionEvent ae){
+                    currPassField.requestFocusInWindow();
+                }
+            };
+            Timer timer = new Timer(500,al);
+            timer.setRepeats(false);
+            timer.start();
+            if (JOptionPane.showConfirmDialog(
+                    null, 
+                    new Component[]{
+                            currPassLabel, currPassField,
+                            newPassLabel, newPassField,
+                            newPassConfirmLabel, newPassConfirmField
+                            }, 
+                    "Change password", 
+                    JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                String currPass = new String(currPassField.getPassword());            
+                String newPass = new String(newPassField.getPassword()); 
+                String newPassConfirmation = new String(newPassConfirmField.getPassword()); 
+                if (!newPass.equals(newPassConfirmation)) {
+                    displayErrorMessage("Failed to change password!" + Constants.NEW_LINE + "New password hasn't been correctly confirmed!");
+                } else {
+                    try {
+                        BackEnd.setPassword(currPass, newPass);
+                        displayMessage("Password has been successfully changed!");
+                    } catch (Exception ex) {
+                        displayErrorMessage("Failed to change password!" + Constants.NEW_LINE + ex.getMessage(), ex);
+                    }
+                }
+            }
+        }
+    };
+
     private Action addEntryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
