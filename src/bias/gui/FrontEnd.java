@@ -9,6 +9,7 @@ import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Rectangle;
@@ -60,6 +61,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.TabbedPaneUI;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
@@ -259,7 +261,15 @@ public class FrontEnd extends JFrame {
                 if (lafInstance.getControlIcons() != null) {
                     controlIcons = lafInstance.getControlIcons();
                 }
+                if (activeLAF == null) {
+                    if (laf != null) {
+                        activeLAF = laf;
+                    } else {
+                        activeLAF = DEFAULT_LOOK_AND_FEEL;
+                    }
+                }
             } catch (Throwable t) {
+                activeLAF = DEFAULT_LOOK_AND_FEEL;
                 System.err.println(
                         "Current Look-&-Feel '" + laf + "' is broken (failed to initialize)!" + Constants.NEW_LINE +
                         "It will be uninstalled." + Constants.NEW_LINE + "Error details: " + Constants.NEW_LINE);
@@ -278,6 +288,8 @@ public class FrontEnd extends JFrame {
                     t2.printStackTrace();
                 }
             }
+        } else {
+            activeLAF = DEFAULT_LOOK_AND_FEEL;
         }
     }
     
@@ -286,9 +298,11 @@ public class FrontEnd extends JFrame {
     private static Map<String, byte[]> initialLAFSettings = new HashMap<String, byte[]>();
     
     private String lastAddedEntryType = null;
+    
+    private static String activeLAF = null;
 
     private JTabbedPane currentTabPane = null;
-
+    
     private JPanel jContentPane = null;
 
     private JTabbedPane jTabbedPane = null;
@@ -1817,7 +1831,29 @@ public class FrontEnd extends JFrame {
                         return false;
                     }
                 };
-                final JTable lafList = new JTable(lafModel);
+                final JTable lafList = new JTable(lafModel) {
+                    private static final long serialVersionUID = 1L;
+                    @Override
+                    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+                        Component c = super.prepareRenderer(renderer, row, column);
+                        String currLAFName = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+                        if (currLAFName == null) {
+                            currLAFName = DEFAULT_LOOK_AND_FEEL;
+                        }
+                        String name = (String) getModel().getValueAt(row, 0);
+                        if (name.equals(activeLAF)) {
+                            c.setForeground(Color.BLUE);
+                            Font f = super.getFont();
+                            f = new Font(f.getName(), Font.BOLD, f.getSize());
+                            c.setFont(f);
+                        } else if (!activeLAF.equals(currLAFName) && name.equals(currLAFName)) {
+                            c.setForeground(Color.BLUE);
+                        } else {
+                            c.setForeground(super.getForeground());
+                        }
+                        return c;
+                    }
+                };
                 final TableRowSorter<TableModel> lafSorter = new TableRowSorter<TableModel>(lafModel);
                 lafList.setRowSorter(lafSorter);
                 lafModel.addColumn("Name");
@@ -1869,6 +1905,7 @@ public class FrontEnd extends JFrame {
                             if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
                                 try {
                                     modified = setActiveLAF(null);
+                                    lafList.repaint();
                                 } catch (Exception t) {
                                     displayErrorMessage(t);
                                 }
@@ -1884,6 +1921,7 @@ public class FrontEnd extends JFrame {
                                             Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                     + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
                                         modified = setActiveLAF(fullLAFClassName);
+                                        lafList.repaint();
                                     } catch (Exception t) {
                                         displayErrorMessage(t);
                                     }
