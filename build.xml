@@ -34,7 +34,8 @@
 			</fileset>
 		</delete>
 		<jar basedir="bin" destfile="build/bias.jar" 
-			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/**" />
+			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/**">
+		</jar>	
 	</target>
 
 	<!-- ================================= 
@@ -47,24 +48,7 @@
 			</fileset>
 		</delete>
 		<jar basedir="bin" destfile="build/bias-sdk.jar" 
-			includes=
-			"
-			bias/*.* 
-			bias/annotation/** 
-			bias/core/** 
-			bias/extension/*.* 
-			bias/gui/** 
-			bias/laf/*.* 
-			bias/res/*.* 
-			bias/utils/**
-			../src/bias/*.* 
-			../src/bias/annotation/** 
-			../src/bias/core/** 
-			../src/bias/extension/*.* 
-			../src/bias/gui/** 
-			../src/bias/laf/*.* 
-			../src/bias/utils/**
-			" />
+			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/**" />
 	</target>
 
 	<!-- ================================= 
