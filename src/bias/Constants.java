@@ -67,6 +67,7 @@ public class Constants {
     public static final String ZIP_ENTRY_PREFIX_PATTERN = "^.*/";
     
     public static final String ADDON_LIB_FILENAME_SEPARATOR = "_";
+    public static final String CLASSPATH_SEPARATOR = ":";
     
     public static final String PACKAGE_PATH_SEPARATOR = ".";
     public static final String PACKAGE_PATH_SEPARATOR_PATTERN = "\\.";
@@ -79,6 +80,7 @@ public class Constants {
     
     public static final String GLOBAL_CONFIG_FILE = "config.properties";
     public static final String PREFERENCES_FILE = "preferences.properties";
+    public static final String CLASSPATH_CONFIG_FILE = "classpath.conf";
     public static final String CONFIG_FILE_SUFFIX = ".conf";
     public static final String METADATA_FILE = "metadata.xml";
     public static final String ICONS_CONFIG_FILE = "icons.conf";
