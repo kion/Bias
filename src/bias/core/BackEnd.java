@@ -12,12 +12,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -63,6 +65,8 @@ public class BackEnd {
     private static Cipher CIPHER_DECRYPT;
     
     private static String password;
+    
+    private static Collection<String> classPathEntries = new ArrayList<String>();
     
 	private static BackEnd instance;
     
@@ -133,8 +137,8 @@ public class BackEnd {
         config = new Properties();
         byte[] data = null;
         byte[] decryptedData = null;
+        // data files
         if (Constants.DATA_DIR.exists()) {
-            // data files
             for (File dataFile : Constants.DATA_DIR.listFiles()) {
                 if (dataFile.getName().endsWith(Constants.DATA_FILE_SUFFIX)) {
                     data = FSUtils.readFile(dataFile);
@@ -146,9 +150,9 @@ public class BackEnd {
                 }
             }
         }
+        // metadata file
         File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE);
         if (metadataFile.exists()) {
-            // metadata file
             data = FSUtils.readFile(metadataFile);
             decryptedData = CIPHER_DECRYPT.doFinal(data);
             metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
@@ -167,8 +171,8 @@ public class BackEnd {
                 prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(data));
             }
         }
+        // icon files
         if (Constants.ICONS_DIR.exists()) {
-            // icon files
             File iconsListFile = new File(Constants.CONFIG_DIR, Constants.ICONS_CONFIG_FILE);
             if (iconsListFile.exists()) {
                 String[] iconsList = new String(FSUtils.readFile(iconsListFile)).split(Constants.NEW_LINE);
@@ -179,6 +183,35 @@ public class BackEnd {
                         icons.put(UUID.fromString(iconId), data);
                     }
                 }
+            }
+        }
+        // classpath
+        File classPathConfigFile = new File(Constants.CONFIG_DIR, Constants.CLASSPATH_CONFIG_FILE);
+        if (classPathConfigFile.exists()) {
+            // read classpath entries
+            byte[] cpData = FSUtils.readFile(classPathConfigFile);
+            if (cpData != null) {
+                for (String cpEntry : new String(cpData).split(Constants.CLASSPATH_SEPARATOR)) {
+                    classPathEntries.add(cpEntry);
+                }
+            }
+        }
+        // remove addon-files that are not in classpath
+        for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
+            URI rootURI = Constants.ROOT_DIR.toURI();
+            URI addonFileURI = addonFile.toURI();
+            URI relativeURI = rootURI.relativize(addonFileURI);
+            if (!classPathEntries.contains(relativeURI.toString())) {
+                addonFile.delete();
+            }
+        }
+        // remove lib-files that are not in classpath
+        for (File addonLibFile : Constants.LIBS_DIR.listFiles()) {
+            URI rootURI = Constants.ROOT_DIR.toURI();
+            URI addonLibFileURI = addonLibFile.toURI();
+            URI relativeURI = rootURI.relativize(addonLibFileURI);
+            if (!classPathEntries.contains(relativeURI.toString())) {
+                addonLibFile.delete();
             }
         }
         // parse metadata file
@@ -577,14 +610,17 @@ public class BackEnd {
                 } else {
                     File installedExtensionFile = new File(Constants.ADDONS_DIR, installedExtensionName + Constants.EXTENSION_JAR_FILE_SUFFIX);
                     FSUtils.writeFile(installedExtensionFile, installedExtensionJAR);
+                    addClassPathEntry(installedExtensionFile);
                     if (!libsMap.isEmpty()) {
                         for (Entry<String, byte[]> entry : libsMap.entrySet()) {
                             if (entry.getValue() != null) {
                                 File libFile = new File(Constants.LIBS_DIR, entry.getKey());
                                 FSUtils.writeFile(libFile, entry.getValue());
+                                addClassPathEntry(libFile);
                             }
                         }
                     }
+                    storeClassPathConfiguration();
                 }
                 installedExtensionName = fullExtName;
             }
@@ -599,15 +635,16 @@ public class BackEnd {
         for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
             if (addonFile.getName().matches(Constants.EXTENSION_JAR_FILE_PATTERN)
                     && addonFile.getName().contains(extensionName)) {
-                FSUtils.delete(addonFile);
+                removeClassPathEntry(addonFile);
             }
         }
         for (File addonLibFile : Constants.LIBS_DIR.listFiles()) {
             if (addonLibFile.getName().matches(Constants.EXTENSION_JAR_FILE_PATTERN)
                     && addonLibFile.getName().contains(extensionName)) {
-                FSUtils.delete(addonLibFile);
+                removeClassPathEntry(addonLibFile);
             }
         }
+        storeClassPathConfiguration();
         File extensionConfigFile = new File(Constants.CONFIG_DIR, extensionName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
         FSUtils.delete(extensionConfigFile);
     }
@@ -729,14 +766,17 @@ public class BackEnd {
                 } else {
                     File installedLAFFile = new File(Constants.ADDONS_DIR, installedLAFName + Constants.LAF_JAR_FILE_SUFFIX);
                     FSUtils.writeFile(installedLAFFile, installedLAFJAR);
+                    addClassPathEntry(installedLAFFile);
                     if (!libsMap.isEmpty()) {
                         for (Entry<String, byte[]> entry : libsMap.entrySet()) {
                             if (entry.getValue() != null) {
                                 File libFile = new File(Constants.LIBS_DIR, entry.getKey());
                                 FSUtils.writeFile(libFile, entry.getValue());
+                                addClassPathEntry(libFile);
                             }
                         }
                     }
+                    storeClassPathConfiguration();
                 }
                 installedLAFName = fullLAFName;
             }
@@ -751,17 +791,53 @@ public class BackEnd {
         for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
             if (addonFile.getName().matches(Constants.LAF_JAR_FILE_PATTERN)
                     && addonFile.getName().contains(lafName)) {
-                FSUtils.delete(addonFile);
+                removeClassPathEntry(addonFile);
             }
         }
         for (File addonLibFile : Constants.LIBS_DIR.listFiles()) {
             if (addonLibFile.getName().matches(Constants.LAF_JAR_FILE_PATTERN)
                     && addonLibFile.getName().contains(lafName)) {
-                FSUtils.delete(addonLibFile);
+                removeClassPathEntry(addonLibFile);
             }
         }
+        storeClassPathConfiguration();
         File lafConfigFile = new File(Constants.CONFIG_DIR, lafName + Constants.LAF_CONFIG_FILE_SUFFIX);
         FSUtils.delete(lafConfigFile);
+    }
+    
+    private void addClassPathEntry(File jarFile) {
+        URI rootURI = Constants.ROOT_DIR.toURI();
+        URI jarFileURI = jarFile.toURI();
+        URI relativeURI = rootURI.relativize(jarFileURI);
+        classPathEntries.add(relativeURI.toString());
+    }
+    
+    private void removeClassPathEntry(File jarFile) {
+        URI rootURI = Constants.ROOT_DIR.toURI();
+        URI jarFileURI = jarFile.toURI();
+        URI relativeURI = rootURI.relativize(jarFileURI);
+        classPathEntries.remove(relativeURI.toString());
+    }
+    
+    private void storeClassPathConfiguration() throws Exception {
+        StringBuffer classpath = new StringBuffer();
+        Iterator<String> it = classPathEntries.iterator();
+        while (it.hasNext()) {
+            String cpEntry = it.next();
+            classpath.append(cpEntry);
+            if (it.hasNext()) {
+                classpath.append(Constants.CLASSPATH_SEPARATOR);
+            }
+        }
+        File classPathConfigFile = new File(Constants.CONFIG_DIR, Constants.CLASSPATH_CONFIG_FILE);
+        if (!classPathConfigFile.exists()) {
+            classPathConfigFile.createNewFile();
+        }
+        if (!Validator.isNullOrBlank(classpath)) {
+            FSUtils.writeFile(classPathConfigFile, classpath.toString().getBytes());
+        } else {
+            classPathConfigFile.delete();
+        }
     }
     
     public Collection<ImageIcon> getIcons() {

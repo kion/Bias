@@ -16,7 +16,7 @@
           target: ExecuteJarPackage              
          ================================= -->
 	<target name="ExecuteJarPackage">
-		<exec command="java -cp build/bias.jar:build/addons/'*':build/libs/'*' bias.Launcher" />
+		<exec dir="build" command="./bias.sh" />
 	</target>
 
 	<!-- ================================= 
