@@ -13,8 +13,6 @@ import bias.laf.LookAndFeel;
  */
 public class Constants {
     
-    // TODO: remove unused constants
-    
     public static final File ROOT_DIR = Bias.getJarFile().getParentFile();
     public static final File ADDONS_DIR = new File(ROOT_DIR, "addons");
     public static final File LIBS_DIR = new File(ROOT_DIR, "libs");
@@ -52,17 +50,12 @@ public class Constants {
     
     public static final String FILE_PROTOCOL_PREFIX = "file:";
 
-    public static final String META_INF_DIR = "META-INF";
-    
     public static final String CIPHER_ALGORITHM = "PBEWithMD5AndDES";
     
     public static final byte[] CIPHER_SALT = "kn+kv=lv".getBytes();
     
     public static final String EMPTY_STR = "";
-    public static final String SPACE_STR = " ";
     public static final String NEW_LINE = "\n";
-    public static final String NULL_STR = "NULL";
-    public static final String EMPTY_STR_PATTERN = "\\s*";
 
     public static final String PATH_PREFIX_PATTERN = "^.*/";
     
@@ -70,24 +63,19 @@ public class Constants {
     public static final String CLASSPATH_SEPARATOR = ":";
     
     public static final String PACKAGE_PATH_SEPARATOR = ".";
-    public static final String PACKAGE_PATH_SEPARATOR_PATTERN = "\\.";
     public static final String PACKAGE_PREFIX_PATTERN = "^.*\\.";
 
     public static final String ADDON_PACK_PATTERN = "(?i).+\\.jar$";
     public static final String ADDON_FILE_PATTERN_DESCRIPTION = "JAR file";
 
-    public static final String ANY_CHARACTERS_PATTERN = ".*";
-    
     public static final String GLOBAL_CONFIG_FILE = "config.properties";
     public static final String PREFERENCES_FILE = "preferences.properties";
     public static final String CLASSPATH_CONFIG_FILE = "classpath.conf";
-    public static final String CONFIG_FILE_SUFFIX = ".conf";
     public static final String METADATA_FILE = "metadata.xml";
     public static final String ICONS_CONFIG_FILE = "icons.conf";
     public static final String DATA_FILE_SUFFIX = ".data";
     public static final String FILE_SUFFIX_PATTERN = "\\..*$";
     public static final String CLASS_FILE_SUFFIX = ".class";
-    public static final String CLASS_FILE_SUFFIX_PATTERN = "\\.class$";
     public static final String MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE = "Bias-Add-On-Name";
     public static final String EXTENSION_DIR_PATTERN = "^ext/";
     public static final String LAF_DIR_PATTERN = "^laf/";
@@ -98,11 +86,11 @@ public class Constants {
     public static final String EXTENSION_JAR_FILE_SUFFIX = ".ext.jar";
     public static final String LAF_JAR_FILE_SUFFIX = ".laf.jar";
     public static final String EXTENSION_DIR_PACKAGE_NAME = Extension.class.getPackage().getName();
+    public static final String LAF_DIR_PACKAGE_NAME = LookAndFeel.class.getPackage().getName();
     public static final String ICON_FORMAT = "PNG";
     public static final String ICON_FILE_SUFFIX = ".png";
     public static final String LIBS_DIR_PATTERN = "^libs/";
     public static final String LIBS_FILE_PATH_PATTERN = "(?i)" + LIBS_DIR_PATTERN + "[^/]+\\.jar$";
-    public static final String LAF_DIR_PACKAGE_NAME = LookAndFeel.class.getPackage().getName();
     public static final String EXTENSION_CONFIG_FILE_SUFFIX = ".ext.conf";
     public static final String LAF_CONFIG_FILE_SUFFIX = ".laf.conf";
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
