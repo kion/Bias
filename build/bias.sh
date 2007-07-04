@@ -9,5 +9,5 @@ then
   fi
 fi
 cmdLine="java -cp bias.jar$cp bias.Launcher";
-echo $cmdLine\n;
+echo $cmdLine"\n";
 `$cmdLine`;

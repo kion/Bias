@@ -495,13 +495,15 @@ public class BackEnd {
 
     public Collection<String> getExtensions() {
         Collection<String> extensions = new LinkedHashSet<String>();
-        for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
-            String name = addonFile.getName();
-            if (name.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
-                String extension = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                            + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-                extensions.add(extension);
+        for (String name : classPathEntries) {
+            if (!name.startsWith(Constants.LIBS_DIR.getName())) {
+                name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                if (name.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
+                    String extension = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
+                    extensions.add(extension);
+                }
             }
         }
         return extensions;
@@ -559,7 +561,7 @@ public class BackEnd {
                     if (jeName.matches(Constants.EXTENSION_JAR_FILE_PATH_PATTERN)) {
                         if (!jarFound) {
                             if (extName.equals(
-                                    jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
+                                    jeName.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR)
                                           .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR))) {
                                 type = 1;
                             } else {
@@ -581,7 +583,7 @@ public class BackEnd {
                             out.write(b);
                         }
                         out.close();
-                        String installedName = jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
+                        String installedName = jeName.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR)
                                                      .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                         if (type == 1) {
                             installedExtensionName = installedName;
@@ -651,13 +653,15 @@ public class BackEnd {
         
     public Collection<String> getLAFs() {
         Collection<String> lafs = new LinkedHashSet<String>();
-        for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
-            String name = addonFile.getName();
-            if (name.matches(Constants.LAF_JAR_FILE_PATTERN)) {
-                String laf = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                            + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                lafs.add(laf);
+        for (String name : classPathEntries) {
+            if (!name.startsWith(Constants.LIBS_DIR.getName())) {
+                name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                if (name.matches(Constants.LAF_JAR_FILE_PATTERN)) {
+                    String laf = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                    lafs.add(laf);
+                }
             }
         }
         return lafs;
@@ -715,7 +719,7 @@ public class BackEnd {
                     if (jeName.matches(Constants.LAF_JAR_FILE_PATH_PATTERN)) {
                         if (!jarFound) {
                             if (lafName.equals(
-                                    jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
+                                    jeName.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR)
                                           .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR))) {
                                 type = 1;
                             } else {
@@ -737,7 +741,7 @@ public class BackEnd {
                             out.write(b);
                         }
                         out.close();
-                        String installedName = jeName.replaceFirst(Constants.ZIP_ENTRY_PREFIX_PATTERN, Constants.EMPTY_STR)
+                        String installedName = jeName.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR)
                                                      .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                         if (type == 1) {
                             installedLAFName = installedName;

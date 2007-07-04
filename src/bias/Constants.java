@@ -64,7 +64,7 @@ public class Constants {
     public static final String NULL_STR = "NULL";
     public static final String EMPTY_STR_PATTERN = "\\s*";
 
-    public static final String ZIP_ENTRY_PREFIX_PATTERN = "^.*/";
+    public static final String PATH_PREFIX_PATTERN = "^.*/";
     
     public static final String ADDON_LIB_FILENAME_SEPARATOR = "_";
     public static final String CLASSPATH_SEPARATOR = ":";
