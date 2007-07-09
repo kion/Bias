@@ -1749,6 +1749,17 @@ public class FrontEnd extends JFrame {
                                 "Search", 
                                 JOptionPane.OK_CANCEL_OPTION);
                         if (option == JOptionPane.OK_OPTION && !Validator.isNullOrBlank(searchExpressionTF.getText())) {
+                            
+                            JPanel entryPathItemsPanel = getJPanel4();
+                            entryPathItemsPanel.setVisible(false);
+                            entryPathItemsPanel.removeAll();
+                            entryPathItemsPanel.setLayout(new BorderLayout());
+                            JLabel processLabel = new JLabel("searching...");
+                            entryPathItemsPanel.add(processLabel, BorderLayout.CENTER);
+                            entryPathItemsPanel.setVisible(true);
+                            getJPanel2().setPreferredSize(new Dimension(FrontEnd.getInstance().getWidth(), FrontEnd.getInstance().getHeight()/4));
+                            getJPanel2().setVisible(true);
+
                             if (lastSearchCriteria == null) {
                                 lastSearchCriteria = new SearchCriteria();
                             }
@@ -1761,10 +1772,8 @@ public class FrontEnd extends JFrame {
                                     isRegularExpressionCB.isSelected());
                             Map<VisualEntryDescriptor, Map<String, HighLightMarker>> result = search(sc);
                             if (result.isEmpty()) {
-                                JOptionPane.showMessageDialog(FrontEnd.getInstance(), "No items matching search criteria.");
+                                processLabel.setText("No items matching search criteria.");
                             } else {
-                                getJPanel2().setPreferredSize(new Dimension(FrontEnd.getInstance().getWidth(), FrontEnd.getInstance().getHeight()/4));
-                                JPanel entryPathItemsPanel = getJPanel4();
                                 entryPathItemsPanel.setVisible(false);
                                 entryPathItemsPanel.removeAll();
                                 entryPathItemsPanel.setLayout(new GridLayout(result.size(), 1));
