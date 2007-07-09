@@ -937,7 +937,7 @@ public class FrontEnd extends JFrame {
 
     public static void displayErrorMessage(Throwable t) {
         Launcher.hideSplash();
-        JOptionPane.showMessageDialog(instance, "Details: " + t, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(instance, t.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace();
     }
 

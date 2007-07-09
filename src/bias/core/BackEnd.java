@@ -118,6 +118,10 @@ public class BackEnd {
     
     private static String password;
     
+    private static Collection<String> loadedExtensions;
+
+    private static Collection<String> loadedLAFs;
+    
     private static Collection<String> classPathEntries = new ArrayList<String>();
     
     private Map<UUID, byte[]> icons = new LinkedHashMap<UUID, byte[]>();
@@ -216,6 +220,9 @@ public class BackEnd {
         }
         // parse metadata file
         this.data = parseMetadata(metadata, identifiedData, null);
+        // get lists of loaded extensions and lafs
+        loadedExtensions = getExtensions();
+        loadedLAFs = getLAFs();
     }
     
     public DataCategory importData(File importDir, Collection<UUID> existingIDs, String password) throws Exception {
@@ -607,8 +614,10 @@ public class BackEnd {
             } else {
                 String fullExtName = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                             + extName + Constants.PACKAGE_PATH_SEPARATOR + extName;
-                if (getExtensions().contains(extName)) {
+                if (getExtensions().contains(fullExtName)) {
                     throw new Exception("Can not install Extension add-on pack: duplicate extension name!");
+                } else if (loadedExtensions.contains(fullExtName)) {
+                    throw new Exception("Can not install Extension add-on pack: Bias restart needed!");
                 } else {
                     File installedExtensionFile = new File(Constants.ADDONS_DIR, installedExtensionName + Constants.EXTENSION_JAR_FILE_SUFFIX);
                     FSUtils.writeFile(installedExtensionFile, installedExtensionJAR);
@@ -765,8 +774,10 @@ public class BackEnd {
             } else {
                 String fullLAFName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                             + lafName + Constants.PACKAGE_PATH_SEPARATOR + lafName;
-                if (getLAFs().contains(lafName)) {
+                if (getLAFs().contains(fullLAFName)) {
                     throw new Exception("Can not install LAF add-on pack: duplicate look-&-feel name!");
+                } else if (loadedLAFs.contains(fullLAFName)) {
+                    throw new Exception("Can not install LAF add-on pack: Bias restart needed!");
                 } else {
                     File installedLAFFile = new File(Constants.ADDONS_DIR, installedLAFName + Constants.LAF_JAR_FILE_SUFFIX);
                     FSUtils.writeFile(installedLAFFile, installedLAFJAR);
