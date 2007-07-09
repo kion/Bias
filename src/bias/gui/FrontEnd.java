@@ -720,18 +720,25 @@ public class FrontEnd extends JFrame {
             Component c = tabPane.getComponent(i);
             if (c instanceof Extension) {
                 Extension entry = ((Extension) c);
-                Collection<String> searchStrings = new LinkedList<String>();
+                Collection<String> searchStrings = null;
                 String caption = tabPane.getTitleAt(i);
                 if (!Validator.isNullOrBlank(caption)) {
                     // add tab caption to entry search data,
                     // so it will be considered while searching
+                    searchStrings = new LinkedList<String>();
                     searchStrings.add(caption);
                 }
                 Collection<String> entrySearchStrings = entry.getSearchData();
                 if (entrySearchStrings != null) {
-                    searchStrings.addAll(entrySearchStrings);
+                    if (searchStrings != null) {
+                        searchStrings.addAll(entrySearchStrings);
+                    } else {
+                        searchStrings = entrySearchStrings;
+                    }
                 }
-                entries.put(entry.getId(), searchStrings);
+                if (searchStrings != null) {
+                    entries.put(entry.getId(), searchStrings);
+                }
             } else if (c instanceof JTabbedPane) {
                 String caption = tabPane.getTitleAt(i);
                 if (!Validator.isNullOrBlank(caption)) {
