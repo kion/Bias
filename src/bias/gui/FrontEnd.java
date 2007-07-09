@@ -353,13 +353,14 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    @SuppressWarnings("unchecked")
     private static void activateLAF() {
         String laf = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
         if (laf != null) {
             try {
                 String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                Class lafClass = Class.forName(lafFullClassName);
-                LookAndFeel lafInstance = (LookAndFeel) lafClass.newInstance();
+                Class<LookAndFeel> lafClass = (Class<LookAndFeel>) Class.forName(lafFullClassName);
+                LookAndFeel lafInstance = lafClass.newInstance();
                 byte[] lafSettings = BackEnd.getInstance().getLAFSettings(lafFullClassName);
                 lafInstance.activate(lafSettings);
                 // use control icons defined by LAF if available
@@ -491,11 +492,12 @@ public class FrontEnd extends JFrame {
         return lafChanged;
     }
     
+    @SuppressWarnings("unchecked")
     private boolean configureLAF(String laf) throws Exception {
         boolean lafChanged = false;
         if (laf != null) {
-            Class lafClass = Class.forName(laf);
-            LookAndFeel lafInstance = ((LookAndFeel)lafClass.newInstance());
+            Class<LookAndFeel> lafClass = (Class<LookAndFeel>) Class.forName(laf);
+            LookAndFeel lafInstance = lafClass.newInstance();
             byte[] lafSettings = BackEnd.getInstance().getLAFSettings(laf);
             byte[] settings = lafInstance.configure(lafSettings);
             // store if differs from stored version

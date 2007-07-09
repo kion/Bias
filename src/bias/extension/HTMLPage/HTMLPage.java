@@ -266,10 +266,10 @@ public class HTMLPage extends Extension {
             if (fontSize == null) {
                 fontSize = DEFAULT_FONT.getSize();
             }
-            Iterator it = HTMLPage.FONT_SIZES.entrySet().iterator();
+            Iterator<Entry<String, Integer>> it = HTMLPage.FONT_SIZES.entrySet().iterator();
             while (it.hasNext()) {
-                Entry fontSizeEntry = (Entry) it.next();
-                Integer fontSizeValue = (Integer) fontSizeEntry.getValue();
+                Entry<String, Integer> fontSizeEntry = it.next();
+                Integer fontSizeValue = fontSizeEntry.getValue();
                 if (fontSizeValue.equals(fontSize)) {
                     getJComboBox().setSelectedItem(fontSizeEntry.getKey());
                     break;
@@ -638,7 +638,7 @@ public class HTMLPage extends Extension {
                         BranchElement pEl = (BranchElement) document.getParagraphElement(pos);
                         Element el = pEl.positionToElement(pos);
                         AttributeSet attrs = el.getAttributes();
-                        for (Enumeration en = attrs.getAttributeNames(); en.hasMoreElements();) {
+                        for (Enumeration<?> en = attrs.getAttributeNames(); en.hasMoreElements();) {
                             Object attr = en.nextElement();
                             if (attr.toString().equalsIgnoreCase("a")) {
                                 String[] param = attrs.getAttribute(attr).toString().split(" ");
@@ -731,7 +731,7 @@ public class HTMLPage extends Extension {
                         BranchElement pEl = (BranchElement) document.getParagraphElement(pos);
                         Element el = pEl.positionToElement(pos);
                         AttributeSet attrs = el.getAttributes();
-                        for (Enumeration en = attrs.getAttributeNames(); en.hasMoreElements();) {
+                        for (Enumeration<?> en = attrs.getAttributeNames(); en.hasMoreElements();) {
                             Object attr = en.nextElement();
                             if (attr.toString().equalsIgnoreCase("a")) {
                                 String[] param = attrs.getAttribute(attr).toString().split(" ");
@@ -848,7 +848,7 @@ public class HTMLPage extends Extension {
                         if (attrs.isDefined(HTML.Attribute.ALIGN)) {
                             alignCB.setSelectedItem(attrs.getAttribute(HTML.Attribute.ALIGN).toString());
                         }
-                        for (Enumeration en = attrs.getAttributeNames(); en.hasMoreElements();) {
+                        for (Enumeration<?> en = attrs.getAttributeNames(); en.hasMoreElements();) {
                             Object attr = en.nextElement();
                             if (attr.toString().equalsIgnoreCase("a")) {
                                 Object attrValue = attrs.getAttribute(attr);
@@ -1003,9 +1003,9 @@ public class HTMLPage extends Extension {
             jComboBox.setPreferredSize(new Dimension(150, 20)); // Generated
             jComboBox.setToolTipText("font size"); // Generated
             jComboBox.setMinimumSize(new Dimension(150, 20)); // Generated
-            Iterator it = HTMLPage.FONT_SIZES.keySet().iterator();
+            Iterator<String> it = HTMLPage.FONT_SIZES.keySet().iterator();
             while (it.hasNext()) {
-                jComboBox.addItem((String) it.next());
+                jComboBox.addItem(it.next());
             }
             jComboBox.addItemListener(new java.awt.event.ItemListener() {
                 public void itemStateChanged(java.awt.event.ItemEvent e) {

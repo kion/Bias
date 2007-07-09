@@ -20,6 +20,7 @@ public abstract class Extension extends JPanel {
     
     private byte[] settings;
     
+    @SuppressWarnings("unused")
     private Extension() {
         // default constructor without parameters is not visible
     }
@@ -28,7 +29,7 @@ public abstract class Extension extends JPanel {
      * The only allowed constructor that is aware of initialization data and settings.
      * 
      * @param id id to be assigned to extension instance
-     * @param data data to be incapsulated by extension instance
+     * @param data data to be encapsulated by extension instance
      * @param settings extension instance settings
      */
     public Extension(UUID id, byte[] data, byte[] settings) {
