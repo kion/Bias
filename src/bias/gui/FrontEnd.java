@@ -1737,6 +1737,7 @@ public class FrontEnd extends JFrame {
             });
             Thread searchThread = new Thread(new Runnable(){
                 public void run() {
+                    JLabel processLabel = new JLabel();
                     try {
                         int option = JOptionPane.showConfirmDialog(
                                 FrontEnd.getInstance(), 
@@ -1754,7 +1755,7 @@ public class FrontEnd extends JFrame {
                             entryPathItemsPanel.setVisible(false);
                             entryPathItemsPanel.removeAll();
                             entryPathItemsPanel.setLayout(new BorderLayout());
-                            JLabel processLabel = new JLabel("searching...");
+                            processLabel.setText("searching...");
                             entryPathItemsPanel.add(processLabel, BorderLayout.CENTER);
                             entryPathItemsPanel.setVisible(true);
                             getJPanel2().setPreferredSize(new Dimension(FrontEnd.getInstance().getWidth(), FrontEnd.getInstance().getHeight()/4));
@@ -1839,7 +1840,8 @@ public class FrontEnd extends JFrame {
                             }
                         }
                     } catch (Throwable t) {
-                        displayErrorMessage("Error while processing search!", t);
+                        processLabel.setText("<html><font color=red>Error while processing search!</font></html>");
+                        t.printStackTrace();
                     }
                 }
             });
