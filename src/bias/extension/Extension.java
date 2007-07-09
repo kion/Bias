@@ -3,6 +3,7 @@
  */
 package bias.extension;
 
+import java.util.Collection;
 import java.util.UUID;
 
 import javax.swing.JPanel;
@@ -24,7 +25,7 @@ public abstract class Extension extends JPanel {
     }
 
     /**
-     * The only allowed constructor that is aware of initialization data and settings
+     * The only allowed constructor that is aware of initialization data and settings.
      * 
      * @param id id to be assigned to extension instance
      * @param data data to be incapsulated by extension instance
@@ -75,7 +76,7 @@ public abstract class Extension extends JPanel {
     /**
      * Serializes extension's settings to array of bytes
      * By default returns null (no settings).
-     * Should be overriden to return settings for certain extension's instance
+     * Should be overriden to return settings for certain extension's instance.
      * 
      * @return array of bytes representing serialized settings of extension's instance
      */
@@ -84,13 +85,24 @@ public abstract class Extension extends JPanel {
     }
 
     /**
-     * Serializes extension data to array of bytes.
+     * Serializes extension's data to array of bytes.
      * By default returns null (no data).
-     * Should be overriden to return data for certain extension's instance
+     * Should be overriden to return data for certain extension's instance.
      * 
      * @return array of bytes representing serialized data of extension's instance
      */
     public byte[] serializeData() throws Throwable {
+        return null;
+    }
+
+    /**
+     * Returns extension's search data.
+     * By default returns null (no data for search provided).
+     * Should be overriden to return search data for certain extension's instance.
+     * 
+     * @return data for search provided by extension's instance
+     */
+    public Collection<String> getSearchData() throws Throwable {
         return null;
     }
 

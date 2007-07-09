@@ -9,9 +9,12 @@ import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
@@ -23,14 +26,19 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.Map.Entry;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -74,6 +82,9 @@ import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
 import bias.core.Recognizable;
+import bias.core.SearchCriteria;
+import bias.core.SearchEngine;
+import bias.core.SearchEngine.HighLightMarker;
 import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.MissingExtensionInformer;
@@ -99,6 +110,7 @@ public class FrontEnd extends JFrame {
      * Application icon
      */
     private static final ImageIcon ICON_APP = new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
+    private static final ImageIcon ICON_CLOSE = new ImageIcon(Constants.class.getResource("/bias/res/close.png"));
 
     private static final String RESTART_MESSAGE = "Changes will take effect after Bias restart";
 
@@ -179,12 +191,107 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private static class IconViewPanel extends JPanel {
+        private static final long serialVersionUID = 1L;
+        private static final int MAX_ICON_WIDTH = 32;
+        private static final int MAX_ICON_HEIGHT = 32;
+        private Image image;
+        public IconViewPanel(Image image) {
+            if (image != null) {
+                this.image = image;
+                int previewWidth;
+                int previewHeight;
+                int imWidth = image.getWidth(this);
+                int imHeight = image.getHeight(this);
+                if (imWidth > MAX_ICON_WIDTH || imHeight > MAX_ICON_HEIGHT) {
+                    if (imWidth >= imHeight){
+                        previewHeight = (int)(imHeight/((float)imWidth/MAX_ICON_WIDTH));
+                        previewWidth = MAX_ICON_WIDTH;
+                    } else {
+                        previewWidth = (int)(imWidth/((float)imHeight/MAX_ICON_HEIGHT));
+                        previewHeight = MAX_ICON_HEIGHT;
+                    }
+                } else {
+                    previewWidth = imWidth;
+                    previewHeight = imHeight;
+                }
+                this.image = image.getScaledInstance(previewWidth, previewHeight, Image.SCALE_FAST);
+                this.setPreferredSize(new Dimension(previewWidth, previewHeight));
+            }
+        }     
+            
+        /*
+         * (non-Javadoc)
+         * 
+         * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
+         */
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.drawImage(image, 0, 0, this);
+        }
+    }
+
+    private static FrontEnd instance;
+
     private static final String ADDON_ANN_FIELD_VALUE_NA = "N/A";
     
     // use default control icons initially
     private static ControlIcons controlIcons = new ControlIcons();
 
-    private static FrontEnd instance;
+    private static Properties config;
+    
+    private static Map<String, byte[]> initialLAFSettings = new HashMap<String, byte[]>();
+    
+    private String lastAddedEntryType = null;
+    
+    private SearchCriteria lastSearchCriteria = null;
+    
+    private static String activeLAF = null;
+
+    private JTabbedPane currentTabPane = null;
+    
+    private JPanel jContentPane = null;
+
+    private JTabbedPane jTabbedPane = null;
+
+    private JToolBar jToolBar = null;
+
+    private JButton jButton = null;
+
+    private JButton jButton1 = null;
+
+    private JButton jButton2 = null;
+
+    private JButton jButton4 = null;
+
+    private JButton jButton5 = null;
+
+    private JButton jButton11 = null;
+
+    private JButton jButton12 = null;
+    
+    private JPanel jPanel = null;
+
+    private JPanel jPanel2 = null;
+
+    private JPanel jPanel3 = null;
+
+    private JPanel jPanel4 = null;
+
+    private JToolBar jToolBar2 = null;
+
+    private JButton jButton6 = null;
+
+    private JButton jButton7 = null;
+
+    private JButton jButton8 = null;
+
+    private JButton jButton9 = null;
+
+    private JButton jButton10 = null;
+
+    private JButton jButton3 = null;
 
     /**
      * Default singleton's hidden constructor without parameters
@@ -291,50 +398,6 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private static Properties config;
-    
-    private static Map<String, byte[]> initialLAFSettings = new HashMap<String, byte[]>();
-    
-    private String lastAddedEntryType = null;
-    
-    private static String activeLAF = null;
-
-    private JTabbedPane currentTabPane = null;
-    
-    private JPanel jContentPane = null;
-
-    private JTabbedPane jTabbedPane = null;
-
-    private JToolBar jToolBar = null;
-
-    private JButton jButton = null;
-
-    private JButton jButton1 = null;
-
-    private JButton jButton2 = null;
-
-    private JButton jButton4 = null;
-
-    private JButton jButton5 = null;
-
-    private JButton jButton11 = null;
-    
-    private JPanel jPanel = null;
-
-    private JToolBar jToolBar2 = null;
-
-    private JButton jButton6 = null;
-
-    private JButton jButton7 = null;
-
-    private JButton jButton8 = null;
-
-    private JButton jButton9 = null;
-
-    private JButton jButton10 = null;
-
-    private JButton jButton3 = null;
-
     /**
      * This method initializes this
      * 
@@ -634,6 +697,56 @@ public class FrontEnd extends JFrame {
         return data;
     }
     
+    public Map<VisualEntryDescriptor, Map<String, HighLightMarker>> search(SearchCriteria sc) throws Throwable {
+        Map<VisualEntryDescriptor, Map<String, HighLightMarker>> result = new LinkedHashMap<VisualEntryDescriptor, Map<String, HighLightMarker>>();
+        Map<UUID, Collection<String>> entries = getSearchEntries(getJTabbedPane());
+        Map<UUID, Map<String, HighLightMarker>> matchesFound = SearchEngine.search(sc, entries);
+        if (!matchesFound.isEmpty()) {
+            Map<UUID, VisualEntryDescriptor> veMap = getVisualEntriesMap();
+            for (Entry<UUID, Map<String, HighLightMarker>> matchesFoundEntry : matchesFound.entrySet()) {
+                UUID id = matchesFoundEntry.getKey();
+                VisualEntryDescriptor ved = veMap.get(id);
+                if (ved != null) {
+                    result.put(ved, matchesFoundEntry.getValue());
+                }
+            }
+        }
+        return result;
+    }
+    
+    private Map<UUID, Collection<String>> getSearchEntries(JTabbedPane tabPane) throws Throwable {
+        Map<UUID, Collection<String>> entries = new LinkedHashMap<UUID, Collection<String>>();
+        for (int i = 0; i < tabPane.getTabCount(); i++) {
+            Component c = tabPane.getComponent(i);
+            if (c instanceof Extension) {
+                Extension entry = ((Extension) c);
+                Collection<String> searchStrings = new LinkedList<String>();
+                String caption = tabPane.getTitleAt(i);
+                if (!Validator.isNullOrBlank(caption)) {
+                    // add tab caption to entry search data,
+                    // so it will be considered while searching
+                    searchStrings.add(caption);
+                }
+                Collection<String> entrySearchStrings = entry.getSearchData();
+                if (entrySearchStrings != null) {
+                    searchStrings.addAll(entrySearchStrings);
+                }
+                entries.put(entry.getId(), searchStrings);
+            } else if (c instanceof JTabbedPane) {
+                String caption = tabPane.getTitleAt(i);
+                if (!Validator.isNullOrBlank(caption)) {
+                    // add tab caption to entry search data,
+                    // so it will be considered while searching
+                    Collection<String> searchStrings = new ArrayList<String>();
+                    searchStrings.add(caption);
+                    entries.put(UUID.fromString(((JTabbedPane) c).getName()), searchStrings);
+                }
+                entries.putAll(getSearchEntries((JTabbedPane) c));
+            }
+        }
+        return entries;
+    }
+    
     private void cleanUp() {
         FSUtils.delete(Constants.TMP_DIR);
     }
@@ -705,31 +818,56 @@ public class FrontEnd extends JFrame {
     }
 
     public static Collection<VisualEntryDescriptor> getVisualEntryDescriptors() {
-        return instance.getVisualEntryDescriptors(instance.getJTabbedPane(), new LinkedList<String>());
+        return instance.getVisualEntryDescriptors(instance.getJTabbedPane(), new LinkedList<Recognizable>());
     }
 
-    private Collection<VisualEntryDescriptor> getVisualEntryDescriptors(JTabbedPane rootTabPane, LinkedList<String> captionsPath) {
+    private Collection<VisualEntryDescriptor> getVisualEntryDescriptors(JTabbedPane tabPane, LinkedList<Recognizable> entryPath) {
         Collection<VisualEntryDescriptor> vDescriptors = new LinkedList<VisualEntryDescriptor>();
-        String idStr = rootTabPane.getName();
-        if (idStr != null) {
-            vDescriptors.add(new VisualEntryDescriptor(UUID.fromString(idStr), captionsPath.toArray(new String[] {})));
-        }
-        for (int i = 0; i < rootTabPane.getTabCount(); i++) {
-            Component c = rootTabPane.getComponent(i);
-            String caption = rootTabPane.getTitleAt(i);
-            captionsPath.addLast(caption);
+        for (int i = 0; i < tabPane.getTabCount(); i++) {
+            Component c = tabPane.getComponent(i);
+            String caption = tabPane.getTitleAt(i);
+            Icon icon = tabPane.getIconAt(i);
             if (c instanceof JTabbedPane) {
-                vDescriptors.addAll(getVisualEntryDescriptors((JTabbedPane) c, captionsPath));
-                captionsPath.removeLast();
+                String id = c.getName();
+                Recognizable entry = new Recognizable(UUID.fromString(id), caption, icon);
+                entryPath.addLast(entry);
+                vDescriptors.add(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
+                vDescriptors.addAll(getVisualEntryDescriptors((JTabbedPane) c, new LinkedList<Recognizable>(entryPath)));
+                entryPath.removeLast();
             } else if (c instanceof Extension) {
-                Extension ve = (Extension) c;
-                if (ve.getId() != null) {
-                    vDescriptors.add(new VisualEntryDescriptor(ve.getId(), captionsPath.toArray(new String[] {})));
-                }
-                captionsPath.removeLast();
+                Recognizable entry = new Recognizable(((Extension) c).getId(), caption, icon);
+                entryPath.addLast(entry);
+                vDescriptors.add(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
+                entryPath.removeLast();
             }
         }
         return vDescriptors;
+    }
+
+    public static Map<UUID, VisualEntryDescriptor> getVisualEntriesMap() {
+        return instance.getVisualEntriesMap(instance.getJTabbedPane(), new LinkedList<Recognizable>());
+    }
+
+    private Map<UUID, VisualEntryDescriptor> getVisualEntriesMap(JTabbedPane tabPane, LinkedList<Recognizable> entryPath) {
+        Map<UUID, VisualEntryDescriptor> veMap = new LinkedHashMap<UUID, VisualEntryDescriptor>();
+        for (int i = 0; i < tabPane.getTabCount(); i++) {
+            Component c = tabPane.getComponent(i);
+            String caption = tabPane.getTitleAt(i);
+            Icon icon = tabPane.getIconAt(i);
+            if (c instanceof JTabbedPane) {
+                Recognizable entry = new Recognizable(UUID.fromString(c.getName()), caption, icon);
+                entryPath.addLast(entry);
+                veMap.put(entry.getId(), new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
+                veMap.putAll(getVisualEntriesMap((JTabbedPane) c, new LinkedList<Recognizable>(entryPath)));
+                entryPath.removeLast();
+            } else if (c instanceof Extension) {
+                Recognizable entry = new Recognizable(((Extension) c).getId(), caption, icon);
+                entryPath.addLast(entry);
+                veMap.put(entry.getId(), new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
+                entryPath.removeLast();
+            }
+        }
+        return veMap;
     }
 
     public static boolean switchToVisualEntry(UUID id) {
@@ -1055,8 +1193,9 @@ public class FrontEnd extends JFrame {
         if (jContentPane == null) {
             jContentPane = new JPanel();
             jContentPane.setLayout(new BorderLayout());
-            jContentPane.add(getJTabbedPane(), BorderLayout.CENTER);
             jContentPane.add(getJPanel(), BorderLayout.NORTH); // Generated
+            jContentPane.add(getJTabbedPane(), BorderLayout.CENTER);
+            jContentPane.add(getJPanel2(), BorderLayout.SOUTH); // Generated
         }
         return jContentPane;
     }
@@ -1091,8 +1230,9 @@ public class FrontEnd extends JFrame {
             jToolBar.add(getJButton4());
             jToolBar.add(getJButton()); // Generated
             jToolBar.add(getJButton5()); // Generated
-            jToolBar.add(getJButton11()); // Generated
             jToolBar.add(getJButton1()); // Generated
+            jToolBar.add(getJButton12()); // Generated
+            jToolBar.add(getJButton11()); // Generated
             jToolBar.add(getJButton10());
         }
         return jToolBar;
@@ -1141,6 +1281,20 @@ public class FrontEnd extends JFrame {
     }
 
     /**
+     * This method initializes jButton12
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton12() {
+        if (jButton12 == null) {
+            jButton12 = new JButton(searchAction);
+            jButton12.setToolTipText("search"); // Generated
+            jButton12.setIcon(controlIcons.getIconSearch());
+        }
+        return jButton12;
+    }
+
+    /**
      * This method initializes jButton1
      * 
      * @return javax.swing.JButton
@@ -1181,6 +1335,57 @@ public class FrontEnd extends JFrame {
             jPanel.add(getJToolBar2(), BorderLayout.EAST); // Generated
         }
         return jPanel;
+    }
+
+    /**
+     * This method initializes jPanel2
+     * 
+     * @return javax.swing.JPanel
+     */
+    private JPanel getJPanel2() {
+        if (jPanel2 == null) {
+            jPanel2 = new JPanel();
+            jPanel2.setVisible(false);
+            jPanel2.setLayout(new BorderLayout()); // Generated
+            jPanel2.add(getJPanel3(), BorderLayout.NORTH); // Generated
+            jPanel2.add(new JScrollPane(getJPanel4()), BorderLayout.CENTER); // Generated
+        }
+        return jPanel2;
+    }
+
+    /**
+     * This method initializes jPanel3
+     * 
+     * @return javax.swing.JPanel
+     */
+    private JPanel getJPanel3() {
+        if (jPanel3 == null) {
+            jPanel3 = new JPanel();
+            jPanel3.setLayout(new BorderLayout()); // Generated
+            jPanel3.add(new JLabel("<html><u>Search results</u></html>"), BorderLayout.CENTER); // Generated
+            JButton closeSearchResultsButton = new JButton(new AbstractAction(){
+                private static final long serialVersionUID = 1L;
+                public void actionPerformed(ActionEvent e) {
+                    getJPanel2().setVisible(false);
+                }
+            });
+            closeSearchResultsButton.setIcon(ICON_CLOSE);
+            closeSearchResultsButton.setPreferredSize(new Dimension(18, 18));
+            jPanel3.add(closeSearchResultsButton, BorderLayout.EAST); // Generated
+        }
+        return jPanel3;
+    }
+
+    /**
+     * This method initializes jPanel4
+     * 
+     * @return javax.swing.JPanel
+     */
+    private JPanel getJPanel4() {
+        if (jPanel4 == null) {
+            jPanel4 = new JPanel();
+        }
+        return jPanel4;
     }
 
     /**
@@ -1422,6 +1627,7 @@ public class FrontEnd extends JFrame {
     
     private Action changePasswordAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
+        
         public void actionPerformed(ActionEvent evt) {
             JLabel currPassLabel = new JLabel("current password:");
             final JPasswordField currPassField = new JPasswordField();
@@ -1463,9 +1669,165 @@ public class FrontEnd extends JFrame {
         }
     };
 
+    private Action searchAction = new AbstractAction() {
+        private static final long serialVersionUID = 1L;
+        
+        public void actionPerformed(ActionEvent evt) {
+            try {
+                JLabel searchExpressionL = new JLabel("search expression:");
+                final JTextField searchExpressionTF = new JTextField();
+                final Color normal = searchExpressionTF.getForeground();
+                final JLabel isCaseSensitiveL = new JLabel("case sensitive:");
+                final JCheckBox isCaseSensitiveCB = new JCheckBox();
+                JPanel caseSensitivePanel = new JPanel(new BorderLayout());
+                caseSensitivePanel.add(isCaseSensitiveL, BorderLayout.CENTER);
+                caseSensitivePanel.add(isCaseSensitiveCB, BorderLayout.EAST);
+                JLabel isRegularExpressionL = new JLabel("regular expression:");
+                final JCheckBox isRegularExpressionCB = new JCheckBox();
+                isRegularExpressionCB.addChangeListener(new ChangeListener(){
+                    public void stateChanged(ChangeEvent e) {
+                        if (isRegularExpressionCB.isSelected()) {
+                            isCaseSensitiveL.setEnabled(false);
+                            isCaseSensitiveCB.setEnabled(false);
+                        } else {
+                            isCaseSensitiveL.setEnabled(true);
+                            isCaseSensitiveCB.setEnabled(true);
+                        }
+                    }
+                });
+                JPanel regularExpressionPanel = new JPanel(new BorderLayout());
+                regularExpressionPanel.add(isRegularExpressionL, BorderLayout.CENTER);
+                regularExpressionPanel.add(isRegularExpressionCB, BorderLayout.EAST);
+
+                if (lastSearchCriteria != null) {
+                    searchExpressionTF.setText(lastSearchCriteria.getSearchExpression());
+                    isCaseSensitiveCB.setSelected(lastSearchCriteria.isCaseSensitive());
+                    isRegularExpressionCB.setSelected(lastSearchCriteria.isRegularExpression());
+                }
+                
+                searchExpressionTF.addCaretListener(new CaretListener(){
+                    public void caretUpdate(CaretEvent e) {
+                        String searchExpression = searchExpressionTF.getText();
+                        if (isRegularExpressionCB.isSelected() && !Validator.isNullOrBlank(searchExpression)) {
+                            try {
+                                Pattern.compile(searchExpression);
+                                searchExpressionTF.setForeground(normal);
+                            } catch (PatternSyntaxException pse) {
+                                String errorMsg = "Pattern syntax error";
+                                if (pse.getIndex() != -1) {
+                                    errorMsg +=  " at the index " + pse.getIndex() + " - char '" + searchExpression.charAt(pse.getIndex()-1) + "'";
+                                } else {
+                                    errorMsg += "!";
+                                }
+                                searchExpressionTF.setForeground(Color.RED);
+                                searchExpressionTF.setToolTipText(errorMsg);
+                            }
+                        } else {
+                            searchExpressionTF.setForeground(normal);
+                        }
+                    }
+                });
+                
+                int option = JOptionPane.showConfirmDialog(
+                        FrontEnd.getInstance(), 
+                        new Component[]{
+                            searchExpressionL,
+                            searchExpressionTF,
+                            caseSensitivePanel,
+                            regularExpressionPanel
+                        }, 
+                        "Search", 
+                        JOptionPane.OK_CANCEL_OPTION);
+                if (option == JOptionPane.OK_OPTION && !Validator.isNullOrBlank(searchExpressionTF.getText())) {
+                    if (lastSearchCriteria == null) {
+                        lastSearchCriteria = new SearchCriteria();
+                    }
+                    lastSearchCriteria.setSearchExpression(searchExpressionTF.getText()); 
+                    lastSearchCriteria.setCaseSensitive(isCaseSensitiveCB.isSelected()); 
+                    lastSearchCriteria.setRegularExpression(isRegularExpressionCB.isSelected());                    
+                    SearchCriteria sc = new SearchCriteria(
+                            searchExpressionTF.getText(),
+                            isCaseSensitiveCB.isSelected(),
+                            isRegularExpressionCB.isSelected());
+                    Map<VisualEntryDescriptor, Map<String, HighLightMarker>> result = search(sc);
+                    if (result.isEmpty()) {
+                        JOptionPane.showMessageDialog(FrontEnd.getInstance(), "No items matching search criteria.");
+                    } else {
+                        getJPanel2().setPreferredSize(new Dimension(FrontEnd.getInstance().getWidth(), FrontEnd.getInstance().getHeight()/4));
+                        JPanel entryPathItemsPanel = getJPanel4();
+                        entryPathItemsPanel.setVisible(false);
+                        entryPathItemsPanel.removeAll();
+                        entryPathItemsPanel.setLayout(new GridLayout(result.size(), 1));
+                        for (Entry<VisualEntryDescriptor, Map<String, HighLightMarker>> resultEntry : result.entrySet()) {
+                            final VisualEntryDescriptor ved = resultEntry.getKey();
+                            Collection<Recognizable> entryPath = ved.getEntryPath();
+                            JPanel entryPathItemPanel = new JPanel(new FlowLayout());
+                            Iterator<Recognizable> it = entryPath.iterator();
+                            while (it.hasNext()) {
+                                final Recognizable r = it.next();
+                                MouseListener ml = new MouseAdapter(){
+                                    @Override
+                                    public void mouseClicked(MouseEvent e) {
+                                        switchToVisualEntry(r.getId());                                        
+                                    }
+                                };
+                                JPanel entryPathItemIcon = new IconViewPanel(((ImageIcon) r.getIcon()).getImage());
+                                entryPathItemIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                                entryPathItemIcon.addMouseListener(ml);
+                                entryPathItemPanel.add(entryPathItemIcon);
+                                JLabel entryPathItemLabel = new JLabel("<html><u><font color=blue>" + r.getCaption() + "</font></u></html>");
+                                entryPathItemLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                                entryPathItemLabel.addMouseListener(ml);
+                                entryPathItemPanel.add(entryPathItemLabel);
+                                if (it.hasNext()) {
+                                    entryPathItemPanel.add(new JLabel(">"));
+                                }
+                            }
+                            StringBuffer matchedSnippets = new StringBuffer();
+                            Iterator<Entry<String, HighLightMarker>> it2 = resultEntry.getValue().entrySet().iterator();
+                            while (it2.hasNext()) {
+                                Entry<String, HighLightMarker> entry = it2.next();
+                                String str = entry.getKey();
+                                String hlStr = null;
+                                HighLightMarker hlMarker = entry.getValue();
+                                if (hlMarker != null) {
+                                    Integer beginIndex = entry.getValue().getBeginIndex();
+                                    Integer endIndex = entry.getValue().getEndIndex();
+                                    if (beginIndex != null && endIndex != null) {
+                                        hlStr = str.substring(0, beginIndex);
+                                        hlStr += "<font bgcolor=yellow>";
+                                        hlStr += str.substring(beginIndex, endIndex);
+                                        hlStr += "</font>";
+                                        hlStr += str.substring(endIndex, str.length());
+                                    }
+                                }
+                                if (hlStr != null) {
+                                    matchedSnippets.append(hlStr);
+                                } else {
+                                    matchedSnippets.append(str);
+                                }
+                                if (it2.hasNext()) {
+                                    matchedSnippets.append(" :: ");
+                                }
+                            }
+                            entryPathItemPanel.add(new JLabel("<html> &gt;&gt; <i>" + matchedSnippets.toString() + "</i></html>"));
+                            JPanel p = new JPanel(new BorderLayout());
+                            p.add(entryPathItemPanel, BorderLayout.WEST);
+                            entryPathItemsPanel.add(p);
+                        }
+                        entryPathItemsPanel.setVisible(true);
+                        getJPanel2().setVisible(true);
+                    }
+                }
+            } catch (Throwable t) {
+                displayErrorMessage("Error while processing search!", t);
+            }
+        }
+    };
+    
     private Action addEntryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
-
+        
         public void actionPerformed(ActionEvent evt) {
             try {
                 Map<String, Class<Extension>> extensions = ExtensionFactory.getInstance().getAnnotatedExtensions();
@@ -1532,7 +1894,7 @@ public class FrontEnd extends JFrame {
 
     private Action deleteEntryOrCategoryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
-
+        
         public void actionPerformed(ActionEvent evt) {
             if (getJTabbedPane().getTabCount() > 0) {
                 try {
@@ -1555,7 +1917,7 @@ public class FrontEnd extends JFrame {
 
     private Action importDataAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
-
+        
         public void actionPerformed(ActionEvent evt) {
             try {
                 JFileChooser jfc = new JFileChooser();
@@ -1615,7 +1977,7 @@ public class FrontEnd extends JFrame {
 
     private Action addCategoryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
-
+        
         public void actionPerformed(ActionEvent evt) {
             try {
                 if (getJTabbedPane().getTabCount() == 0) {

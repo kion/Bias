@@ -64,10 +64,6 @@ public class BackEnd {
     private static Cipher CIPHER_ENCRYPT;
     private static Cipher CIPHER_DECRYPT;
     
-    private static String password;
-    
-    private static Collection<String> classPathEntries = new ArrayList<String>();
-    
 	private static BackEnd instance;
     
     private BackEnd() {
@@ -119,6 +115,10 @@ public class BackEnd {
         cipher.init(mode, key, paramSpec);
         return cipher;
     }
+    
+    private static String password;
+    
+    private static Collection<String> classPathEntries = new ArrayList<String>();
     
     private Map<UUID, byte[]> icons = new LinkedHashMap<UUID, byte[]>();
     

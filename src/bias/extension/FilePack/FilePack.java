@@ -8,6 +8,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -107,6 +109,21 @@ public class FilePack extends Extension {
 		return PropertiesUtils.serializeProperties(p);
 	}
 	
+    /* (non-Javadoc)
+     * @see bias.extension.Extension#getSearchData()
+     */
+    @Override
+    public Collection<String> getSearchData() throws Throwable {
+        Collection<String> searchData = new ArrayList<String>();
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            for (int j = 0; j < model.getColumnCount(); j++) {
+                searchData.add((String) model.getValueAt(i, j));
+            }
+        }
+        return searchData;
+    }
+    
 	private void initGUI() {
 		try {
 			{

@@ -7,6 +7,8 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -127,6 +129,16 @@ public class PlainText extends Extension {
     @Override
     public byte[] serializeData() throws Throwable {
         return getJTextArea().getText().getBytes();
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.Extension#getSearchData()
+     */
+    @Override
+    public Collection<String> getSearchData() throws Throwable {
+        Collection<String> searchData = new ArrayList<String>();
+        searchData.add(getJTextArea().getText());
+        return searchData;
     }
 
     /**

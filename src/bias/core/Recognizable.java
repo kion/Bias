@@ -10,7 +10,7 @@ import javax.swing.Icon;
 /**
  * @author kion
  */
-public abstract class Recognizable {
+public class Recognizable {
     
     protected UUID id;
     

@@ -3,53 +3,56 @@
  */
 package bias.gui;
 
-import java.util.UUID;
+import java.util.Collection;
+import java.util.Iterator;
+
+import bias.core.Recognizable;
 
 /**
  * @author kion
  */
 public class VisualEntryDescriptor {
     
-    private UUID id;
-    
-    private String[] captionsPath;
+    private Recognizable entry;
+    private Collection<Recognizable> entryPath;
     
     public VisualEntryDescriptor() {
         // default constructor
     }
     
-    public VisualEntryDescriptor(UUID id, String[] captionsPath) {
-        this.id = id;
-        this.captionsPath = captionsPath;
+    public VisualEntryDescriptor(Recognizable entry, Collection<Recognizable> entryPath) {
+        this.entry = entry;
+        this.entryPath = entryPath;
     }
 
-    public UUID getId() {
-        return id;
+    public Recognizable getEntry() {
+        return entry;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    public void setEntry(Recognizable entry) {
+        this.entry = entry;
+    }
+    
+    public Collection<Recognizable> getEntryPath() {
+        return entryPath;
     }
 
-    public String[] getCaptionsPath() {
-        return captionsPath;
+    public void setEntryPath(Collection<Recognizable> entryPath) {
+        this.entryPath = entryPath;
     }
-
-    public void setCaptionsPath(String[] captionsPath) {
-        this.captionsPath = captionsPath;
-    }
-
+    
     @Override
     public String toString() {
-        StringBuffer result = new StringBuffer();
-        int i = 1;
-        for (String captionPathElement : captionsPath) {
-            result.append(captionPathElement);
-            if (i++ < captionsPath.length) {
-                result.append(" > ");
+        StringBuffer entryPathStr = new StringBuffer();
+        Iterator<Recognizable> it = entryPath.iterator();
+        while (it.hasNext()) {
+            Recognizable r = it.next();
+            entryPathStr.append(r.getCaption());
+            if (it.hasNext()) {
+                entryPathStr.append(" > ");
             }
         }
-        return result.toString();
+        return entryPathStr.toString();
     }
 
 }

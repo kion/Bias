@@ -185,7 +185,17 @@ public class HTMLPage extends Extension {
     public byte[] serializeData() throws Throwable {
         return processOnSave(getJTextPane().getText()).getBytes();
     }
-
+    
+    /* (non-Javadoc)
+     * @see bias.extension.Extension#getSearchData()
+     */
+    @Override
+    public Collection<String> getSearchData() throws Throwable {
+        Collection<String> searchData = new ArrayList<String>();
+        searchData.add(getJTextPane().getDocument().getText(0, getJTextPane().getDocument().getLength()));
+        return searchData;
+    }
+    
     private void synchronizeEditNoteControlsStates(JTextPane textPane) {
         if (textPane.isEditable()) {
             boolean boldSelected = false;
@@ -653,7 +663,7 @@ public class HTMLPage extends Extension {
                     JComboBox hrefComboBox = new JComboBox();
                     for (VisualEntryDescriptor veDescriptor : FrontEnd.getVisualEntryDescriptors()) {
                         hrefComboBox.addItem(veDescriptor);
-                        if (veDescriptor.getId().toString().equals(id)) {
+                        if (veDescriptor.getEntry().getId().toString().equals(id)) {
                             currDescriptor = veDescriptor;
                         }
                     }
@@ -667,7 +677,7 @@ public class HTMLPage extends Extension {
                             StringBuffer linkHTML = new StringBuffer("<a ");
                             linkHTML.append("href=\"" + Constants.ENTRY_PROTOCOL_PREFIX);
                             if (!Validator.isNullOrBlank(hrefComboBox.getSelectedItem())) {
-                                linkHTML.append(((VisualEntryDescriptor) hrefComboBox.getSelectedItem()).getId());
+                                linkHTML.append(((VisualEntryDescriptor) hrefComboBox.getSelectedItem()).getEntry().getId());
                             } else {
                                 linkHTML.append("#");
                             }
