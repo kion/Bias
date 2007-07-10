@@ -1720,10 +1720,15 @@ public class FrontEnd extends JFrame {
                         try {
                             Pattern.compile(searchExpression);
                             searchExpressionTF.setForeground(normal);
+                            searchExpressionTF.setToolTipText(null);
                         } catch (PatternSyntaxException pse) {
                             String errorMsg = "Pattern syntax error";
-                            if (pse.getIndex() != -1) {
-                                errorMsg +=  " at the index " + pse.getIndex() + " - char '" + searchExpression.charAt(pse.getIndex()-1) + "'";
+                            int idx = pse.getIndex();
+                            if (idx != -1) {
+                                if (idx > 0) {
+                                    idx--;
+                                }
+                                errorMsg +=  " at the position " + (idx + 1) + " - char '" + searchExpression.charAt(idx) + "'";
                             } else {
                                 errorMsg += "!";
                             }
@@ -1732,6 +1737,7 @@ public class FrontEnd extends JFrame {
                         }
                     } else {
                         searchExpressionTF.setForeground(normal);
+                        searchExpressionTF.setToolTipText(null);
                     }
                 }
             });
