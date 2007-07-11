@@ -277,8 +277,6 @@ public class FrontEnd extends JFrame {
 
     private JPanel jPanel3 = null;
 
-    private JPanel jPanel4 = null;
-
     private JToolBar jToolBar2 = null;
 
     private JButton jButton6 = null;
@@ -936,6 +934,27 @@ public class FrontEnd extends JFrame {
         }
         return rootTabPane;
     }
+    
+    private void displayBottomPanel(String title, JPanel panel) {
+        getJPanel2().setVisible(false);
+        getJPanel2().removeAll();
+        getJPanel2().setLayout(new BorderLayout());
+        getJPanel3().setLayout(new BorderLayout()); // Generated
+        getJPanel3().add(new JLabel("<html><u>" + title + "</u></html>"), BorderLayout.CENTER); // Generated
+        JButton closeSearchResultsButton = new JButton(new AbstractAction(){
+            private static final long serialVersionUID = 1L;
+            public void actionPerformed(ActionEvent e) {
+                getJPanel2().setVisible(false);
+            }
+        });
+        closeSearchResultsButton.setIcon(ICON_CLOSE);
+        closeSearchResultsButton.setPreferredSize(new Dimension(18, 18));
+        getJPanel3().add(closeSearchResultsButton, BorderLayout.EAST); // Generated
+        getJPanel2().add(getJPanel3(), BorderLayout.NORTH);
+        getJPanel2().add(new JScrollPane(panel), BorderLayout.CENTER);
+        getJPanel2().setPreferredSize(new Dimension(FrontEnd.getInstance().getWidth(), FrontEnd.getInstance().getHeight()/4));
+        getJPanel2().setVisible(true);
+    }
 
     public static void displayErrorMessage(Throwable t) {
         Launcher.hideSplash();
@@ -1354,10 +1373,6 @@ public class FrontEnd extends JFrame {
     private JPanel getJPanel2() {
         if (jPanel2 == null) {
             jPanel2 = new JPanel();
-            jPanel2.setVisible(false);
-            jPanel2.setLayout(new BorderLayout()); // Generated
-            jPanel2.add(getJPanel3(), BorderLayout.NORTH); // Generated
-            jPanel2.add(new JScrollPane(getJPanel4()), BorderLayout.CENTER); // Generated
         }
         return jPanel2;
     }
@@ -1370,31 +1385,8 @@ public class FrontEnd extends JFrame {
     private JPanel getJPanel3() {
         if (jPanel3 == null) {
             jPanel3 = new JPanel();
-            jPanel3.setLayout(new BorderLayout()); // Generated
-            jPanel3.add(new JLabel("<html><u>Search results</u></html>"), BorderLayout.CENTER); // Generated
-            JButton closeSearchResultsButton = new JButton(new AbstractAction(){
-                private static final long serialVersionUID = 1L;
-                public void actionPerformed(ActionEvent e) {
-                    getJPanel2().setVisible(false);
-                }
-            });
-            closeSearchResultsButton.setIcon(ICON_CLOSE);
-            closeSearchResultsButton.setPreferredSize(new Dimension(18, 18));
-            jPanel3.add(closeSearchResultsButton, BorderLayout.EAST); // Generated
         }
         return jPanel3;
-    }
-
-    /**
-     * This method initializes jPanel4
-     * 
-     * @return javax.swing.JPanel
-     */
-    private JPanel getJPanel4() {
-        if (jPanel4 == null) {
-            jPanel4 = new JPanel();
-        }
-        return jPanel4;
     }
 
     /**
@@ -1757,15 +1749,11 @@ public class FrontEnd extends JFrame {
                                 JOptionPane.OK_CANCEL_OPTION);
                         if (option == JOptionPane.OK_OPTION && !Validator.isNullOrBlank(searchExpressionTF.getText())) {
                             
-                            JPanel entryPathItemsPanel = getJPanel4();
-                            entryPathItemsPanel.setVisible(false);
-                            entryPathItemsPanel.removeAll();
+                            JPanel entryPathItemsPanel = new JPanel();
                             entryPathItemsPanel.setLayout(new BorderLayout());
                             processLabel.setText("searching...");
                             entryPathItemsPanel.add(processLabel, BorderLayout.CENTER);
-                            entryPathItemsPanel.setVisible(true);
-                            getJPanel2().setPreferredSize(new Dimension(FrontEnd.getInstance().getWidth(), FrontEnd.getInstance().getHeight()/4));
-                            getJPanel2().setVisible(true);
+                            displayBottomPanel("Search results", entryPathItemsPanel);
 
                             if (lastSearchCriteria == null) {
                                 lastSearchCriteria = new SearchCriteria();
@@ -1842,7 +1830,6 @@ public class FrontEnd extends JFrame {
                                     entryPathItemsPanel.add(p);
                                 }
                                 entryPathItemsPanel.setVisible(true);
-                                getJPanel2().setVisible(true);
                             }
                         }
                     } catch (Throwable t) {
