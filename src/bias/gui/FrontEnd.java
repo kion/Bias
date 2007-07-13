@@ -56,6 +56,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -277,6 +278,8 @@ public class FrontEnd extends JFrame {
 
     private JPanel jPanel3 = null;
 
+    private JSplitPane jSplitPane = null;
+
     private JToolBar jToolBar2 = null;
 
     private JButton jButton6 = null;
@@ -403,7 +406,7 @@ public class FrontEnd extends JFrame {
      * @return void
      */
     private void initialize() {
-        this.setSize(new Dimension(772, 535)); // Generated
+        this.setSize(new Dimension(772, 535));
         try {
             this.setTitle("Bias");
             this.setIconImage(ICON_APP.getImage());
@@ -939,8 +942,8 @@ public class FrontEnd extends JFrame {
         getJPanel2().setVisible(false);
         getJPanel2().removeAll();
         getJPanel2().setLayout(new BorderLayout());
-        getJPanel3().setLayout(new BorderLayout()); // Generated
-        getJPanel3().add(new JLabel("<html><u>" + title + "</u></html>"), BorderLayout.CENTER); // Generated
+        getJPanel3().setLayout(new BorderLayout());
+        getJPanel3().add(new JLabel("<html><u>" + title + "</u></html>"), BorderLayout.CENTER);
         JButton closeSearchResultsButton = new JButton(new AbstractAction(){
             private static final long serialVersionUID = 1L;
             public void actionPerformed(ActionEvent e) {
@@ -949,10 +952,10 @@ public class FrontEnd extends JFrame {
         });
         closeSearchResultsButton.setIcon(ICON_CLOSE);
         closeSearchResultsButton.setPreferredSize(new Dimension(18, 18));
-        getJPanel3().add(closeSearchResultsButton, BorderLayout.EAST); // Generated
+        getJPanel3().add(closeSearchResultsButton, BorderLayout.EAST);
         getJPanel2().add(getJPanel3(), BorderLayout.NORTH);
         getJPanel2().add(new JScrollPane(panel), BorderLayout.CENTER);
-        getJPanel2().setPreferredSize(new Dimension(FrontEnd.getInstance().getWidth(), FrontEnd.getInstance().getHeight()/4));
+        getJSplitPane().setDividerLocation(FrontEnd.getInstance().getHeight()/5*3);
         getJPanel2().setVisible(true);
     }
 
@@ -1221,9 +1224,8 @@ public class FrontEnd extends JFrame {
         if (jContentPane == null) {
             jContentPane = new JPanel();
             jContentPane.setLayout(new BorderLayout());
-            jContentPane.add(getJPanel(), BorderLayout.NORTH); // Generated
-            jContentPane.add(getJTabbedPane(), BorderLayout.CENTER);
-            jContentPane.add(getJPanel2(), BorderLayout.SOUTH); // Generated
+            jContentPane.add(getJPanel(), BorderLayout.NORTH);
+            jContentPane.add(getJSplitPane(), BorderLayout.CENTER);
         }
         return jContentPane;
     }
@@ -1236,7 +1238,7 @@ public class FrontEnd extends JFrame {
     private JTabbedPane getJTabbedPane() {
         if (jTabbedPane == null) {
             jTabbedPane = new JTabbedPane();
-            jTabbedPane.setBackground(null); // Generated
+            jTabbedPane.setBackground(null);
             jTabbedPane.setTabPlacement(JTabbedPane.LEFT);
             addTabPaneListeners(jTabbedPane);
         }
@@ -1251,16 +1253,16 @@ public class FrontEnd extends JFrame {
     private JToolBar getJToolBar() {
         if (jToolBar == null) {
             jToolBar = new JToolBar();
-            jToolBar.setFloatable(false); // Generated
-            jToolBar.add(getJButton7()); // Generated
-            jToolBar.add(getJButton2()); // Generated
-            jToolBar.add(getJButton3()); // Generated
+            jToolBar.setFloatable(false);
+            jToolBar.add(getJButton7());
+            jToolBar.add(getJButton2());
+            jToolBar.add(getJButton3());
             jToolBar.add(getJButton4());
-            jToolBar.add(getJButton()); // Generated
-            jToolBar.add(getJButton5()); // Generated
-            jToolBar.add(getJButton1()); // Generated
-            jToolBar.add(getJButton12()); // Generated
-            jToolBar.add(getJButton11()); // Generated
+            jToolBar.add(getJButton());
+            jToolBar.add(getJButton5());
+            jToolBar.add(getJButton1());
+            jToolBar.add(getJButton12());
+            jToolBar.add(getJButton11());
             jToolBar.add(getJButton10());
         }
         return jToolBar;
@@ -1274,7 +1276,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton() {
         if (jButton == null) {
             jButton = new JButton(addRootEntryAction);
-            jButton.setToolTipText("add root entry"); // Generated
+            jButton.setToolTipText("add root entry");
             jButton.setIcon(controlIcons.getIconRootEntry());
         }
         return jButton;
@@ -1288,7 +1290,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton5() {
         if (jButton5 == null) {
             jButton5 = new JButton(addEntryAction);
-            jButton5.setToolTipText("add entry"); // Generated
+            jButton5.setToolTipText("add entry");
             jButton5.setIcon(controlIcons.getIconEntry());
         }
         return jButton5;
@@ -1302,7 +1304,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton11() {
         if (jButton11 == null) {
             jButton11 = new JButton(changePasswordAction);
-            jButton11.setToolTipText("change password"); // Generated
+            jButton11.setToolTipText("change password");
             jButton11.setIcon(controlIcons.getIconChangePassword());
         }
         return jButton11;
@@ -1316,7 +1318,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton12() {
         if (jButton12 == null) {
             jButton12 = new JButton(searchAction);
-            jButton12.setToolTipText("search"); // Generated
+            jButton12.setToolTipText("search");
             jButton12.setIcon(controlIcons.getIconSearch());
         }
         return jButton12;
@@ -1330,7 +1332,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton1() {
         if (jButton1 == null) {
             jButton1 = new JButton(deleteEntryOrCategoryAction);
-            jButton1.setToolTipText("delete active item"); // Generated
+            jButton1.setToolTipText("delete active item");
             jButton1.setIcon(controlIcons.getIconDelete());
         }
         return jButton1;
@@ -1344,7 +1346,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton2() {
         if (jButton2 == null) {
             jButton2 = new JButton(importDataAction);
-            jButton2.setToolTipText("import data from another Bias JAR"); // Generated
+            jButton2.setToolTipText("import data from another Bias JAR");
             jButton2.setIcon(controlIcons.getIconImport());
         }
         return jButton2;
@@ -1358,11 +1360,26 @@ public class FrontEnd extends JFrame {
     private JPanel getJPanel() {
         if (jPanel == null) {
             jPanel = new JPanel();
-            jPanel.setLayout(new BorderLayout()); // Generated
-            jPanel.add(getJToolBar(), BorderLayout.CENTER); // Generated
-            jPanel.add(getJToolBar2(), BorderLayout.EAST); // Generated
+            jPanel.setLayout(new BorderLayout());
+            jPanel.add(getJToolBar(), BorderLayout.CENTER);
+            jPanel.add(getJToolBar2(), BorderLayout.EAST);
         }
         return jPanel;
+    }
+
+    /**
+     * This method initializes jSplitPane
+     * 
+     * @return javax.swing.JSplitPane
+     */
+    private JSplitPane getJSplitPane() {
+        if (jSplitPane == null) {
+            jSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+            jSplitPane.setDividerSize(3);
+            jSplitPane.setTopComponent(getJTabbedPane());
+            jSplitPane.setBottomComponent(getJPanel2());
+        }
+        return jSplitPane;
     }
 
     /**
@@ -1373,6 +1390,7 @@ public class FrontEnd extends JFrame {
     private JPanel getJPanel2() {
         if (jPanel2 == null) {
             jPanel2 = new JPanel();
+            jPanel2.setVisible(false);
         }
         return jPanel2;
     }
@@ -1397,11 +1415,11 @@ public class FrontEnd extends JFrame {
     private JToolBar getJToolBar2() {
         if (jToolBar2 == null) {
             jToolBar2 = new JToolBar();
-            jToolBar2.setFloatable(false); // Generated
-            jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT); // Generated
-            jToolBar2.add(getJButton6()); // Generated
-            jToolBar2.add(getJButton8()); // Generated
-            jToolBar2.add(getJButton9()); // Generated
+            jToolBar2.setFloatable(false);
+            jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+            jToolBar2.add(getJButton6());
+            jToolBar2.add(getJButton8());
+            jToolBar2.add(getJButton9());
         }
         return jToolBar2;
     }
@@ -1414,7 +1432,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton6() {
         if (jButton6 == null) {
             jButton6 = new JButton(displayAboutInfoAction);
-            jButton6.setToolTipText("about Bias"); // Generated
+            jButton6.setToolTipText("about Bias");
             jButton6.setIcon(controlIcons.getIconAbout());
         }
         return jButton6;
@@ -1428,7 +1446,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton7() {
         if (jButton7 == null) {
             jButton7 = new JButton(saveAction);
-            jButton7.setToolTipText("save & exit"); // Generated
+            jButton7.setToolTipText("save & exit");
             jButton7.setIcon(controlIcons.getIconSave());
         }
         return jButton7;
@@ -1442,7 +1460,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton8() {
         if (jButton8 == null) {
             jButton8 = new JButton(manageAddOnsAction);
-            jButton8.setToolTipText("manage add-ons"); // Generated
+            jButton8.setToolTipText("manage add-ons");
             jButton8.setIcon(controlIcons.getIconAddOns());
         }
         return jButton8;
@@ -1456,7 +1474,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton9() {
         if (jButton9 == null) {
             jButton9 = new JButton(preferencesAction);
-            jButton9.setToolTipText("preferences"); // Generated
+            jButton9.setToolTipText("preferences");
             jButton9.setIcon(controlIcons.getIconPreferences());
         }
         return jButton9;
@@ -1470,7 +1488,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton10() {
         if (jButton10 == null) {
             jButton10 = new JButton(discardUnsavedChangesAction);
-            jButton10.setToolTipText("exit & discard unsaved changes"); // Generated
+            jButton10.setToolTipText("exit & discard unsaved changes");
             jButton10.setIcon(controlIcons.getIconDiscard());
         }
         return jButton10;
@@ -1484,7 +1502,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton3() {
         if (jButton3 == null) {
             jButton3 = new JButton(addRootCategoryAction);
-            jButton3.setToolTipText("add root category"); // Generated
+            jButton3.setToolTipText("add root category");
             jButton3.setIcon(controlIcons.getIconRootCategory());
         }
         return jButton3;
