@@ -110,6 +110,36 @@
 			</manifest>
 		</jar>	
 	</target>
+	<!-- ================================= 
+          target: BuildAddOn_SimpleSearch
+         ================================= -->
+	<target name="BuildAddOn_SimpleSearch" description="SimpleSearch Add-On" depends="prepare">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/extension/SimpleSearch/** bias/res/SimpleSearch/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/ext/SimpleSearch.jar" 
+			includes="*/**" />
+		<jar basedir="tmp" destfile="build/SimpleSearch.jar" includes="ext/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="SimpleSearch" />
+			</manifest>
+		</jar>	
+	</target>
+	<!-- ================================= 
+          target: BuildAddOn_SimpleStats
+         ================================= -->
+	<target name="BuildAddOn_SimpleStats" description="SimpleStats Add-On" depends="prepare">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/extension/SimpleStats/** bias/res/SimpleStats/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/ext/SimpleStats.jar" 
+			includes="*/**" />
+		<jar basedir="tmp" destfile="build/SimpleStats.jar" includes="ext/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="SimpleStats" />
+			</manifest>
+		</jar>	
+	</target>
 
 	<!-- ================================= 
           target: prepare

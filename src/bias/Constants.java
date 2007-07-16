@@ -74,6 +74,7 @@ public class Constants {
     public static final String METADATA_FILE = "metadata.xml";
     public static final String ICONS_CONFIG_FILE = "icons.conf";
     public static final String DATA_FILE_SUFFIX = ".data";
+    public static final String TOOL_DATA_FILE_SUFFIX = ".tooldata";
     public static final String FILE_SUFFIX_PATTERN = "\\..*$";
     public static final String CLASS_FILE_SUFFIX = ".class";
     public static final String MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE = "Bias-Add-On-Name";

@@ -23,7 +23,7 @@ import javax.swing.JToolBar;
 import javax.swing.border.LineBorder;
 
 import bias.annotation.AddOnAnnotation;
-import bias.extension.Extension;
+import bias.extension.EntryExtension;
 import bias.extension.Graffiti.brush.LiveBrush;
 import bias.extension.Graffiti.brush.PaintBrush;
 
@@ -37,7 +37,7 @@ import com.sun.image.codec.jpeg.ImageFormatException;
         version="0.1.1",
         author="kion",
         description = "Simple painting component")
-public class Graffiti extends Extension {
+public class Graffiti extends EntryExtension {
 
     private static final long serialVersionUID = 1L;
     

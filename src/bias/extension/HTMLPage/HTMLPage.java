@@ -65,7 +65,7 @@ import bias.Constants;
 import bias.annotation.AddOnAnnotation;
 import bias.core.Attachment;
 import bias.core.BackEnd;
-import bias.extension.Extension;
+import bias.extension.EntryExtension;
 import bias.gui.FrontEnd;
 import bias.gui.VisualEntryDescriptor;
 import bias.gui.utils.ImageFileChooser;
@@ -78,7 +78,7 @@ import bias.utils.Validator;
  */
 
 @AddOnAnnotation(version = "0.4.5", author = "kion", description = "WYSIWYG HTML page editor")
-public class HTMLPage extends Extension {
+public class HTMLPage extends EntryExtension {
 
     private static final long serialVersionUID = 1L;
 

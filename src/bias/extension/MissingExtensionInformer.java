@@ -20,7 +20,7 @@ import bias.core.DataEntry;
         version="1.0",
         author="kion",
         description = "Special extension to inform about missing extensions")
-public class MissingExtensionInformer extends Extension {
+public class MissingExtensionInformer extends EntryExtension {
 
     private static final long serialVersionUID = 1L;
 

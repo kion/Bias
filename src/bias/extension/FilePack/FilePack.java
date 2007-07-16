@@ -31,7 +31,7 @@ import bias.Constants;
 import bias.annotation.AddOnAnnotation;
 import bias.core.Attachment;
 import bias.core.BackEnd;
-import bias.extension.Extension;
+import bias.extension.EntryExtension;
 import bias.gui.FrontEnd;
 import bias.utils.AppManager;
 import bias.utils.FSUtils;
@@ -47,7 +47,7 @@ import bias.utils.PropertiesUtils;
         version="0.2.0",
         author="kion",
         description = "Simple file pack")
-public class FilePack extends Extension {
+public class FilePack extends EntryExtension {
 
 	private static final long serialVersionUID = 1L;
     

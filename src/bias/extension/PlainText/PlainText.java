@@ -26,7 +26,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import bias.annotation.AddOnAnnotation;
-import bias.extension.Extension;
+import bias.extension.EntryExtension;
 import bias.utils.PropertiesUtils;
 
 /**
@@ -37,7 +37,7 @@ import bias.utils.PropertiesUtils;
         version="0.9.3",
         author="kion",
         description = "Simple plain text editor")
-public class PlainText extends Extension {
+public class PlainText extends EntryExtension {
 
     private static final long serialVersionUID = 1L;
 

@@ -1,7 +1,7 @@
 /**
  * Created on Jul 6, 2007
  */
-package bias.core;
+package bias.extension.SimpleSearch;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;

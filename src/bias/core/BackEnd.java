@@ -126,7 +126,7 @@ public class BackEnd {
     
     private Map<UUID, byte[]> icons = new LinkedHashMap<UUID, byte[]>();
     
-    private Map<String, DataEntry> identifiedData;
+    private Map<String, DataEntry> identifiedData = new LinkedHashMap<String, DataEntry>();
     
     private DataCategory data;
     
@@ -134,11 +134,9 @@ public class BackEnd {
     
     private Document prefs;
     
-    private Properties config;
+    private Properties config = new Properties();
     
     public void load() throws Exception {
-        identifiedData = new LinkedHashMap<String, DataEntry>();
-        config = new Properties();
         byte[] data = null;
         byte[] decryptedData = null;
         // data files
@@ -500,6 +498,26 @@ public class BackEnd {
         }
     }
 
+    public byte[] getToolData(String extension) throws Exception {
+        byte[] data = null;
+        if (!Validator.isNullOrBlank(extension)) {
+            String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+            File extDataFile = new File(Constants.DATA_DIR, extensionName + Constants.TOOL_DATA_FILE_SUFFIX);
+            if (extDataFile.exists()) {
+                data = FSUtils.readFile(extDataFile);
+            }
+        }
+        return data;
+    }
+
+    public void storeToolData(String extension, byte[] data) throws Exception {
+        if (!Validator.isNullOrBlank(extension) && data != null) {
+            String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+            File extDataFile = new File(Constants.DATA_DIR, extensionName + Constants.TOOL_DATA_FILE_SUFFIX);
+            FSUtils.writeFile(extDataFile, data);
+        }
+    }
+
     public Collection<String> getExtensions() {
         Collection<String> extensions = new LinkedHashSet<String>();
         for (String name : classPathEntries) {
@@ -656,6 +674,8 @@ public class BackEnd {
             }
         }
         storeClassPathConfiguration();
+        File extensionDataFile = new File(Constants.DATA_DIR, extensionName + Constants.TOOL_DATA_FILE_SUFFIX);
+        FSUtils.delete(extensionDataFile);
         File extensionConfigFile = new File(Constants.CONFIG_DIR, extensionName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
         FSUtils.delete(extensionConfigFile);
     }
