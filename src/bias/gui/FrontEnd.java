@@ -108,7 +108,7 @@ public class FrontEnd extends JFrame {
     private static final ImageIcon ICON_CLOSE = new ImageIcon(Constants.class.getResource("/bias/res/close.png"));
 
     private static final String RESTART_MESSAGE = "Changes will take effect after Bias restart";
-
+    
     private static final Placement[] PLACEMENTS = new Placement[] { new Placement(JTabbedPane.TOP),
             new Placement(JTabbedPane.LEFT), new Placement(JTabbedPane.RIGHT),
             new Placement(JTabbedPane.BOTTOM) };
@@ -2072,6 +2072,10 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 }
+                for (Entry<String, String> extensionEntry : BackEnd.getInstance().getNewExtensions().entrySet()) {
+                    String extension = extensionEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                    extModel.addRow(new Object[]{extension, null, null, extensionEntry.getValue()});
+                }
                 JButton extConfigButt = new JButton("Configure selected");
                 extConfigButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -2105,7 +2109,7 @@ public class FrontEnd extends JFrame {
                                 for (File file : extensionFileChooser.getSelectedFiles()) {
                                     String installedExt = BackEnd.getInstance().installExtension(file);
                                     installedExt = installedExt.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                    extModel.addRow(new Object[]{installedExt,null,null,file.getName()});
+                                    extModel.addRow(new Object[]{installedExt, null, null, Constants.COMMENT_ADDON_INSTALLED});
                                     modified = true;
                                 }
                             } catch (Exception ex) {
@@ -2211,6 +2215,10 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 }
+                for (Entry<String, String> lafEntry : BackEnd.getInstance().getNewLAFs().entrySet()) {
+                    String laf = lafEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                    lafModel.addRow(new Object[]{laf, null, null, lafEntry.getValue()});
+                }
                 JButton lafActivateButt = new JButton("(Re)Activate Look-&-Feel");
                 lafActivateButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -2254,7 +2262,7 @@ public class FrontEnd extends JFrame {
                                 for (File file : lafFileChooser.getSelectedFiles()) {
                                     String installedLAF = BackEnd.getInstance().installLAF(file);
                                     installedLAF = installedLAF.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                    lafModel.addRow(new Object[]{installedLAF,null,null,file.getName()});
+                                    lafModel.addRow(new Object[]{installedLAF, null, null, Constants.COMMENT_ADDON_INSTALLED});
                                     modified = true;
                                 }
                             } catch (Exception ex) {

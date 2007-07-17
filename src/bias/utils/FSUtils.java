@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 
 /**
  * @author kion
@@ -48,6 +49,17 @@ public class FSUtils {
         }
         bos.close();
         bais.close();
+	}
+	
+	public static void copyFile(File in, File out) throws IOException {
+	    if (in.exists() && in != null && out != null) {
+	        if (!out.exists()) {
+	            out.createNewFile();
+	        }
+	        FileChannel inCh = new FileInputStream(in).getChannel();
+	        FileChannel outCh = new FileOutputStream(out).getChannel();
+	        inCh.transferTo(0, inCh.size(), outCh);
+	    }
 	}
     
     public static void delete(File file) {

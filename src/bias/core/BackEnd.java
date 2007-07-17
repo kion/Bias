@@ -66,6 +66,30 @@ public class BackEnd {
     
 	private static BackEnd instance;
     
+    private static String password;
+    
+    private static Collection<String> loadedExtensions;
+
+    private static Map<String, String> newExtensions = new LinkedHashMap<String, String>();
+
+    private static Collection<String> loadedLAFs;
+    
+    private static Map<String, String> newLAFs = new LinkedHashMap<String, String>();
+
+    private static Collection<String> classPathEntries = new ArrayList<String>();
+    
+    private Map<UUID, byte[]> icons = new LinkedHashMap<UUID, byte[]>();
+    
+    private Map<String, DataEntry> identifiedData = new LinkedHashMap<String, DataEntry>();
+    
+    private DataCategory data;
+    
+    private Document metadata;
+    
+    private Document prefs;
+    
+    private Properties config = new Properties();
+    
     private BackEnd() {
         try {
             CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, password);
@@ -115,26 +139,6 @@ public class BackEnd {
         cipher.init(mode, key, paramSpec);
         return cipher;
     }
-    
-    private static String password;
-    
-    private static Collection<String> loadedExtensions;
-
-    private static Collection<String> loadedLAFs;
-    
-    private static Collection<String> classPathEntries = new ArrayList<String>();
-    
-    private Map<UUID, byte[]> icons = new LinkedHashMap<UUID, byte[]>();
-    
-    private Map<String, DataEntry> identifiedData = new LinkedHashMap<String, DataEntry>();
-    
-    private DataCategory data;
-    
-    private Document metadata;
-    
-    private Document prefs;
-    
-    private Properties config = new Properties();
     
     public void load() throws Exception {
         byte[] data = null;
@@ -253,9 +257,7 @@ public class BackEnd {
                 // if local config file does not exist, use imported one, 
                 // otherwise - skip it (already existing local configuration will be used)
                 if (!localConfigFile.exists()) {
-                    localConfigFile.createNewFile();
-                    byte[] configData = FSUtils.readFile(configFile);
-                    FSUtils.writeFile(localConfigFile, configData);
+                    FSUtils.copyFile(configFile, localConfigFile);
                 }
             }
         }
@@ -288,6 +290,51 @@ public class BackEnd {
                     FSUtils.writeFile(attFile, encryptedData);
                 }
             }
+        }
+        // classpath and addons/libs files
+        File classPathConfigFile = new File(configDir, Constants.CLASSPATH_CONFIG_FILE);
+        if (classPathConfigFile.exists()) {
+            // read classpath entries
+            byte[] cpData = FSUtils.readFile(classPathConfigFile);
+            if (cpData != null) {
+                for (String cpEntry : new String(cpData).split(Constants.CLASSPATH_SEPARATOR)) {
+                    if (!classPathEntries.contains(cpEntry)) {
+                        String[] addonFilePath = cpEntry.split(Constants.PATH_SEPARATOR);
+                        if (addonFilePath.length == 2) {
+                            File dir = new File(importDir, addonFilePath[0]);
+                            File addonFile = new File(dir, addonFilePath[1]);
+                            if (addonFile.exists()) {
+                                File localDir = new File(Constants.ROOT_DIR, addonFilePath[0]);
+                                File localAddOnFile = new File(localDir, addonFilePath[1]);
+                                if (localDir.exists() && !localAddOnFile.exists()) {
+                                    FSUtils.copyFile(addonFile, localAddOnFile);
+                                    classPathEntries.add(cpEntry);
+                                    if (!cpEntry.startsWith(Constants.LIBS_DIR.getName())) {
+                                        if (cpEntry.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
+                                            String extension = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                                            extension = extension.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                                            extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                                        + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
+                                            if (!newExtensions.keySet().contains(extension)) {
+                                                newExtensions.put(extension, Constants.COMMENT_ADDON_IMPORTED);
+                                            }
+                                        } else if (cpEntry.matches(Constants.LAF_JAR_FILE_PATTERN)) {
+                                            String laf = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                                            laf = laf.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                                            laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                                        + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                                            if (!newLAFs.keySet().contains(laf)) {
+                                                newLAFs.put(laf, Constants.COMMENT_ADDON_IMPORTED);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            storeClassPathConfiguration();
         }
         // parse metadata file
         DataCategory importedData = parseMetadata(metadata, importedIdentifiedData, existingIDs);
@@ -518,16 +565,22 @@ public class BackEnd {
         }
     }
 
+    public Map<String, String> getNewExtensions() {
+        return newExtensions;
+    }
+    
     public Collection<String> getExtensions() {
         Collection<String> extensions = new LinkedHashSet<String>();
         for (String name : classPathEntries) {
             if (!name.startsWith(Constants.LIBS_DIR.getName())) {
                 name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
                 if (name.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
-                    String extension = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    String extension = name.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                 + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-                    extensions.add(extension);
+                    if (!newExtensions.keySet().contains(extension)) {
+                        extensions.add(extension);
+                    }
                 }
             }
         }
@@ -652,6 +705,7 @@ public class BackEnd {
                     storeClassPathConfiguration();
                 }
                 installedExtensionName = fullExtName;
+                newExtensions.put(installedExtensionName, Constants.COMMENT_ADDON_INSTALLED);
             }
         } else {
             throw new Exception("Invalid extension pack!");
@@ -668,7 +722,7 @@ public class BackEnd {
             String addonFileName = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
             if (addonFileName.matches(Constants.EXTENSION_JAR_FILE_PATTERN)
                     && addonFileName.contains(extensionName)) {
-                removeClassPathEntry(cpEntry);
+                classPathEntries.remove(cpEntry);
             }
         }
         storeClassPathConfiguration();
@@ -676,18 +730,25 @@ public class BackEnd {
         FSUtils.delete(extensionDataFile);
         File extensionConfigFile = new File(Constants.CONFIG_DIR, extensionName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
         FSUtils.delete(extensionConfigFile);
+        newExtensions.remove(extension);
     }
         
+    public Map<String, String> getNewLAFs() {
+        return newLAFs;
+    }
+    
     public Collection<String> getLAFs() {
         Collection<String> lafs = new LinkedHashSet<String>();
         for (String name : classPathEntries) {
             if (!name.startsWith(Constants.LIBS_DIR.getName())) {
                 name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
                 if (name.matches(Constants.LAF_JAR_FILE_PATTERN)) {
-                    String laf = name.replaceAll(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    String laf = name.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                 + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                    lafs.add(laf);
+                    if (!newLAFs.keySet().contains(laf)) {
+                        lafs.add(laf);
+                    }
                 }
             }
         }
@@ -812,6 +873,7 @@ public class BackEnd {
                     storeClassPathConfiguration();
                 }
                 installedLAFName = fullLAFName;
+                newLAFs.put(installedLAFName, Constants.COMMENT_ADDON_INSTALLED);
             }
         } else {
             throw new Exception("Invalid LAF pack!");
@@ -828,12 +890,13 @@ public class BackEnd {
             String addonFileName = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
             if (addonFileName.matches(Constants.LAF_JAR_FILE_PATTERN)
                     && addonFileName.contains(lafName)) {
-                removeClassPathEntry(cpEntry);
+                classPathEntries.remove(cpEntry);
             }
         }
         storeClassPathConfiguration();
         File lafConfigFile = new File(Constants.CONFIG_DIR, lafName + Constants.LAF_CONFIG_FILE_SUFFIX);
         FSUtils.delete(lafConfigFile);
+        newLAFs.remove(laf);
     }
     
     private void addClassPathEntry(File jarFile) {
@@ -841,10 +904,6 @@ public class BackEnd {
         URI jarFileURI = jarFile.toURI();
         URI relativeURI = rootURI.relativize(jarFileURI);
         classPathEntries.add(relativeURI.toString());
-    }
-    
-    private void removeClassPathEntry(String cpEntry) {
-        classPathEntries.remove(cpEntry);
     }
     
     private void storeClassPathConfiguration() throws Exception {

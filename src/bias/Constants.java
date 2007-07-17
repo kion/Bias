@@ -46,6 +46,9 @@ public class Constants {
         }
     }
     
+    public static final String COMMENT_ADDON_IMPORTED = "Imported  [restart needed]";
+    public static final String COMMENT_ADDON_INSTALLED = "Installed [restart needed]";
+    
     public static final String UNICODE_ENCODING = "UTF-8";
     
     public static final String FILE_PROTOCOL_PREFIX = "file:";
@@ -58,6 +61,7 @@ public class Constants {
     public static final String NEW_LINE = "\n";
 
     public static final String PATH_PREFIX_PATTERN = "^.*/";
+    public static final String PATH_SEPARATOR = "/";
     
     public static final String ADDON_LIB_FILENAME_SEPARATOR = "_";
     public static final String CLASSPATH_SEPARATOR = ":";
