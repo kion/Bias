@@ -661,16 +661,14 @@ public class BackEnd {
     
     public void uninstallExtension(String extension) throws Exception {
         String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-        for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
-            if (addonFile.getName().matches(Constants.EXTENSION_JAR_FILE_PATTERN)
-                    && addonFile.getName().contains(extensionName)) {
-                removeClassPathEntry(addonFile);
-            }
-        }
-        for (File addonLibFile : Constants.LIBS_DIR.listFiles()) {
-            if (addonLibFile.getName().matches(Constants.EXTENSION_JAR_FILE_PATTERN)
-                    && addonLibFile.getName().contains(extensionName)) {
-                removeClassPathEntry(addonLibFile);
+        Collection<String> currentClassPathEntries = new ArrayList<String>(classPathEntries);
+        Iterator<String> it = currentClassPathEntries.iterator();
+        while (it.hasNext()) {
+            String cpEntry = it.next();
+            String addonFileName = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+            if (addonFileName.matches(Constants.EXTENSION_JAR_FILE_PATTERN)
+                    && addonFileName.contains(extensionName)) {
+                removeClassPathEntry(cpEntry);
             }
         }
         storeClassPathConfiguration();
@@ -823,16 +821,14 @@ public class BackEnd {
     
     public void uninstallLAF(String laf) throws Exception {
         String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-        for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
-            if (addonFile.getName().matches(Constants.LAF_JAR_FILE_PATTERN)
-                    && addonFile.getName().contains(lafName)) {
-                removeClassPathEntry(addonFile);
-            }
-        }
-        for (File addonLibFile : Constants.LIBS_DIR.listFiles()) {
-            if (addonLibFile.getName().matches(Constants.LAF_JAR_FILE_PATTERN)
-                    && addonLibFile.getName().contains(lafName)) {
-                removeClassPathEntry(addonLibFile);
+        Collection<String> currentClassPathEntries = new ArrayList<String>(classPathEntries);
+        Iterator<String> it = currentClassPathEntries.iterator();
+        while (it.hasNext()) {
+            String cpEntry = it.next();
+            String addonFileName = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+            if (addonFileName.matches(Constants.LAF_JAR_FILE_PATTERN)
+                    && addonFileName.contains(lafName)) {
+                removeClassPathEntry(cpEntry);
             }
         }
         storeClassPathConfiguration();
@@ -847,11 +843,8 @@ public class BackEnd {
         classPathEntries.add(relativeURI.toString());
     }
     
-    private void removeClassPathEntry(File jarFile) {
-        URI rootURI = Constants.ROOT_DIR.toURI();
-        URI jarFileURI = jarFile.toURI();
-        URI relativeURI = rootURI.relativize(jarFileURI);
-        classPathEntries.remove(relativeURI.toString());
+    private void removeClassPathEntry(String cpEntry) {
+        classPathEntries.remove(cpEntry);
     }
     
     private void storeClassPathConfiguration() throws Exception {

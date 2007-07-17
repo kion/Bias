@@ -612,9 +612,11 @@ public class FrontEnd extends JFrame {
     }
 
     private void storeToolsDataAndSettings() throws Throwable {
-        for (ToolExtension tool : tools) {
-            BackEnd.getInstance().storeToolData(tool.getClass().getName(), tool.serializeData());
-            BackEnd.getInstance().storeExtensionSettings(tool.getClass().getName(), tool.serializeSettings());
+        if (tools != null) {
+            for (ToolExtension tool : tools) {
+                BackEnd.getInstance().storeToolData(tool.getClass().getName(), tool.serializeData());
+                BackEnd.getInstance().storeExtensionSettings(tool.getClass().getName(), tool.serializeSettings());
+            }
         }
     }
 

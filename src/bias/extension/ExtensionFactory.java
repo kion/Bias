@@ -110,7 +110,7 @@ public class ExtensionFactory {
         Map<String, Class<? extends EntryExtension>> types = new LinkedHashMap<String, Class<? extends EntryExtension>>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
             String annotationStr;
-            Class<? extends EntryExtension> extClass = (Class<EntryExtension>) Class.forName(extension);
+            Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
             // extension instantiation test
             Extension ext = newExtension(extClass);
             if (ext instanceof EntryExtension) {
@@ -125,7 +125,7 @@ public class ExtensionFactory {
                                     + " [ Extension Info Is Missing ]";
                 }
                 // extension is ok, add it to the list
-                types.put(annotationStr, extClass);
+                types.put(annotationStr, (Class<? extends EntryExtension>) extClass);
             }
         }
         return types;
@@ -136,7 +136,7 @@ public class ExtensionFactory {
         Map<String, Class<? extends ToolExtension>> types = new LinkedHashMap<String, Class<? extends ToolExtension>>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
             String annotationStr;
-            Class<? extends ToolExtension> extClass = (Class<ToolExtension>) Class.forName(extension);
+            Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
             // extension instantiation test
             Extension ext = newExtension(extClass);
             if (ext instanceof ToolExtension) {
@@ -151,7 +151,7 @@ public class ExtensionFactory {
                                     + " [ Extension Info Is Missing ]";
                 }
                 // extension is ok, add it to the list
-                types.put(annotationStr, extClass);
+                types.put(annotationStr, (Class<? extends ToolExtension>) extClass);
             }
         }
         return types;
