@@ -82,11 +82,11 @@ public class ExtensionFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public Map<String, Class<Extension>> getAnnotatedExtensions() throws Throwable {
-        Map<String, Class<Extension>> types = new LinkedHashMap<String, Class<Extension>>();
+    public Map<String, Class<? extends Extension>> getAnnotatedExtensions() throws Throwable {
+        Map<String, Class<? extends Extension>> types = new LinkedHashMap<String, Class<? extends Extension>>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
             String annotationStr;
-            Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
+            Class<? extends Extension> extClass = (Class<? extends Extension>) Class.forName(extension);
             AddOnAnnotation extAnn = 
                 (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
             if (extAnn != null) {

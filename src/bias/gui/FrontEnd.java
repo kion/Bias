@@ -190,7 +190,7 @@ public class FrontEnd extends JFrame {
     
     private static FrontEnd instance;
     
-    private static Collection<ToolExtension> tools;
+    private static Map<Class<? extends ToolExtension>, ToolExtension> tools;
 
     // use default control icons initially
     private static ControlIcons controlIcons = new ControlIcons();
@@ -484,9 +484,13 @@ public class FrontEnd extends JFrame {
                         "If extension is configurable, you can adjust its default settings...");
             }
             try {
-                Class<Extension> extensionClass = (Class<Extension>) Class.forName(extension);
-                Extension extensionInstance = ExtensionFactory.getInstance().newExtension(extensionClass);
-                byte[] settings = extensionInstance.configure(null);
+                Class<? extends Extension> extensionClass = (Class<? extends Extension>) Class.forName(extension);
+                Extension extensionInstance = tools.get(extensionClass);
+                if (extensionInstance == null) {
+                    extensionInstance = ExtensionFactory.getInstance().newExtension(extensionClass);
+                }
+                byte[] extSettings = BackEnd.getInstance().getExtensionSettings(extension);
+                byte[] settings = extensionInstance.configure(extSettings);
                 if (settings == null) {
                     settings = new byte[]{};
                 }
@@ -512,7 +516,7 @@ public class FrontEnd extends JFrame {
             displayErrorMessage("Failed to initialize tools!", t);
         }
         if (extensions != null) {
-            tools = new LinkedList<ToolExtension>();
+            tools = new LinkedHashMap<Class<? extends ToolExtension>, ToolExtension>();
             int toolCnt = 0;
             for (Entry<String, Class<? extends ToolExtension>> ext : extensions.entrySet()) {
                 try {
@@ -531,7 +535,7 @@ public class FrontEnd extends JFrame {
                             }
                         });
                         getJToolBar3().add(toolButt);
-                        tools.add(tool);
+                        tools.put(ext.getValue(), tool);
                         toolCnt++;
                     }
                 } catch (Throwable t) {
@@ -613,7 +617,7 @@ public class FrontEnd extends JFrame {
 
     private void storeToolsDataAndSettings() throws Throwable {
         if (tools != null) {
-            for (ToolExtension tool : tools) {
+            for (ToolExtension tool : tools.values()) {
                 BackEnd.getInstance().storeToolData(tool.getClass().getName(), tool.serializeData());
                 BackEnd.getInstance().storeExtensionSettings(tool.getClass().getName(), tool.serializeSettings());
             }
