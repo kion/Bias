@@ -209,6 +209,8 @@ public class BackEnd {
             URI relativeURI = rootURI.relativize(addonFileURI);
             if (!classPathEntries.contains(relativeURI.toString())) {
                 addonFile.delete();
+                String addonName = addonFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                removeAddOnDataAndConfigFiles(addonName);
             }
         }
         // remove lib-files that are not in classpath
@@ -551,7 +553,8 @@ public class BackEnd {
             String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             File extDataFile = new File(Constants.DATA_DIR, extensionName + Constants.TOOL_DATA_FILE_SUFFIX);
             if (extDataFile.exists()) {
-                data = FSUtils.readFile(extDataFile);
+                byte[] decryptedData = FSUtils.readFile(extDataFile);
+                data = CIPHER_DECRYPT.doFinal(decryptedData);
             }
         }
         return data;
@@ -561,7 +564,8 @@ public class BackEnd {
         if (!Validator.isNullOrBlank(extension) && data != null) {
             String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             File extDataFile = new File(Constants.DATA_DIR, extensionName + Constants.TOOL_DATA_FILE_SUFFIX);
-            FSUtils.writeFile(extDataFile, data);
+            byte[] encryptedData = CIPHER_ENCRYPT.doFinal(data);
+            FSUtils.writeFile(extDataFile, encryptedData);
         }
     }
 
@@ -726,13 +730,9 @@ public class BackEnd {
             }
         }
         storeClassPathConfiguration();
-        File extensionDataFile = new File(Constants.DATA_DIR, extensionName + Constants.TOOL_DATA_FILE_SUFFIX);
-        FSUtils.delete(extensionDataFile);
-        File extensionConfigFile = new File(Constants.CONFIG_DIR, extensionName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
-        FSUtils.delete(extensionConfigFile);
         newExtensions.remove(extension);
     }
-        
+    
     public Map<String, String> getNewLAFs() {
         return newLAFs;
     }
@@ -894,11 +894,24 @@ public class BackEnd {
             }
         }
         storeClassPathConfiguration();
-        File lafConfigFile = new File(Constants.CONFIG_DIR, lafName + Constants.LAF_CONFIG_FILE_SUFFIX);
-        FSUtils.delete(lafConfigFile);
         newLAFs.remove(laf);
     }
     
+    private void removeAddOnDataAndConfigFiles(String addonName) {
+        File extensionDataFile = new File(Constants.DATA_DIR, addonName + Constants.TOOL_DATA_FILE_SUFFIX);
+        if (extensionDataFile.exists()) {
+            FSUtils.delete(extensionDataFile);
+        }
+        File extensionConfigFile = new File(Constants.CONFIG_DIR, addonName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
+        if (extensionConfigFile.exists()) {
+            FSUtils.delete(extensionConfigFile);
+        }
+        File lafConfigFile = new File(Constants.CONFIG_DIR, addonName + Constants.LAF_CONFIG_FILE_SUFFIX);
+        if (lafConfigFile.exists()) {
+            FSUtils.delete(lafConfigFile);
+        }
+    }
+        
     private void addClassPathEntry(File jarFile) {
         URI rootURI = Constants.ROOT_DIR.toURI();
         URI jarFileURI = jarFile.toURI();

@@ -2133,7 +2133,6 @@ public class FrontEnd extends JFrame {
                                     extModel.removeRow(idx);
                                     modified = true;
                                 }
-                                displayMessage("Extension(s) have been successfully uninstalled!");
                             }
                         } catch (Exception ex) {
                             displayErrorMessage(ex);
@@ -2276,7 +2275,6 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             if (lafList.getSelectedRowCount() > 0) {
-                                boolean uninstalled = false;
                                 String currentLAF = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
                                 int idx;
                                 while ((idx = lafList.getSelectedRow()) != -1) {
@@ -2292,7 +2290,6 @@ public class FrontEnd extends JFrame {
                                             //... unset it (default one will be used)
                                             config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
                                         }
-                                        uninstalled = true;
                                         modified = true;
                                     } else {
                                         displayErrorMessage("Default Look-&-Feel can not be uninstalled!");
@@ -2300,9 +2297,6 @@ public class FrontEnd extends JFrame {
                                             break;
                                         }
                                     }
-                                }
-                                if (uninstalled) {
-                                    displayMessage("Look-&-Feel(s) have been successfully uninstalled!");
                                 }
                             }
                         } catch (Exception ex) {
