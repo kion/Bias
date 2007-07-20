@@ -517,10 +517,11 @@ public class FrontEnd extends JFrame {
         }
         if (extensions != null) {
             tools = new LinkedHashMap<Class<? extends ToolExtension>, ToolExtension>();
+            Map<String, byte[]> toolsData = BackEnd.getInstance().getToolsData();
             int toolCnt = 0;
             for (Entry<String, Class<? extends ToolExtension>> ext : extensions.entrySet()) {
                 try {
-                    byte[] toolData = BackEnd.getInstance().getToolData(ext.getValue().getName());
+                    byte[] toolData = toolsData.get(ext.getValue().getName());
                     final ToolExtension tool = ExtensionFactory.getInstance().newToolExtension(ext.getValue(), toolData);
                     if (tool.getIcon() != null) {
                         JButton toolButt = new JButton(tool.getIcon());
@@ -611,16 +612,18 @@ public class FrontEnd extends JFrame {
     private void store() throws Throwable {
         collectProperties();
         collectData();
+        collectToolsDataAndStoreToolsSettings();
         BackEnd.getInstance().store();
-        storeToolsDataAndSettings();
     }
 
-    private void storeToolsDataAndSettings() throws Throwable {
+    private void collectToolsDataAndStoreToolsSettings() throws Throwable {
         if (tools != null) {
+            Map<String, byte[]> toolsData = new HashMap<String, byte[]>();
             for (ToolExtension tool : tools.values()) {
-                BackEnd.getInstance().storeToolData(tool.getClass().getName(), tool.serializeData());
+                toolsData.put(tool.getClass().getName(), tool.serializeData());
                 BackEnd.getInstance().storeExtensionSettings(tool.getClass().getName(), tool.serializeSettings());
             }
+            BackEnd.getInstance().setToolsData(toolsData);
         }
     }
 

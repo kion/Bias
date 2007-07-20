@@ -84,6 +84,8 @@ public class BackEnd {
     
     private DataCategory data;
     
+    private Map<String, byte[]> toolsData = new HashMap<String, byte[]>();
+    
     private Document metadata;
     
     private Document prefs;
@@ -143,16 +145,24 @@ public class BackEnd {
     public void load() throws Exception {
         byte[] data = null;
         byte[] decryptedData = null;
-        // data files
         if (Constants.DATA_DIR.exists()) {
             for (File dataFile : Constants.DATA_DIR.listFiles()) {
                 if (dataFile.getName().endsWith(Constants.DATA_FILE_SUFFIX)) {
+                    // data files
                     data = FSUtils.readFile(dataFile);
                     decryptedData = CIPHER_DECRYPT.doFinal(data);
                     String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     DataEntry de = new DataEntry();
                     de.setData(decryptedData);
                     identifiedData.put(entryIDStr, de);
+                } else if (dataFile.getName().endsWith(Constants.TOOL_DATA_FILE_SUFFIX)) {
+                    // tools data files
+                    data = FSUtils.readFile(dataFile);
+                    decryptedData = CIPHER_DECRYPT.doFinal(data);
+                    String tool = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    tool = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                + tool + Constants.PACKAGE_PATH_SEPARATOR + tool;
+                    toolsData.put(tool, decryptedData);
                 }
             }
         }
@@ -454,6 +464,15 @@ public class BackEnd {
         new XMLSerializer(sw, of).serialize(metadata);
         byte[] encryptedData = CIPHER_ENCRYPT.doFinal(sw.getBuffer().toString().getBytes());
         FSUtils.writeFile(new File(Constants.DATA_DIR, Constants.METADATA_FILE), encryptedData);
+        // tools data files
+        for (Entry<String, byte[]> toolEntry : toolsData.entrySet()) {
+            if (toolEntry.getValue() != null) {
+                String tool = toolEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                File toolDataFile = new File(Constants.DATA_DIR, tool + Constants.TOOL_DATA_FILE_SUFFIX);
+                encryptedData = CIPHER_ENCRYPT.doFinal(toolEntry.getValue());
+                FSUtils.writeFile(toolDataFile, encryptedData);
+            }
+        }
         // icons
         StringBuffer iconsList = new StringBuffer();
         for (Entry<UUID, byte[]> icon : icons.entrySet()) {
@@ -544,28 +563,6 @@ public class BackEnd {
             } else {
                 FSUtils.delete(deConfigFile);
             }
-        }
-    }
-
-    public byte[] getToolData(String extension) throws Exception {
-        byte[] data = null;
-        if (!Validator.isNullOrBlank(extension)) {
-            String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            File extDataFile = new File(Constants.DATA_DIR, extensionName + Constants.TOOL_DATA_FILE_SUFFIX);
-            if (extDataFile.exists()) {
-                byte[] decryptedData = FSUtils.readFile(extDataFile);
-                data = CIPHER_DECRYPT.doFinal(decryptedData);
-            }
-        }
-        return data;
-    }
-
-    public void storeToolData(String extension, byte[] data) throws Exception {
-        if (!Validator.isNullOrBlank(extension) && data != null) {
-            String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            File extDataFile = new File(Constants.DATA_DIR, extensionName + Constants.TOOL_DATA_FILE_SUFFIX);
-            byte[] encryptedData = CIPHER_ENCRYPT.doFinal(data);
-            FSUtils.writeFile(extDataFile, encryptedData);
         }
     }
 
@@ -1125,6 +1122,14 @@ public class BackEnd {
 
     public void setData(DataCategory data) {
         this.data = data;
+    }
+
+    public Map<String, byte[]> getToolsData() {
+        return toolsData;
+    }
+
+    public void setToolsData(Map<String, byte[]> toolsData) {
+        this.toolsData = toolsData;
     }
 
     public Properties getConfig() {
