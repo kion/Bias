@@ -255,6 +255,16 @@ public class BackEnd {
                 decryptedData = cipher.doFinal(data);
                 de.setData(decryptedData);
                 importedIdentifiedData.put(entryIDStr, de);
+            } else if (dataFile.getName().endsWith(Constants.TOOL_DATA_FILE_SUFFIX)) {
+                // tools data files
+                String tool = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                tool = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                            + tool + Constants.PACKAGE_PATH_SEPARATOR + tool;
+                if (!toolsData.containsKey(tool)) {
+                    data = FSUtils.readFile(dataFile);
+                    decryptedData = cipher.doFinal(data);
+                    toolsData.put(tool, decryptedData);
+                }
             }
         }
         // metadata file
