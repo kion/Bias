@@ -82,30 +82,6 @@ public class ExtensionFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public Map<String, Class<? extends Extension>> getAnnotatedExtensions() throws Throwable {
-        Map<String, Class<? extends Extension>> types = new LinkedHashMap<String, Class<? extends Extension>>();
-        for (String extension : BackEnd.getInstance().getExtensions()) {
-            String annotationStr;
-            Class<? extends Extension> extClass = (Class<? extends Extension>) Class.forName(extension);
-            AddOnAnnotation extAnn = 
-                (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
-            if (extAnn != null) {
-                annotationStr = extClass.getSimpleName() 
-                                + " [ " + extAnn.description() + " ]";
-            } else {
-                annotationStr = extension.substring(
-                        extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR) + 1, extension.length()) 
-                                + " [ Extension Info Is Missing ]";
-            }
-            // extension instantiation test
-            newExtension(extClass);
-            // extension is ok, add it to the list
-            types.put(annotationStr, extClass);
-        }
-        return types;
-    }
-    
-    @SuppressWarnings("unchecked")
     public Map<String, Class<? extends EntryExtension>> getAnnotatedEntryExtensions() throws Throwable {
         Map<String, Class<? extends EntryExtension>> types = new LinkedHashMap<String, Class<? extends EntryExtension>>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
