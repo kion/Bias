@@ -20,7 +20,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -1060,7 +1059,7 @@ public class FrontEnd extends JFrame {
     
     private TabMoveListener tabMoveListener = new TabMoveListener();
 
-    public class TabMoveListener extends MouseAdapter implements MouseMotionListener {
+    public class TabMoveListener extends MouseAdapter {
 
         private int srcIndex = -1;
 
@@ -1121,13 +1120,6 @@ public class FrontEnd extends JFrame {
                 }
             }
         }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.awt.event.MouseMotionListener#mouseMoved(java.awt.event.MouseEvent)
-         */
-        public void mouseMoved(MouseEvent e) {}
 
         /*
          * (non-Javadoc)
