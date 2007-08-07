@@ -103,4 +103,9 @@ public class Preferences {
             description="Defines if application should remain in system tray when application's window is closed.")
     public boolean remainInSysTrayOnWindowClose;
     
+    @PreferenceAnnotation(
+            title="Exit without confirmation",
+            description="Defines if exit-confirmation should be displayed on exit.")
+    public boolean exitWithoutConfirmation;
+    
 }

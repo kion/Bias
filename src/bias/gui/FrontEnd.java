@@ -282,11 +282,6 @@ public class FrontEnd extends JFrame {
         } else {
             hideSysTrayIcon();
         }
-        if (Preferences.getInstance().remainInSysTrayOnWindowClose) {
-            instance.setDefaultCloseOperation(HIDE_ON_CLOSE);
-        } else {
-            instance.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        }
     }
     
     private static void showSysTrayIcon() {
@@ -395,6 +390,7 @@ public class FrontEnd extends JFrame {
     private void initialize() {
         this.setSize(new Dimension(772, 535));
         try {
+            this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
             this.setTitle("Bias");
             this.setIconImage(ICON_APP.getImage());
             this.setContentPane(getJContentPane());
@@ -451,8 +447,7 @@ public class FrontEnd extends JFrame {
                         if (Preferences.getInstance().remainInSysTrayOnWindowClose) {
                             showSysTrayIcon();
                         } else {
-                            store();
-                            cleanUp();
+                            exit();
                         }
                     } catch (Throwable t) {
                         displayErrorMessage(t);
@@ -750,6 +745,39 @@ public class FrontEnd extends JFrame {
     
     private void cleanUp() {
         FSUtils.delete(Constants.TMP_DIR);
+    }
+    
+    private void exit() {
+        if (Preferences.getInstance().exitWithoutConfirmation) {
+            cleanUp();
+            System.exit(0);
+        } else {
+            // show confirmation dialog
+            JLabel l = new JLabel(
+                    "All unsaved changes will be lost. Click OK to exit.");
+            JButton b = new JButton("Save changes before exit");
+            b.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        // store before exit
+                        store();
+                        // now it's safe to exit
+                        cleanUp();
+                        System.exit(0);
+                    } catch (Throwable t) {
+                        displayErrorMessage("Failed to save!", t);
+                    }
+                }
+            });
+            if (JOptionPane.showConfirmDialog(FrontEnd.this, 
+                    new Component[]{l, b},
+                    "Exit confirmation",
+                    JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                // store nothing, just exit
+                cleanUp();
+                System.exit(0);
+            }
+        }
     }
 
     public static UUID getSelectedVisualEntryID() {
@@ -1966,28 +1994,7 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
-            // show confirmation dialog
-            JLabel l = new JLabel(
-                    "All unsaved changes will be lost. Click OK to exit.");
-            JButton b = new JButton("Save changes before exit");
-            b.addActionListener(new ActionListener(){
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        store();
-                        System.exit(0);
-                    } catch (Throwable t) {
-                        displayErrorMessage("Failed to save!", t);
-                    }
-                }
-            });
-            if (JOptionPane.showConfirmDialog(FrontEnd.this, 
-                    new Component[]{l, b},
-                    "Exit confirmation",
-                    JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-                // store nothing, just exit
-                cleanUp();
-                System.exit(0);
-            }
+            exit();
         }
     };
     
