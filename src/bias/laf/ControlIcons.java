@@ -22,7 +22,7 @@ public class ControlIcons {
     public static final ImageIcon ICON_ROOT_ENTRY = new ImageIcon(ControlIcons.class.getResource("/bias/res/add_root_entry.png"));
     public static final ImageIcon ICON_CHANGE_PASSWORD = new ImageIcon(ControlIcons.class.getResource("/bias/res/change_password.png"));
     public static final ImageIcon ICON_SAVE = new ImageIcon(ControlIcons.class.getResource("/bias/res/save.png"));
-    public static final ImageIcon ICON_DISCARD = new ImageIcon(ControlIcons.class.getResource("/bias/res/discard.png"));
+    public static final ImageIcon ICON_EXIT = new ImageIcon(ControlIcons.class.getResource("/bias/res/exit.png"));
     public static final ImageIcon ICON_ADDONS = new ImageIcon(ControlIcons.class.getResource("/bias/res/addons.png"));
     public static final ImageIcon ICON_PREFERENCES = new ImageIcon(ControlIcons.class.getResource("/bias/res/prefs.png"));
     public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(ControlIcons.class.getResource("/bias/res/extensions.png"));
@@ -37,7 +37,7 @@ public class ControlIcons {
     private ImageIcon iconEntry;
     private ImageIcon iconChangePassword;
     private ImageIcon iconDelete;
-    private ImageIcon iconDiscard;
+    private ImageIcon iconExit;
     private ImageIcon iconPreferences;
     private ImageIcon iconAddOns;
     private ImageIcon iconExtensions;
@@ -58,7 +58,7 @@ public class ControlIcons {
         this.iconEntry = ICON_ENTRY;
         this.iconChangePassword = ICON_CHANGE_PASSWORD;
         this.iconDelete = ICON_DELETE;
-        this.iconDiscard = ICON_DISCARD; 
+        this.iconExit = ICON_EXIT; 
         this.iconPreferences = ICON_PREFERENCES;
         this.iconAddOns = ICON_ADDONS;
         this.iconExtensions = ICON_EXTENSIONS; 
@@ -76,7 +76,7 @@ public class ControlIcons {
             ImageIcon iconEntry, 
             ImageIcon iconDelete,
             ImageIcon iconChangePassword,
-            ImageIcon iconDiscard, 
+            ImageIcon iconExit, 
             ImageIcon iconPreferences, 
             ImageIcon iconAddOns, 
             ImageIcon iconExtensions, 
@@ -91,7 +91,7 @@ public class ControlIcons {
         this.iconEntry = iconEntry;
         this.iconDelete = iconDelete;
         this.iconChangePassword = iconChangePassword;
-        this.iconDiscard = iconDiscard;
+        this.iconExit = iconExit;
         this.iconPreferences = iconPreferences;
         this.iconAddOns = iconAddOns;
         this.iconExtensions = iconExtensions;
@@ -132,12 +132,12 @@ public class ControlIcons {
         this.iconDelete = iconDelete;
     }
 
-    public ImageIcon getIconDiscard() {
-        return iconDiscard;
+    public ImageIcon getIconExit() {
+        return iconExit;
     }
 
-    public void setIconDiscard(ImageIcon iconDiscard) {
-        this.iconDiscard = iconDiscard;
+    public void setIconExit(ImageIcon iconExit) {
+        this.iconExit = iconExit;
     }
 
     public ImageIcon getIconEntry() {

@@ -201,6 +201,10 @@ public class FrontEnd extends JFrame {
     private String lastAddedEntryType = null;
     
     private static String activeLAF = null;
+    
+    private static boolean sysTrayIconVisible = false;
+    
+    private static TrayIcon trayIcon = null;
 
     private JTabbedPane currentTabPane = null;
     
@@ -267,34 +271,61 @@ public class FrontEnd extends JFrame {
             preInit();
             activateLAF();
             instance = new FrontEnd();
-            if (Preferences.getInstance().useSysTrayIcon) {
-                // setup system tray and tray icon
-                if (!SystemTray.isSupported()) {
-                    System.err.println("System tray API is not available on this platform!");
-                } else {
-                    try {
-                        SystemTray sysTray = SystemTray.getSystemTray();
-                        TrayIcon trayIcon = new TrayIcon(
-                                ICON_APP.getImage(), 
-                                "Bias :: Personal Information Manager");
-                        trayIcon.setImageAutoSize(true);
-                        trayIcon.addMouseListener(new MouseAdapter(){
-                            @Override
-                            public void mouseClicked(MouseEvent e) {
-                                instance.setVisible(!instance.isVisible());
-                            }
-                        });
-                        sysTray.add(trayIcon);
-                    } catch (Exception ex) {
-                        System.err.println(
-                                "Failed to initialize system tray!" + Constants.NEW_LINE 
-                                + "Error details: " + Constants.NEW_LINE);
-                        ex.printStackTrace(System.err);
-                    }
-                }
-            }
+            applyPreferences();
         }
         return instance;
+    }
+    
+    private static void applyPreferences() {
+        if (Preferences.getInstance().useSysTrayIcon) {
+            showSysTrayIcon();
+        } else {
+            hideSysTrayIcon();
+        }
+        if (Preferences.getInstance().remainInSysTrayOnWindowClose) {
+            instance.setDefaultCloseOperation(HIDE_ON_CLOSE);
+        } else {
+            instance.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        }
+    }
+    
+    private static void showSysTrayIcon() {
+        if (!SystemTray.isSupported()) {
+            displayErrorMessage("System tray API is not available on this platform!");
+        } else if (!sysTrayIconVisible) {
+            try {
+                // initialize tray icon
+                if (trayIcon == null) {
+                    trayIcon = new TrayIcon(
+                            ICON_APP.getImage(), 
+                            "Bias :: Personal Information Manager");
+                    trayIcon.setImageAutoSize(true);
+                    trayIcon.addMouseListener(new MouseAdapter(){
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            instance.setVisible(!instance.isVisible());
+                            if (!Preferences.getInstance().useSysTrayIcon) {
+                                hideSysTrayIcon();
+                            }
+                        }
+                    });
+                }
+                // add icon to system tray
+                if (SystemTray.getSystemTray().getTrayIcons().length == 0) {
+                    SystemTray.getSystemTray().add(trayIcon);
+                }
+                sysTrayIconVisible = true;
+            } catch (Exception ex) {
+                displayErrorMessage("Failed to initialize system tray!", ex);
+            }
+        }
+    }
+    
+    private static void hideSysTrayIcon() {
+        if (sysTrayIconVisible == true && trayIcon != null) {
+            SystemTray.getSystemTray().remove(trayIcon);
+            sysTrayIconVisible = false;
+        }
     }
     
     private static void preInit() {
@@ -366,7 +397,6 @@ public class FrontEnd extends JFrame {
         try {
             this.setTitle("Bias");
             this.setIconImage(ICON_APP.getImage());
-            this.setDefaultCloseOperation(EXIT_ON_CLOSE);
             this.setContentPane(getJContentPane());
 
             int wpxValue;
@@ -418,8 +448,12 @@ public class FrontEnd extends JFrame {
             this.addWindowListener(new java.awt.event.WindowAdapter() {
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     try {
-                        store();
-                        cleanUp();
+                        if (Preferences.getInstance().remainInSysTrayOnWindowClose) {
+                            showSysTrayIcon();
+                        } else {
+                            store();
+                            cleanUp();
+                        }
                     } catch (Throwable t) {
                         displayErrorMessage(t);
                     }
@@ -1517,9 +1551,9 @@ public class FrontEnd extends JFrame {
      */
     private JButton getJButton10() {
         if (jButton10 == null) {
-            jButton10 = new JButton(discardUnsavedChangesAction);
+            jButton10 = new JButton(exitAction);
             jButton10.setToolTipText("exit & discard unsaved changes");
-            jButton10.setIcon(controlIcons.getIconDiscard());
+            jButton10.setIcon(controlIcons.getIconExit());
         }
         return jButton10;
     }
@@ -1923,21 +1957,33 @@ public class FrontEnd extends JFrame {
             try {
                 store();
             } catch (Throwable t) {
-                displayErrorMessage(t);
+                displayErrorMessage("Failed to save!", t);
             }
         }
     };
     
-    private Action discardUnsavedChangesAction = new AbstractAction() {
+    private Action exitAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
             // show confirmation dialog
+            JLabel l = new JLabel(
+                    "All unsaved changes will be lost. Click OK to exit.");
+            JButton b = new JButton("Save changes before exit");
+            b.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        store();
+                        System.exit(0);
+                    } catch (Throwable t) {
+                        displayErrorMessage("Failed to save!", t);
+                    }
+                }
+            });
             if (JOptionPane.showConfirmDialog(FrontEnd.this, 
-                    "All unsaved changes will be lost." + Constants.NEW_LINE +
-                    "Are you sure you want to discard unsaved chages?",
-                    "Discard unsaved changes confirmation",
-                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                    new Component[]{l, b},
+                    "Exit confirmation",
+                    JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                 // store nothing, just exit
                 cleanUp();
                 System.exit(0);
@@ -1960,8 +2006,8 @@ public class FrontEnd extends JFrame {
                     if (prefAnn != null) {
                         JLabel prefTitle = new JLabel(prefAnn.title());
                         prefTitle.setToolTipText(prefAnn.description());
-                        JPanel prefPanel = new JPanel(new BorderLayout());
-                        prefPanel.add(prefTitle, BorderLayout.WEST);
+                        JPanel prefPanel = new JPanel(new GridLayout(1, 2));
+                        prefPanel.add(prefTitle);
                         Component prefControl = null;
                         String type = field.getType().getSimpleName().toLowerCase();
                         if ("boolean".equals(type)) {
@@ -1985,7 +2031,7 @@ public class FrontEnd extends JFrame {
                             }
                         }
                         if (prefControl != null) {
-                            prefPanel.add(prefControl, BorderLayout.CENTER);
+                            prefPanel.add(prefControl);
                             prefComponents.add(prefPanel);
                         }
                     }
@@ -1997,7 +2043,8 @@ public class FrontEnd extends JFrame {
                 JOptionPane.showConfirmDialog(FrontEnd.this, prefsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION);
                 byte[] after = Preferences.getInstance().serialize();
                 if (!Arrays.equals(after, before)) {
-                    displayMessage(RESTART_MESSAGE);
+                    BackEnd.getInstance().storePreferences();
+                    applyPreferences();
                 }
             } catch (Exception ex) {
                 displayErrorMessage(ex);

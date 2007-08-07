@@ -98,4 +98,9 @@ public class Preferences {
             description="Defines if application can allocate space in system tray, allows to hide/restore application to/from system tray icon.")
     public boolean useSysTrayIcon;
 
+    @PreferenceAnnotation(
+            title="Remain in system tray on window close",
+            description="Defines if application should remain in system tray when application's window is closed.")
+    public boolean remainInSysTrayOnWindowClose;
+    
 }

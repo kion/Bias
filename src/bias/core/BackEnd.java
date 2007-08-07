@@ -498,6 +498,10 @@ public class BackEnd {
         config.list(new PrintWriter(sw));
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE), sw.getBuffer().toString().getBytes());
         // preferences file
+        storePreferences();
+    }
+    
+    public void storePreferences() throws Exception {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
     }
     
