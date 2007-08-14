@@ -111,6 +111,21 @@
 		</jar>	
 	</target>
 	<!-- ================================= 
+          target: BuildAddOn_ToDoList
+         ================================= -->
+	<target name="BuildAddOn_ToDoList" description="ToDoList Add-On" depends="prepare">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/extension/ToDoList/** bias/res/ToDoList/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/ext/ToDoList.jar" 
+			includes="*/**" />
+		<jar basedir="tmp" destfile="build/ToDoList.jar" includes="ext/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="ToDoList" />
+			</manifest>
+		</jar>	
+	</target>
+	<!-- ================================= 
           target: BuildAddOn_SimpleSearch
          ================================= -->
 	<target name="BuildAddOn_SimpleSearch" description="SimpleSearch Add-On" depends="prepare">
