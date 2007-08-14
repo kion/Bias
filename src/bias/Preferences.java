@@ -108,4 +108,9 @@ public class Preferences {
             description="Defines if exit-confirmation should be displayed on exit.")
     public boolean exitWithoutConfirmation;
     
+    @PreferenceAnnotation(
+            title="Auto save on exit",
+            description="Defines if user data have to be automatically saved on exit.")
+    public boolean autoSaveOnExit;
+    
 }

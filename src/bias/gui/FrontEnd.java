@@ -743,37 +743,58 @@ public class FrontEnd extends JFrame {
         return data;
     }
     
+    private void optionalAutoSave() {
+        if (Preferences.getInstance().autoSaveOnExit) {
+            try {
+                store();
+            } catch (Throwable t) {
+                displayErrorMessage("Failed to save data!", t);
+            }
+        }
+    }
+    
     private void cleanUp() {
         FSUtils.delete(Constants.TMP_DIR);
     }
     
     private void exit() {
         if (Preferences.getInstance().exitWithoutConfirmation) {
+            optionalAutoSave();
             cleanUp();
             System.exit(0);
         } else {
             // show confirmation dialog
-            JLabel l = new JLabel(
-                    "All unsaved changes will be lost. Click OK to exit.");
-            JButton b = new JButton("Save changes before exit");
-            b.addActionListener(new ActionListener(){
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        // store before exit
-                        store();
-                        // now it's safe to exit
-                        cleanUp();
-                        System.exit(0);
-                    } catch (Throwable t) {
-                        displayErrorMessage("Failed to save!", t);
+            Component[] cs = null;
+            JLabel l = new JLabel();
+            StringBuffer caption = new StringBuffer();
+            if (!Preferences.getInstance().autoSaveOnExit) {
+                caption.append("All unsaved changes will be lost. ");
+                JButton b = new JButton("Save changes before exit");
+                b.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            // store before exit
+                            store();
+                            // now it's safe to exit
+                            cleanUp();
+                            System.exit(0);
+                        } catch (Throwable t) {
+                            displayErrorMessage("Failed to save!", t);
+                        }
                     }
-                }
-            });
+                });
+                cs = new Component[]{l,b};
+            } else {
+                cs = new Component[]{l};
+            }
+            caption.append("Click OK to exit.");
+            l.setText(caption.toString());
             if (JOptionPane.showConfirmDialog(FrontEnd.this, 
-                    new Component[]{l, b},
+                    cs,
                     "Exit confirmation",
                     JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                 // store nothing, just exit
+                optionalAutoSave();
                 cleanUp();
                 System.exit(0);
             }
