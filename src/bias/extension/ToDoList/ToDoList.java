@@ -68,7 +68,7 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  */
 
 @AddOnAnnotation(
-        version="0.1.5",
+        version="0.5.1",
         author="kion",
         description = "ToDo List")
 public class ToDoList extends EntryExtension {
