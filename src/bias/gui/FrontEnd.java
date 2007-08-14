@@ -446,6 +446,7 @@ public class FrontEnd extends JFrame {
                     try {
                         if (Preferences.getInstance().remainInSysTrayOnWindowClose) {
                             showSysTrayIcon();
+                            setVisible(false);
                         } else {
                             exit();
                         }
