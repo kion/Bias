@@ -1601,7 +1601,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton10() {
         if (jButton10 == null) {
             jButton10 = new JButton(exitAction);
-            jButton10.setToolTipText("exit & discard unsaved changes");
+            jButton10.setToolTipText("exit");
             jButton10.setIcon(controlIcons.getIconExit());
         }
         return jButton10;
