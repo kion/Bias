@@ -1,7 +1,7 @@
 /**
  * Created on Feb 27, 2007
  */
-package bias.extension.HTMLPage;
+package bias.extension.HTMLPage.editor;
 
 import java.io.IOException;
 
@@ -18,7 +18,7 @@ import bias.Constants;
 /**
  * @author kion
  */
-public class HTMLPageEditor {
+public class HTMLEditor {
 
     public static void insertHTML(JTextPane editor, String htmlText, Tag tag) throws BadLocationException, IOException {
         if (editor.getEditorKit() instanceof HTMLEditorKit && editor.getDocument() instanceof HTMLDocument) {

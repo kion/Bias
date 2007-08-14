@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -31,7 +32,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
@@ -51,7 +51,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import bias.annotation.AddOnAnnotation;
+import bias.core.Attachment;
+import bias.core.BackEnd;
 import bias.extension.EntryExtension;
+import bias.extension.ToDoList.editor.HTMLEditorPanel;
 import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
@@ -110,16 +113,14 @@ public class ToDoList extends EntryExtension {
     
     private Map<UUID, Date> originalTimestamps = new HashMap<UUID, Date>();
     
-    private Map<UUID, String> descriptions = new HashMap<UUID, String>();
-    
-    private UUID currEntryID = null;
-    
+    private Map<UUID, HTMLEditorPanel> editorPanels = new HashMap<UUID, HTMLEditorPanel>();
+
     private JPanel mainPanel = null;
     
     private JTable todoEntriesTable = null;
     
-    private JTextPane textPane = null;
-
+    private JSplitPane splitPane = null;
+    
     public ToDoList(UUID id, byte[] data, byte[] settings) {
         super(id, data, settings);
         initialize();
@@ -278,32 +279,21 @@ public class ToDoList extends EntryExtension {
             initTableCells();
 
             JPanel entriesPanel = new JPanel(new BorderLayout());
-            final JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+            splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
             splitPane.setDividerSize(3);
             splitPane.setTopComponent(new JScrollPane(todoEntriesTable));
-            splitPane.setBottomComponent(getTextPane());
             entriesPanel.add(splitPane, BorderLayout.CENTER);
             
             todoEntriesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
                 public void valueChanged(ListSelectionEvent e) {
                     DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
-                    if (currEntryID != null) {
-                        descriptions.put(currEntryID, getTextPane().getText());
-                    }
                     int rn = todoEntriesTable.getSelectedRow();
                     if (rn == -1) {
-                        getTextPane().setVisible(false);
-                        currEntryID = null;
+                        splitPane.setBottomComponent(null);
                     } else {
                         UUID id = UUID.fromString((String) model.getValueAt(rn, 0));
-                        String text = descriptions.get(id);
-                        if (text == null) {
-                            text = "";
-                        }
-                        getTextPane().setText(text);
-                        getTextPane().setVisible(true);
+                        splitPane.setBottomComponent(editorPanels.get(id));
                         splitPane.setDividerLocation(0.5);
-                        currEntryID = id;
                     }
                 }
             });
@@ -326,14 +316,6 @@ public class ToDoList extends EntryExtension {
             this.setLayout(new BorderLayout());
             this.add(mainPanel, BorderLayout.CENTER);
         }
-    }
-    
-    private JTextPane getTextPane() {
-        if (textPane == null) {
-            textPane = new JTextPane();
-            textPane.setVisible(false);
-        }
-        return textPane;
     }
     
     private JToolBar initToolBar() {
@@ -396,19 +378,12 @@ public class ToDoList extends EntryExtension {
     }
     
     private void addToDoEntry(ToDoEntry todoEntry) {
-        
         DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
-
         int idx = todoEntriesTable.getSelectedRow();
         if (idx != -1) {
             todoEntriesTable.getSelectionModel().removeSelectionInterval(0, idx);
         }
-        if (currEntryID != null) {
-            descriptions.put(currEntryID, getTextPane().getText());
-            getTextPane().setVisible(false);
-            currEntryID = null;
-        }
-        
+        splitPane.setBottomComponent(null);
         todoEntriesTable.setVisible(false);
         model.addRow(new Object[]{
                 todoEntry.getId().toString(),
@@ -420,8 +395,8 @@ public class ToDoList extends EntryExtension {
         if (todoEntry.getId() != null && todoEntry.getTimestamp() != null) {
             originalTimestamps.put(todoEntry.getId(), todoEntry.getTimestamp());
         }
-        if (todoEntry.getDescription() != null) {
-            descriptions.put(todoEntry.getId(), todoEntry.getDescription());
+        if (todoEntry.getId() != null && todoEntry.getDescription() != null) {
+            editorPanels.put(todoEntry.getId(), new HTMLEditorPanel(getId(), todoEntry.getDescription()));
         }
         todoEntriesTable.setVisible(true);
         
@@ -430,6 +405,7 @@ public class ToDoList extends EntryExtension {
     private Collection<ToDoEntry> getToDoEntries() {
         Collection<ToDoEntry> entries = new LinkedList<ToDoEntry>();
         DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
+        Collection<String> usedAttachmentNames = new ArrayList<String>();
         for (int i = 0; i < model.getRowCount(); i++) {
             try {
                 ToDoEntry entry = new ToDoEntry();
@@ -439,15 +415,51 @@ public class ToDoList extends EntryExtension {
                 entry.setTitle((String) model.getValueAt(i, 2));
                 entry.setPriority((String) model.getValueAt(i, 3));
                 entry.setStatus((String) model.getValueAt(i, 4));
-                entry.setDescription(descriptions.get(id));
+                HTMLEditorPanel editorPanel = editorPanels.get(id);
+                entry.setDescription(editorPanel.getCode());
+                usedAttachmentNames.addAll(editorPanel.getProcessedAttachmentNames());
                 entries.add(entry);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
+        cleanUpUnUsedAttachments(usedAttachmentNames);
         return entries;
     }
 
+    private void cleanUpUnUsedAttachments(Collection<String> usedAttachmentNames) {
+        try {
+            Collection<Attachment> atts = BackEnd.getInstance().getAttachments(getId());
+            for (Attachment att : atts) {
+                if (!usedAttachmentNames.contains(att.getName())) {
+                    BackEnd.getInstance().removeAttachment(getId(), att.getName());
+                }
+            }
+        } catch (Exception ex) {
+            // if some error occurred while cleaning up unused attachments,
+            // ignore it, these attachments will be removed next time Bias persists data
+            ex.printStackTrace();
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#getSearchData()
+     */
+    @Override
+    public Collection<String> getSearchData() throws Throwable {
+        Collection<String> searchSnippets = new ArrayList<String>();
+        for (ToDoEntry entry : getToDoEntries()) {
+            searchSnippets.add(entry.getTitle());
+            searchSnippets.add(editorPanels.get(entry.getId()).getText());
+            searchSnippets.add(entry.getPriority());
+            searchSnippets.add(entry.getStatus());
+        }
+        return searchSnippets;
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#serializeData()
+     */
     @Override
     public byte[] serializeData() throws Throwable {
         Document doc = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
@@ -475,11 +487,17 @@ public class ToDoList extends EntryExtension {
         return sw.getBuffer().toString().getBytes();
     }
 
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#serializeSettings()
+     */
     @Override
     public byte[] serializeSettings() throws Throwable {
         return settings;
     }
 
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#configure(byte[])
+     */
     @Override
     public byte[] configure(byte[] settings) throws Throwable {
         Properties props = PropertiesUtils.deserializeProperties(settings);

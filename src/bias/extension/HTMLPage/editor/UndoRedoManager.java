@@ -1,7 +1,7 @@
 /**
  * Created on Feb 27, 2007
  */
-package bias.extension.HTMLPage;
+package bias.extension.HTMLPage.editor;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;

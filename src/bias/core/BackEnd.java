@@ -1108,7 +1108,7 @@ public class BackEnd {
             }
             for (UUID id : foundAttIds) {
                 if (!ids.contains(id)) {
-                    // orphaned attachments found, remove 'em
+                    // orphaned attachments found, remove'em
                     removeAttachments(id);
                 }
             }

@@ -1347,7 +1347,6 @@ public class FrontEnd extends JFrame {
             jToolBar.add(getJButton5());
             jToolBar.add(getJButton1());
             jToolBar.add(getJButton11());
-            jToolBar.add(getJButton10());
         }
         return jToolBar;
     }
@@ -1530,6 +1529,7 @@ public class FrontEnd extends JFrame {
             jToolBar2 = new JToolBar();
             jToolBar2.setFloatable(false);
             jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+            jToolBar2.add(getJButton10());
             jToolBar2.add(getJButton6());
             jToolBar2.add(getJButton8());
             jToolBar2.add(getJButton9());
