@@ -21,6 +21,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 import javax.swing.DefaultCellEditor;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -71,6 +72,10 @@ public class ToDoList extends EntryExtension {
 
     private static final long serialVersionUID = 1L;
     
+    private static final ImageIcon ICON_CONFIG = new ImageIcon(ToDoList.class.getResource("/bias/res/ToDoList/config.png"));
+    private static final ImageIcon ICON_ADD = new ImageIcon(ToDoList.class.getResource("/bias/res/ToDoList/add.png"));
+    private static final ImageIcon ICON_DELETE = new ImageIcon(ToDoList.class.getResource("/bias/res/ToDoList/del.png"));
+
     private static final String XML_ELEMENT_ROOT = "root";
     private static final String XML_ELEMENT_ENTRY = "entry";
     private static final String XML_ELEMENT_TITLE = "title";
@@ -334,7 +339,23 @@ public class ToDoList extends EntryExtension {
     private JToolBar initToolBar() {
         JToolBar toolbar = new JToolBar();
         toolbar.setFloatable(false);
-        JButton buttAdd = new JButton("add");
+        JButton buttConf = new JButton(ICON_CONFIG);
+        buttConf.setToolTipText("configure list");
+        buttConf.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    byte[] oldSettings = settings;
+                    settings = configure(settings);
+                    if (!Arrays.equals(oldSettings, settings)) {
+                        applySettings(settings);
+                    }
+                } catch (Throwable t) {
+                    FrontEnd.displayErrorMessage(t);
+                }
+            }
+        });
+        JButton buttAdd = new JButton(ICON_ADD);
+        buttAdd.setToolTipText("add entry");
         buttAdd.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
                 JComboBox priority = new JComboBox(priorities);
@@ -357,7 +378,8 @@ public class ToDoList extends EntryExtension {
                 }
             }
         });
-        JButton buttDel = new JButton("delete");
+        JButton buttDel = new JButton(ICON_DELETE);
+        buttDel.setToolTipText("delete entry");
         buttDel.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
                 DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
@@ -367,23 +389,9 @@ public class ToDoList extends EntryExtension {
                 }
             }
         });
-        JButton buttConf = new JButton("configure");
-        buttConf.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    byte[] oldSettings = settings;
-                    settings = configure(settings);
-                    if (!Arrays.equals(oldSettings, settings)) {
-                        applySettings(settings);
-                    }
-                } catch (Throwable t) {
-                    FrontEnd.displayErrorMessage(t);
-                }
-            }
-        });
+        toolbar.add(buttConf);
         toolbar.add(buttAdd);
         toolbar.add(buttDel);
-        toolbar.add(buttConf);
         return toolbar;
     }
     
