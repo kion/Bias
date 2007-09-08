@@ -78,6 +78,8 @@ public class BackEnd {
 
     private static Collection<String> classPathEntries = new ArrayList<String>();
     
+    private static Collection<String> outOfClasspathAddOns = new ArrayList<String>();
+
     private Map<UUID, byte[]> icons = new LinkedHashMap<UUID, byte[]>();
     
     private Map<String, DataEntry> identifiedData = new LinkedHashMap<String, DataEntry>();
@@ -220,7 +222,7 @@ public class BackEnd {
             if (!classPathEntries.contains(relativeURI.toString())) {
                 addonFile.delete();
                 String addonName = addonFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                removeAddOnDataAndConfigFiles(addonName);
+                outOfClasspathAddOns.add(addonName);
             }
         }
         // remove lib-files that are not in classpath
@@ -908,18 +910,20 @@ public class BackEnd {
         newLAFs.remove(laf);
     }
     
-    private void removeAddOnDataAndConfigFiles(String addonName) {
-        File extensionDataFile = new File(Constants.DATA_DIR, addonName + Constants.TOOL_DATA_FILE_SUFFIX);
-        if (extensionDataFile.exists()) {
-            FSUtils.delete(extensionDataFile);
-        }
-        File extensionConfigFile = new File(Constants.CONFIG_DIR, addonName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
-        if (extensionConfigFile.exists()) {
-            FSUtils.delete(extensionConfigFile);
-        }
-        File lafConfigFile = new File(Constants.CONFIG_DIR, addonName + Constants.LAF_CONFIG_FILE_SUFFIX);
-        if (lafConfigFile.exists()) {
-            FSUtils.delete(lafConfigFile);
+    public void removeUnusedAddOnDataAndConfigFiles() {
+        for (String addonName : outOfClasspathAddOns) {
+            File extensionDataFile = new File(Constants.DATA_DIR, addonName + Constants.TOOL_DATA_FILE_SUFFIX);
+            if (extensionDataFile.exists()) {
+                FSUtils.delete(extensionDataFile);
+            }
+            File extensionConfigFile = new File(Constants.CONFIG_DIR, addonName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
+            if (extensionConfigFile.exists()) {
+                FSUtils.delete(extensionConfigFile);
+            }
+            File lafConfigFile = new File(Constants.CONFIG_DIR, addonName + Constants.LAF_CONFIG_FILE_SUFFIX);
+            if (lafConfigFile.exists()) {
+                FSUtils.delete(lafConfigFile);
+            }
         }
     }
         

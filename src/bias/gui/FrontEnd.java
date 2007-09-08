@@ -2490,6 +2490,33 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Icons", controlIcons.getIconIcons(), icPanel);
                 
+                JPanel advPanel = new JPanel(new BorderLayout());
+                JPanel cleanPanel = new JPanel(new GridLayout(2,1));
+                final JButton cleanButt = new JButton("Clean unused data and config files!");
+                JLabel cleanLabel = new JLabel(
+                        "<html>" +
+                        "<body>" +
+                        "<div color=\"red\">" +
+                        "NOTE: This will remove all unused data and configuration files<br>" +
+                        "that were used by extensions/LAFs that are not currently installed.<br>" +
+                		"Do that only if you don't plan to install these extensions/LAFs again<br>" +
+                		"or want to reset their data/settings." +
+                		"</div>" +
+                		"</body>" +
+                		"</html>");
+                cleanButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        BackEnd.getInstance().removeUnusedAddOnDataAndConfigFiles();
+                        cleanButt.setText("Done!");
+                        cleanButt.setEnabled(false);
+                    }
+                });
+                cleanPanel.add(cleanButt);
+                cleanPanel.add(cleanLabel);
+                advPanel.add(cleanPanel, BorderLayout.NORTH);
+                
+                addOnsPane.addTab("Advanced", controlIcons.getIconPreferences(), advPanel);
+                
                 modified = false;
                 JOptionPane.showMessageDialog(
                     FrontEnd.this, 
