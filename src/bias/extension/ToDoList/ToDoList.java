@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -35,10 +36,14 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
+import javax.swing.SortOrder;
+import javax.swing.RowSorter.SortKey;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.RowSorterEvent;
+import javax.swing.event.RowSorterListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
@@ -68,7 +73,7 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  */
 
 @AddOnAnnotation(
-        version="0.5.1",
+        version="0.5.3",
         author="kion",
         description = "ToDo List")
 public class ToDoList extends EntryExtension {
@@ -91,8 +96,12 @@ public class ToDoList extends EntryExtension {
     private static final String PROPERTY_PRIORITIES = "PRIORITIES";
     private static final String PROPERTY_STATUSES = "STATUSES";
     private static final String PROPERTY_DATE_TIME_FORMAT = "DATE_FORMAT";
+    private static final String PROPERTY_SORT_BY_COLUMN = "SORT_BY_COLUMN";
+    private static final String PROPERTY_SORT_ORDER = "SORT_BY_ORDER";
     
     private static final String SEPARATOR_PATTERN = "\\s*,\\s*";
+    
+    private static final int MAX_SORT_KEYS_NUMBER = 4;
     
     private static class ComboBoxEditor extends DefaultCellEditor {
         private static final long serialVersionUID = 1L;
@@ -102,6 +111,10 @@ public class ToDoList extends EntryExtension {
     }
     
     private String dateTimeFormat = "yyyy-MM-dd HH:mm";
+    
+    private int[] sortByColumn = new int[MAX_SORT_KEYS_NUMBER];
+    
+    private SortOrder[] sortOrder = new SortOrder[MAX_SORT_KEYS_NUMBER];
     
     private SimpleDateFormat sdf = new SimpleDateFormat(dateTimeFormat);
     
@@ -150,6 +163,20 @@ public class ToDoList extends EntryExtension {
         }
         if (!Validator.isNullOrBlank(dateTimeFormat)) {
             this.dateTimeFormat = dateTimeFormat;
+        }
+        for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+            int sortByColumn = -1;
+            String sortByColumnStr = props.getProperty(PROPERTY_SORT_BY_COLUMN + i);
+            if (!Validator.isNullOrBlank(sortByColumnStr)) {
+                sortByColumn = Integer.valueOf(sortByColumnStr);
+            }
+            this.sortByColumn[i] = sortByColumn;
+            SortOrder sortOrder = null;
+            String sortOrderStr = props.getProperty(PROPERTY_SORT_ORDER + i);
+            if (!Validator.isNullOrBlank(sortOrderStr)) {
+                sortOrder = SortOrder.valueOf(sortOrderStr);
+            }
+            this.sortOrder[i] = sortOrder;
         }
         initTableCells();
     }
@@ -261,8 +288,7 @@ public class ToDoList extends EntryExtension {
             };
             todoEntriesTable = new JTable(model);
             todoEntriesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            final TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-            todoEntriesTable.setRowSorter(sorter);
+            
             model.addColumn("ID");
             model.addColumn("Timestamp");
             model.addColumn("Title");
@@ -272,6 +298,35 @@ public class ToDoList extends EntryExtension {
             // hide ID column
             TableColumn idCol = todoEntriesTable.getColumnModel().getColumn(0);
             todoEntriesTable.getColumnModel().removeColumn(idCol);
+            
+            final TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+            sorter.setMaxSortKeys(MAX_SORT_KEYS_NUMBER);
+            List<SortKey> sortKeys = new LinkedList<SortKey>();
+            for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+                if (sortByColumn[i] != -1 && sortOrder[i] != null) {
+                    SortKey sortKey = new SortKey(sortByColumn[i], sortOrder[i]);
+                    sortKeys.add(sortKey);
+                }
+            }
+            sorter.setSortKeys(sortKeys);
+            sorter.addRowSorterListener(new RowSorterListener(){
+                public void sorterChanged(RowSorterEvent e) {
+                    if (e.getType().equals(RowSorterEvent.Type.SORT_ORDER_CHANGED)) {
+                        List<? extends SortKey> sortKeys = sorter.getSortKeys();
+                        for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+                            if (i < sortKeys.size()) {
+                                SortKey sortKey = sortKeys.get(i);
+                                sortByColumn[i] = sortKey.getColumn();
+                                sortOrder[i] = sortKey.getSortOrder();
+                            } else {
+                                sortByColumn[i] = -1;
+                                sortOrder[i] = null;
+                            }
+                        }
+                    }
+                }
+            });
+            todoEntriesTable.setRowSorter(sorter);
             
             initTableCells();
 
@@ -491,7 +546,17 @@ public class ToDoList extends EntryExtension {
      */
     @Override
     public byte[] serializeSettings() throws Throwable {
-        return settings;
+        Properties props = PropertiesUtils.deserializeProperties(settings);
+        for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+            if (sortByColumn[i] != -1 && sortOrder[i] != null) {
+                props.setProperty(PROPERTY_SORT_BY_COLUMN + i, "" + sortByColumn[i]);
+                props.setProperty(PROPERTY_SORT_ORDER + i, sortOrder[i].name());
+            } else {
+                props.remove(PROPERTY_SORT_BY_COLUMN + i);
+                props.remove(PROPERTY_SORT_ORDER + i);
+            }
+        }
+        return PropertiesUtils.serializeProperties(props);
     }
 
     /* (non-Javadoc)
