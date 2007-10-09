@@ -161,9 +161,6 @@ public class ToDoList extends EntryExtension {
             col.setCellEditor(new ComboBoxEditor(this.priorities));
             col = todoEntriesTable.getColumnModel().getColumn(3);
             col.setCellEditor(new ComboBoxEditor(this.statuses));
-            // update table model:
-            // * change date-time format
-            // * change non-existing priority/status titles to first available
             SimpleDateFormat sdf = null;
             try {
                 sdf = new SimpleDateFormat(dateTimeFormat);
@@ -286,18 +283,20 @@ public class ToDoList extends EntryExtension {
             
             todoEntriesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
                 public void valueChanged(ListSelectionEvent e) {
-                    DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
-                    int rn = todoEntriesTable.getSelectedRow();
-                    if (rn == -1) {
-                        splitPane.setBottomComponent(null);
-                    } else {
-                        UUID id = UUID.fromString((String) model.getValueAt(rn, 0));
-                        splitPane.setBottomComponent(editorPanels.get(id));
-                        splitPane.setDividerLocation(0.5);
+                    if (!e.getValueIsAdjusting()) {
+                        DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
+                        int rn = todoEntriesTable.getSelectedRow();
+                        if (rn == -1) {
+                            splitPane.setBottomComponent(null);
+                        } else {
+                            rn = todoEntriesTable.convertRowIndexToModel(rn);
+                            UUID id = UUID.fromString((String) model.getValueAt(rn, 0));
+                            splitPane.setBottomComponent(editorPanels.get(id));
+                            splitPane.setDividerLocation(0.5);
+                        }
                     }
                 }
             });
-
             
             mainPanel.add(entriesPanel, BorderLayout.CENTER);
             final JTextField filterText = new JTextField();
