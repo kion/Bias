@@ -1020,8 +1020,10 @@ public class BackEnd {
     }
 
     public void removeIcon(ImageIcon icon) throws Exception {
-        File iconFile = new File(Constants.ICONS_DIR, icon.getDescription() + Constants.ICON_FILE_SUFFIX);
+        String id = icon.getDescription();
+        File iconFile = new File(Constants.ICONS_DIR, id + Constants.ICON_FILE_SUFFIX);
         FSUtils.delete(iconFile);
+        icons.remove(UUID.fromString(id));
     }
     
     private static void reencryptAttachments() throws Exception {
