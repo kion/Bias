@@ -287,7 +287,7 @@ public class HTMLEditorPanel extends JPanel {
             boolean italicSelected = false;
             boolean underlineSelected = false;
             Integer fontSize = null;
-            AttributeSet fontFamilyAS = new SimpleAttributeSet();
+            String fontFamily = null;
             if (textPane.getSelectedText() == null) {
                 int pos = textPane.getCaretPosition() == 0 ? textPane.getCaretPosition() : textPane.getCaretPosition() - 1;
                 AttributeSet as = ((HTMLDocument) textPane.getDocument()).getCharacterElement(pos).getAttributes();
@@ -303,7 +303,7 @@ public class HTMLEditorPanel extends JPanel {
                 // get font size at current position
                 fontSize = (Integer) as.getAttribute(StyleConstants.FontSize);
                 // get font family at the current position
-                fontFamilyAS = ((HTMLDocument) textPane.getDocument()).getCharacterElement(pos).getAttributes();
+                fontFamily = (String) as.getAttribute(StyleConstants.FontFamily);
             } else {
                 AttributeSet as = null;
                 int selStart;
@@ -317,14 +317,14 @@ public class HTMLEditorPanel extends JPanel {
                 }
                 for (int i = selStart; i < selEnd; i++) {
                     as = ((HTMLDocument) textPane.getDocument()).getCharacterElement(i).getAttributes();
-                    if (!as.containsAttribute(StyleConstants.Bold, new Boolean(true))) {
-                        boldSelected = false;
+                    if (as.containsAttribute(StyleConstants.Bold, Boolean.TRUE)) {
+                        boldSelected = true;
                     }
-                    if (!as.containsAttribute(StyleConstants.Italic, new Boolean(true))) {
-                        italicSelected = false;
+                    if (as.containsAttribute(StyleConstants.Italic, Boolean.TRUE)) {
+                        italicSelected = true;
                     }
-                    if (!as.containsAttribute(StyleConstants.Underline, new Boolean(true))) {
-                        underlineSelected = false;
+                    if (as.containsAttribute(StyleConstants.Underline, Boolean.TRUE)) {
+                        underlineSelected = true;
                     }
                     // get the biggest font size value in selected text
                     if (as.isDefined(StyleConstants.FontSize)) {
@@ -334,10 +334,7 @@ public class HTMLEditorPanel extends JPanel {
                         }
                     }
                     // get font family of last char of selected text which has font family set
-                    AttributeSet ffAS = ((HTMLDocument) textPane.getDocument()).getCharacterElement(i).getAttributes();
-                    if (ffAS.isDefined(StyleConstants.FontFamily)) {
-                        fontFamilyAS = ffAS.copyAttributes();
-                    }
+                    fontFamily = (String) as.getAttribute(StyleConstants.FontFamily);
                 }
             }
             getJToggleButton().setSelected(boldSelected);
@@ -368,11 +365,10 @@ public class HTMLEditorPanel extends JPanel {
             for (int i = 0; i < ils.length; i++) {
                 getJComboBox1().removeItemListener(ils[i]);
             }
-            if (fontFamilyAS.isDefined(StyleConstants.FontFamily)) {
-                getJComboBox1().setSelectedItem(fontFamilyAS.getAttribute(StyleConstants.FontFamily));
-            } else {
-                getJComboBox1().setSelectedItem(DEFAULT_FONT.getAttributes().get(StyleConstants.FontFamily));
+            if (fontFamily == null) {
+                fontFamily = DEFAULT_FONT.getFamily();
             }
+            getJComboBox1().setSelectedItem(fontFamily);
             for (int i = 0; i < ils.length; i++) {
                 getJComboBox1().addItemListener(ils[i]);
             }
