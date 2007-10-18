@@ -184,8 +184,8 @@ public class HTMLEditorPanel extends JPanel {
         getJTextPane().getDocument().addUndoableEditListener(new UndoRedoManager(getJTextPane()));
         getJTextPane().setText(code);
         this.setLayout(new BorderLayout());
-        this.add(getJScrollPane(), BorderLayout.CENTER); // Generated
-        this.add(getJPanel(), BorderLayout.SOUTH); // Generated
+        this.add(getJScrollPane(), BorderLayout.CENTER); 
+        this.add(getJPanel(), BorderLayout.SOUTH); 
     }
     
     public String getCode() {
@@ -211,7 +211,7 @@ public class HTMLEditorPanel extends JPanel {
     private JScrollPane getJScrollPane() {
         if (jScrollPane == null) {
             jScrollPane = new JScrollPane();
-            jScrollPane.setViewportView(getJTextPane()); // Generated
+            jScrollPane.setViewportView(getJTextPane()); 
         }
         return jScrollPane;
     }
@@ -471,9 +471,9 @@ public class HTMLEditorPanel extends JPanel {
     private JToolBar getJToolBar() {
         if (jToolBar == null) {
             jToolBar = new JToolBar();
-            jToolBar.setFloatable(false); // Generated
-            jToolBar.add(getJButton8()); // Generated
-            jToolBar.add(getJToggleButton3()); // Generated
+            jToolBar.setFloatable(false); 
+            jToolBar.add(getJButton8()); 
+            jToolBar.add(getJToggleButton3()); 
         }
         return jToolBar;
     }
@@ -486,18 +486,18 @@ public class HTMLEditorPanel extends JPanel {
     private JToolBar getJToolBar1() {
         if (jToolBar1 == null) {
             jToolBar1 = new JToolBar();
-            jToolBar1.setFloatable(false); // Generated
-            jToolBar1.setBorder(null); // Generated
-            jToolBar1.add(getJButton1()); // Generated
-            jToolBar1.add(getJButton()); // Generated
-            jToolBar1.add(getJButton2()); // Generated
-            jToolBar1.add(getJButton5()); // Generated
-            jToolBar1.add(getJToggleButton()); // Generated
-            jToolBar1.add(getJToggleButton1()); // Generated
-            jToolBar1.add(getJToggleButton2()); // Generated
-            jToolBar1.add(getJComboBox()); // Generated
-            jToolBar1.add(getJComboBox1()); // Generated
-            jToolBar1.setVisible(false); // Generated
+            jToolBar1.setFloatable(false); 
+            jToolBar1.setBorder(null); 
+            jToolBar1.add(getJButton1()); 
+            jToolBar1.add(getJButton()); 
+            jToolBar1.add(getJButton2()); 
+            jToolBar1.add(getJButton5()); 
+            jToolBar1.add(getJToggleButton()); 
+            jToolBar1.add(getJToggleButton1()); 
+            jToolBar1.add(getJToggleButton2()); 
+            jToolBar1.add(getJComboBox()); 
+            jToolBar1.add(getJComboBox1()); 
+            jToolBar1.setVisible(false); 
         }
         return jToolBar1;
     }
@@ -510,8 +510,8 @@ public class HTMLEditorPanel extends JPanel {
     private JToggleButton getJToggleButton() {
         if (jToggleButton == null) {
             jToggleButton = new JToggleButton();
-            jToggleButton.setToolTipText("bold"); // Generated
-            jToggleButton.setIcon(ICON_TEXT_BOLD); // Generated
+            jToggleButton.setToolTipText("bold"); 
+            jToggleButton.setIcon(ICON_TEXT_BOLD); 
             jToggleButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     new StyledEditorKit.BoldAction().actionPerformed(e);
@@ -530,8 +530,8 @@ public class HTMLEditorPanel extends JPanel {
     private JToggleButton getJToggleButton1() {
         if (jToggleButton1 == null) {
             jToggleButton1 = new JToggleButton();
-            jToggleButton1.setToolTipText("italic"); // Generated
-            jToggleButton1.setIcon(ICON_TEXT_ITALIC); // Generated
+            jToggleButton1.setToolTipText("italic"); 
+            jToggleButton1.setIcon(ICON_TEXT_ITALIC); 
             jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     new StyledEditorKit.ItalicAction().actionPerformed(e);
@@ -550,8 +550,8 @@ public class HTMLEditorPanel extends JPanel {
     private JToggleButton getJToggleButton2() {
         if (jToggleButton2 == null) {
             jToggleButton2 = new JToggleButton();
-            jToggleButton2.setToolTipText("underline"); // Generated
-            jToggleButton2.setIcon(ICON_TEXT_UNDERLINE); // Generated
+            jToggleButton2.setToolTipText("underline"); 
+            jToggleButton2.setIcon(ICON_TEXT_UNDERLINE); 
             jToggleButton2.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     new StyledEditorKit.UnderlineAction().actionPerformed(e);
@@ -570,7 +570,7 @@ public class HTMLEditorPanel extends JPanel {
     private JToggleButton getJToggleButton3() {
         if (jToggleButton3 == null) {
             jToggleButton3 = new JToggleButton();
-            jToggleButton3.setToolTipText("switch mode"); // Generated
+            jToggleButton3.setToolTipText("switch mode"); 
             jToggleButton3.setIcon(ICON_SWITCH_MODE);
             jToggleButton3.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -598,8 +598,8 @@ public class HTMLEditorPanel extends JPanel {
     private JButton getJButton5() {
         if (jButton5 == null) {
             jButton5 = new JButton();
-            jButton5.setToolTipText("text color"); // Generated
-            jButton5.setIcon(ICON_COLOR); // Generated
+            jButton5.setToolTipText("text color"); 
+            jButton5.setIcon(ICON_COLOR); 
             jButton5.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     Color color = JColorChooser.showDialog(HTMLEditorPanel.this, "select text color", Color.BLACK);
@@ -618,8 +618,8 @@ public class HTMLEditorPanel extends JPanel {
     private JButton getJButton8() {
         if (jButton8 == null) {
             jButton8 = new JButton();
-            jButton8.setToolTipText("save to file"); // Generated
-            jButton8.setIcon(ICON_SAVE); // Generated
+            jButton8.setToolTipText("save to file"); 
+            jButton8.setIcon(ICON_SAVE); 
             jButton8.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     try {
@@ -679,7 +679,7 @@ public class HTMLEditorPanel extends JPanel {
     private JButton getJButton() {
         if (jButton == null) {
             jButton = new JButton();
-            jButton.setToolTipText("entry link"); // Generated
+            jButton.setToolTipText("entry link"); 
             jButton.setIcon(ICON_ENTRY_LINK);
             jButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -774,7 +774,7 @@ public class HTMLEditorPanel extends JPanel {
     private JButton getJButton1() {
         if (jButton1 == null) {
             jButton1 = new JButton();
-            jButton1.setToolTipText("URL link"); // Generated
+            jButton1.setToolTipText("URL link"); 
             jButton1.setIcon(ICON_URL_LINK);
             jButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -852,7 +852,7 @@ public class HTMLEditorPanel extends JPanel {
     private JButton getJButton2() {
         if (jButton2 == null) {
             jButton2 = new JButton();
-            jButton2.setToolTipText("image"); // Generated
+            jButton2.setToolTipText("image"); 
             jButton2.setIcon(ICON_IMAGE);
             jButton2.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -1062,10 +1062,10 @@ public class HTMLEditorPanel extends JPanel {
     private JComboBox getJComboBox() {
         if (jComboBox == null) {
             jComboBox = new JComboBox();
-            jComboBox.setMaximumSize(new Dimension(150, 20)); // Generated
-            jComboBox.setPreferredSize(new Dimension(150, 20)); // Generated
-            jComboBox.setToolTipText("font size"); // Generated
-            jComboBox.setMinimumSize(new Dimension(150, 20)); // Generated
+            jComboBox.setMaximumSize(new Dimension(150, 20)); 
+            jComboBox.setPreferredSize(new Dimension(150, 20)); 
+            jComboBox.setToolTipText("font size"); 
+            jComboBox.setMinimumSize(new Dimension(150, 20)); 
             Iterator<String> it = FONT_SIZES.keySet().iterator();
             while (it.hasNext()) {
                 jComboBox.addItem(it.next());
@@ -1092,10 +1092,10 @@ public class HTMLEditorPanel extends JPanel {
     private JComboBox getJComboBox1() {
         if (jComboBox1 == null) {
             jComboBox1 = new JComboBox();
-            jComboBox1.setMaximumSize(new Dimension(150, 20)); // Generated
-            jComboBox1.setPreferredSize(new Dimension(150, 20)); // Generated
-            jComboBox1.setToolTipText("font family"); // Generated
-            jComboBox1.setMinimumSize(new Dimension(150, 20)); // Generated
+            jComboBox1.setMaximumSize(new Dimension(150, 20)); 
+            jComboBox1.setPreferredSize(new Dimension(150, 20)); 
+            jComboBox1.setToolTipText("font family"); 
+            jComboBox1.setMinimumSize(new Dimension(150, 20)); 
             for (int i = 0; i < FONT_FAMILY_NAMES.length; i++) {
                 jComboBox1.addItem(FONT_FAMILY_NAMES[i]);
             }
@@ -1120,9 +1120,9 @@ public class HTMLEditorPanel extends JPanel {
     private JPanel getJPanel() {
         if (jPanel == null) {
             jPanel = new JPanel();
-            jPanel.setLayout(new BorderLayout()); // Generated
-            jPanel.add(getJToolBar1(), BorderLayout.CENTER); // Generated
-            jPanel.add(getJToolBar(), BorderLayout.WEST); // Generated
+            jPanel.setLayout(new BorderLayout()); 
+            jPanel.add(getJToolBar1(), BorderLayout.CENTER); 
+            jPanel.add(getJToolBar(), BorderLayout.WEST); 
         }
         return jPanel;
     }

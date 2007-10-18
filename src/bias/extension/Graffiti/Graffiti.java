@@ -102,8 +102,8 @@ public class Graffiti extends EntryExtension {
      * @throws ImageFormatException 
      */
     private void initialize() throws ImageFormatException, IOException {
-        this.setLayout(new BorderLayout());  // Generated
-        this.add(getJToolBar(), BorderLayout.SOUTH);  // Generated
+        this.setLayout(new BorderLayout());  
+        this.add(getJToolBar(), BorderLayout.SOUTH);  
         JPanel panel = new JPanel(new GridBagLayout());
         Dimension d = new Dimension(300,300);
         JPanel cp = new JPanel();
@@ -111,7 +111,7 @@ public class Graffiti extends EntryExtension {
         cp.add(pp);
         cp.setBorder(new LineBorder(Color.black));
         panel.add(cp);
-        this.add(new JScrollPane(panel), BorderLayout.CENTER);  // Generated
+        this.add(new JScrollPane(panel), BorderLayout.CENTER);  
                 
         if (getData() != null && getData().length > 0) {
             ByteArrayInputStream bais = new ByteArrayInputStream(getData());
@@ -140,11 +140,11 @@ public class Graffiti extends EntryExtension {
     private JToolBar getJToolBar() {
         if (jToolBar == null) {
             jToolBar = new JToolBar();
-            jToolBar.setFloatable(false);  // Generated
-            jToolBar.add(getJButton());  // Generated
-            jToolBar.add(getJButton1());  // Generated
-            jToolBar.add(getJButton4());  // Generated
-            jToolBar.add(getJButton2());  // Generated
+            jToolBar.setFloatable(false);  
+            jToolBar.add(getJButton());  
+            jToolBar.add(getJButton1());  
+            jToolBar.add(getJButton4());  
+            jToolBar.add(getJButton2());  
         }
         return jToolBar;
     }
@@ -157,7 +157,7 @@ public class Graffiti extends EntryExtension {
     private JButton getJButton() {
         if (jButton == null) {
             jButton = new JButton();
-            jButton.setToolTipText("paint brush");  // Generated
+            jButton.setToolTipText("paint brush");  
             jButton.setIcon(ICON_PAINT_BRUSH);
             jButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -176,7 +176,7 @@ public class Graffiti extends EntryExtension {
     private JButton getJButton1() {
         if (jButton1 == null) {
             jButton1 = new JButton();
-            jButton1.setToolTipText("live brush");  // Generated
+            jButton1.setToolTipText("live brush");  
             jButton1.setIcon(ICON_LIVE_BRUSH);
             jButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -195,7 +195,7 @@ public class Graffiti extends EntryExtension {
     private JButton getJButton4() {
         if (jButton4 == null) {
             jButton4 = new JButton();
-            jButton4.setToolTipText("choose color");  // Generated
+            jButton4.setToolTipText("choose color");  
             jButton4.setIcon(ICON_COLOR);
             jButton4.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -214,7 +214,7 @@ public class Graffiti extends EntryExtension {
     private JButton getJButton2() {
         if (jButton2 == null) {
             jButton2 = new JButton();
-            jButton2.setToolTipText("clear canvas");  // Generated
+            jButton2.setToolTipText("clear canvas");  
             jButton2.setIcon(ICON_ERASER);
             jButton2.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {

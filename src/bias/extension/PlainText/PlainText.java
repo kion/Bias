@@ -168,8 +168,8 @@ public class PlainText extends EntryExtension {
         Font font = new Font(currentFontFamily, Font.PLAIN, currentFontSize);
         getJTextArea().setFont(font);
         getJTextArea().getDocument().addUndoableEditListener(new UndoRedoManager(jTextArea));
-        this.add(getJScrollPane(), BorderLayout.CENTER);  // Generated
-        this.add(getJToolBar(), BorderLayout.SOUTH);  // Generated
+        this.add(getJScrollPane(), BorderLayout.CENTER);  
+        this.add(getJToolBar(), BorderLayout.SOUTH);  
     }
 
     /**
@@ -180,7 +180,7 @@ public class PlainText extends EntryExtension {
     private JScrollPane getJScrollPane() {
         if (jScrollPane == null) {
             jScrollPane = new JScrollPane();
-            jScrollPane.setViewportView(getJTextArea());  // Generated
+            jScrollPane.setViewportView(getJTextArea());  
         }
         return jScrollPane;
     }
@@ -208,11 +208,11 @@ public class PlainText extends EntryExtension {
     private JToolBar getJToolBar() {
         if (jToolBar == null) {
             jToolBar = new JToolBar();
-            jToolBar.setFloatable(false);  // Generated
-            jToolBar.add(getJToggleButton());  // Generated
-            jToolBar.add(getJButton1());  // Generated
-            jToolBar.add(getJButton2());  // Generated
-            jToolBar.add(getJComboBox());  // Generated
+            jToolBar.setFloatable(false);  
+            jToolBar.add(getJToggleButton());  
+            jToolBar.add(getJButton1());  
+            jToolBar.add(getJButton2());  
+            jToolBar.add(getJComboBox());  
         }
         return jToolBar;
     }
@@ -225,7 +225,7 @@ public class PlainText extends EntryExtension {
     private JToggleButton getJToggleButton() {
         if (jToggleButton == null) {
             jToggleButton = new JToggleButton();
-            jToggleButton.setToolTipText("switch mode");  // Generated
+            jToggleButton.setToolTipText("switch mode");  
             jToggleButton.setIcon(PlainText.ICON_SWITCH_MODE);
             jToggleButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -247,7 +247,7 @@ public class PlainText extends EntryExtension {
     private JButton getJButton1() {
         if (jButton1 == null) {
             jButton1 = new JButton();
-            jButton1.setToolTipText("increase font size");  // Generated
+            jButton1.setToolTipText("increase font size");  
             jButton1.setText("+");
             jButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -271,7 +271,7 @@ public class PlainText extends EntryExtension {
     private JButton getJButton2() {
         if (jButton2 == null) {
             jButton2 = new JButton();
-            jButton2.setToolTipText("decrease font size");  // Generated
+            jButton2.setToolTipText("decrease font size");  
             jButton2.setText("-");
             jButton2.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -295,10 +295,10 @@ public class PlainText extends EntryExtension {
     private JComboBox getJComboBox() {
         if (jComboBox == null) {
             jComboBox = new JComboBox();
-            jComboBox.setMaximumSize(new Dimension(150, 20));  // Generated
-            jComboBox.setPreferredSize(new Dimension(150, 20));  // Generated
-            jComboBox.setToolTipText("font family");  // Generated
-            jComboBox.setMinimumSize(new Dimension(150, 20));  // Generated
+            jComboBox.setMaximumSize(new Dimension(150, 20));  
+            jComboBox.setPreferredSize(new Dimension(150, 20));  
+            jComboBox.setToolTipText("font family");  
+            jComboBox.setMinimumSize(new Dimension(150, 20));  
             for (int i = 0; i < FONT_FAMILY_NAMES.length; i++) {
                 jComboBox.addItem(FONT_FAMILY_NAMES[i]);
             }

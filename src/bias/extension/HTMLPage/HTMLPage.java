@@ -63,7 +63,7 @@ public class HTMLPage extends EntryExtension {
      */
     private void initialize() {
         this.setLayout(new BorderLayout());
-        this.add(getHTMLEditorPanel(), BorderLayout.CENTER); // Generated
+        this.add(getHTMLEditorPanel(), BorderLayout.CENTER); 
     }
 
     private HTMLEditorPanel getHTMLEditorPanel() {

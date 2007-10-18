@@ -55,6 +55,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import bias.Constants;
 import bias.annotation.AddOnAnnotation;
 import bias.core.Attachment;
 import bias.core.BackEnd;
@@ -73,7 +74,7 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  */
 
 @AddOnAnnotation(
-        version="0.5.3",
+        version="0.5.5",
         author="kion",
         description = "ToDo List")
 public class ToDoList extends EntryExtension {
@@ -124,6 +125,10 @@ public class ToDoList extends EntryExtension {
     
     private String[] statuses = null;
     
+    private String[] oldPriorities = null;
+    
+    private String[] oldStatuses = null;
+    
     private Map<UUID, Date> originalTimestamps = new HashMap<UUID, Date>();
     
     private Map<UUID, HTMLEditorPanel> editorPanels = new HashMap<UUID, HTMLEditorPanel>();
@@ -151,11 +156,13 @@ public class ToDoList extends EntryExtension {
         String priorities = props.getProperty(PROPERTY_PRIORITIES);
         String statuses = props.getProperty(PROPERTY_STATUSES);
         String dateTimeFormat = props.getProperty(PROPERTY_DATE_TIME_FORMAT);
+        this.oldPriorities = this.priorities;
         if (!Validator.isNullOrBlank(priorities)) {
             this.priorities = priorities.split(SEPARATOR_PATTERN);
         } else {
             this.priorities = new String[]{};
         }
+        this.oldStatuses = this.statuses;
         if (!Validator.isNullOrBlank(statuses)) {
             this.statuses = statuses.split(SEPARATOR_PATTERN);
         } else {
@@ -188,12 +195,7 @@ public class ToDoList extends EntryExtension {
             col.setCellEditor(new ComboBoxEditor(this.priorities));
             col = todoEntriesTable.getColumnModel().getColumn(3);
             col.setCellEditor(new ComboBoxEditor(this.statuses));
-            SimpleDateFormat sdf = null;
-            try {
-                sdf = new SimpleDateFormat(dateTimeFormat);
-            } catch (IllegalArgumentException iae) {
-                FrontEnd.displayErrorMessage("Invalid Date-Time format!");
-            }
+            sdf = new SimpleDateFormat(dateTimeFormat);
             DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
             for (int i = 0; i < model.getRowCount(); i++){
                 if (sdf != null) {
@@ -205,7 +207,12 @@ public class ToDoList extends EntryExtension {
                 if (!Arrays.asList(this.priorities).contains(priority)) {
                     String value = "";
                     if (this.priorities.length != 0) {
-                        value = this.priorities[0];
+                        int idx = getElementIndex(oldPriorities, priority);
+                        if (idx != -1 && idx < this.priorities.length) {
+                            value = this.priorities[idx];
+                        } else {
+                            value = this.priorities[0];
+                        }
                     }
                     model.setValueAt(value, i, 3);
                 }
@@ -213,13 +220,26 @@ public class ToDoList extends EntryExtension {
                 if (!Arrays.asList(this.statuses).contains(status)) {
                     String value = "";
                     if (this.statuses.length != 0) {
-                        value = this.statuses[0];
+                        int idx = getElementIndex(oldStatuses, status);
+                        if (idx != -1 && idx < this.statuses.length) {
+                            value = this.statuses[idx];
+                        } else {
+                            value = this.statuses[0];
+                        }
                     }
                     model.setValueAt(value, i, 4);
                 }
             }
-            this.sdf = sdf;
         }
+    }
+    
+    private int getElementIndex(String[] elements, String element) {
+        for (int i = 0; i < elements.length; i++) {
+            if (elements[i].equals(element)) {
+                return i;
+            }
+        }
+        return -1;
     }
     
     private void parseData() {
@@ -443,8 +463,8 @@ public class ToDoList extends EntryExtension {
                 todoEntry.getId().toString(),
                 sdf.format(todoEntry.getTimestamp()), 
                 todoEntry.getTitle(),
-                todoEntry.getPriority().trim(),
-                todoEntry.getStatus().trim()
+                todoEntry.getPriority() != null ? todoEntry.getPriority().trim() : Constants.EMPTY_STR,
+                todoEntry.getStatus() != null ? todoEntry.getStatus().trim() : Constants.EMPTY_STR
                 });
         if (todoEntry.getId() != null && todoEntry.getTimestamp() != null) {
             originalTimestamps.put(todoEntry.getId(), todoEntry.getTimestamp());
@@ -581,19 +601,7 @@ public class ToDoList extends EntryExtension {
         }
         final JTextField dateTimeFormatTF = new JTextField(dateTimeFormat);
         dateTimeFormatTF.setToolTipText(sdf.format(new Date()));
-        final Color normal = dateTimeFormatTF.getForeground();
-        dateTimeFormatTF.addCaretListener(new CaretListener(){
-            public void caretUpdate(CaretEvent e) {
-                try {
-                    SimpleDateFormat sdf = new SimpleDateFormat(dateTimeFormatTF.getText());
-                    dateTimeFormatTF.setForeground(normal);
-                    dateTimeFormatTF.setToolTipText(sdf.format(new Date()));
-                } catch (IllegalArgumentException iae) {
-                    dateTimeFormatTF.setForeground(Color.RED);
-                    dateTimeFormatTF.setToolTipText("Invalid date-time format!");
-                }
-            }
-        });
+        FormatChangeListener formatChangeListener = new FormatChangeListener(dateTimeFormatTF);
         int opt = JOptionPane.showConfirmDialog(
                 ToDoList.this, 
                 new Component[]{
@@ -607,20 +615,39 @@ public class ToDoList extends EntryExtension {
                 "Configuration", 
                 JOptionPane.OK_CANCEL_OPTION);
         if (opt == JOptionPane.OK_OPTION) {
-            if (!Validator.isNullOrBlank(prioritiesTF.getText())) {
-                priorities = prioritiesTF.getText().trim();
-                props.setProperty(PROPERTY_PRIORITIES, priorities);
-            }
-            if (!Validator.isNullOrBlank(statusesTF.getText())) {
-                statuses = statusesTF.getText().trim();
-                props.setProperty(PROPERTY_STATUSES, statuses);
-            }
-            if (!Validator.isNullOrBlank(dateTimeFormatTF.getText())) {
+            priorities = prioritiesTF.getText().trim();
+            props.setProperty(PROPERTY_PRIORITIES, priorities);
+            statuses = statusesTF.getText().trim();
+            props.setProperty(PROPERTY_STATUSES, statuses);
+            if (!Validator.isNullOrBlank(dateTimeFormatTF.getText()) && formatChangeListener.isFormatCorrect) {
                 dateTimeFormat = dateTimeFormatTF.getText().trim();
                 props.setProperty(PROPERTY_DATE_TIME_FORMAT, dateTimeFormat);
             }
         }
         return PropertiesUtils.serializeProperties(props);
+    }
+    
+    private static class FormatChangeListener implements CaretListener {
+        private JTextField dateTimeFormatTF;
+        Color normal;
+        private boolean isFormatCorrect = true;
+        public FormatChangeListener(JTextField dateTimeFormatTF) {
+            this.dateTimeFormatTF = dateTimeFormatTF;
+            this.normal = dateTimeFormatTF.getForeground();
+            this.dateTimeFormatTF.addCaretListener(this);
+        }
+        public void caretUpdate(CaretEvent e) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(dateTimeFormatTF.getText());
+                dateTimeFormatTF.setForeground(normal);
+                dateTimeFormatTF.setToolTipText(sdf.format(new Date()));
+                isFormatCorrect = true;
+            } catch (IllegalArgumentException iae) {
+                dateTimeFormatTF.setForeground(Color.RED);
+                dateTimeFormatTF.setToolTipText("Invalid date-time format!");
+                isFormatCorrect = false;
+            }
+        }
     }
     
 }
