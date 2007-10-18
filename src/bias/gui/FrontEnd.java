@@ -1415,7 +1415,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton1() {
         if (jButton1 == null) {
             jButton1 = new JButton(deleteEntryOrCategoryAction);
-            jButton1.setToolTipText("delete active item");
+            jButton1.setToolTipText("delete active entry");
             jButton1.setIcon(controlIcons.getIconDelete());
         }
         return jButton1;
