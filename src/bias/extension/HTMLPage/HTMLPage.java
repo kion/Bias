@@ -88,4 +88,4 @@ public class HTMLPage extends EntryExtension {
         }
     }
     
-} // @jve:decl-index=0:visual-constraint="10,10"
+}

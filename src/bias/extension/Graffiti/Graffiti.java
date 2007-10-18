@@ -225,4 +225,4 @@ public class Graffiti extends EntryExtension {
         return jButton2;
     }
 
-}  //  @jve:decl-index=0:visual-constraint="10,10"
+}
