@@ -54,6 +54,7 @@ import javax.swing.text.Element;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.AbstractDocument.BranchElement;
 import javax.swing.text.html.HTML;
@@ -225,23 +226,15 @@ public class HTMLEditorPanel extends JPanel {
             jTextPane = new JTextPane();
             jTextPane.setEditable(false);
             jTextPane.setEditorKit(new HTMLEditorKit());
-            jTextPane.setStyledDocument(new HTMLDocument(){
-                private static final long serialVersionUID = 1L;
-                // set default font for JTextPane instance
-                @Override
-                public Font getFont(AttributeSet attr) {
-                    SimpleAttributeSet newAttr = new SimpleAttributeSet(attr);
-                    String family = (String) attr.getAttribute(StyleConstants.FontFamily);
-                    if (family == null) {
-                        StyleConstants.setFontFamily(newAttr, DEFAULT_FONT.getFamily());
-                    }
-                    String size = (String) attr.getAttribute(StyleConstants.FontSize);
-                    if (size == null) {
-                        StyleConstants.setFontSize(newAttr, DEFAULT_FONT.getSize());
-                    }
-                    return super.getFont(newAttr);
-                }
-            });
+
+            // set default font for JTextPane instance
+            MutableAttributeSet attrs = jTextPane.getInputAttributes();
+            StyleConstants.setFontFamily(attrs, DEFAULT_FONT.getFamily());
+            StyleConstants.setFontSize(attrs, DEFAULT_FONT.getSize());
+            StyleConstants.setItalic(attrs, (DEFAULT_FONT.getStyle() & Font.ITALIC) != 0);
+            StyleConstants.setBold(attrs, (DEFAULT_FONT.getStyle() & Font.BOLD) != 0);
+            StyledDocument doc = jTextPane.getStyledDocument();
+            doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
 
             jTextPane.addCaretListener(new CaretListener() {
                 public void caretUpdate(CaretEvent e) {
