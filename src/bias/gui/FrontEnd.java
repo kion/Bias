@@ -1560,7 +1560,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton7() {
         if (jButton7 == null) {
             jButton7 = new JButton(saveAction);
-            jButton7.setToolTipText("save & exit");
+            jButton7.setToolTipText("save");
             jButton7.setIcon(controlIcons.getIconSave());
         }
         return jButton7;
