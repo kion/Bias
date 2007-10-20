@@ -14,15 +14,13 @@ import java.util.UUID;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
-import javax.swing.JSlider;
 import javax.swing.JTextPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
@@ -51,9 +49,11 @@ public class PlainText extends EntryExtension {
     
     private static final String PROPERTY_FONT_SIZE = "FONT_SIZE";
     
-    private static final Integer[] FONT_SIZES = new Integer[]{ 8, 10, 12, 14, 18, 24, 36 };
+    private static final int[] FONT_SIZES = new int[]{ 8, 10, 12, 14, 18, 24, 36 };
 
     private static final int DEFAULT_FONT_SIZE = FONT_SIZES[2];
+    
+    private static final String DEFAULT_FONT_FAMILY = "Monospaced";
     
     private int currentFontSize = DEFAULT_FONT_SIZE;
 
@@ -79,24 +79,21 @@ public class PlainText extends EntryExtension {
     public byte[] configure(byte[] settings) throws Throwable {
         Properties newSettings = PropertiesUtils.deserializeProperties(settings);
         JLabel fsLb = new JLabel("Default font size:");
-        String selValue = newSettings.getProperty(PROPERTY_FONT_SIZE);
-        int sel = DEFAULT_FONT_SIZE;
-        if (selValue != null) {
-            sel = Integer.valueOf(selValue);
+        JComboBox fsCb = new JComboBox();
+        for (Integer fs : FONT_SIZES) {
+            fsCb.addItem("" + fs);
         }
-        final JLabel cfsLb = new JLabel("" + sel);
-        final JSlider fsSl = new JSlider(1, 48, sel);
-        fsSl.addChangeListener(new ChangeListener(){
-            public void stateChanged(ChangeEvent e) {
-                cfsLb.setText("" + fsSl.getValue());
-            }
-        });
+        String selValue = newSettings.getProperty(PROPERTY_FONT_SIZE);
+        if (selValue == null) {
+            selValue = "" + DEFAULT_FONT_SIZE;
+        }
+        fsCb.setSelectedItem(selValue);
         JOptionPane.showMessageDialog(
                 this, 
-                new Component[]{fsLb, fsSl, cfsLb}, 
+                new Component[]{fsLb, fsCb}, 
                 "Settings for " + this.getClass().getSimpleName() + " extension", 
                 JOptionPane.INFORMATION_MESSAGE);
-        newSettings.setProperty(PROPERTY_FONT_SIZE, "" + fsSl.getValue());
+        newSettings.setProperty(PROPERTY_FONT_SIZE, (String) fsCb.getSelectedItem());
         return PropertiesUtils.serializeProperties(newSettings);
     }
 
@@ -136,6 +133,9 @@ public class PlainText extends EntryExtension {
     private void initialize() {
         this.setSize(733, 515);
         this.setLayout(new BorderLayout());
+        if (getData() != null) {
+            getJTextPane().setText(new String(getData()));
+        }
         Properties settings = PropertiesUtils.deserializeProperties(getSettings());
         String cfs = settings.getProperty(PROPERTY_FONT_SIZE);
         if (cfs != null) {
@@ -143,9 +143,7 @@ public class PlainText extends EntryExtension {
         } else {
             currentFontSize = DEFAULT_FONT_SIZE;
         }
-        if (getData() != null) {
-            getJTextPane().setText(new String(getData()));
-        }
+        setFontSize(new ActionEvent(getJTextPane(), ActionEvent.ACTION_PERFORMED, "Font size"));
         if (currentFontSize == FONT_SIZES[FONT_SIZES.length-1]) {
             getJButton1().setEnabled(false);
         } else if (currentFontSize == FONT_SIZES[0]) {
@@ -184,8 +182,8 @@ public class PlainText extends EntryExtension {
                 public Font getFont(AttributeSet attr) {
                     String family = (String) attr.getAttribute(StyleConstants.FontFamily);
                     if (family == null) {
-                        SimpleAttributeSet newAttr=new SimpleAttributeSet (attr);
-                        StyleConstants.setFontFamily(newAttr, "Monospaced");
+                        SimpleAttributeSet newAttr = new SimpleAttributeSet (attr);
+                        StyleConstants.setFontFamily(newAttr, DEFAULT_FONT_FAMILY);
                         return super.getFont(newAttr);
                     }
                     return super.getFont(attr);
