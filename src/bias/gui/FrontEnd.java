@@ -443,7 +443,6 @@ public class FrontEnd extends JFrame {
 
             representTools();
             representData(BackEnd.getInstance().getData());
-            sync();
 
             String lsid = config.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
             if (lsid != null) {

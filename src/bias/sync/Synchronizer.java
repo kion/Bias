@@ -79,6 +79,7 @@ public abstract class Synchronizer {
         // parse local & remote sync tables
         compareSyncTables(remoteSyncTable, localSyncTable);
         // commit metadata file
+        // TODO: metadata file should be merged!!!
         byte[] data = BackEnd.getInstance().getMetadata();
         commit(metadataFilePath, data);
     }
@@ -113,19 +114,27 @@ public abstract class Synchronizer {
                     } else {
                         String localRevisionStr = localSyncTable.getProperty(path);
                         if (localRevisionStr == null) {
-                            // TODO
-                            // remote file does not exist locally yet, check it out
-//                          byte[] fileData = checkOut(path);
-                          // set file revision
-                          localSyncTable.setProperty(path, remoteRevisionStr);
-                          System.out.println("Checked out [added]: " + path);
+                            if (path.charAt(0) != DELETE_MARKER) {
+                                // remote file does not exist locally yet, check it out
+                              byte[] fileData = checkOut(path);
+                              FSUtils.writeFile(new File(Constants.ROOT_DIR, path), fileData);
+                              // set file revision
+                              localSyncTable.setProperty(path, remoteRevisionStr);
+                              System.out.println("Checked out [added]: " + path);
+                            } else {
+                                // remote file deleted, delete local one as well
+                                path = path.substring(1);
+                                File file = new File(Constants.ROOT_DIR, path);
+                                FSUtils.delete(file);
+                                localSyncTable.remove(path);
+                            }
                         } else if (!localRevisionStr.equals(remoteRevisionStr)) {
                             int remoteRevision = Integer.parseInt(remoteRevisionStr);
                             int localRevision = Integer.parseInt(localRevisionStr);
                             if (remoteRevision > localRevision) {
-                                // TODO
                                 // remote file is newer, check it out
-//                                byte[] fileData = checkOut(path);
+                                byte[] fileData = checkOut(path);
+                                FSUtils.writeFile(new File(Constants.ROOT_DIR, path), fileData);
                                 // set file revision
                                 localSyncTable.setProperty(path, remoteRevisionStr);
                                 System.out.println("Checked out [updated]: " + path);
@@ -145,22 +154,15 @@ public abstract class Synchronizer {
                 if (path.charAt(0) == UPDATE_MARKER) {
                     path = path.substring(1);
                 }
-                String remoteDeletedRevisionStr = remoteSyncTable.getProperty(DELETE_MARKER + path);
-                if (remoteDeletedRevisionStr != null) {
-                    // remote file deleted, delete local one as well
-                    File file = new File(Constants.ROOT_DIR, path);
-                    FSUtils.delete(file);
-                } else {
-                    String remoteRevisionStr = remoteSyncTable.getProperty(path);
-                    if (remoteRevisionStr == null) {
-                        // local file does not exist remotely yet, commit it
-                        byte[] fileData = FSUtils.readFile(new File(Constants.ROOT_DIR, path));
-                        commit(path, fileData);
-                        String localRevisionStr = localSyncTable.getProperty(path);
-                        int localRevision = Integer.parseInt(localRevisionStr);
-                        localSyncTable.setProperty(path, "" + ++localRevision);
-                        System.out.println("Commited [added]: " + path);
-                    }
+                String remoteRevisionStr = remoteSyncTable.getProperty(path);
+                if (remoteRevisionStr == null) {
+                    // local file does not exist remotely yet, commit it
+                    byte[] fileData = FSUtils.readFile(new File(Constants.ROOT_DIR, path));
+                    commit(path, fileData);
+                    String localRevisionStr = localSyncTable.getProperty(path);
+                    int localRevision = Integer.parseInt(localRevisionStr);
+                    localSyncTable.setProperty(path, "" + ++localRevision);
+                    System.out.println("Commited [added]: " + path);
                 }
             }
             // save...

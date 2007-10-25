@@ -156,6 +156,20 @@ public class BackEnd {
     public void load() throws Exception {
         byte[] data = null;
         byte[] decryptedData = null;
+        // preferences file
+        File prefsFile = new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE);
+        if (prefsFile.exists()) {
+            data = FSUtils.readFile(prefsFile);
+            if (data.length != 0) {
+                prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(data));
+            }
+        }
+        // sync table
+        if (syncTableFile.exists()) {
+            syncTable.load(new FileInputStream(syncTableFile));
+        }
+        // synchronize
+        Synchronizer.getInstance().sync();
         // data files
         if (Constants.DATA_DIR.exists()) {
             for (File dataFile : Constants.DATA_DIR.listFiles()) {
@@ -184,14 +198,6 @@ public class BackEnd {
             data = FSUtils.readFile(metadataFile);
             decryptedData = CIPHER_DECRYPT.doFinal(data);
             metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
-        }
-        // preferences file
-        File prefsFile = new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE);
-        if (prefsFile.exists()) {
-            data = FSUtils.readFile(prefsFile);
-            if (data.length != 0) {
-                prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(data));
-            }
         }
         // global config file
         File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
@@ -249,10 +255,6 @@ public class BackEnd {
         // get lists of loaded extensions and lafs
         loadedExtensions = getExtensions();
         loadedLAFs = getLAFs();
-        // sync table
-        if (syncTableFile.exists()) {
-            syncTable.load(new FileInputStream(syncTableFile));
-        }
     }
     
     public DataCategory importData(File importDir, Collection<UUID> existingIDs, String password) throws Exception {
