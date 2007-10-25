@@ -541,12 +541,12 @@ public class BackEnd {
                     byte[] encryptedData = CIPHER_ENCRYPT.doFinal(entryData);
                     FSUtils.writeFile(deFile, encryptedData);
                     if (Preferences.getInstance().syncType != null) {
-                        handleSyncTableEntry(deFile, true);
+                        handleSyncTableEntry(deFile, Synchronizer.UPDATE_MARKER);
                     }
                     identifiedData.put(de.getId().toString(), de);
                 } else {
                     if (Preferences.getInstance().syncType != null) {
-                        handleSyncTableEntry(deFile, false);
+                        handleSyncTableEntry(deFile, null);
                     }
                 }
                 storeDataEntrySettings(de);
@@ -586,16 +586,16 @@ public class BackEnd {
         return ids;
     }
     
-    private void handleSyncTableEntry(File file, boolean markAsUpdated) throws Exception {
+    private void handleSyncTableEntry(File file, Character marker) throws Exception {
         String relPath = file.getAbsolutePath().substring(Constants.ROOT_DIR.getAbsolutePath().length() + 1);
         String revisionStr = syncTable.getProperty(Synchronizer.UPDATE_MARKER + relPath);
         if (revisionStr == null) {
             revisionStr = syncTable.getProperty(relPath);
             if (revisionStr == null) {
                 syncTable.setProperty(relPath, "0");
-            } else if (markAsUpdated) {
-                System.out.println("Marking file as updated: " + relPath);
-                syncTable.setProperty(Synchronizer.UPDATE_MARKER + relPath, revisionStr);
+            } else if (marker != null) {
+                System.out.println("Marking file [" + relPath + "] with marker [" + marker + "]");
+                syncTable.setProperty(marker + relPath, revisionStr);
                 syncTable.remove(relPath);
             }
         }
@@ -1163,7 +1163,9 @@ public class BackEnd {
             for (UUID id : foundDEIds) {
                 if (!ids.contains(id)) {
                     // orphaned data entry found, remove it
-                    FSUtils.delete(new File(Constants.DATA_DIR, id.toString() + Constants.DATA_FILE_SUFFIX));
+                    File deFile = new File(Constants.DATA_DIR, id.toString() + Constants.DATA_FILE_SUFFIX);
+                    FSUtils.delete(deFile);
+                    handleSyncTableEntry(deFile, Synchronizer.DELETE_MARKER);
                 }
             }
         }

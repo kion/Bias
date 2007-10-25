@@ -61,4 +61,12 @@ public class FTPSynchronizer extends Synchronizer {
         os.close();
     }
 
+    /* (non-Javadoc)
+     * @see bias.sync.Synchronizer#delete(java.lang.String)
+     */
+    @Override
+    protected void delete(String filePath) throws Exception {
+        // TODO
+    }
+
 }

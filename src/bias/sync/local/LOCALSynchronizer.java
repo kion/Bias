@@ -45,4 +45,16 @@ public class LOCALSynchronizer extends Synchronizer {
         FSUtils.writeFile(file, data);
     }
 
+    /* (non-Javadoc)
+     * @see bias.sync.Synchronizer#delete(java.lang.String)
+     */
+    @Override
+    protected void delete(String filePath) throws Exception {
+        File syncDir = new File(syncDirPath);
+        File file = new File(syncDir, filePath);
+        if (file.exists()) {
+            file.delete();
+        }
+    }
+
 }

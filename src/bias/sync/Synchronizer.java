@@ -36,8 +36,7 @@ public abstract class Synchronizer {
     
     public static final char UPDATE_MARKER = '+';
     
-    // TODO: implement removed files synchronization
-    public static final char REMOVE_MARKER = '-';
+    public static final char DELETE_MARKER = '-';
     
     private static final String syncTableFilePath = Constants.CONFIG_DIR.getName() + Constants.PATH_SEPARATOR + Constants.SYNC_TABLE_FILE;
     
@@ -90,10 +89,10 @@ public abstract class Synchronizer {
             for (Entry<Object, Object> entry : remoteSyncTable.entrySet()) {
                 String path = (String) entry.getKey();
                 String remoteRevisionStr = (String) entry.getValue();
-                String localMarkedRevisionStr = localSyncTable.getProperty(UPDATE_MARKER + path);
-                if (localMarkedRevisionStr != null) {
+                String localUpdatedRevisionStr = localSyncTable.getProperty(UPDATE_MARKER + path);
+                if (localUpdatedRevisionStr != null) {
                     int remoteRevision = Integer.parseInt(remoteRevisionStr);
-                    int localRevision = Integer.parseInt(localMarkedRevisionStr);
+                    int localRevision = Integer.parseInt(localUpdatedRevisionStr);
                     if (localRevision < remoteRevision) {
                         // TODO
                         // handle conflicting revisions
@@ -107,29 +106,35 @@ public abstract class Synchronizer {
                         System.out.println("Commited [updated]: " + path);
                     }
                 } else {
-                    String localRevisionStr = localSyncTable.getProperty(path);
-                    if (localRevisionStr == null) {
-                        // TODO
-                        // remote file does not exist locally yet, check it out
-//                      byte[] fileData = checkOut(path);
-                      // set file revision
-                      localSyncTable.setProperty(path, remoteRevisionStr);
-                      System.out.println("Checked out [added]: " + path);
-                    } else if (!localRevisionStr.equals(remoteRevisionStr)) {
-                        int remoteRevision = Integer.parseInt(remoteRevisionStr);
-                        int localRevision = Integer.parseInt(localRevisionStr);
-                        if (remoteRevision > localRevision) {
+                    String localDeletedRevisionStr = localSyncTable.getProperty(DELETE_MARKER + path);
+                    if (localDeletedRevisionStr != null) {
+                        // file removed locally, remove remote one as well
+                        delete(path);
+                    } else {
+                        String localRevisionStr = localSyncTable.getProperty(path);
+                        if (localRevisionStr == null) {
                             // TODO
-                            // remote file is newer, check it out
-//                            byte[] fileData = checkOut(path);
-                            // set file revision
-                            localSyncTable.setProperty(path, remoteRevisionStr);
-                            System.out.println("Checked out [updated]: " + path);
-                        } else {
-                            // local file is newer, commit it
-                            byte[] fileData = FSUtils.readFile(new File(Constants.ROOT_DIR, path));
-                            commit(path, fileData);
-                            System.out.println("Commited [updated]: " + path);
+                            // remote file does not exist locally yet, check it out
+//                          byte[] fileData = checkOut(path);
+                          // set file revision
+                          localSyncTable.setProperty(path, remoteRevisionStr);
+                          System.out.println("Checked out [added]: " + path);
+                        } else if (!localRevisionStr.equals(remoteRevisionStr)) {
+                            int remoteRevision = Integer.parseInt(remoteRevisionStr);
+                            int localRevision = Integer.parseInt(localRevisionStr);
+                            if (remoteRevision > localRevision) {
+                                // TODO
+                                // remote file is newer, check it out
+//                                byte[] fileData = checkOut(path);
+                                // set file revision
+                                localSyncTable.setProperty(path, remoteRevisionStr);
+                                System.out.println("Checked out [updated]: " + path);
+                            } else {
+                                // local file is newer, commit it
+                                byte[] fileData = FSUtils.readFile(new File(Constants.ROOT_DIR, path));
+                                commit(path, fileData);
+                                System.out.println("Commited [updated]: " + path);
+                            }
                         }
                     }
                 }
@@ -140,15 +145,22 @@ public abstract class Synchronizer {
                 if (path.charAt(0) == UPDATE_MARKER) {
                     path = path.substring(1);
                 }
-                String remoteRevisionStr = remoteSyncTable.getProperty(path);
-                if (remoteRevisionStr == null) {
-                    // local file does not exist remotely yet, commit it
-                    byte[] fileData = FSUtils.readFile(new File(Constants.ROOT_DIR, path));
-                    commit(path, fileData);
-                    String localRevisionStr = localSyncTable.getProperty(path);
-                    int localRevision = Integer.parseInt(localRevisionStr);
-                    localSyncTable.setProperty(path, "" + ++localRevision);
-                    System.out.println("Commited [added]: " + path);
+                String remoteDeletedRevisionStr = remoteSyncTable.getProperty(DELETE_MARKER + path);
+                if (remoteDeletedRevisionStr != null) {
+                    // remote file deleted, delete local one as well
+                    File file = new File(Constants.ROOT_DIR, path);
+                    FSUtils.delete(file);
+                } else {
+                    String remoteRevisionStr = remoteSyncTable.getProperty(path);
+                    if (remoteRevisionStr == null) {
+                        // local file does not exist remotely yet, commit it
+                        byte[] fileData = FSUtils.readFile(new File(Constants.ROOT_DIR, path));
+                        commit(path, fileData);
+                        String localRevisionStr = localSyncTable.getProperty(path);
+                        int localRevision = Integer.parseInt(localRevisionStr);
+                        localSyncTable.setProperty(path, "" + ++localRevision);
+                        System.out.println("Commited [added]: " + path);
+                    }
                 }
             }
             // save...
@@ -178,5 +190,13 @@ public abstract class Synchronizer {
      * @throws Exception
      */
     protected abstract void commit(String filePath, byte[] data) throws Exception;
+    
+    /**
+     * Removes file from synchronization repository.
+     * 
+     * @param filePath path of the file to remove, must be a path relative to Bias root directory
+     * @throws Exception
+     */
+    protected abstract void delete(String filePath) throws Exception;
 
 }
