@@ -36,6 +36,9 @@ public abstract class Synchronizer {
     
     public static final char UPDATE_MARKER = '+';
     
+    // TODO: implement removed files synchronization
+    public static final char REMOVE_MARKER = '+';
+    
     private static final String syncTableFilePath = Constants.CONFIG_DIR.getName() + Constants.PATH_SEPARATOR + Constants.SYNC_TABLE_FILE;
     
     private static final String metadataFilePath = Constants.DATA_DIR.getName() + Constants.PATH_SEPARATOR + Constants.METADATA_FILE_NAME;
@@ -44,7 +47,7 @@ public abstract class Synchronizer {
     
     /**
      * Returns instance of appropriate class extending this abstract class
-     * depending on user-defined preferences.
+     * depending on user-defined preferences (synchronization type).
      */
     @SuppressWarnings("unchecked")
     public static Synchronizer getInstance() throws Exception {
