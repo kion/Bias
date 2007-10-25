@@ -17,9 +17,13 @@ import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -73,6 +77,8 @@ import bias.Launcher;
 import bias.Preferences;
 import bias.annotation.AddOnAnnotation;
 import bias.annotation.PreferenceAnnotation;
+import bias.annotation.PreferenceEnableAnnotation;
+import bias.annotation.PreferenceProtectAnnotation;
 import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
@@ -85,6 +91,8 @@ import bias.extension.ToolExtension;
 import bias.gui.utils.ImageFileChooser;
 import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
+import bias.sync.Synchronizer;
+import bias.sync.Synchronizer.SYNC_TYPE;
 import bias.utils.AppManager;
 import bias.utils.FSUtils;
 import bias.utils.PropertiesUtils;
@@ -435,6 +443,7 @@ public class FrontEnd extends JFrame {
 
             representTools();
             representData(BackEnd.getInstance().getData());
+            sync();
 
             String lsid = config.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
             if (lsid != null) {
@@ -643,6 +652,17 @@ public class FrontEnd extends JFrame {
         collectData();
         collectToolsDataAndStoreToolsSettings();
         BackEnd.getInstance().store();
+        sync();
+    }
+    
+    private void sync() {
+        try {
+            if (Preferences.getInstance().syncType != null) {
+                Synchronizer.getInstance().sync();
+            }
+        } catch (Exception ex) {
+            displayErrorMessage("Failed to sync data!" + (ex.getMessage() != null ? "\n" + ex.getClass().getSimpleName() + ": " + ex.getMessage() : Constants.EMPTY_STR), ex);
+        }
     }
 
     private void collectToolsDataAndStoreToolsSettings() throws Throwable {
@@ -744,13 +764,18 @@ public class FrontEnd extends JFrame {
         return data;
     }
     
-    private void optionalAutoSave() {
+    private void exitWithOptionalAutoSave() {
         if (Preferences.getInstance().autoSaveOnExit) {
             try {
                 store();
+                cleanUp();
+                System.exit(0);
             } catch (Throwable t) {
-                displayErrorMessage("Failed to save data!", t);
+                displayErrorMessage("Failed to save!", t);
             }
+        } else {
+            cleanUp();
+            System.exit(0);
         }
     }
     
@@ -760,11 +785,8 @@ public class FrontEnd extends JFrame {
     
     private void exit() {
         if (Preferences.getInstance().exitWithoutConfirmation) {
-            optionalAutoSave();
-            cleanUp();
-            System.exit(0);
+            exitWithOptionalAutoSave();
         } else {
-            // show confirmation dialog
             Component[] cs = null;
             JLabel l = new JLabel();
             StringBuffer caption = new StringBuffer();
@@ -774,13 +796,11 @@ public class FrontEnd extends JFrame {
                 b.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            // store before exit
                             store();
-                            // now it's safe to exit
                             cleanUp();
                             System.exit(0);
                         } catch (Throwable t) {
-                            displayErrorMessage("Failed to save!", t);
+                            displayErrorMessage("Failed to save data!", t);
                         }
                     }
                 });
@@ -794,10 +814,7 @@ public class FrontEnd extends JFrame {
                     cs,
                     "Exit confirmation",
                     JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-                // store nothing, just exit
-                optionalAutoSave();
-                cleanUp();
-                System.exit(0);
+                exitWithOptionalAutoSave();
             }
         }
     }
@@ -2028,59 +2045,136 @@ public class FrontEnd extends JFrame {
             try {
                 byte[] before = Preferences.getInstance().serialize();
                 JPanel prefsPanel = null;
-                Collection<Component> prefComponents = new LinkedList<Component>();
+                Map<Component, Field> prefEntries = new HashMap<Component, Field>();
+                Collection<JPanel> prefPanels = new LinkedList<JPanel>();
                 Field[] fields = Preferences.class.getDeclaredFields();
-                for (final Field field : fields) {
-                    PreferenceAnnotation prefAnn = field.getAnnotation(PreferenceAnnotation.class);
-                    if (prefAnn != null) {
-                        JLabel prefTitle = new JLabel(prefAnn.title());
-                        prefTitle.setToolTipText(prefAnn.description());
-                        JPanel prefPanel = new JPanel(new GridLayout(1, 2));
-                        prefPanel.add(prefTitle);
-                        Component prefControl = null;
-                        String type = field.getType().getSimpleName().toLowerCase();
-                        if ("boolean".equals(type)) {
-                            prefControl = new JCheckBox();
-                            try {
+                try {
+                    for (final Field field : fields) {
+                        PreferenceAnnotation prefAnn = field.getAnnotation(PreferenceAnnotation.class);
+                        if (prefAnn != null) {
+                            JLabel prefTitle = new JLabel(prefAnn.title());
+                            prefTitle.setToolTipText(prefAnn.description());
+                            JPanel prefPanel = new JPanel(new GridLayout(1, 2));
+                            prefPanel.add(prefTitle);
+                            Component prefControl = null;
+                            String type = field.getType().getSimpleName().toLowerCase();
+                            if ("string".equals(type)) {
+                                PreferenceProtectAnnotation prefProtectAnn = field.getAnnotation(PreferenceProtectAnnotation.class);
+                                if (prefProtectAnn != null) {
+                                    prefControl = new JPasswordField();
+                                } else {
+                                    prefControl = new JTextField();
+                                }
+                                String text = (String) field.get(Preferences.getInstance());
+                                if (text == null) {
+                                    text = Constants.EMPTY_STR;
+                                }
+                                ((JTextField) prefControl).setText(text);
+                            } else if ("boolean".equals(type)) {
+                                prefControl = new JCheckBox();
                                 ((JCheckBox) prefControl).setSelected(field.getBoolean(Preferences.getInstance()));
-                                ((JCheckBox) prefControl).addActionListener(new ActionListener(){
-                                    public void actionPerformed(ActionEvent e) {
-                                        try {
-                                            field.setBoolean(Preferences.getInstance(), ((JCheckBox) e.getSource()).isSelected());
-                                        } catch (Exception ex) {
-                                            displayErrorMessage(
-                                                    "Failed to change preference!", ex);
-                                        }
-                                    }
-                                });
-                            } catch (Exception ex) {
-                                prefControl = null;
-                                displayErrorMessage(
-                                        "Failed to get preference!", ex);
+                            } else if ("sync_type".equals(type)) {
+                                prefControl = new JComboBox();
+                                for (SYNC_TYPE t : SYNC_TYPE.values()) {
+                                    ((JComboBox) prefControl).addItem(t);
+                                }
+                                SYNC_TYPE st = (SYNC_TYPE) field.get(Preferences.getInstance());
+                                if (st == null) {
+                                    st = (SYNC_TYPE) ((JComboBox) prefControl).getItemAt(0);
+                                }
+                                ((JComboBox) prefControl).setSelectedItem(st);
+                            }
+                            if (prefControl != null) {
+                                prefEntries.put(prefControl, field);
+                                prefPanel.add(prefControl);
+                                prefPanels.add(prefPanel);
                             }
                         }
-                        if (prefControl != null) {
-                            prefPanel.add(prefControl);
-                            prefComponents.add(prefPanel);
+                    }
+                    prefsPanel = new JPanel(new GridLayout(prefPanels.size(), 1));
+                    for (JPanel prefPanel : prefPanels) {
+                        prefsPanel.add(prefPanel);
+                    }
+                    for (Entry<Component, Field> pref : prefEntries.entrySet()) {
+                        PreferenceEnableAnnotation prefEnableAnn = pref.getValue().getAnnotation(PreferenceEnableAnnotation.class);
+                        if (prefEnableAnn != null) {
+                            createPrefChangeListener(pref.getKey(), prefEnableAnn, prefEntries);
                         }
                     }
+                } catch (Exception ex) {
+                    displayErrorMessage("Failed to load preferences!", ex);
                 }
-                prefsPanel = new JPanel(new GridLayout(prefComponents.size(), 1));
-                for (Component prefComponent : prefComponents) {
-                    prefsPanel.add(prefComponent);
-                }
-                JOptionPane.showConfirmDialog(FrontEnd.this, prefsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION);
-                byte[] after = Preferences.getInstance().serialize();
-                if (!Arrays.equals(after, before)) {
-                    BackEnd.getInstance().storePreferences();
-                    applyPreferences();
+                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, prefsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION);
+                if (opt == JOptionPane.OK_OPTION) {
+                    try {
+                        for (Entry<Component, Field> pref : prefEntries.entrySet()) {
+                            if (pref.getKey() instanceof JTextField) {
+                                pref.getValue().set(Preferences.getInstance(), ((JTextField) pref.getKey()).getText());
+                            } else if (pref.getKey() instanceof JCheckBox) {
+                                pref.getValue().setBoolean(Preferences.getInstance(), ((JCheckBox) pref.getKey()).isSelected());
+                            } else if (pref.getKey() instanceof JComboBox) {
+                                pref.getValue().set(Preferences.getInstance(), ((JComboBox) pref.getKey()).getSelectedItem());
+                            }
+                        }
+                        byte[] after = Preferences.getInstance().serialize();
+                        if (!Arrays.equals(after, before)) {
+                            BackEnd.getInstance().storePreferences();
+                            applyPreferences();
+                        }
+                    } catch (Exception ex) {
+                        displayErrorMessage("Failed to save preferences!", ex);
+                    }
                 }
             } catch (Exception ex) {
                 displayErrorMessage(ex);
             }
         }
-        
     };
+    
+    private void createPrefChangeListener(final Component c, final PreferenceEnableAnnotation ann, Map<Component, Field> prefEntries) {
+        for (final Entry<Component, Field> pref : prefEntries.entrySet()) {
+            if (ann.enabledByField().equals(pref.getValue().getName())) {
+                if (pref.getKey() instanceof JTextField) {
+                    c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals(((JTextField) pref.getKey()).getText()));
+                    ((JTextField) pref.getKey()).addPropertyChangeListener("text", new PropertyChangeListener(){
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals(((JTextField) pref.getKey()).getText()));
+                        }
+                    });
+                    ((JTextField) pref.getKey()).addPropertyChangeListener("enabled", new PropertyChangeListener(){
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals(((JTextField) pref.getKey()).getText()));
+                        }
+                    });
+                } else if (pref.getKey() instanceof JCheckBox) {
+                    c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals("" + ((JCheckBox) pref.getKey()).isSelected()));
+                    ((JCheckBox) pref.getKey()).addChangeListener(new ChangeListener(){
+                        public void stateChanged(ChangeEvent e) {
+                            c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals("" + ((JCheckBox) pref.getKey()).isSelected()));
+                        }
+                    });
+                    ((JCheckBox) pref.getKey()).addPropertyChangeListener("enabled", new PropertyChangeListener(){
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals("" + ((JCheckBox) pref.getKey()).isSelected()));
+                        }
+                    });
+                } else if (pref.getKey() instanceof JComboBox) {
+                    c.setEnabled(pref.getKey().isEnabled() && ((JComboBox) pref.getKey()).getSelectedItem() != null && ann.enabledByValue().equals(((JComboBox) pref.getKey()).getSelectedItem().toString()));
+                    ((JComboBox) pref.getKey()).addItemListener(new ItemListener(){
+                        public void itemStateChanged(ItemEvent e) {
+                            c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals(((JComboBox) pref.getKey()).getSelectedItem().toString()));
+                        }
+                    });
+                    ((JComboBox) pref.getKey()).addPropertyChangeListener("enabled", new PropertyChangeListener(){
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            c.setEnabled(pref.getKey().isEnabled() && ((JComboBox) pref.getKey()).getSelectedItem() != null && ann.enabledByValue().equals(((JComboBox) pref.getKey()).getSelectedItem().toString()));
+                        }
+                    });
+                }
+                break;
+            }
+        }
+    }
     
     private Action manageAddOnsAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;

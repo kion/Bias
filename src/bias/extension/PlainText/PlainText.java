@@ -21,6 +21,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
@@ -57,6 +59,8 @@ public class PlainText extends EntryExtension {
     
     private int currentFontSize = DEFAULT_FONT_SIZE;
 
+    private boolean dataChanged = false;
+    
     private JScrollPane jScrollPane = null;
     private JTextPane jTextPane = null;
     private JToolBar jToolBar = null;
@@ -112,7 +116,11 @@ public class PlainText extends EntryExtension {
      */
     @Override
     public byte[] serializeData() throws Throwable {
-        return getJTextPane().getText().getBytes();
+        if (dataChanged) {
+            return getJTextPane().getText().getBytes();
+        } else {
+            return getData();
+        }
     }
 
     /* (non-Javadoc)
@@ -150,6 +158,20 @@ public class PlainText extends EntryExtension {
             getJButton2().setEnabled(false);
         }
         getJTextPane().getDocument().addUndoableEditListener(new UndoRedoManager(jTextPane));
+        getJTextPane().getDocument().addDocumentListener(new DocumentListener(){
+            public void changedUpdate(DocumentEvent e) {
+                dataChanged();
+            }
+            public void insertUpdate(DocumentEvent e) {
+                dataChanged();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                dataChanged();
+            }
+            private void dataChanged() {
+                dataChanged = true;
+            }
+        });
         this.add(getJScrollPane(), BorderLayout.CENTER);  
         this.add(getJToolBar(), BorderLayout.SOUTH);  
     }

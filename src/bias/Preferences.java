@@ -12,8 +12,11 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import bias.annotation.PreferenceAnnotation;
+import bias.annotation.PreferenceEnableAnnotation;
+import bias.annotation.PreferenceProtectAnnotation;
 import bias.core.BackEnd;
 import bias.gui.FrontEnd;
+import bias.sync.Synchronizer.SYNC_TYPE;
 
 import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
@@ -40,9 +43,13 @@ public class Preferences {
                     try {
                         Field field = Preferences.class.getDeclaredField(fieldName);
                         String type = prefNode.getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_TYPE).getNodeValue();
-                        if ("boolean".equals(type)) {
-                                String value = prefNode.getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_VALUE).getNodeValue();
-                                field.setBoolean(this, Boolean.parseBoolean(value));
+                        String value = prefNode.getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_VALUE).getNodeValue();
+                        if ("string".equals(type)) {
+                            field.set(this, value);
+                        } else if ("boolean".equals(type)) {
+                            field.setBoolean(this, Boolean.parseBoolean(value));
+                        } else if ("sync_type".equals(type)) {
+                            field.set(this, SYNC_TYPE.valueOf(value));
                         }
                     } catch (Exception ex) {
                         FrontEnd.displayErrorMessage(ex);
@@ -71,12 +78,16 @@ public class Preferences {
                 prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, field.getName());
                 String type = field.getType().getSimpleName().toLowerCase();
                 prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_TYPE, type);
-                if ("boolean".equals(type)) {
-                    try {
+                try {
+                    if ("string".equals(type)) {
+                        prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, "" + (String) field.get(this));
+                    } else if ("boolean".equals(type)) {
                         prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, "" + field.getBoolean(this));
-                    } catch (Exception ex) {
-                        prefElement = null;
+                    } else if ("sync_type".equals(type)) {
+                        prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, "" + ((SYNC_TYPE) field.get(this)).name());
                     }
+                } catch (Exception ex) {
+                    prefElement = null;
                 }
                 if (prefElement != null) {
                     rootNode.appendChild(prefElement);
@@ -94,23 +105,65 @@ public class Preferences {
     /* PREFERENCES DECLARATION SECTION */
     
     @PreferenceAnnotation(
-            title="Show system tray icon",
-            description="Defines if application can allocate space in system tray, allows to hide/restore application to/from system tray icon.")
+            title = "Show system tray icon",
+            description = "Defines if application can allocate space in system tray, allows to hide/restore application to/from system tray icon")
     public boolean useSysTrayIcon;
 
     @PreferenceAnnotation(
-            title="Remain in system tray on window close",
-            description="Defines if application should remain in system tray when application's window is closed.")
+            title = "Remain in system tray on window close",
+            description = "Defines if application should remain in system tray when application's window is closed")
     public boolean remainInSysTrayOnWindowClose;
     
     @PreferenceAnnotation(
-            title="Exit without confirmation",
-            description="Defines if exit-confirmation should be displayed on exit.")
+            title = "Exit without confirmation",
+            description = "Defines if exit-confirmation should be displayed on exit")
     public boolean exitWithoutConfirmation;
     
     @PreferenceAnnotation(
-            title="Auto save on exit",
-            description="Defines if user data have to be automatically saved on exit.")
+            title = "Auto save on exit",
+            description = "Defines if user data have to be automatically saved on exit")
     public boolean autoSaveOnExit;
+    
+    @PreferenceAnnotation(
+            title = "Synchronize data",
+            description = "Defines if user data have to be synchronized")
+    public boolean syncData;
+    
+    @PreferenceAnnotation(
+            title = "Synchronization type",
+            description = "Defines which synchronization type to use")
+    @PreferenceEnableAnnotation(enabledByField = "syncData", enabledByValue = "true")
+    public SYNC_TYPE syncType;
+    
+    @PreferenceAnnotation(
+            title = "Bias directory path on local machine",
+            description = "Path to Bias directory on local machine")
+    @PreferenceEnableAnnotation(enabledByField = "syncType", enabledByValue = "LOCAL")
+    public String localSyncDirPath;
+    
+    @PreferenceAnnotation(
+            title = "FTP server",
+            description = "IP address or domain name of FTP server")
+    @PreferenceEnableAnnotation(enabledByField = "syncType", enabledByValue = "FTP")
+    public String ftpServer;
+    
+    @PreferenceAnnotation(
+            title = "Bias directory path on FTP server",
+            description = "Path to Bias directory on FTP server")
+    @PreferenceEnableAnnotation(enabledByField = "syncType", enabledByValue = "FTP")
+    public String ftpSyncDirPath;
+    
+    @PreferenceAnnotation(
+            title = "FTP server username",
+            description = "Username to aceess FTP server")
+    @PreferenceEnableAnnotation(enabledByField = "syncType", enabledByValue = "FTP")
+    public String ftpUsername;
+    
+    @PreferenceAnnotation(
+            title = "FTP server password",
+            description = "Password to aceess FTP server")
+    @PreferenceProtectAnnotation
+    @PreferenceEnableAnnotation(enabledByField = "syncType", enabledByValue = "FTP")
+    public String ftpPassword;
     
 }

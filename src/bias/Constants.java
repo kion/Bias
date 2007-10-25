@@ -74,8 +74,10 @@ public class Constants {
 
     public static final String GLOBAL_CONFIG_FILE = "config.properties";
     public static final String PREFERENCES_FILE = "preferences.properties";
+    public static final String SYNC_TABLE_FILE = "sync_table.properties";
+    public static final String SYNC_TABLE_REMOTE_FILE = "sync_table_remote.properties";
     public static final String CLASSPATH_CONFIG_FILE = "classpath.conf";
-    public static final String METADATA_FILE = "metadata.xml";
+    public static final String METADATA_FILE_NAME = "metadata.xml";
     public static final String ICONS_CONFIG_FILE = "icons.conf";
     public static final String DATA_FILE_SUFFIX = ".data";
     public static final String TOOL_DATA_FILE_SUFFIX = ".tooldata";

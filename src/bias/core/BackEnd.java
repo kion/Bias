@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -49,6 +50,7 @@ import org.w3c.dom.NodeList;
 
 import bias.Constants;
 import bias.Preferences;
+import bias.sync.Synchronizer;
 import bias.utils.FSUtils;
 import bias.utils.Validator;
 
@@ -62,12 +64,17 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 public class BackEnd {
     
     private static Cipher CIPHER_ENCRYPT;
+    
     private static Cipher CIPHER_DECRYPT;
     
 	private static BackEnd instance;
     
     private static String password;
     
+    private File syncTableFile = new File(Constants.CONFIG_DIR, Constants.SYNC_TABLE_FILE);
+    
+    private File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
+
     private static Collection<String> loadedExtensions;
 
     private static Map<String, String> newExtensions = new LinkedHashMap<String, String>();
@@ -93,6 +100,8 @@ public class BackEnd {
     private Document prefs;
     
     private Properties config = new Properties();
+    
+    private Properties syncTable = new Properties();
     
     private BackEnd() {
         try {
@@ -147,10 +156,11 @@ public class BackEnd {
     public void load() throws Exception {
         byte[] data = null;
         byte[] decryptedData = null;
+        // data files
         if (Constants.DATA_DIR.exists()) {
             for (File dataFile : Constants.DATA_DIR.listFiles()) {
                 if (dataFile.getName().endsWith(Constants.DATA_FILE_SUFFIX)) {
-                    // data files
+                    // entries data files
                     data = FSUtils.readFile(dataFile);
                     decryptedData = CIPHER_DECRYPT.doFinal(data);
                     String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
@@ -169,17 +179,11 @@ public class BackEnd {
             }
         }
         // metadata file
-        File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE);
+        File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
         if (metadataFile.exists()) {
             data = FSUtils.readFile(metadataFile);
             decryptedData = CIPHER_DECRYPT.doFinal(data);
             metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
-        }
-        // global config file
-        File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
-        if (configFile.exists()) {
-            data = FSUtils.readFile(configFile);
-            config.load(new ByteArrayInputStream(data));
         }
         // preferences file
         File prefsFile = new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE);
@@ -188,6 +192,12 @@ public class BackEnd {
             if (data.length != 0) {
                 prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(data));
             }
+        }
+        // global config file
+        File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
+        if (configFile.exists()) {
+            data = FSUtils.readFile(configFile);
+            config.load(new ByteArrayInputStream(data));
         }
         // icon files
         if (Constants.ICONS_DIR.exists()) {
@@ -239,6 +249,10 @@ public class BackEnd {
         // get lists of loaded extensions and lafs
         loadedExtensions = getExtensions();
         loadedLAFs = getLAFs();
+        // sync table
+        if (syncTableFile.exists()) {
+            syncTable.load(new FileInputStream(syncTableFile));
+        }
     }
     
     public DataCategory importData(File importDir, Collection<UUID> existingIDs, String password) throws Exception {
@@ -270,7 +284,7 @@ public class BackEnd {
             }
         }
         // metadata file
-        data = FSUtils.readFile(new File(dataDir, Constants.METADATA_FILE));
+        data = FSUtils.readFile(new File(dataDir, Constants.METADATA_FILE_NAME));
         decryptedData = cipher.doFinal(data);
         metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
         // config files
@@ -367,10 +381,7 @@ public class BackEnd {
         return importedData;
     }
     
-    private DataCategory parseMetadata(
-    		Document metadata, 
-    		Map<String, DataEntry> identifiedData,
-    		Collection<UUID> existingIDs) throws Exception {
+    private DataCategory parseMetadata(Document metadata, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs) throws Exception {
         DataCategory data = new DataCategory();
         if (metadata == null) {
             metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
@@ -457,8 +468,6 @@ public class BackEnd {
     }
     
     public void store() throws Exception {
-        // clear data dir before writing updated files
-        FSUtils.clearDirectory(Constants.DATA_DIR);
         // metadata file and data entries
         metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         Element rootNode = metadata.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
@@ -475,7 +484,7 @@ public class BackEnd {
         StringWriter sw = new StringWriter();
         new XMLSerializer(sw, of).serialize(metadata);
         byte[] encryptedData = CIPHER_ENCRYPT.doFinal(sw.getBuffer().toString().getBytes());
-        FSUtils.writeFile(new File(Constants.DATA_DIR, Constants.METADATA_FILE), encryptedData);
+        FSUtils.writeFile(metadataFile, encryptedData);
         // tools data files
         for (Entry<String, byte[]> toolEntry : toolsData.entrySet()) {
             if (toolEntry.getValue() != null) {
@@ -501,10 +510,18 @@ public class BackEnd {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE), sw.getBuffer().toString().getBytes());
         // preferences file
         storePreferences();
+        // sync table
+        syncTableFile.createNewFile();
+        syncTable.store(new FileOutputStream(syncTableFile), null);
     }
     
     public void storePreferences() throws Exception {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
+    }
+    
+    public void storeSyncTable() throws Exception {
+        syncTableFile.createNewFile();
+        syncTable.store(new FileOutputStream(syncTableFile), null);
     }
     
     private Collection<UUID> buildNode(Node node, DataCategory data) throws Exception {
@@ -517,8 +534,21 @@ public class BackEnd {
                 if (entryData == null) {
                     entryData = new byte[]{};
                 }
-                byte[] encryptedData = CIPHER_ENCRYPT.doFinal(entryData);
-                FSUtils.writeFile(deFile, encryptedData);
+                DataEntry oldDE = identifiedData.get(de.getId().toString());
+                boolean dataChanged = (oldDE == null || !Arrays.equals(entryData, oldDE.getData()));
+                if (dataChanged) {
+                    System.out.println(de.getCaption() + " - writing data...");
+                    byte[] encryptedData = CIPHER_ENCRYPT.doFinal(entryData);
+                    FSUtils.writeFile(deFile, encryptedData);
+                    if (Preferences.getInstance().syncType != null) {
+                        handleSyncTableEntry(deFile, true);
+                    }
+                    identifiedData.put(de.getId().toString(), de);
+                } else {
+                    if (Preferences.getInstance().syncType != null) {
+                        handleSyncTableEntry(deFile, false);
+                    }
+                }
                 storeDataEntrySettings(de);
                 Element entryNode = metadata.createElement(Constants.XML_ELEMENT_ENTRY);
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, de.getId().toString());
@@ -554,6 +584,21 @@ public class BackEnd {
             }
         }
         return ids;
+    }
+    
+    private void handleSyncTableEntry(File file, boolean markAsUpdated) throws Exception {
+        String relPath = file.getAbsolutePath().substring(Constants.ROOT_DIR.getAbsolutePath().length() + 1);
+        String revisionStr = syncTable.getProperty(Synchronizer.UPDATE_MARKER + relPath);
+        if (revisionStr == null) {
+            revisionStr = syncTable.getProperty(relPath);
+            if (revisionStr == null) {
+                syncTable.setProperty(relPath, "0");
+            } else if (markAsUpdated) {
+                System.out.println("Marking file as updated: " + relPath);
+                syncTable.setProperty(Synchronizer.UPDATE_MARKER + relPath, revisionStr);
+                syncTable.remove(relPath);
+            }
+        }
     }
     
     private void setDataEntrySettings(DataEntry dataEntry) throws Exception {
@@ -1106,6 +1151,23 @@ public class BackEnd {
     }
     
     private void cleanUpOrphanedStuff(Collection<UUID> ids) throws Exception {
+        // data entries
+        if (Constants.DATA_DIR.exists()) {
+            Collection<UUID> foundDEIds = new ArrayList<UUID>();
+            for (File deFile : Constants.DATA_DIR.listFiles()) {
+                if (deFile.getName().endsWith(Constants.DATA_FILE_SUFFIX)) {
+                    UUID id = UUID.fromString(deFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
+                    foundDEIds.add(id);
+                }
+            }
+            for (UUID id : foundDEIds) {
+                if (!ids.contains(id)) {
+                    // orphaned data entry found, remove it
+                    FSUtils.delete(new File(Constants.DATA_DIR, id.toString() + Constants.DATA_FILE_SUFFIX));
+                }
+            }
+        }
+        // attachments
         if (Constants.ATTACHMENTS_DIR.exists()) {
             Collection<UUID> foundAttIds = new ArrayList<UUID>();
             for (File attFile : Constants.ATTACHMENTS_DIR.listFiles()) {
@@ -1119,6 +1181,7 @@ public class BackEnd {
                 }
             }
         }
+        // configs
         if (Constants.CONFIG_DIR.exists()) {
             Collection<UUID> foundConfIds = new ArrayList<UUID>();
             for (File configFile : Constants.CONFIG_DIR.listFiles()) {
@@ -1160,12 +1223,20 @@ public class BackEnd {
         this.config = config;
     }
 
+    public void setSyncTable(Properties syncTable) {
+        this.syncTable = syncTable;
+    }
+
+    public byte[] getMetadata() throws Exception {
+        return FSUtils.readFile(metadataFile);
+    }
+
     public Document getPrefs() {
         return prefs;
     }
 
-    public void setPrefs(Document prefs) {
-        this.prefs = prefs;
+    public Properties getSyncTable() {
+        return syncTable;
     }
 
 }
