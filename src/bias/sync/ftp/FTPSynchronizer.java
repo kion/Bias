@@ -20,7 +20,8 @@ import bias.sync.Synchronizer;
 public class FTPSynchronizer extends Synchronizer {
     
     private static final String PROTOCOL_PREFIX = "ftp://";
-    
+
+    // TODO: fix: should reflect changes done during current runtime session
     private String username = Preferences.getInstance().ftpUsername;
     private String password = Preferences.getInstance().ftpPassword;
     private String server = Preferences.getInstance().ftpServer;
@@ -66,7 +67,7 @@ public class FTPSynchronizer extends Synchronizer {
      */
     @Override
     protected void delete(String filePath) throws Exception {
-        // TODO
+        // TODO: implement
     }
 
 }

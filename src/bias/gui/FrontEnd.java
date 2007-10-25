@@ -334,7 +334,8 @@ public class FrontEnd extends JFrame {
     private static void preInit() {
         try {
             BackEnd.getInstance().load();
-            config = BackEnd.getInstance().getConfig();
+            config = new Properties();
+            config.putAll(BackEnd.getInstance().getConfig());
         } catch (Throwable t) {
             displayErrorMessage(
                     "Bias has failed to load data!" + Constants.NEW_LINE +
@@ -656,9 +657,7 @@ public class FrontEnd extends JFrame {
     
     private void sync() {
         try {
-            if (Preferences.getInstance().syncType != null) {
-                Synchronizer.getInstance().sync();
-            }
+            Synchronizer.synchronize();
         } catch (Exception ex) {
             displayErrorMessage("Failed to sync data!" + (ex.getMessage() != null ? "\n" + ex.getClass().getSimpleName() + ": " + ex.getMessage() : Constants.EMPTY_STR), ex);
         }

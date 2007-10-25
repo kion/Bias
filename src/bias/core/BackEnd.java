@@ -152,7 +152,22 @@ public class BackEnd {
         cipher.init(mode, key, paramSpec);
         return cipher;
     }
+
+    public byte[] decrypt(byte[] data) throws Exception {
+        return useCipher(CIPHER_DECRYPT, data);
+    }
     
+    public byte[] encrypt(byte[] data) throws Exception {
+        return useCipher(CIPHER_ENCRYPT, data);
+    }
+    
+    private byte[] useCipher(Cipher cipher, byte[] data) throws Exception {
+        if (data == null) {
+            return null;
+        }
+        return cipher.doFinal(data);
+    }
+
     public void load() throws Exception {
         byte[] data = null;
         byte[] decryptedData = null;
@@ -164,19 +179,32 @@ public class BackEnd {
                 prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(data));
             }
         }
+        // global config file
+        File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
+        if (configFile.exists()) {
+            data = FSUtils.readFile(configFile);
+            config.load(new ByteArrayInputStream(data));
+        }
+        // metadata file
+        File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
+        if (metadataFile.exists()) {
+            data = FSUtils.readFile(metadataFile);
+            decryptedData = decrypt(data);
+            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
+        }
         // sync table
         if (syncTableFile.exists()) {
             syncTable.load(new FileInputStream(syncTableFile));
         }
         // synchronize
-        Synchronizer.getInstance().sync();
+        Synchronizer.synchronize();
         // data files
         if (Constants.DATA_DIR.exists()) {
             for (File dataFile : Constants.DATA_DIR.listFiles()) {
                 if (dataFile.getName().endsWith(Constants.DATA_FILE_SUFFIX)) {
                     // entries data files
                     data = FSUtils.readFile(dataFile);
-                    decryptedData = CIPHER_DECRYPT.doFinal(data);
+                    decryptedData = decrypt(data);
                     String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     DataEntry de = new DataEntry();
                     de.setData(decryptedData);
@@ -184,26 +212,13 @@ public class BackEnd {
                 } else if (dataFile.getName().endsWith(Constants.TOOL_DATA_FILE_SUFFIX)) {
                     // tools data files
                     data = FSUtils.readFile(dataFile);
-                    decryptedData = CIPHER_DECRYPT.doFinal(data);
+                    decryptedData = decrypt(data);
                     String tool = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     tool = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                 + tool + Constants.PACKAGE_PATH_SEPARATOR + tool;
                     toolsData.put(tool, decryptedData);
                 }
             }
-        }
-        // metadata file
-        File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
-        if (metadataFile.exists()) {
-            data = FSUtils.readFile(metadataFile);
-            decryptedData = CIPHER_DECRYPT.doFinal(data);
-            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
-        }
-        // global config file
-        File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
-        if (configFile.exists()) {
-            data = FSUtils.readFile(configFile);
-            config.load(new ByteArrayInputStream(data));
         }
         // icon files
         if (Constants.ICONS_DIR.exists()) {
@@ -321,7 +336,7 @@ public class BackEnd {
                 for (File attFile : entryAttsDir.listFiles()) {
                     data = FSUtils.readFile(attFile);
                     decryptedData = cipher.doFinal(data);
-                    byte[] encryptedData = CIPHER_ENCRYPT.doFinal(decryptedData);
+                    byte[] encryptedData = encrypt(decryptedData);
                     entryAttsDir = new File(Constants.ATTACHMENTS_DIR, entryAttsDir.getName());
                     if (!entryAttsDir.exists()) {
                         entryAttsDir.mkdir();
@@ -480,19 +495,13 @@ public class BackEnd {
         Collection<UUID> ids = buildNode(rootNode, data);
         cleanUpOrphanedStuff(ids);
         metadata.appendChild(rootNode);
-        OutputFormat of = new OutputFormat();
-        of.setIndenting(true);
-        of.setIndent(4);
-        StringWriter sw = new StringWriter();
-        new XMLSerializer(sw, of).serialize(metadata);
-        byte[] encryptedData = CIPHER_ENCRYPT.doFinal(sw.getBuffer().toString().getBytes());
-        FSUtils.writeFile(metadataFile, encryptedData);
+        storeMetadata();
         // tools data files
         for (Entry<String, byte[]> toolEntry : toolsData.entrySet()) {
             if (toolEntry.getValue() != null) {
                 String tool = toolEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                 File toolDataFile = new File(Constants.DATA_DIR, tool + Constants.TOOL_DATA_FILE_SUFFIX);
-                encryptedData = CIPHER_ENCRYPT.doFinal(toolEntry.getValue());
+                byte[] encryptedData = encrypt(toolEntry.getValue());
                 FSUtils.writeFile(toolDataFile, encryptedData);
             }
         }
@@ -507,7 +516,7 @@ public class BackEnd {
         File iconsListFile = new File(Constants.CONFIG_DIR, Constants.ICONS_CONFIG_FILE);
         FSUtils.writeFile(iconsListFile, iconsList.toString().getBytes());
         // global config file
-        sw = new StringWriter();
+        StringWriter sw = new StringWriter();
         config.list(new PrintWriter(sw));
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE), sw.getBuffer().toString().getBytes());
         // preferences file
@@ -526,6 +535,14 @@ public class BackEnd {
         syncTable.store(new FileOutputStream(syncTableFile), null);
     }
     
+    public void storeMetadata() throws Exception {
+        OutputFormat of = new OutputFormat();
+        StringWriter sw = new StringWriter();
+        new XMLSerializer(sw, of).serialize(metadata);
+        byte[] encryptedData = encrypt(sw.getBuffer().toString().getBytes());
+        FSUtils.writeFile(metadataFile, encryptedData);
+    }
+    
     private Collection<UUID> buildNode(Node node, DataCategory data) throws Exception {
         Collection<UUID> ids = new ArrayList<UUID>();
         for (Recognizable item : data.getData()) {
@@ -540,7 +557,7 @@ public class BackEnd {
                 boolean dataChanged = (oldDE == null || !Arrays.equals(entryData, oldDE.getData()));
                 if (dataChanged) {
                     System.out.println(de.getCaption() + " - writing data...");
-                    byte[] encryptedData = CIPHER_ENCRYPT.doFinal(entryData);
+                    byte[] encryptedData = encrypt(entryData);
                     FSUtils.writeFile(deFile, encryptedData);
                     if (Preferences.getInstance().syncType != null) {
                         handleSyncTableEntry(deFile, Synchronizer.UPDATE_MARKER);
@@ -1092,7 +1109,7 @@ public class BackEnd {
             File[] entryAtts = entryAttsDir.listFiles();
             for (File entryAtt : entryAtts) {
                 byte[] data = FSUtils.readFile(entryAtt);
-                byte[] decryptedData = CIPHER_DECRYPT.doFinal(data);
+                byte[] decryptedData = decrypt(data);
                 Attachment att = new Attachment(entryAtt.getName(), decryptedData);
                 atts.add(att);
             }
@@ -1108,7 +1125,7 @@ public class BackEnd {
             for (File entryAtt : entryAtts) {
                 if (entryAtt.getName().equals(attName)) {
                     byte[] data = FSUtils.readFile(entryAtt);
-                    byte[] decryptedData = CIPHER_DECRYPT.doFinal(data);
+                    byte[] decryptedData = decrypt(data);
                     att = new Attachment(entryAtt.getName(), decryptedData);
                 }
             }
@@ -1126,7 +1143,7 @@ public class BackEnd {
             if (att.exists()) {
             	throw new Exception("Duplicate attachment name!");
             }
-            byte[] encryptedData = CIPHER_ENCRYPT.doFinal(attachment.getData());
+            byte[] encryptedData = encrypt(attachment.getData());
             FSUtils.writeFile(att, encryptedData);
         } else {
             throw new Exception("Invalid parameters!");
@@ -1227,20 +1244,24 @@ public class BackEnd {
         this.config = config;
     }
 
+    public Properties getSyncTable() {
+        return syncTable;
+    }
+
     public void setSyncTable(Properties syncTable) {
         this.syncTable = syncTable;
     }
 
-    public byte[] getMetadata() throws Exception {
-        return FSUtils.readFile(metadataFile);
+    public Document getMetadata() throws Exception {
+        return metadata;
+    }
+
+    public void setMetadata(Document metadata) {
+        this.metadata = metadata;
     }
 
     public Document getPrefs() {
         return prefs;
-    }
-
-    public Properties getSyncTable() {
-        return syncTable;
     }
 
 }

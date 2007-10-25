@@ -14,14 +14,12 @@ import bias.utils.FSUtils;
  */
 public class LOCALSynchronizer extends Synchronizer {
 
-    private String syncDirPath = Preferences.getInstance().localSyncDirPath;
-
     /* (non-Javadoc)
      * @see bias.sync.Synchronizer#checkOut(java.lang.String)
      */
     @Override
     protected byte[] checkOut(String filePath) throws Exception {
-        File syncDir = new File(syncDirPath);
+        File syncDir = new File(Preferences.getInstance().localSyncDirPath);
         if (syncDir.isDirectory()) {
             File file = new File(syncDir, filePath);
             if (file.exists()) {
@@ -36,7 +34,7 @@ public class LOCALSynchronizer extends Synchronizer {
      */
     @Override
     protected void commit(String filePath, byte[] data) throws Exception {
-        File syncDir = new File(syncDirPath);
+        File syncDir = new File(Preferences.getInstance().localSyncDirPath);
         File file = new File(syncDir, filePath);
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
@@ -50,7 +48,7 @@ public class LOCALSynchronizer extends Synchronizer {
      */
     @Override
     protected void delete(String filePath) throws Exception {
-        File syncDir = new File(syncDirPath);
+        File syncDir = new File(Preferences.getInstance().localSyncDirPath);
         File file = new File(syncDir, filePath);
         if (file.exists()) {
             file.delete();
