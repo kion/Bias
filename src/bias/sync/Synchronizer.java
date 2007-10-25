@@ -37,7 +37,7 @@ public abstract class Synchronizer {
     public static final char UPDATE_MARKER = '+';
     
     // TODO: implement removed files synchronization
-    public static final char REMOVE_MARKER = '+';
+    public static final char REMOVE_MARKER = '-';
     
     private static final String syncTableFilePath = Constants.CONFIG_DIR.getName() + Constants.PATH_SEPARATOR + Constants.SYNC_TABLE_FILE;
     
