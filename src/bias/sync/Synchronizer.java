@@ -7,8 +7,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -115,12 +113,12 @@ public abstract class Synchronizer {
             remoteMetadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
         }
         // parse local & remote sync tables
-        Collection<UUID> diffEntriesIDs = compareSyncTables(localSyncTable, remoteSyncTable);
-        if (!diffEntriesIDs.isEmpty() && remoteMetadata != null) {
-            modifyMetadata(localMetadata, remoteMetadata, diffEntriesIDs);
+        Map<UUID, Character> diffEntries = compareSyncTables(localSyncTable, remoteSyncTable);
+        if (!diffEntries.isEmpty() && remoteMetadata != null) {
+            modifyMetadata(localMetadata, remoteMetadata, diffEntries);
         }
         saveAndCommitMetadata(localMetadata);
-        saveAndCommitSyncTable(localSyncTable);
+        saveAndCommitSyncTable(localSyncTable, remoteSyncTable);
     }
 
     private void saveAndCommitMetadata(Document metadata) throws Exception {
@@ -136,82 +134,89 @@ public abstract class Synchronizer {
 
     }
 
-    private void saveAndCommitSyncTable(Properties syncTable) throws Exception {
+    private void saveAndCommitSyncTable(Properties localSyncTable, Properties remoteSyncTable) throws Exception {
         // save...
-        BackEnd.getInstance().setSyncTable(syncTable);
+        BackEnd.getInstance().setSyncTable(localSyncTable);
         BackEnd.getInstance().storeSyncTable();
         // ... & commit synchronization table
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        syncTable.store(baos, null);
+        remoteSyncTable.store(baos, null);
         commit(SYNCTABLE_FILEPATH, baos.toByteArray());
     }
 
-    private Collection<UUID> compareSyncTables(Properties localSyncTable, Properties remoteSyncTable) throws Exception {
-        Collection<UUID> diffEntriesIDs = new ArrayList<UUID>();
+    private Map<UUID, Character> compareSyncTables(Properties localSyncTable, Properties remoteSyncTable) throws Exception {
+        Map<UUID, Character> diffEntries = new HashMap<UUID, Character>();
         if (!remoteSyncTable.equals(localSyncTable)) {
             // walk through remote sync table
-            for (Entry<Object, Object> entry : remoteSyncTable.entrySet()) {
+            Properties initialRemoteSynctTable = new Properties();
+            initialRemoteSynctTable.putAll(remoteSyncTable);
+            for (Entry<Object, Object> entry : initialRemoteSynctTable.entrySet()) {
                 String path = (String) entry.getKey();
                 String remoteRevisionStr = (String) entry.getValue();
-                String localUpdatedRevisionStr = localSyncTable.getProperty(UPDATE_MARKER + path);
-                if (localUpdatedRevisionStr != null) {
-                    int remoteRevision = Integer.parseInt(remoteRevisionStr);
-                    int localRevision = Integer.parseInt(localUpdatedRevisionStr);
-                    if (localRevision < remoteRevision) {
-                        // TODO: handle conflicting revisions
-                        System.out.println("Conflicting revisions! Local: " + localRevision + ", Remote: " + remoteRevision);
-                    } else {
-                        // commit local file revision
-                        byte[] fileData = FSUtils.readFile(new File(Constants.ROOT_DIR, path));
-                        commit(path, fileData);
-                        localSyncTable.setProperty(path, "" + ++localRevision);
-                        localSyncTable.remove(UPDATE_MARKER + path);
-                        System.out.println("Commited [updated]: " + path);
-                    }
+                if (path.charAt(0) == DELETE_MARKER) {
+                    // remote file deleted, delete local one as well
+                    localSyncTable.remove(path);
+                    path = path.substring(1);
+                    File file = new File(Constants.ROOT_DIR, path);
+                    FSUtils.delete(file);
+                    localSyncTable.remove(path);
+                    diffEntries.put(getIdFromPath(path), DELETE_MARKER);
+                    System.out.println("Checked out [deleted]: " + path);
                 } else {
-                    String localDeletedRevisionStr = localSyncTable.getProperty(DELETE_MARKER + path);
-                    if (localDeletedRevisionStr != null) {
-                        // file removed locally, remove remote one as well
-                        delete(path);
+                    String localUpdatedRevisionStr = localSyncTable.getProperty(UPDATE_MARKER + path);
+                    if (localUpdatedRevisionStr != null) {
+                        int remoteRevision = Integer.parseInt(remoteRevisionStr);
+                        int localRevision = Integer.parseInt(localUpdatedRevisionStr);
+                        if (localRevision < remoteRevision) {
+                            // TODO: handle conflicting revisions
+                            System.out.println("Conflicting revisions! Local: " + localRevision + ", Remote: " + remoteRevision);
+                        } else {
+                            // commit local file revision
+                            byte[] fileData = FSUtils.readFile(new File(Constants.ROOT_DIR, path));
+                            commit(path, fileData);
+                            localSyncTable.remove(UPDATE_MARKER + path);
+                            localRevision++;
+                            localSyncTable.setProperty(path, "" + localRevision);
+                            remoteSyncTable.setProperty(path, "" + localRevision);
+                            System.out.println("Commited [updated]: " + path);
+                        }
                     } else {
-                        String localRevisionStr = localSyncTable.getProperty(path);
-                        if (localRevisionStr == null) {
-                            if (path.charAt(0) == DELETE_MARKER) {
-                                // remote file deleted, delete local one as well
-                                localSyncTable.remove(path);
-                                path = path.substring(1);
-                                File file = new File(Constants.ROOT_DIR, path);
-                                FSUtils.delete(file);
-                                localSyncTable.remove(path);
-                            } else {
+                        String localDeletedRevisionStr = localSyncTable.getProperty(DELETE_MARKER + path);
+                        if (localDeletedRevisionStr != null) {
+                            // file removed locally, remove remote one as well
+                            delete(path);
+                            localSyncTable.remove(DELETE_MARKER + path);
+                            remoteSyncTable.remove(path);
+                            remoteSyncTable.setProperty(DELETE_MARKER + path, remoteRevisionStr);
+                            System.out.println("Commited [deleted]: " + path);
+                        } else {
+                            String localRevisionStr = localSyncTable.getProperty(path);
+                            if (localRevisionStr == null) {
                                 // remote file does not exist locally yet, check it out
                                 byte[] fileData = checkOut(path);
                                 FSUtils.writeFile(new File(Constants.ROOT_DIR, path), fileData);
-                                String id = path.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                id = path.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                                diffEntriesIDs.add(UUID.fromString(id));
+                                diffEntries.put(getIdFromPath(path), UPDATE_MARKER);
                                 // set file revision
                                 localSyncTable.setProperty(path, remoteRevisionStr);
                                 System.out.println("Checked out [added]: " + path);
-                            }
-                        } else if (!localRevisionStr.equals(remoteRevisionStr)) {
-                            int remoteRevision = Integer.parseInt(remoteRevisionStr);
-                            int localRevision = Integer.parseInt(localRevisionStr);
-                            if (remoteRevision > localRevision) {
-                                // remote file is newer, check it out
-                                byte[] fileData = checkOut(path);
-                                FSUtils.writeFile(new File(Constants.ROOT_DIR, path), fileData);
-                                String id = path.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                id = id.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                                diffEntriesIDs.add(UUID.fromString(id));
-                                // set file revision
-                                localSyncTable.setProperty(path, remoteRevisionStr);
-                                System.out.println("Checked out [updated]: " + path);
-                            } else {
-                                // local file is newer, commit it
-                                byte[] fileData = FSUtils.readFile(new File(Constants.ROOT_DIR, path));
-                                commit(path, fileData);
-                                System.out.println("Commited [updated]: " + path);
+                            } else if (!localRevisionStr.equals(remoteRevisionStr)) {
+                                int remoteRevision = Integer.parseInt(remoteRevisionStr);
+                                int localRevision = Integer.parseInt(localRevisionStr);
+                                if (remoteRevision > localRevision) {
+                                    // remote file is newer, check it out
+                                    byte[] fileData = checkOut(path);
+                                    FSUtils.writeFile(new File(Constants.ROOT_DIR, path), fileData);
+                                    diffEntries.put(getIdFromPath(path), UPDATE_MARKER);
+                                    // set file revision
+                                    localSyncTable.setProperty(path, remoteRevisionStr);
+                                    System.out.println("Checked out [updated]: " + path);
+                                } else {
+                                    // local file is newer, commit it
+                                    byte[] fileData = FSUtils.readFile(new File(Constants.ROOT_DIR, path));
+                                    commit(path, fileData);
+                                    remoteSyncTable.setProperty(path, localRevisionStr);
+                                    System.out.println("Commited [updated]: " + path);
+                                }
                             }
                         }
                     }
@@ -231,21 +236,29 @@ public abstract class Synchronizer {
                         commit(path, fileData);
                         String localRevisionStr = localSyncTable.getProperty(path);
                         int localRevision = Integer.parseInt(localRevisionStr);
-                        localSyncTable.setProperty(path, "" + ++localRevision);
+                        localRevision++;
+                        localSyncTable.setProperty(path, "" + localRevision);
+                        remoteSyncTable.setProperty(path, "" + localRevision);
                         System.out.println("Commited [added]: " + path);
                     }
                 }
             }
         }
-        return diffEntriesIDs;
+        return diffEntries;
+    }
+    
+    private UUID getIdFromPath(String path) {
+        path = path.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+        path = path.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+        return UUID.fromString(path);
     }
 
-    private void modifyMetadata(Document localMetadata, Document remoteMetadata, Collection<UUID> diffEntriesIDs) {
+    private void modifyMetadata(Document localMetadata, Document remoteMetadata, Map<UUID, Character> diffEntries) {
         Node root = remoteMetadata.getFirstChild();
-        modifyMetadata(localMetadata, remoteMetadata, diffEntriesIDs, root);
+        modifyMetadata(localMetadata, remoteMetadata, diffEntries, root);
     }
 
-    private void modifyMetadata(Document localMetadata, Document remoteMetadata, Collection<UUID> diffEntriesIDs, Node node) {
+    private void modifyMetadata(Document localMetadata, Document remoteMetadata, Map<UUID, Character> diffEntries, Node node) {
         NodeList nodes = node.getChildNodes();
         for (int i = 0; i < nodes.getLength(); i++) {
             Node n = nodes.item(i);
@@ -253,30 +266,34 @@ public abstract class Synchronizer {
                 NamedNodeMap attributes = n.getAttributes();
                 Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
                 UUID id = UUID.fromString(attID.getNodeValue());
-                for (UUID diffId : diffEntriesIDs) {
-                    if (diffId.equals(id)) {
-                        Stack<UUID> path = new Stack<UUID>();
-                        while (true) {
-                            n = n.getParentNode();
-                            if (n.equals(remoteMetadata.getFirstChild())) {
-                                break;
+                for (Entry<UUID, Character> diffEntry : diffEntries.entrySet()) {
+                    if (diffEntry.getKey().equals(id)) {
+                        if (diffEntry.getValue().equals(DELETE_MARKER)) {
+                            removeFromMetadata(localMetadata, diffEntry.getKey());
+                        } else if (diffEntry.getValue().equals(UPDATE_MARKER)) {
+                            Stack<UUID> path = new Stack<UUID>();
+                            while (true) {
+                                n = n.getParentNode();
+                                if (n.equals(remoteMetadata.getFirstChild())) {
+                                    break;
+                                }
+                                attributes = n.getAttributes();
+                                attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
+                                id = UUID.fromString(attID.getNodeValue());
+                                path.push(id);
                             }
-                            attributes = n.getAttributes();
-                            attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
-                            id = UUID.fromString(attID.getNodeValue());
-                            path.push(id);
+                            addToMetadata(localMetadata, path, n.cloneNode(false));
                         }
-                        ;
-                        addToMetadata(localMetadata, path, n.cloneNode(false));
                         break;
                     }
                 }
             } else if (n.getNodeName().equals(Constants.XML_ELEMENT_CATEGORY)) {
-                modifyMetadata(localMetadata, remoteMetadata, diffEntriesIDs, n);
+                modifyMetadata(localMetadata, remoteMetadata, diffEntries, n);
             }
         }
     }
 
+    // TODO: added categories must be added
     private void addToMetadata(Document metadata, Stack<UUID> path, Node node) {
         Node n = metadata.getFirstChild();
         while (!path.isEmpty()) {
@@ -308,6 +325,11 @@ public abstract class Synchronizer {
             }
         }
         n.appendChild(node);
+    }
+    
+    // TODO: removed categories must be removed
+    private void removeFromMetadata(Document metadata, UUID entryId) {
+        // TODO: implement
     }
 
     /**
