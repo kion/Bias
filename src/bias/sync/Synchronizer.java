@@ -103,6 +103,8 @@ public abstract class Synchronizer {
         if (rstData != null) {
             remoteSyncTable.load(new ByteArrayInputStream(rstData));
         }
+        Properties initialRemoteSyncTable = new Properties();
+        initialRemoteSyncTable.putAll(remoteSyncTable);
         // read local metadata
         Document localMetadata = BackEnd.getInstance().getMetadata();
         // check out remote metadata
@@ -113,35 +115,47 @@ public abstract class Synchronizer {
             remoteMetadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
         }
         // parse local & remote sync tables
-        Map<UUID, Character> diffEntries = compareSyncTables(localSyncTable, remoteSyncTable);
-        if (!diffEntries.isEmpty() && remoteMetadata != null) {
-            modifyMetadata(localMetadata, remoteMetadata, diffEntries);
+        if (localMetadata != null) {
+            Map<UUID, Character> diffEntries = compareSyncTables(localSyncTable, remoteSyncTable);
+            if (!diffEntries.isEmpty() && remoteMetadata != null) {
+                modifyMetadata(localMetadata, remoteMetadata, diffEntries);
+            }
+        } else {
+            localMetadata = remoteMetadata;
         }
-        saveAndCommitMetadata(localMetadata);
-        saveAndCommitSyncTable(localSyncTable, remoteSyncTable);
+        saveAndCommit(localSyncTable, initialRemoteSyncTable, remoteSyncTable, localMetadata, remoteMetadata);
     }
 
-    private void saveAndCommitMetadata(Document metadata) throws Exception {
-        // save...
-        BackEnd.getInstance().setMetadata(metadata);
-        BackEnd.getInstance().storeMetadata();
-        // ... & commit metadata file
-        OutputFormat of = new OutputFormat();
-        StringWriter sw = new StringWriter();
-        new XMLSerializer(sw, of).serialize(metadata);
-        byte[] encryptedData = BackEnd.getInstance().encrypt(sw.getBuffer().toString().getBytes());
-        commit(METADATA_FILEPATH, encryptedData);
-
-    }
-
-    private void saveAndCommitSyncTable(Properties localSyncTable, Properties remoteSyncTable) throws Exception {
-        // save...
+    private void saveAndCommit(
+            Properties localSyncTable, 
+            Properties initialRemoteSyncTable, 
+            Properties remoteSyncTable,
+            Document localMetadata, 
+            Document remoteMetadata) throws Exception {
         BackEnd.getInstance().setSyncTable(localSyncTable);
         BackEnd.getInstance().storeSyncTable();
-        // ... & commit synchronization table
+        if (!initialRemoteSyncTable.equals(remoteSyncTable)) {
+            saveAndCommitMetadata(localMetadata, remoteMetadata);
+            commitSyncTable(remoteSyncTable);
+        }
+    }
+
+    private void commitSyncTable(Properties remoteSyncTable) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         remoteSyncTable.store(baos, null);
         commit(SYNCTABLE_FILEPATH, baos.toByteArray());
+        System.out.println("Commited [sync-table]");
+    }
+
+    private void saveAndCommitMetadata(Document localMetadata, Document remoteMetadata) throws Exception {
+        BackEnd.getInstance().setMetadata(localMetadata);
+        BackEnd.getInstance().storeMetadata();
+        OutputFormat of = new OutputFormat();
+        StringWriter sw = new StringWriter();
+        new XMLSerializer(sw, of).serialize(localMetadata);
+        byte[] encryptedData = BackEnd.getInstance().encrypt(sw.getBuffer().toString().getBytes());
+        commit(METADATA_FILEPATH, encryptedData);
+        System.out.println("Commited [meta-data]");
     }
 
     private Map<UUID, Character> compareSyncTables(Properties localSyncTable, Properties remoteSyncTable) throws Exception {
@@ -157,11 +171,13 @@ public abstract class Synchronizer {
                     // remote file deleted, delete local one as well
                     localSyncTable.remove(path);
                     path = path.substring(1);
-                    File file = new File(Constants.ROOT_DIR, path);
-                    FSUtils.delete(file);
-                    localSyncTable.remove(path);
-                    diffEntries.put(getIdFromPath(path), DELETE_MARKER);
-                    System.out.println("Checked out [deleted]: " + path);
+                    if (localSyncTable.containsKey(path)) {
+                        File file = new File(Constants.ROOT_DIR, path);
+                        FSUtils.delete(file);
+                        localSyncTable.remove(path);
+                        diffEntries.put(getIdFromPath(path), DELETE_MARKER);
+                        System.out.println("Checked out [deleted]: " + path);
+                    }
                 } else {
                     String localUpdatedRevisionStr = localSyncTable.getProperty(UPDATE_MARKER + path);
                     if (localUpdatedRevisionStr != null) {
@@ -311,16 +327,18 @@ public abstract class Synchronizer {
                 }
             }
         }
-        String id = n.getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID).getNodeValue();
-        NodeList nodes = n.getChildNodes();
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Node ni = nodes.item(i);
-            if (ni.getNodeName().equals(Constants.XML_ELEMENT_ENTRY)) {
-                NamedNodeMap attributes = n.getAttributes();
-                Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
-                if (id.equals(attID.getNodeValue())) {
-                    n.removeChild(ni);
-                    break;
+        if (!n.equals(metadata.getFirstChild())) {
+            String id = n.getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID).getNodeValue();
+            NodeList nodes = n.getChildNodes();
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node ni = nodes.item(i);
+                if (ni.getNodeName().equals(Constants.XML_ELEMENT_ENTRY)) {
+                    NamedNodeMap attributes = n.getAttributes();
+                    Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
+                    if (id.equals(attID.getNodeValue())) {
+                        n.removeChild(ni);
+                        break;
+                    }
                 }
             }
         }
@@ -329,7 +347,28 @@ public abstract class Synchronizer {
     
     // TODO: removed categories must be removed
     private void removeFromMetadata(Document metadata, UUID entryId) {
-        // TODO: implement
+        Node root = metadata.getFirstChild();
+        removeFromMetadata(root, entryId);
+    }
+    
+    private boolean removeFromMetadata(Node node, UUID entryId) {
+        NodeList nodes = node.getChildNodes();
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node ni = nodes.item(i);
+            if (ni.getNodeName().equals(Constants.XML_ELEMENT_ENTRY)) {
+                NamedNodeMap attributes = ni.getAttributes();
+                Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
+                if (entryId.toString().equals(attID.getNodeValue())) {
+                    ni.getParentNode().removeChild(ni);
+                    return true;
+                }
+            } else if (ni.getNodeName().equals(Constants.XML_ELEMENT_CATEGORY)) {
+                if (removeFromMetadata(ni, entryId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

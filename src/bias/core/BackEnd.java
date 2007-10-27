@@ -548,25 +548,9 @@ public class BackEnd {
         for (Recognizable item : data.getData()) {
             if (item instanceof DataEntry) {
                 DataEntry de = (DataEntry) item;
-                File deFile = new File(Constants.DATA_DIR, de.getId().toString() + Constants.DATA_FILE_SUFFIX);
                 byte[] entryData = de.getData();
                 if (entryData == null) {
                     entryData = new byte[]{};
-                }
-                DataEntry oldDE = identifiedData.get(de.getId().toString());
-                boolean dataChanged = (oldDE == null || !Arrays.equals(entryData, oldDE.getData()));
-                if (dataChanged) {
-                    System.out.println(de.getCaption() + " - writing data...");
-                    byte[] encryptedData = encrypt(entryData);
-                    FSUtils.writeFile(deFile, encryptedData);
-                    if (Preferences.getInstance().syncType != null) {
-                        handleSyncTableEntry(deFile, Synchronizer.UPDATE_MARKER);
-                    }
-                    identifiedData.put(de.getId().toString(), de);
-                } else {
-                    if (Preferences.getInstance().syncType != null) {
-                        handleSyncTableEntry(deFile, null);
-                    }
                 }
                 storeDataEntrySettings(de);
                 Element entryNode = metadata.createElement(Constants.XML_ELEMENT_ENTRY);
@@ -582,6 +566,24 @@ public class BackEnd {
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_TYPE, de.getType());
                 node.appendChild(entryNode);
                 ids.add(de.getId());
+                // handle sync table entry
+                File deFile = new File(Constants.DATA_DIR, de.getId().toString() + Constants.DATA_FILE_SUFFIX);
+                DataEntry oldDE = identifiedData.get(de.getId().toString());
+//                boolean dataChanged = (oldDE == null || !Arrays.equals(entryData, oldDE.getData()));
+//                if (dataChanged) {
+                if (!de.equals(oldDE)) {
+                    System.out.println(de.getCaption() + " - writing data...");
+                    byte[] encryptedData = encrypt(entryData);
+                    FSUtils.writeFile(deFile, encryptedData);
+                    if (Preferences.getInstance().syncType != null) {
+                        handleSyncTableEntry(deFile, Synchronizer.UPDATE_MARKER);
+                    }
+                    identifiedData.put(de.getId().toString(), de);
+                } else {
+                    if (Preferences.getInstance().syncType != null) {
+                        handleSyncTableEntry(deFile, null);
+                    }
+                }
             } else if (item instanceof DataCategory) {
                 DataCategory dc = (DataCategory) item;
                 Element catNode = metadata.createElement(Constants.XML_ELEMENT_CATEGORY);
