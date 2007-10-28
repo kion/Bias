@@ -298,6 +298,7 @@ public abstract class Synchronizer {
                             attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
                             id = UUID.fromString(attID.getNodeValue());
                             path.push(id);
+                            n = pn;
                         }
                         addToMetadata(localMetadata, path, n.cloneNode(false));
                     }
