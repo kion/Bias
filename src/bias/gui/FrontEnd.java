@@ -260,6 +260,8 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton10 = null;
 
+    private JButton jButton12 = null;
+
     private JButton jButton3 = null;
 
     /**
@@ -652,7 +654,6 @@ public class FrontEnd extends JFrame {
         collectData();
         collectToolsDataAndStoreToolsSettings();
         BackEnd.getInstance().store();
-        sync();
     }
     
     private void sync() {
@@ -1357,6 +1358,7 @@ public class FrontEnd extends JFrame {
             jToolBar.setFloatable(false);
             jToolBar.add(getJButton7());
             jToolBar.add(getJButton2());
+            jToolBar.add(getJButton12());
             jToolBar.add(getJButton3());
             jToolBar.add(getJButton4());
             jToolBar.add(getJButton());
@@ -1621,6 +1623,21 @@ public class FrontEnd extends JFrame {
             jButton10.setIcon(controlIcons.getIconExit());
         }
         return jButton10;
+    }
+
+    /**
+     * This method initializes jButton12
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton12() {
+        if (jButton12 == null) {
+            jButton12 = new JButton(syncAction);
+            jButton12.setToolTipText("synchronize");
+//            jButton12.setIcon(controlIcons.getIconSync());
+            jButton12.setText("SYNC");
+        }
+        return jButton12;
     }
 
     /**
@@ -2032,6 +2049,21 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             exit();
+        }
+    };
+    
+    private Action syncAction = new AbstractAction() {
+        private static final long serialVersionUID = 1L;
+
+        public void actionPerformed(ActionEvent evt) {
+            try {
+                getJTabbedPane().removeAll();
+                sync();
+                BackEnd.getInstance().load();
+                representData(BackEnd.getInstance().getData());
+            } catch (Throwable t) {
+                displayErrorMessage("Failed to synchronize!", t);
+            }
         }
     };
     

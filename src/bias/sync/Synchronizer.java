@@ -115,27 +115,21 @@ public abstract class Synchronizer {
             remoteMetadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
         }
         // parse local & remote sync tables
-        if (localMetadata != null) {
-            Map<UUID, Character> diffEntries = compareSyncTables(localSyncTable, remoteSyncTable);
-            if (!diffEntries.isEmpty() && remoteMetadata != null) {
-                modifyMetadata(localMetadata, remoteMetadata, diffEntries);
-            }
-        } else {
+        if (localMetadata == null) {
             localMetadata = remoteMetadata;
         }
-        saveAndCommit(localSyncTable, initialRemoteSyncTable, remoteSyncTable, localMetadata, remoteMetadata);
-    }
-
-    private void saveAndCommit(
-            Properties localSyncTable, 
-            Properties initialRemoteSyncTable, 
-            Properties remoteSyncTable,
-            Document localMetadata, 
-            Document remoteMetadata) throws Exception {
+        Map<UUID, Character> diffEntries = compareSyncTables(localSyncTable, remoteSyncTable);
+        if (!diffEntries.isEmpty() && remoteMetadata != null) {
+            modifyMetadata(localMetadata, remoteMetadata, diffEntries);
+        }
+        if (localMetadata != null) {
+            BackEnd.getInstance().setMetadata(localMetadata);
+            BackEnd.getInstance().storeMetadata();
+        }
         BackEnd.getInstance().setSyncTable(localSyncTable);
         BackEnd.getInstance().storeSyncTable();
         if (!initialRemoteSyncTable.equals(remoteSyncTable)) {
-            saveAndCommitMetadata(localMetadata, remoteMetadata);
+            commitMetadata(localMetadata, remoteMetadata);
             commitSyncTable(remoteSyncTable);
         }
     }
@@ -147,9 +141,7 @@ public abstract class Synchronizer {
         System.out.println("Commited [sync-table]");
     }
 
-    private void saveAndCommitMetadata(Document localMetadata, Document remoteMetadata) throws Exception {
-        BackEnd.getInstance().setMetadata(localMetadata);
-        BackEnd.getInstance().storeMetadata();
+    private void commitMetadata(Document localMetadata, Document remoteMetadata) throws Exception {
         OutputFormat of = new OutputFormat();
         StringWriter sw = new StringWriter();
         new XMLSerializer(sw, of).serialize(localMetadata);
@@ -239,9 +231,13 @@ public abstract class Synchronizer {
                 }
             }
             // walk through local sync table
-            for (Entry<Object, Object> entry : localSyncTable.entrySet()) {
+            Properties initialLocalSynctTable = new Properties();
+            initialLocalSynctTable.putAll(localSyncTable);
+            for (Entry<Object, Object> entry : initialLocalSynctTable.entrySet()) {
                 String path = (String) entry.getKey();
                 if (path.charAt(0) != DELETE_MARKER) {
+                    String localRevisionStr = localSyncTable.getProperty(path);
+                    int localRevision = Integer.parseInt(localRevisionStr);
                     if (path.charAt(0) == UPDATE_MARKER) {
                         path = path.substring(1);
                     }
@@ -250,8 +246,6 @@ public abstract class Synchronizer {
                         // local file does not exist remotely yet, commit it
                         byte[] fileData = FSUtils.readFile(new File(Constants.ROOT_DIR, path));
                         commit(path, fileData);
-                        String localRevisionStr = localSyncTable.getProperty(path);
-                        int localRevision = Integer.parseInt(localRevisionStr);
                         localRevision++;
                         localSyncTable.setProperty(path, "" + localRevision);
                         remoteSyncTable.setProperty(path, "" + localRevision);
@@ -269,12 +263,20 @@ public abstract class Synchronizer {
         return UUID.fromString(path);
     }
 
+    // TODO: root node attributes must be synchronized, tabs order should be preserved
     private void modifyMetadata(Document localMetadata, Document remoteMetadata, Map<UUID, Character> diffEntries) {
-        Node root = remoteMetadata.getFirstChild();
-        modifyMetadata(localMetadata, remoteMetadata, diffEntries, root);
+        for (Entry<UUID, Character> diffEntry : diffEntries.entrySet()) {
+            if (diffEntry.getValue().equals(DELETE_MARKER)) {
+                Node root = localMetadata.getFirstChild();
+                modifyMetadata(localMetadata, remoteMetadata, diffEntry, root);
+            } else if (diffEntry.getValue().equals(UPDATE_MARKER)) {
+                Node root = remoteMetadata.getFirstChild();
+                modifyMetadata(localMetadata, remoteMetadata, diffEntry, root);
+            }
+        }
     }
 
-    private void modifyMetadata(Document localMetadata, Document remoteMetadata, Map<UUID, Character> diffEntries, Node node) {
+    private void modifyMetadata(Document localMetadata, Document remoteMetadata, Entry<UUID, Character> diffEntry, Node node) {
         NodeList nodes = node.getChildNodes();
         for (int i = 0; i < nodes.getLength(); i++) {
             Node n = nodes.item(i);
@@ -282,29 +284,26 @@ public abstract class Synchronizer {
                 NamedNodeMap attributes = n.getAttributes();
                 Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
                 UUID id = UUID.fromString(attID.getNodeValue());
-                for (Entry<UUID, Character> diffEntry : diffEntries.entrySet()) {
-                    if (diffEntry.getKey().equals(id)) {
-                        if (diffEntry.getValue().equals(DELETE_MARKER)) {
-                            removeFromMetadata(localMetadata, diffEntry.getKey());
-                        } else if (diffEntry.getValue().equals(UPDATE_MARKER)) {
-                            Stack<UUID> path = new Stack<UUID>();
-                            while (true) {
-                                n = n.getParentNode();
-                                if (n.equals(remoteMetadata.getFirstChild())) {
-                                    break;
-                                }
-                                attributes = n.getAttributes();
-                                attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
-                                id = UUID.fromString(attID.getNodeValue());
-                                path.push(id);
+                if (diffEntry.getKey().equals(id)) {
+                    if (diffEntry.getValue().equals(DELETE_MARKER)) {
+                        removeFromMetadata(localMetadata, diffEntry.getKey());
+                    } else if (diffEntry.getValue().equals(UPDATE_MARKER)) {
+                        Stack<UUID> path = new Stack<UUID>();
+                        while (true) {
+                            Node pn = n.getParentNode();
+                            if (pn.equals(remoteMetadata.getFirstChild())) {
+                                break;
                             }
-                            addToMetadata(localMetadata, path, n.cloneNode(false));
+                            attributes = pn.getAttributes();
+                            attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
+                            id = UUID.fromString(attID.getNodeValue());
+                            path.push(id);
                         }
-                        break;
+                        addToMetadata(localMetadata, path, n.cloneNode(false));
                     }
                 }
             } else if (n.getNodeName().equals(Constants.XML_ELEMENT_CATEGORY)) {
-                modifyMetadata(localMetadata, remoteMetadata, diffEntries, n);
+                modifyMetadata(localMetadata, remoteMetadata, diffEntry, n);
             }
         }
     }
@@ -327,21 +326,20 @@ public abstract class Synchronizer {
                 }
             }
         }
-        if (!n.equals(metadata.getFirstChild())) {
-            String id = n.getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID).getNodeValue();
-            NodeList nodes = n.getChildNodes();
-            for (int i = 0; i < nodes.getLength(); i++) {
-                Node ni = nodes.item(i);
-                if (ni.getNodeName().equals(Constants.XML_ELEMENT_ENTRY)) {
-                    NamedNodeMap attributes = n.getAttributes();
-                    Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
-                    if (id.equals(attID.getNodeValue())) {
-                        n.removeChild(ni);
-                        break;
-                    }
+        String id = node.getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID).getNodeValue();
+        NodeList nodes = n.getChildNodes();
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node ni = nodes.item(i);
+            if (ni.getNodeName().equals(Constants.XML_ELEMENT_ENTRY)) {
+                NamedNodeMap attributes = ni.getAttributes();
+                Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
+                if (id.equals(attID.getNodeValue())) {
+                    n.removeChild(ni);
+                    break;
                 }
             }
         }
+        node = metadata.adoptNode(node);
         n.appendChild(node);
     }
     

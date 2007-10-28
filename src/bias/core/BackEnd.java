@@ -196,8 +196,6 @@ public class BackEnd {
         if (syncTableFile.exists()) {
             syncTable.load(new FileInputStream(syncTableFile));
         }
-        // synchronize
-        Synchronizer.synchronize();
         // data files
         if (Constants.DATA_DIR.exists()) {
             for (File dataFile : Constants.DATA_DIR.listFiles()) {
@@ -569,8 +567,6 @@ public class BackEnd {
                 // handle sync table entry
                 File deFile = new File(Constants.DATA_DIR, de.getId().toString() + Constants.DATA_FILE_SUFFIX);
                 DataEntry oldDE = identifiedData.get(de.getId().toString());
-//                boolean dataChanged = (oldDE == null || !Arrays.equals(entryData, oldDE.getData()));
-//                if (dataChanged) {
                 if (!de.equals(oldDE)) {
                     System.out.println(de.getCaption() + " - writing data...");
                     byte[] encryptedData = encrypt(entryData);
@@ -609,15 +605,29 @@ public class BackEnd {
     
     private void handleSyncTableEntry(File file, Character marker) throws Exception {
         String relPath = file.getAbsolutePath().substring(Constants.ROOT_DIR.getAbsolutePath().length() + 1);
-        String revisionStr = syncTable.getProperty(Synchronizer.UPDATE_MARKER + relPath);
-        if (revisionStr == null) {
-            revisionStr = syncTable.getProperty(relPath);
+        if (marker == null) {
+            String revisionStr = syncTable.getProperty(relPath);
             if (revisionStr == null) {
                 syncTable.setProperty(relPath, "0");
-            } else if (marker != null) {
+            }
+        } else if (Synchronizer.UPDATE_MARKER == marker) {
+            String revisionStr = syncTable.getProperty(marker + relPath);
+            if (revisionStr == null) {
+                revisionStr = syncTable.getProperty(relPath);
+                if (revisionStr == null) {
+                    syncTable.setProperty(relPath, "0");
+                } else if (!"0".equals(revisionStr)) {
+                    System.out.println("Marking file [" + relPath + "] with marker [" + marker + "]");
+                    syncTable.setProperty(marker + relPath, revisionStr);
+                    syncTable.remove(relPath);
+                }
+            }
+        } else if (Synchronizer.DELETE_MARKER == marker) {
+            String revisionStr = syncTable.getProperty(relPath);
+            syncTable.remove(relPath);
+            if (!"0".equals(revisionStr)) {
                 System.out.println("Marking file [" + relPath + "] with marker [" + marker + "]");
                 syncTable.setProperty(marker + relPath, revisionStr);
-                syncTable.remove(relPath);
             }
         }
     }
