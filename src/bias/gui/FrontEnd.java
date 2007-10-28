@@ -643,7 +643,7 @@ public class FrontEnd extends JFrame {
                 }
             }
         } catch (Exception ex) {
-            displayErrorMessage("Critical error! :( Bias can not proceed further...");
+            displayErrorMessage("Critical error! Data can not be represented. Bias can not proceed further...");
             System.exit(1);
         }
         return brokenExtensionsFound;
