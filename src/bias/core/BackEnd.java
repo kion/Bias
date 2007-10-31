@@ -50,7 +50,6 @@ import org.w3c.dom.NodeList;
 
 import bias.Constants;
 import bias.Preferences;
-import bias.sync.Synchronizer;
 import bias.utils.FSUtils;
 import bias.utils.Validator;
 
@@ -564,21 +563,15 @@ public class BackEnd {
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_TYPE, de.getType());
                 node.appendChild(entryNode);
                 ids.add(de.getId());
-                // handle sync table entry
-                File deFile = new File(Constants.DATA_DIR, de.getId().toString() + Constants.DATA_FILE_SUFFIX);
+                // check if data of the entry have changed;
+                // if yes - write changed data to file, otherwise - skip data writing
                 DataEntry oldDE = identifiedData.get(de.getId().toString());
-                if (!de.equals(oldDE)) {
+                if (!Arrays.equals(de.getData(), oldDE.getData())) {
                     System.out.println(de.getCaption() + " - writing data...");
                     byte[] encryptedData = encrypt(entryData);
+                    File deFile = new File(Constants.DATA_DIR, de.getId().toString() + Constants.DATA_FILE_SUFFIX);
                     FSUtils.writeFile(deFile, encryptedData);
-                    if (Preferences.getInstance().syncType != null) {
-                        handleSyncTableEntry(deFile, Synchronizer.UPDATE_MARKER);
-                    }
                     identifiedData.put(de.getId().toString(), de);
-                } else {
-                    if (Preferences.getInstance().syncType != null) {
-                        handleSyncTableEntry(deFile, null);
-                    }
                 }
             } else if (item instanceof DataCategory) {
                 DataCategory dc = (DataCategory) item;
@@ -601,35 +594,6 @@ public class BackEnd {
             }
         }
         return ids;
-    }
-    
-    private void handleSyncTableEntry(File file, Character marker) throws Exception {
-        String relPath = file.getAbsolutePath().substring(Constants.ROOT_DIR.getAbsolutePath().length() + 1);
-        if (marker == null) {
-            String revisionStr = syncTable.getProperty(relPath);
-            if (revisionStr == null) {
-                syncTable.setProperty(relPath, "0");
-            }
-        } else if (Synchronizer.UPDATE_MARKER == marker) {
-            String revisionStr = syncTable.getProperty(marker + relPath);
-            if (revisionStr == null) {
-                revisionStr = syncTable.getProperty(relPath);
-                if (revisionStr == null) {
-                    syncTable.setProperty(relPath, "0");
-                } else if (!"0".equals(revisionStr)) {
-                    System.out.println("Marking file [" + relPath + "] with marker [" + marker + "]");
-                    syncTable.setProperty(marker + relPath, revisionStr);
-                    syncTable.remove(relPath);
-                }
-            }
-        } else if (Synchronizer.DELETE_MARKER == marker) {
-            String revisionStr = syncTable.getProperty(relPath);
-            syncTable.remove(relPath);
-            if (!"0".equals(revisionStr)) {
-                System.out.println("Marking file [" + relPath + "] with marker [" + marker + "]");
-                syncTable.setProperty(marker + relPath, revisionStr);
-            }
-        }
     }
     
     private void setDataEntrySettings(DataEntry dataEntry) throws Exception {
@@ -1196,7 +1160,6 @@ public class BackEnd {
                     // orphaned data entry found, remove it
                     File deFile = new File(Constants.DATA_DIR, id.toString() + Constants.DATA_FILE_SUFFIX);
                     FSUtils.delete(deFile);
-                    handleSyncTableEntry(deFile, Synchronizer.DELETE_MARKER);
                 }
             }
         }

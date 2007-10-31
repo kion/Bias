@@ -12,11 +12,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import bias.annotation.PreferenceAnnotation;
-import bias.annotation.PreferenceEnableAnnotation;
-import bias.annotation.PreferenceProtectAnnotation;
 import bias.core.BackEnd;
 import bias.gui.FrontEnd;
-import bias.sync.Synchronizer.SYNC_TYPE;
 
 import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
@@ -48,8 +45,6 @@ public class Preferences {
                             field.set(this, value);
                         } else if ("boolean".equals(type)) {
                             field.setBoolean(this, Boolean.parseBoolean(value));
-                        } else if ("sync_type".equals(type)) {
-                            field.set(this, SYNC_TYPE.valueOf(value));
                         }
                     } catch (Exception ex) {
                         FrontEnd.displayErrorMessage(ex);
@@ -83,8 +78,6 @@ public class Preferences {
                         prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, "" + (String) field.get(this));
                     } else if ("boolean".equals(type)) {
                         prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, "" + field.getBoolean(this));
-                    } else if ("sync_type".equals(type)) {
-                        prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, "" + ((SYNC_TYPE) field.get(this)).name());
                     }
                 } catch (Exception ex) {
                     prefElement = null;
@@ -128,42 +121,5 @@ public class Preferences {
             title = "Synchronize data",
             description = "Defines if user data have to be synchronized")
     public boolean syncData;
-    
-    @PreferenceAnnotation(
-            title = "Synchronization type",
-            description = "Defines which synchronization type to use")
-    @PreferenceEnableAnnotation(enabledByField = "syncData", enabledByValue = "true")
-    public SYNC_TYPE syncType;
-    
-    @PreferenceAnnotation(
-            title = "Bias directory path on local machine",
-            description = "Path to Bias directory on local machine")
-    @PreferenceEnableAnnotation(enabledByField = "syncType", enabledByValue = "LOCAL")
-    public String localSyncDirPath;
-    
-    @PreferenceAnnotation(
-            title = "FTP server",
-            description = "IP address or domain name of FTP server")
-    @PreferenceEnableAnnotation(enabledByField = "syncType", enabledByValue = "FTP")
-    public String ftpServer;
-    
-    @PreferenceAnnotation(
-            title = "Bias directory path on FTP server",
-            description = "Path to Bias directory on FTP server")
-    @PreferenceEnableAnnotation(enabledByField = "syncType", enabledByValue = "FTP")
-    public String ftpSyncDirPath;
-    
-    @PreferenceAnnotation(
-            title = "FTP server username",
-            description = "Username to aceess FTP server")
-    @PreferenceEnableAnnotation(enabledByField = "syncType", enabledByValue = "FTP")
-    public String ftpUsername;
-    
-    @PreferenceAnnotation(
-            title = "FTP server password",
-            description = "Password to aceess FTP server")
-    @PreferenceProtectAnnotation
-    @PreferenceEnableAnnotation(enabledByField = "syncType", enabledByValue = "FTP")
-    public String ftpPassword;
     
 }

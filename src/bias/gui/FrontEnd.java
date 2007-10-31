@@ -91,8 +91,6 @@ import bias.extension.ToolExtension;
 import bias.gui.utils.ImageFileChooser;
 import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
-import bias.sync.Synchronizer;
-import bias.sync.Synchronizer.SYNC_TYPE;
 import bias.utils.AppManager;
 import bias.utils.FSUtils;
 import bias.utils.PropertiesUtils;
@@ -259,8 +257,6 @@ public class FrontEnd extends JFrame {
     private JButton jButton9 = null;
 
     private JButton jButton10 = null;
-
-    private JButton jButton12 = null;
 
     private JButton jButton3 = null;
 
@@ -656,14 +652,6 @@ public class FrontEnd extends JFrame {
         BackEnd.getInstance().store();
     }
     
-    private void sync() {
-        try {
-            Synchronizer.synchronize();
-        } catch (Exception ex) {
-            displayErrorMessage("Failed to sync data!" + (ex.getMessage() != null ? "\n" + ex.getClass().getSimpleName() + ": " + ex.getMessage() : Constants.EMPTY_STR), ex);
-        }
-    }
-
     private void collectToolsDataAndStoreToolsSettings() throws Throwable {
         if (tools != null) {
             Map<String, byte[]> toolsData = new HashMap<String, byte[]>();
@@ -1358,7 +1346,6 @@ public class FrontEnd extends JFrame {
             jToolBar.setFloatable(false);
             jToolBar.add(getJButton7());
             jToolBar.add(getJButton2());
-            jToolBar.add(getJButton12());
             jToolBar.add(getJButton3());
             jToolBar.add(getJButton4());
             jToolBar.add(getJButton());
@@ -1623,21 +1610,6 @@ public class FrontEnd extends JFrame {
             jButton10.setIcon(controlIcons.getIconExit());
         }
         return jButton10;
-    }
-
-    /**
-     * This method initializes jButton12
-     * 
-     * @return javax.swing.JButton
-     */
-    private JButton getJButton12() {
-        if (jButton12 == null) {
-            jButton12 = new JButton(syncAction);
-            jButton12.setToolTipText("synchronize");
-//            jButton12.setIcon(controlIcons.getIconSync());
-            jButton12.setText("SYNC");
-        }
-        return jButton12;
     }
 
     /**
@@ -2052,21 +2024,6 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    private Action syncAction = new AbstractAction() {
-        private static final long serialVersionUID = 1L;
-
-        public void actionPerformed(ActionEvent evt) {
-            try {
-                getJTabbedPane().removeAll();
-                sync();
-                BackEnd.getInstance().load();
-                representData(BackEnd.getInstance().getData());
-            } catch (Throwable t) {
-                displayErrorMessage("Failed to synchronize!", t);
-            }
-        }
-    };
-    
     private Action preferencesAction = new AbstractAction() {
 
         private static final long serialVersionUID = 1L;
@@ -2103,16 +2060,6 @@ public class FrontEnd extends JFrame {
                             } else if ("boolean".equals(type)) {
                                 prefControl = new JCheckBox();
                                 ((JCheckBox) prefControl).setSelected(field.getBoolean(Preferences.getInstance()));
-                            } else if ("sync_type".equals(type)) {
-                                prefControl = new JComboBox();
-                                for (SYNC_TYPE t : SYNC_TYPE.values()) {
-                                    ((JComboBox) prefControl).addItem(t);
-                                }
-                                SYNC_TYPE st = (SYNC_TYPE) field.get(Preferences.getInstance());
-                                if (st == null) {
-                                    st = (SYNC_TYPE) ((JComboBox) prefControl).getItemAt(0);
-                                }
-                                ((JComboBox) prefControl).setSelectedItem(st);
                             }
                             if (prefControl != null) {
                                 prefEntries.put(prefControl, field);

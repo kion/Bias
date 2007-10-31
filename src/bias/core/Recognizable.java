@@ -52,20 +52,4 @@ public class Recognizable {
 		this.icon = icon;
 	}
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null || !(obj instanceof Recognizable)) {
-            return false;
-        } else {
-            Recognizable r = (Recognizable) obj;
-            if (r.getId() == null) {
-                return false;
-            } else {
-                return r.getId().equals(getId()) 
-                        && (r.getIcon() == null ? getIcon() == null : r.getIcon().equals(getIcon())) 
-                        && (r.getCaption() == null ? getCaption() == null : r.getCaption().equals(getCaption()));
-            }
-        }
-    }
-
 }

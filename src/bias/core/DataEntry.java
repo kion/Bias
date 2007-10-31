@@ -3,7 +3,6 @@
  */
 package bias.core;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 import javax.swing.Icon;
@@ -52,22 +51,6 @@ public class DataEntry extends Recognizable {
 
     public void setSettings(byte[] settings) {
         this.settings = settings;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!super.equals(obj) || !(obj instanceof DataEntry)) {
-            return false;
-        } else {
-            DataEntry de = (DataEntry) obj;
-            if (de.getType() == null) {
-                return false;
-            } else {
-                return de.getType().equals(getType()) 
-                        && (de.getData() == null ? getData() == null : Arrays.equals(de.getData(), getData())) 
-                        && (de.getSettings() == null ? getSettings() == null : Arrays.equals(de.getSettings(), getSettings()));
-            }
-        }
     }
 
 }
