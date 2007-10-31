@@ -8,7 +8,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -70,8 +69,6 @@ public class BackEnd {
     
     private static String password;
     
-    private File syncTableFile = new File(Constants.CONFIG_DIR, Constants.SYNC_TABLE_FILE);
-    
     private File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
 
     private static Collection<String> loadedExtensions;
@@ -99,8 +96,6 @@ public class BackEnd {
     private Document prefs;
     
     private Properties config = new Properties();
-    
-    private Properties syncTable = new Properties();
     
     private BackEnd() {
         try {
@@ -170,31 +165,6 @@ public class BackEnd {
     public void load() throws Exception {
         byte[] data = null;
         byte[] decryptedData = null;
-        // preferences file
-        File prefsFile = new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE);
-        if (prefsFile.exists()) {
-            data = FSUtils.readFile(prefsFile);
-            if (data.length != 0) {
-                prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(data));
-            }
-        }
-        // global config file
-        File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
-        if (configFile.exists()) {
-            data = FSUtils.readFile(configFile);
-            config.load(new ByteArrayInputStream(data));
-        }
-        // metadata file
-        File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
-        if (metadataFile.exists()) {
-            data = FSUtils.readFile(metadataFile);
-            decryptedData = decrypt(data);
-            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
-        }
-        // sync table
-        if (syncTableFile.exists()) {
-            syncTable.load(new FileInputStream(syncTableFile));
-        }
         // data files
         if (Constants.DATA_DIR.exists()) {
             for (File dataFile : Constants.DATA_DIR.listFiles()) {
@@ -216,6 +186,27 @@ public class BackEnd {
                     toolsData.put(tool, decryptedData);
                 }
             }
+        }
+        // preferences file
+        File prefsFile = new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE);
+        if (prefsFile.exists()) {
+            data = FSUtils.readFile(prefsFile);
+            if (data.length != 0) {
+                prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(data));
+            }
+        }
+        // global config file
+        File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
+        if (configFile.exists()) {
+            data = FSUtils.readFile(configFile);
+            config.load(new ByteArrayInputStream(data));
+        }
+        // metadata file
+        File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
+        if (metadataFile.exists()) {
+            data = FSUtils.readFile(metadataFile);
+            decryptedData = decrypt(data);
+            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
         }
         // icon files
         if (Constants.ICONS_DIR.exists()) {
@@ -518,18 +509,10 @@ public class BackEnd {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE), sw.getBuffer().toString().getBytes());
         // preferences file
         storePreferences();
-        // sync table
-        syncTableFile.createNewFile();
-        syncTable.store(new FileOutputStream(syncTableFile), null);
     }
     
     public void storePreferences() throws Exception {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
-    }
-    
-    public void storeSyncTable() throws Exception {
-        syncTableFile.createNewFile();
-        syncTable.store(new FileOutputStream(syncTableFile), null);
     }
     
     public void storeMetadata() throws Exception {
@@ -1217,22 +1200,6 @@ public class BackEnd {
 
     public void setConfig(Properties config) {
         this.config = config;
-    }
-
-    public Properties getSyncTable() {
-        return syncTable;
-    }
-
-    public void setSyncTable(Properties syncTable) {
-        this.syncTable = syncTable;
-    }
-
-    public Document getMetadata() throws Exception {
-        return metadata;
-    }
-
-    public void setMetadata(Document metadata) {
-        this.metadata = metadata;
     }
 
     public Document getPrefs() {
