@@ -117,9 +117,4 @@ public class Preferences {
             description = "Defines if user data have to be automatically saved on exit")
     public boolean autoSaveOnExit;
     
-    @PreferenceAnnotation(
-            title = "Synchronize data",
-            description = "Defines if user data have to be synchronized")
-    public boolean syncData;
-    
 }

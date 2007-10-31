@@ -51,8 +51,6 @@ public class Constants {
     
     public static final String UNICODE_ENCODING = "UTF-8";
     
-    public static final String FILE_PROTOCOL_PREFIX = "file:";
-
     public static final String CIPHER_ALGORITHM = "PBEWithMD5AndDES";
     
     public static final byte[] CIPHER_SALT = "kn+kv=lv".getBytes();
@@ -72,6 +70,8 @@ public class Constants {
     public static final String ADDON_PACK_PATTERN = "(?i).+\\.jar$";
     public static final String ADDON_FILE_PATTERN_DESCRIPTION = "JAR file";
 
+    public static final String ENTRY_PROTOCOL_PREFIX = "entry://";
+    
     public static final String GLOBAL_CONFIG_FILE = "config.properties";
     public static final String PREFERENCES_FILE = "preferences.properties";
     public static final String SYNC_TABLE_FILE = "sync_table.properties";
@@ -82,7 +82,6 @@ public class Constants {
     public static final String DATA_FILE_SUFFIX = ".data";
     public static final String TOOL_DATA_FILE_SUFFIX = ".tooldata";
     public static final String FILE_SUFFIX_PATTERN = "\\..*$";
-    public static final String CLASS_FILE_SUFFIX = ".class";
     public static final String MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE = "Bias-Add-On-Name";
     public static final String EXTENSION_DIR_PATTERN = "^ext/";
     public static final String LAF_DIR_PATTERN = "^laf/";
@@ -102,6 +101,11 @@ public class Constants {
     public static final String LAF_CONFIG_FILE_SUFFIX = ".laf.conf";
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
     
+    public static final String TRANSFER_PROPERTY_FILEPATH = "FILEPATH";
+    public static final String TRANSFER_PROPERTY_SERVER = "SERVER";
+    public static final String TRANSFER_PROPERTY_USERNAME = "USERNAME";
+    public static final String TRANSFER_PROPERTY_PASSWORD = "PASSWORD";
+    
     public static final String PROPERTY_LOOK_AND_FEEL = "LOOK_AND_FEEL";
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";
@@ -109,8 +113,6 @@ public class Constants {
     public static final String PROPERTY_WINDOW_HEIGHT = "WINDOW_HEIGHT";
     public static final String PROPERTY_LAST_SELECTED_ID = "LAST_SELECTED_ID";
 
-    public static final String ENTRY_PROTOCOL_PREFIX = "entry://";
-    
     public static final String XML_ELEMENT_ROOT_CONTAINER = "root-container";
     public static final String XML_ELEMENT_PREFERENCE = "preference";
     public static final String XML_ELEMENT_CATEGORY = "category";
