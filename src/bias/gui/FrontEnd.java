@@ -651,24 +651,24 @@ public class FrontEnd extends JFrame {
     }
     
     private void store() throws Throwable {
-        collectProperties();
-        collectData();
-        collectToolsDataAndStoreToolsSettings();
+        BackEnd.getInstance().setConfig(collectProperties());
+        BackEnd.getInstance().setData(collectData());
+        BackEnd.getInstance().setToolsData(collectToolsData());
         BackEnd.getInstance().store();
     }
     
-    private void collectToolsDataAndStoreToolsSettings() throws Throwable {
+    private Map<String, byte[]> collectToolsData() throws Throwable {
+        Map<String, byte[]> toolsData = new HashMap<String, byte[]>();
         if (tools != null) {
-            Map<String, byte[]> toolsData = new HashMap<String, byte[]>();
             for (ToolExtension tool : tools.values()) {
                 toolsData.put(tool.getClass().getName(), tool.serializeData());
                 BackEnd.getInstance().storeExtensionSettings(tool.getClass().getName(), tool.serializeSettings());
             }
-            BackEnd.getInstance().setToolsData(toolsData);
         }
+        return toolsData;
     }
 
-    private void collectProperties() {
+    private Properties collectProperties() {
         config.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR + getLocation().getX()
                 / getToolkit().getScreenSize().getWidth());
         config.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR + getLocation().getY()
@@ -681,16 +681,16 @@ public class FrontEnd extends JFrame {
         if (lsid != null) {
             config.put(Constants.PROPERTY_LAST_SELECTED_ID, lsid.toString());
         }
-        BackEnd.getInstance().setConfig(config);
+        return config;
     }
     
-    private void collectData() throws Exception {
+    private DataCategory collectData() throws Exception {
         DataCategory data = collectData("root", getJTabbedPane());
         data.setPlacement(getJTabbedPane().getTabPlacement());
         if (getJTabbedPane().getSelectedIndex() != -1) {
             data.setActiveIndex(getJTabbedPane().getSelectedIndex());
         }
-        BackEnd.getInstance().setData(data);
+        return data;
     }
 
     private DataCategory collectData(String caption, JTabbedPane tabPane) throws Exception {
@@ -1928,7 +1928,7 @@ public class FrontEnd extends JFrame {
                 int opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose import type", JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
                     TRANSFER_TYPE type = (TRANSFER_TYPE) cb.getSelectedItem();
-                    Properties options = displayImportDialog(type);
+                    Properties options = displayTransferOptionsDialog(type);
                     if (options != null) {
                         if (options.isEmpty()) {
                             throw new Exception("Import source options are missing! Import canceled.");
@@ -1980,7 +1980,19 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    private Properties displayImportDialog(TRANSFER_TYPE type) {
+    private Action exportAction = new AbstractAction() {
+        private static final long serialVersionUID = 1L;
+
+        public void actionPerformed(ActionEvent e) {
+            try {
+                // TODO: implement
+            } catch (Throwable t) {
+                displayErrorMessage(t);
+            }
+        }
+    };
+    
+    private Properties displayTransferOptionsDialog(TRANSFER_TYPE type) {
         Properties options = null;
         switch (type) {
         case LOCAL:
@@ -2049,14 +2061,6 @@ public class FrontEnd extends JFrame {
         return options;
     }
 
-    private Action exportAction = new AbstractAction() {
-        private static final long serialVersionUID = 1L;
-
-        public void actionPerformed(ActionEvent e) {
-            // TODO
-        }
-    };
-    
     private Action addCategoryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
         
