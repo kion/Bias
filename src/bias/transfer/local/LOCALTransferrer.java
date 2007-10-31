@@ -19,8 +19,8 @@ public class LOCALTransferrer extends Transferrer {
      * @see bias.transfer.Transferrer#doExport(byte[], java.util.Properties)
      */
     @Override
-    protected void doExport(byte[] data, Properties settings) throws Exception {
-        String filePath = settings.getProperty(Constants.TRANSFER_PROPERTY_FILEPATH);
+    public void doExport(byte[] data, Properties options) throws Exception {
+        String filePath = options.getProperty(Constants.TRANSFER_OPTION_FILEPATH);
         File file = new File(filePath);
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
@@ -33,8 +33,8 @@ public class LOCALTransferrer extends Transferrer {
      * @see bias.transfer.Transferrer#doImport(java.util.Properties)
      */
     @Override
-    protected byte[] doImport(Properties settings) throws Exception {
-        String filePath = settings.getProperty(Constants.TRANSFER_PROPERTY_FILEPATH);
+    public byte[] doImport(Properties options) throws Exception {
+        String filePath = options.getProperty(Constants.TRANSFER_OPTION_FILEPATH);
         File file = new File(filePath);
         return FSUtils.readFile(file);
     }

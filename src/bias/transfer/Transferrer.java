@@ -40,8 +40,8 @@ public abstract class Transferrer {
         return instance;
     }
 
-    protected abstract byte[] doImport(Properties settings) throws Exception;
+    public abstract byte[] doImport(Properties options) throws Exception;
 
-    protected abstract void doExport(byte[] data, Properties settings) throws Exception;
+    public abstract void doExport(byte[] data, Properties options) throws Exception;
 
 }

@@ -104,10 +104,10 @@ public class Constants {
     public static final String LAF_CONFIG_FILE_SUFFIX = ".laf.conf";
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
     
-    public static final String TRANSFER_PROPERTY_FILEPATH = "FILEPATH";
-    public static final String TRANSFER_PROPERTY_SERVER = "SERVER";
-    public static final String TRANSFER_PROPERTY_USERNAME = "USERNAME";
-    public static final String TRANSFER_PROPERTY_PASSWORD = "PASSWORD";
+    public static final String TRANSFER_OPTION_FILEPATH = "FILEPATH";
+    public static final String TRANSFER_OPTION_SERVER = "SERVER";
+    public static final String TRANSFER_OPTION_USERNAME = "USERNAME";
+    public static final String TRANSFER_OPTION_PASSWORD = "PASSWORD";
     
     public static final String PROPERTY_LOOK_AND_FEEL = "LOOK_AND_FEEL";
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";

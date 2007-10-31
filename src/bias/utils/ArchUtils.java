@@ -3,9 +3,9 @@
  */
 package bias.utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -20,11 +20,11 @@ public class ArchUtils {
         // hidden default constructor
     }
     
-    public static void extract(File source, File destination) throws Exception {
+    public static void extract(byte[] source, File destination) throws Exception {
         if (!destination.exists()) {
             destination.mkdirs();
         }
-        ZipInputStream is = new ZipInputStream(new FileInputStream(source));
+        ZipInputStream is = new ZipInputStream(new ByteArrayInputStream(source));
         ZipEntry ze;
         while ((ze = is.getNextEntry()) != null) {
             if (ze.getName().endsWith(Constants.PATH_SEPARATOR)) {

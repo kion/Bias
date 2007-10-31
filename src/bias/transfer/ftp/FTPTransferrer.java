@@ -20,15 +20,19 @@ public class FTPTransferrer extends Transferrer {
 
     private static final String PROTOCOL_PREFIX = "ftp://";
 
+    private static final String PORT_SEPARATOR = ":";
+    
+    private static final int DEFAULT_PORT = 21;
+    
     /* (non-Javadoc)
      * @see bias.transfer.Transferrer#doExport(byte[], java.util.Properties)
      */
     @Override
-    protected void doExport(byte[] data, Properties settings) throws Exception {
-        String server = settings.getProperty(Constants.TRANSFER_PROPERTY_SERVER);
-        String username = settings.getProperty(Constants.TRANSFER_PROPERTY_USERNAME);
-        String password = settings.getProperty(Constants.TRANSFER_PROPERTY_PASSWORD);
-        String filePath = settings.getProperty(Constants.TRANSFER_PROPERTY_FILEPATH);
+    public void doExport(byte[] data, Properties options) throws Exception {
+        String server = options.getProperty(Constants.TRANSFER_OPTION_SERVER);
+        String username = options.getProperty(Constants.TRANSFER_OPTION_USERNAME);
+        String password = options.getProperty(Constants.TRANSFER_OPTION_PASSWORD);
+        String filePath = options.getProperty(Constants.TRANSFER_OPTION_FILEPATH);
         URL url = new URL(PROTOCOL_PREFIX + username + ":" + password + "@" + server + filePath + ";type=i");
         URLConnection urlc = url.openConnection();
         OutputStream os = urlc.getOutputStream();
@@ -40,11 +44,14 @@ public class FTPTransferrer extends Transferrer {
      * @see bias.transfer.Transferrer#doImport(java.util.Properties)
      */
     @Override
-    protected byte[] doImport(Properties settings) throws Exception {
-        String server = settings.getProperty(Constants.TRANSFER_PROPERTY_SERVER);
-        String username = settings.getProperty(Constants.TRANSFER_PROPERTY_USERNAME);
-        String password = settings.getProperty(Constants.TRANSFER_PROPERTY_PASSWORD);
-        String filePath = settings.getProperty(Constants.TRANSFER_PROPERTY_FILEPATH);
+    public byte[] doImport(Properties options) throws Exception {
+        String server = options.getProperty(Constants.TRANSFER_OPTION_SERVER);
+        String username = options.getProperty(Constants.TRANSFER_OPTION_USERNAME);
+        String password = options.getProperty(Constants.TRANSFER_OPTION_PASSWORD);
+        String filePath = options.getProperty(Constants.TRANSFER_OPTION_FILEPATH);
+        if (!server.contains(PORT_SEPARATOR)) {
+            server += PORT_SEPARATOR + DEFAULT_PORT;
+        }
         URL url = new URL(PROTOCOL_PREFIX + username + ":" + password + "@" + server + filePath + ";type=i");
         URLConnection urlc = url.openConnection();
         InputStream is = urlc.getInputStream();

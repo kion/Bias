@@ -91,6 +91,8 @@ import bias.extension.ToolExtension;
 import bias.gui.utils.ImageFileChooser;
 import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
+import bias.transfer.Transferrer;
+import bias.transfer.Transferrer.TRANSFER_TYPE;
 import bias.utils.AppManager;
 import bias.utils.ArchUtils;
 import bias.utils.FSUtils;
@@ -1919,60 +1921,133 @@ public class FrontEnd extends JFrame {
         
         public void actionPerformed(ActionEvent evt) {
             try {
-                JFileChooser jfc = new JFileChooser();
-                jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                jfc.setFileFilter(new FileFilter() {
-                    @Override
-                    public boolean accept(File file) {
-                        return file.isDirectory() || file.getName().matches(Constants.ZIP_FILE_PATTERN);
-                    }
-                    @Override
-                    public String getDescription() {
-                        return Constants.ZIP_FILE_PATTERN_DESCRIPTION;
-                    }
-                });
-                int rVal = jfc.showOpenDialog(FrontEnd.this);
-                if (rVal == JFileChooser.APPROVE_OPTION) {
-                    File importDir = new File(Constants.TMP_DIR, "importDir");
-
-                    JLabel label = new JLabel("password:");
-                    final JPasswordField passField = new JPasswordField();
-                    ActionListener al = new ActionListener(){
-                        public void actionPerformed(ActionEvent ae){
-                            passField.requestFocusInWindow();
-                        }
-                    };
-                    Timer timer = new Timer(500,al);
-                    timer.setRepeats(false);
-                    timer.start();
-                    if (JOptionPane.showConfirmDialog(
-                            null, 
-                            new Component[]{label, passField}, 
-                            "Import authentification", 
-                            JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-                        ArchUtils.extract(jfc.getSelectedFile(), importDir);
-                        String password = new String(passField.getPassword());            
-                        if (password != null) {
-                            try {
-                                DataCategory data = BackEnd.getInstance().importData(importDir, getVisualEntriesIDs(), password);
-                                if (!data.getData().isEmpty()) {
-                                    representData(data);
-                                    displayMessage("Data have been successfully imported");
-                                } else {
-                                    displayErrorMessage("Nothing to import!");
+                JComboBox cb = new JComboBox();
+                for (TRANSFER_TYPE type : Transferrer.TRANSFER_TYPE.values()) {
+                    cb.addItem(type);
+                }
+                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose import type", JOptionPane.OK_CANCEL_OPTION);
+                if (opt == JOptionPane.OK_OPTION) {
+                    TRANSFER_TYPE type = (TRANSFER_TYPE) cb.getSelectedItem();
+                    Properties options = displayImportDialog(type);
+                    if (options != null) {
+                        if (options.isEmpty()) {
+                            throw new Exception("Import source options are missing! Import canceled.");
+                        } else {
+                            Transferrer transferrer = Transferrer.getInstance(type);
+                            byte[] importedData = transferrer.doImport(options);
+                            if (importedData == null) {
+                                throw new Exception("Import source initialization failure!");
+                            } else {
+                                JLabel label = new JLabel("password:");
+                                final JPasswordField passField = new JPasswordField();
+                                ActionListener al = new ActionListener(){
+                                    public void actionPerformed(ActionEvent ae){
+                                        passField.requestFocusInWindow();
+                                    }
+                                };
+                                Timer timer = new Timer(500,al);
+                                timer.setRepeats(false);
+                                timer.start();
+                                if (JOptionPane.showConfirmDialog(
+                                        FrontEnd.this, 
+                                        new Component[]{label, passField}, 
+                                        "Import authentification", 
+                                        JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                                    File importDir = new File(Constants.TMP_DIR, "importDir");
+                                    ArchUtils.extract(importedData, importDir);
+                                    String password = new String(passField.getPassword());            
+                                    if (password != null) {
+                                        try {
+                                            DataCategory data = BackEnd.getInstance().importData(importDir, getVisualEntriesIDs(), password);
+                                            if (!data.getData().isEmpty()) {
+                                                representData(data);
+                                                displayMessage("Data have been successfully imported");
+                                            } else {
+                                                displayErrorMessage("Nothing to import!");
+                                            }
+                                        } catch (Exception ex) {
+                                            displayErrorMessage("Failed to import data!", ex);
+                                        }
+                                    }
                                 }
-                            } catch (Exception ex) {
-                                displayErrorMessage("Failed to import data!", ex);
                             }
                         }
                     }
-
                 }
             } catch (Exception ex) {
                 displayErrorMessage(ex);
             }
         }
     };
+    
+    private Properties displayImportDialog(TRANSFER_TYPE type) {
+        Properties options = null;
+        switch (type) {
+        case LOCAL:
+            JFileChooser jfc = new JFileChooser();
+            jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            jfc.setFileFilter(new FileFilter() {
+                @Override
+                public boolean accept(File file) {
+                    return file.isDirectory() || file.getName().matches(Constants.ZIP_FILE_PATTERN);
+                }
+                @Override
+                public String getDescription() {
+                    return Constants.ZIP_FILE_PATTERN_DESCRIPTION;
+                }
+            });
+            int rVal = jfc.showOpenDialog(FrontEnd.this);
+            if (rVal == JFileChooser.APPROVE_OPTION) {
+                options = new Properties();
+                options.setProperty(Constants.TRANSFER_OPTION_FILEPATH, jfc.getSelectedFile().getAbsolutePath());
+            }
+            break;
+        case FTP:
+            JLabel serverL = new JLabel("FTP Server (domain name or IP, including port if using non-default)");
+            JTextField serverTF = new JTextField();
+            JLabel filepathL = new JLabel("Path to import file on server");
+            JTextField filepathTF = new JTextField();
+            JLabel usernameL = new JLabel("Username to login");
+            JTextField usernameTF = new JTextField();
+            JLabel passwordL = new JLabel("Password to login");
+            JTextField passwordTF = new JPasswordField();
+            int opt = JOptionPane.showConfirmDialog(
+                    FrontEnd.this, 
+                    new Component[]{
+                            serverL,
+                            serverTF,
+                            filepathL,
+                            filepathTF,
+                            usernameL,
+                            usernameTF,
+                            passwordL,
+                            passwordTF
+                    }, 
+                    "FTP import options", 
+                    JOptionPane.OK_CANCEL_OPTION);
+            if (opt == JOptionPane.OK_OPTION) {
+                options = new Properties();
+                String text = serverTF.getText();
+                if (!Validator.isNullOrBlank(text)) {
+                    options.setProperty(Constants.TRANSFER_OPTION_SERVER, text);
+                }
+                text = filepathTF.getText();
+                if (!Validator.isNullOrBlank(text)) {
+                    options.setProperty(Constants.TRANSFER_OPTION_FILEPATH, text);
+                }
+                text = usernameTF.getText();
+                if (!Validator.isNullOrBlank(text)) {
+                    options.setProperty(Constants.TRANSFER_OPTION_USERNAME, text);
+                }
+                text = passwordTF.getText();
+                if (!Validator.isNullOrBlank(text)) {
+                    options.setProperty(Constants.TRANSFER_OPTION_PASSWORD, text);
+                }
+            }
+            break;
+        }
+        return options;
+    }
 
     private Action exportAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
