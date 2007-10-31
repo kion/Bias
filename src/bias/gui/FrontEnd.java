@@ -1433,7 +1433,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton2() {
         if (jButton2 == null) {
             jButton2 = new JButton(importDataAction);
-            jButton2.setToolTipText("import data from another Bias JAR");
+            jButton2.setToolTipText("import...");
             jButton2.setIcon(controlIcons.getIconImport());
         }
         return jButton2;
