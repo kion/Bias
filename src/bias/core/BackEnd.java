@@ -550,7 +550,6 @@ public class BackEnd {
                 // if yes - write changed data to file, otherwise - skip data writing
                 DataEntry oldDE = identifiedData.get(de.getId().toString());
                 if (oldDE == null || !Arrays.equals(de.getData(), oldDE.getData())) {
-                    System.out.println(de.getCaption() + " - writing data...");
                     byte[] encryptedData = encrypt(entryData);
                     File deFile = new File(Constants.DATA_DIR, de.getId().toString() + Constants.DATA_FILE_SUFFIX);
                     FSUtils.writeFile(deFile, encryptedData);

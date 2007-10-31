@@ -378,7 +378,7 @@ public class FrontEnd extends JFrame {
                                                 + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
                     BackEnd.getInstance().uninstallLAF(lafFullClassName);
                     config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
-                    System.out.println(
+                    System.err.println(
                             "Broken Look-&-Feel '" + laf + "' has been uninstalled ;)" + Constants.NEW_LINE +
                             RESTART_MESSAGE);
                 } catch (Throwable t2) {
