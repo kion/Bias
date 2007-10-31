@@ -92,6 +92,7 @@ import bias.gui.utils.ImageFileChooser;
 import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 import bias.utils.AppManager;
+import bias.utils.ArchUtils;
 import bias.utils.FSUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
@@ -162,11 +163,11 @@ public class FrontEnd extends JFrame {
             setFileFilter(new FileFilter(){
                 @Override
                 public boolean accept(File file) {
-                    return file.isDirectory() || file.getName().matches(Constants.ADDON_PACK_PATTERN);
+                    return file.isDirectory() || file.getName().matches(Constants.JAR_FILE_PATTERN);
                 }
                 @Override
                 public String getDescription() {
-                    return Constants.ADDON_FILE_PATTERN_DESCRIPTION;
+                    return Constants.JAR_FILE_PATTERN_DESCRIPTION;
                 }
             });            
         }
@@ -181,11 +182,11 @@ public class FrontEnd extends JFrame {
             setFileFilter(new FileFilter(){
                 @Override
                 public boolean accept(File f) {
-                    return imgFF.accept(f) || f.getName().matches(Constants.ADDON_PACK_PATTERN);
+                    return imgFF.accept(f) || f.getName().matches(Constants.JAR_FILE_PATTERN);
                 }
                 @Override
                 public String getDescription() {
-                    return imgFF.getDescription() + ", " + Constants.ADDON_FILE_PATTERN_DESCRIPTION;
+                    return imgFF.getDescription() + ", " + Constants.JAR_FILE_PATTERN_DESCRIPTION;
                 }
             });
         }
@@ -227,6 +228,8 @@ public class FrontEnd extends JFrame {
     private JButton jButton1 = null;
 
     private JButton jButton2 = null;
+
+    private JButton jButton12 = null;
 
     private JButton jButton4 = null;
 
@@ -1346,6 +1349,7 @@ public class FrontEnd extends JFrame {
             jToolBar.setFloatable(false);
             jToolBar.add(getJButton7());
             jToolBar.add(getJButton2());
+            jToolBar.add(getJButton12());
             jToolBar.add(getJButton3());
             jToolBar.add(getJButton4());
             jToolBar.add(getJButton());
@@ -1432,11 +1436,25 @@ public class FrontEnd extends JFrame {
      */
     private JButton getJButton2() {
         if (jButton2 == null) {
-            jButton2 = new JButton(importDataAction);
+            jButton2 = new JButton(importAction);
             jButton2.setToolTipText("import...");
             jButton2.setIcon(controlIcons.getIconImport());
         }
         return jButton2;
+    }
+
+    /**
+     * This method initializes jButton12
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton12() {
+        if (jButton12 == null) {
+            jButton12 = new JButton(exportAction);
+            jButton12.setToolTipText("export...");
+            jButton12.setIcon(controlIcons.getIconExport());
+        }
+        return jButton12;
     }
 
     /**
@@ -1896,27 +1914,26 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    private Action importDataAction = new AbstractAction() {
+    private Action importAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
         
         public void actionPerformed(ActionEvent evt) {
             try {
                 JFileChooser jfc = new JFileChooser();
-                jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
                 jfc.setFileFilter(new FileFilter() {
                     @Override
                     public boolean accept(File file) {
-                        return file.isDirectory();
+                        return file.isDirectory() || file.getName().matches(Constants.ZIP_FILE_PATTERN);
                     }
                     @Override
                     public String getDescription() {
-                        return "Bias working directory";
+                        return Constants.ZIP_FILE_PATTERN_DESCRIPTION;
                     }
                 });
-                File importDir = null;
                 int rVal = jfc.showOpenDialog(FrontEnd.this);
                 if (rVal == JFileChooser.APPROVE_OPTION) {
-                    importDir = jfc.getSelectedFile();
+                    File importDir = new File(Constants.TMP_DIR, "importDir");
 
                     JLabel label = new JLabel("password:");
                     final JPasswordField passField = new JPasswordField();
@@ -1933,6 +1950,7 @@ public class FrontEnd extends JFrame {
                             new Component[]{label, passField}, 
                             "Import authentification", 
                             JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                        ArchUtils.extract(jfc.getSelectedFile(), importDir);
                         String password = new String(passField.getPassword());            
                         if (password != null) {
                             try {
@@ -1956,6 +1974,14 @@ public class FrontEnd extends JFrame {
         }
     };
 
+    private Action exportAction = new AbstractAction() {
+        private static final long serialVersionUID = 1L;
+
+        public void actionPerformed(ActionEvent e) {
+            // TODO
+        }
+    };
+    
     private Action addCategoryAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
         

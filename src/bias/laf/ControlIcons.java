@@ -14,7 +14,8 @@ public class ControlIcons {
      * Default control icons
      */
     public static final ImageIcon ICON_ABOUT = new ImageIcon(ControlIcons.class.getResource("/bias/res/about.png"));
-    public static final ImageIcon ICON_IMPORT = new ImageIcon(ControlIcons.class.getResource("/bias/res/import_data.png"));
+    public static final ImageIcon ICON_IMPORT = new ImageIcon(ControlIcons.class.getResource("/bias/res/import.png"));
+    public static final ImageIcon ICON_EXPORT = new ImageIcon(ControlIcons.class.getResource("/bias/res/export.png"));
     public static final ImageIcon ICON_DELETE = new ImageIcon(ControlIcons.class.getResource("/bias/res/delete.png"));
     public static final ImageIcon ICON_CATEGORY = new ImageIcon(ControlIcons.class.getResource("/bias/res/add_category.png"));
     public static final ImageIcon ICON_ROOT_CATEGORY = new ImageIcon(ControlIcons.class.getResource("/bias/res/add_root_category.png"));
@@ -31,6 +32,7 @@ public class ControlIcons {
 
     private ImageIcon iconSave;
     private ImageIcon iconImport;
+    private ImageIcon iconExport;
     private ImageIcon iconRootCategory;
     private ImageIcon iconCategory;
     private ImageIcon iconRootEntry;
@@ -52,6 +54,7 @@ public class ControlIcons {
     public ControlIcons() {
         this.iconSave = ICON_SAVE;
         this.iconImport = ICON_IMPORT; 
+        this.iconExport = ICON_EXPORT; 
         this.iconRootCategory = ICON_ROOT_CATEGORY; 
         this.iconCategory = ICON_CATEGORY;
         this.iconRootEntry = ICON_ROOT_ENTRY; 
@@ -70,6 +73,7 @@ public class ControlIcons {
     public ControlIcons(
             ImageIcon iconSave, 
             ImageIcon iconImport, 
+            ImageIcon iconExport, 
             ImageIcon iconRootCategory, 
             ImageIcon iconCategory, 
             ImageIcon iconRootEntry, 
@@ -85,6 +89,7 @@ public class ControlIcons {
             ImageIcon iconAbout) {
         this.iconSave = iconSave;
         this.iconImport = iconImport;
+        this.iconExport = iconExport;
         this.iconRootCategory = iconRootCategory;
         this.iconCategory = iconCategory;
         this.iconRootEntry = iconRootEntry;
@@ -170,6 +175,14 @@ public class ControlIcons {
 
     public void setIconImport(ImageIcon iconImport) {
         this.iconImport = iconImport;
+    }
+
+    public ImageIcon getIconExport() {
+        return iconExport;
+    }
+
+    public void setIconExport(ImageIcon iconExport) {
+        this.iconExport = iconExport;
     }
 
     public ImageIcon getIconLAFs() {

@@ -67,8 +67,11 @@ public class Constants {
     public static final String PACKAGE_PATH_SEPARATOR = ".";
     public static final String PACKAGE_PREFIX_PATTERN = "^.*\\.";
 
-    public static final String ADDON_PACK_PATTERN = "(?i).+\\.jar$";
-    public static final String ADDON_FILE_PATTERN_DESCRIPTION = "JAR file";
+    public static final String JAR_FILE_PATTERN = "(?i).+\\.jar$";
+    public static final String JAR_FILE_PATTERN_DESCRIPTION = "Java Archive (JAR) file";
+
+    public static final String ZIP_FILE_PATTERN = "(?i).+\\.zip$";
+    public static final String ZIP_FILE_PATTERN_DESCRIPTION = "ZIP archive file";
 
     public static final String ENTRY_PROTOCOL_PREFIX = "entry://";
     

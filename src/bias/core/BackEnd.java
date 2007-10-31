@@ -549,7 +549,7 @@ public class BackEnd {
                 // check if data of the entry have changed;
                 // if yes - write changed data to file, otherwise - skip data writing
                 DataEntry oldDE = identifiedData.get(de.getId().toString());
-                if (!Arrays.equals(de.getData(), oldDE.getData())) {
+                if (oldDE == null || !Arrays.equals(de.getData(), oldDE.getData())) {
                     System.out.println(de.getCaption() + " - writing data...");
                     byte[] encryptedData = encrypt(entryData);
                     File deFile = new File(Constants.DATA_DIR, de.getId().toString() + Constants.DATA_FILE_SUFFIX);
@@ -656,7 +656,7 @@ public class BackEnd {
             byte[] installedExtensionJAR = null;
             Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
             String extName = null;
-            if (name.matches(Constants.ADDON_PACK_PATTERN)) {
+            if (name.matches(Constants.JAR_FILE_PATTERN)) {
                 JarInputStream in = new JarInputStream(new FileInputStream(extensionFile));
                 Manifest manifest = in.getManifest();
                 if (manifest == null) {
@@ -820,7 +820,7 @@ public class BackEnd {
             byte[] installedLAFJAR = null;
             Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
             String lafName = null;
-            if (name.matches(Constants.ADDON_PACK_PATTERN)) {
+            if (name.matches(Constants.JAR_FILE_PATTERN)) {
                 JarInputStream in = new JarInputStream(new FileInputStream(lafFile));
                 Manifest manifest = in.getManifest();
                 if (manifest == null) {
@@ -990,7 +990,7 @@ public class BackEnd {
     public Collection<ImageIcon> addIcons(File file) throws Exception {
         Collection<ImageIcon> icons = new LinkedList<ImageIcon>();
         if (file != null && file.exists() && !file.isDirectory()) {
-            if (file.getName().matches(Constants.ADDON_PACK_PATTERN)) {
+            if (file.getName().matches(Constants.JAR_FILE_PATTERN)) {
                 ZipInputStream in = new ZipInputStream(new FileInputStream(file));
                 ZipEntry zEntry;                     
                 while ((zEntry = in.getNextEntry()) != null) {
