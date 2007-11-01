@@ -28,6 +28,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -59,6 +60,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.JTree;
 import javax.swing.RowFilter;
 import javax.swing.Timer;
 import javax.swing.event.CaretEvent;
@@ -71,6 +73,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 
 import bias.Constants;
 import bias.Launcher;
@@ -1984,13 +1990,83 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent e) {
+            // TODO: implement
             try {
-                // TODO: implement
+                DataCategory data = collectData();
+                JTree dataTree = buildDataTree(data);
+                JOptionPane.showMessageDialog(
+                        FrontEnd.this, 
+                        new JScrollPane(dataTree),
+                        "Choose data to export",
+                        JOptionPane.QUESTION_MESSAGE);
             } catch (Throwable t) {
                 displayErrorMessage(t);
             }
         }
     };
+    
+    private Map<DefaultMutableTreeNode, Recognizable> nodeIcons;
+
+    private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
+        private static final long serialVersionUID = 1L;
+        public Component getTreeCellRendererComponent(
+                            JTree tree,
+                            Object value,
+                            boolean sel,
+                            boolean expanded,
+                            boolean leaf,
+                            int row,
+                            boolean hasFocus) {
+            super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
+            Recognizable r = nodeIcons.get(node);
+            if (r != null && r.getIcon() != null) {
+                setIcon(r.getIcon());
+            }
+            return this;
+        }
+    }
+    
+    private JTree buildDataTree(DataCategory data) throws Throwable {
+        nodeIcons = new HashMap<DefaultMutableTreeNode, Recognizable>();
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("ALL DATA");
+        DefaultTreeModel model = new DefaultTreeModel(root);
+        final JTree dataTree = new JTree(model);
+        buildDataTree(root, data);
+        expandTreeNodes(dataTree, root);
+        dataTree.setCellRenderer(new CustomTreeCellRenderer());
+        return dataTree;
+    }
+    
+    private void buildDataTree(DefaultMutableTreeNode node, DataCategory data) throws Throwable {
+        for (Recognizable item : data.getData()) {
+            DefaultMutableTreeNode childNode = new DefaultMutableTreeNode();
+            if (item instanceof DataEntry) {
+                DataEntry de = (DataEntry) item;
+                childNode.setUserObject(de.getCaption());
+                nodeIcons.put(childNode, de);
+                node.add(childNode);
+            } else if (item instanceof DataCategory) {
+                DataCategory dc = (DataCategory) item;
+                childNode.setUserObject(dc.getCaption());
+                nodeIcons.put(childNode, dc);
+                node.add(childNode);
+                buildDataTree(childNode, dc);
+            }
+        }
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void expandTreeNodes(JTree tree, DefaultMutableTreeNode node) {
+        if (node.getChildCount() != 0) {
+            tree.expandPath(new TreePath(node.getPath()));
+            Enumeration<DefaultMutableTreeNode> e = node.children();
+            while (e.hasMoreElements()) {
+                DefaultMutableTreeNode n = e.nextElement();
+                expandTreeNodes(tree, n);
+            }
+        }
+    }
     
     private Properties displayTransferOptionsDialog(TRANSFER_TYPE type) {
         Properties options = null;

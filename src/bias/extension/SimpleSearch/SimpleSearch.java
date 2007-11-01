@@ -71,7 +71,7 @@ public class SimpleSearch extends ToolExtension {
     private static final String PROP_IS_REGULAR_EXPRESSION = "IS_REGULAR_EXPRESSION";
     private static final String PROP_FILTER_TYPE = "FILTER_TYPE";
 
-    private static class IconViewPanel extends JPanel {
+    private class IconViewPanel extends JPanel {
         private static final long serialVersionUID = 1L;
         private static final int MAX_ICON_WIDTH = 32;
         private static final int MAX_ICON_HEIGHT = 32;
