@@ -1763,11 +1763,18 @@ public class FrontEnd extends JFrame {
             try {
                 DataCategory data = collectData();
                 JTree dataTree = buildDataTree(data);
+                CheckTreeManager checkTreeManager = new CheckTreeManager(dataTree);
                 JOptionPane.showMessageDialog(
                         FrontEnd.this, 
                         new JScrollPane(dataTree),
                         "Choose data to export",
                         JOptionPane.QUESTION_MESSAGE);
+                TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
+                if (checkedPaths != null) {
+                    for (TreePath tp : checkedPaths) {
+                        System.out.println(tp);
+                    }
+                }
             } catch (Throwable t) {
                 displayErrorMessage(t);
             }
