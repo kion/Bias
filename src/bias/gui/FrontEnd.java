@@ -1781,7 +1781,7 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    private Map<DefaultMutableTreeNode, Recognizable> nodeIcons;
+    private Map<DefaultMutableTreeNode, Recognizable> nodeEntries;
 
     public class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
         private static final long serialVersionUID = 1L;
@@ -1795,7 +1795,7 @@ public class FrontEnd extends JFrame {
                             boolean hasFocus) {
             super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-            Recognizable r = nodeIcons.get(node);
+            Recognizable r = nodeEntries.get(node);
             if (r != null && r.getIcon() != null) {
                 setIcon(r.getIcon());
             }
@@ -1804,7 +1804,7 @@ public class FrontEnd extends JFrame {
     }
     
     private JTree buildDataTree(DataCategory data) throws Throwable {
-        nodeIcons = new HashMap<DefaultMutableTreeNode, Recognizable>();
+        nodeEntries = new HashMap<DefaultMutableTreeNode, Recognizable>();
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("ALL DATA");
         DefaultTreeModel model = new DefaultTreeModel(root);
         final JTree dataTree = new JTree(model);
@@ -1820,12 +1820,12 @@ public class FrontEnd extends JFrame {
             if (item instanceof DataEntry) {
                 DataEntry de = (DataEntry) item;
                 childNode.setUserObject(de.getCaption());
-                nodeIcons.put(childNode, de);
+                nodeEntries.put(childNode, de);
                 node.add(childNode);
             } else if (item instanceof DataCategory) {
                 DataCategory dc = (DataCategory) item;
                 childNode.setUserObject(dc.getCaption());
-                nodeIcons.put(childNode, dc);
+                nodeEntries.put(childNode, dc);
                 node.add(childNode);
                 buildDataTree(childNode, dc);
             }
