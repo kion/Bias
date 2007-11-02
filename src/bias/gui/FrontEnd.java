@@ -131,6 +131,8 @@ public class FrontEnd extends JFrame {
     
     private static FrontEnd instance;
     
+    private Map<DefaultMutableTreeNode, Recognizable> nodeEntries;
+
     private static Map<Class<? extends ToolExtension>, ToolExtension> tools;
 
     // use default control icons initially
@@ -1781,8 +1783,6 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    private Map<DefaultMutableTreeNode, Recognizable> nodeEntries;
-
     public class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
         private static final long serialVersionUID = 1L;
         public Component getTreeCellRendererComponent(
