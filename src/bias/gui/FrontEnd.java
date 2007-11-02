@@ -652,7 +652,7 @@ public class FrontEnd extends JFrame {
                     serializedData = extension.serializeData();
                 } catch (Throwable t) {
                     displayErrorMessage(
-                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize some data!" + Constants.NEW_LINE +
+                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize data!" + Constants.NEW_LINE +
                             "Data that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
                             "This the most likely is an extension's bug." + Constants.NEW_LINE +
                             "You can either:" + Constants.NEW_LINE +
@@ -665,7 +665,7 @@ public class FrontEnd extends JFrame {
                     serializedSettings = extension.serializeSettings();
                 } catch (Throwable t) {
                     displayErrorMessage(
-                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize some settings!" + Constants.NEW_LINE +
+                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize settings!" + Constants.NEW_LINE +
                             "Settings that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
                             "This the most likely is an extension's bug." + Constants.NEW_LINE +
                             "You can either:" + Constants.NEW_LINE +
