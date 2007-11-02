@@ -1773,8 +1773,31 @@ public class FrontEnd extends JFrame {
                         JOptionPane.QUESTION_MESSAGE);
                 TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
                 if (checkedPaths != null) {
+                    Collection<Recognizable> selectedEntries = new LinkedList<Recognizable>();
                     for (TreePath tp : checkedPaths) {
                         System.out.println(tp);
+                        DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
+                        for (Object o : tp.getPath()) {
+                            DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
+                            Recognizable entry = nodeEntries.get(node);
+                            if (entry != null) {
+                                System.out.println("Corresponding entry: " + entry.getId() + " / " + entry.getCaption());
+                                selectedEntries.add(entry);
+                            }
+                            if (node.equals(lastNodeInPath)) {
+                                System.out.println("This is last node in selection path.");
+                                selectDescenantEntries(node, selectedEntries);
+                            }
+                        }
+                    }
+                    System.out.println("==================================================");
+                    if (selectedEntries.isEmpty()) {
+                        System.out.println("No entries have been selected.");
+                    } else {
+                        System.out.println("List of all selected entries:");
+                        for (Recognizable r : selectedEntries) {
+                            System.out.println(">> " + r.getId() + " / " + r.getCaption());
+                        }
                     }
                 }
             } catch (Throwable t) {
@@ -1782,6 +1805,25 @@ public class FrontEnd extends JFrame {
             }
         }
     };
+    
+    @SuppressWarnings("unchecked")
+    private void selectDescenantEntries(DefaultMutableTreeNode node, Collection<Recognizable> selectedEntries) {
+        if (node.getChildCount() != 0) {
+            System.out.println("Node has child nodes. Getting'em...");
+            Enumeration<DefaultMutableTreeNode> childs = node.children();
+            while (childs.hasMoreElements()) {
+                DefaultMutableTreeNode childNode = childs.nextElement();
+                Recognizable childEntry = nodeEntries.get(childNode);
+                if (childEntry != null) {
+                    System.out.println("Child entry: " + childEntry.getId() + " / " + childEntry.getCaption());
+                    selectedEntries.add(childEntry);
+                    selectDescenantEntries(childNode, selectedEntries);
+                }
+            }
+        } else {
+            System.out.println("Node has no child nodes.");
+        }
+    }
     
     public class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
         private static final long serialVersionUID = 1L;
