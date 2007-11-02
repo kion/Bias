@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -1799,6 +1800,13 @@ public class FrontEnd extends JFrame {
                             System.out.println(">> " + r.getId() + " / " + r.getCaption());
                         }
                     }
+                    System.out.println("==================================================");
+                    System.out.println("Filtering data...");
+                    filterData(data, selectedEntries);
+                    System.out.println("==================================================");
+                    System.out.println("Filtered data:");
+                    listData(data);
+                    // TODO: export filtered data
                 }
             } catch (Throwable t) {
                 displayErrorMessage(t);
@@ -1822,6 +1830,30 @@ public class FrontEnd extends JFrame {
             }
         } else {
             System.out.println("Node has no child nodes.");
+        }
+    }
+    
+    private void filterData(DataCategory data, Collection<Recognizable> filterEntries) {
+        Collection<Recognizable> initialData = new ArrayList<Recognizable>(data.getData());
+        for (Recognizable r : initialData) {
+            if (!filterEntries.contains(r)) {
+                System.out.println("Removing: " + r.getId() + " / " + r.getCaption());
+                data.removeDataItem(r);
+            } else if (r instanceof DataCategory) {
+                filterData((DataCategory) r, filterEntries);
+            }
+        }
+    }
+    
+    // TODO: remove this temporary (created for debug purposes) method
+    private void listData(DataCategory data) {
+        for (Recognizable r : data.getData()) {
+            if (r instanceof DataEntry) {
+                System.out.println("Entry: " + r.getId() + " / " + r.getCaption());
+            } else if (r instanceof DataCategory) {
+                System.out.println("Category: " + r.getId() + " / " + r.getCaption());
+                listData((DataCategory) r);
+            }
         }
     }
     
