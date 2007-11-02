@@ -602,14 +602,14 @@ public class FrontEnd extends JFrame {
     }
 
     private Properties collectProperties() {
-        config.put(Constants.PROPERTY_WINDOW_COORDINATE_X, Constants.EMPTY_STR + getLocation().getX()
-                / getToolkit().getScreenSize().getWidth());
-        config.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, Constants.EMPTY_STR + getLocation().getY()
-                / getToolkit().getScreenSize().getHeight());
-        config.put(Constants.PROPERTY_WINDOW_WIDTH, Constants.EMPTY_STR + getSize().getWidth()
-                / getToolkit().getScreenSize().getHeight());
-        config.put(Constants.PROPERTY_WINDOW_HEIGHT, Constants.EMPTY_STR + getSize().getHeight()
-                / getToolkit().getScreenSize().getHeight());
+        config.put(Constants.PROPERTY_WINDOW_COORDINATE_X, 
+                Constants.EMPTY_STR + getLocation().getX() / getToolkit().getScreenSize().getWidth());
+        config.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, 
+                Constants.EMPTY_STR + getLocation().getY() / getToolkit().getScreenSize().getHeight());
+        config.put(Constants.PROPERTY_WINDOW_WIDTH, 
+                Constants.EMPTY_STR + getSize().getWidth() / getToolkit().getScreenSize().getHeight());
+        config.put(Constants.PROPERTY_WINDOW_HEIGHT, 
+                Constants.EMPTY_STR + getSize().getHeight() / getToolkit().getScreenSize().getHeight());
         UUID lsid = getSelectedVisualEntryID();
         if (lsid != null) {
             config.put(Constants.PROPERTY_LAST_SELECTED_ID, lsid.toString());
