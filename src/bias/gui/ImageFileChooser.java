@@ -1,7 +1,7 @@
 /**
  * Created on Jan 27, 2006
  */
-package bias.gui.utils;
+package bias.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;

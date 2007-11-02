@@ -10,9 +10,7 @@ import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.GridLayout;
-import java.awt.Rectangle;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.event.ActionEvent;
@@ -67,8 +65,6 @@ import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.plaf.TabbedPaneUI;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
@@ -94,7 +90,6 @@ import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.MissingExtensionInformer;
 import bias.extension.ToolExtension;
-import bias.gui.utils.ImageFileChooser;
 import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 import bias.transfer.Transferrer;
@@ -118,8 +113,8 @@ public class FrontEnd extends JFrame {
     /**
      * Application icon
      */
-    private static final ImageIcon ICON_APP = new ImageIcon(Constants.class.getResource("/bias/res/app_icon.png"));
-    private static final ImageIcon ICON_CLOSE = new ImageIcon(Constants.class.getResource("/bias/res/close.png"));
+    private static final ImageIcon ICON_APP = new ImageIcon(FrontEnd.class.getResource("/bias/res/app_icon.png"));
+    private static final ImageIcon ICON_CLOSE = new ImageIcon(FrontEnd.class.getResource("/bias/res/close.png"));
 
     private static final String RESTART_MESSAGE = "Changes will take effect after Bias restart";
     
@@ -127,78 +122,10 @@ public class FrontEnd extends JFrame {
             new Placement(JTabbedPane.LEFT), new Placement(JTabbedPane.RIGHT),
             new Placement(JTabbedPane.BOTTOM) };
 
-    private static class Placement {
-        private String string;
-        private Integer integer;
-        public Placement(int placementType) {
-        	this.integer = placementType;
-        	switch (placementType) {
-        	case JTabbedPane.TOP: this.string = "Top"; break;
-        	case JTabbedPane.LEFT: this.string = "Left"; break;
-        	case JTabbedPane.RIGHT: this.string = "Right"; break;
-        	case JTabbedPane.BOTTOM: this.string = "Bottom"; break;
-        	default: this.string = "Top";
-        	}
-        }
-        public Integer getInteger() {
-            return integer;
-        }
-        public void setInteger(Integer integer) {
-            this.integer = integer;
-        }
-        public String getString() {
-            return string;
-        }
-        public void setString(String string) {
-            this.string = string;
-        }
-
-        @Override
-        public String toString() {
-            return string;
-        }
-    }
-    
-    private static AddOnFileChooser extensionFileChooser = new AddOnFileChooser();
-    private static AddOnFileChooser lafFileChooser = new AddOnFileChooser();
-    private static class AddOnFileChooser extends JFileChooser {
-        private static final long serialVersionUID = 1L;
-
-        public AddOnFileChooser() {
-            super();
-            setMultiSelectionEnabled(true);
-    		setFileSelectionMode(JFileChooser.FILES_ONLY);
-            setFileFilter(new FileFilter(){
-                @Override
-                public boolean accept(File file) {
-                    return file.isDirectory() || file.getName().matches(Constants.JAR_FILE_PATTERN);
-                }
-                @Override
-                public String getDescription() {
-                    return Constants.JAR_FILE_PATTERN_DESCRIPTION;
-                }
-            });            
-        }
-    }
+    private static AddOnFilesChooser extensionFileChooser = new AddOnFilesChooser();
+    private static AddOnFilesChooser lafFileChooser = new AddOnFilesChooser();
 
     private static IconsFileChooser iconsFileChooser = new IconsFileChooser();
-    private static class IconsFileChooser extends ImageFileChooser {
-        private static final long serialVersionUID = 1L;
-        public IconsFileChooser() {
-            super(true);
-            final FileFilter imgFF = getFileFilter();
-            setFileFilter(new FileFilter(){
-                @Override
-                public boolean accept(File f) {
-                    return imgFF.accept(f) || f.getName().matches(Constants.JAR_FILE_PATTERN);
-                }
-                @Override
-                public String getDescription() {
-                    return imgFF.getDescription() + ", " + Constants.JAR_FILE_PATTERN_DESCRIPTION;
-                }
-            });
-        }
-    }
     
     private static final String ADDON_ANN_FIELD_VALUE_NA = "N/A";
     
@@ -1158,164 +1085,6 @@ public class FrontEnd extends JFrame {
     
     private TabMoveListener tabMoveListener = new TabMoveListener();
 
-    public class TabMoveListener extends MouseAdapter {
-
-        private int srcIndex = -1;
-
-        private int currIndex = -1;
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
-         */
-        public void mousePressed(MouseEvent e) {
-            if (!e.isPopupTrigger()) {
-                JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
-                srcIndex = tabbedPane.indexAtLocation(e.getX(), e.getY());
-            }
-            currIndex = -1;
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.awt.event.MouseListener#mouseReleased(java.awt.event.MouseEvent)
-         */
-        public void mouseReleased(MouseEvent e) {
-            JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
-            if (!e.isPopupTrigger()) {
-                int dstIndex = tabbedPane.indexAtLocation(e.getX(), e.getY());
-                if (srcIndex != -1 && dstIndex != -1 && srcIndex != dstIndex) {
-                    moveTab(tabbedPane, srcIndex, dstIndex);
-                }
-            }
-            deHighLight(tabbedPane);
-            setCursor(Cursor.getDefaultCursor());
-            srcIndex = -1;
-            currIndex = -1;
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.awt.event.MouseMotionListener#mouseDragged(java.awt.event.MouseEvent)
-         */
-        public void mouseDragged(MouseEvent e) {
-            if (srcIndex != -1) {
-                JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
-                int index = tabbedPane.indexAtLocation(e.getX(), e.getY());
-                if (index != -1) {
-                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                } else {
-                    setCursor(Cursor.getDefaultCursor());
-                }
-                if (index != -1 && index != currIndex) { // moved over another tab
-                    deHighLight(tabbedPane);
-                    currIndex = index;
-                }
-                if (currIndex != -1 && currIndex != srcIndex) {
-                    highLight(tabbedPane);
-                }
-            }
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
-         */
-        public void mouseExited(MouseEvent e) {
-            deHighLight((JTabbedPane) e.getSource());
-            currIndex = -1;
-        }
-
-        /**
-         * As far as internal structure of JTabbedPane data model does not correspond to 
-         * its visual representation, that is, component located on tab with index X 
-         * is <b>not</b> located in the internal components array using the same index, 
-         * we have to rearrange this array each time tab has been moved and 
-         * repopulate/repaint JTabbedPane instance after that.
-         * 
-         */
-        private void moveTab(JTabbedPane tabPane, int srcIndex, int dstIndex) {
-            
-            int cnt = tabPane.getTabCount();
-
-            // get tabpane's components/captions/icons
-            Component[] components = new Component[cnt];
-            for (int i = 0; i< cnt; i++) {
-                components[i] = tabPane.getComponent(i);
-            }
-            String[] captions = new String[cnt];
-            for (int i = 0; i < cnt; i++) {
-                captions[i] = tabPane.getTitleAt(i);
-            }
-            ImageIcon[] icons = new ImageIcon[cnt];
-            for (int i = 0; i < cnt; i++) {
-                icons[i] = (ImageIcon) tabPane.getIconAt(i);
-            }
-
-            // remember component/caption that has to be moved
-            Component srcComp = components[srcIndex];
-            String srcCap = captions[srcIndex];
-            ImageIcon srcIcon = icons[srcIndex];
-            
-            // rearrange components/captions using shifting
-            if (srcIndex > dstIndex) {
-                for (int i = srcIndex; i > dstIndex; i--) {
-                    components[i] = components[i-1];
-                    captions[i] = captions[i-1];
-                    icons[i] = icons[i-1];
-                }
-            } else {
-                for (int i = srcIndex; i < dstIndex; i++) {
-                    components[i] = components[i+1];
-                    captions[i] = captions[i+1];
-                    icons[i] = icons[i+1];
-                }
-            }
-
-            // set moved component/caption to its new position
-            components[dstIndex] = srcComp;
-            captions[dstIndex] = srcCap;
-            icons[dstIndex] = srcIcon;
-            
-            // remove everything from tabpane before repopulating it
-            tabPane.removeAll();
-            
-            // repopulate tabpane with resulting components/captions
-            for (int i = 0; i < cnt; i++) {
-                tabPane.addTab(captions[i], icons[i], components[i]);
-            }
-            
-            // set moved component as selected
-            tabPane.setSelectedIndex(dstIndex);
-            
-            // repaint tabpane
-            tabPane.repaint();
-            
-        }
-
-        private void deHighLight(JTabbedPane tabbedPane) {
-            if (currIndex == -1) {
-                return;
-            }
-            TabbedPaneUI ui = tabbedPane.getUI();
-            Rectangle rect = ui.getTabBounds(tabbedPane, currIndex);
-            tabbedPane.repaint(rect);
-        }
-
-        private void highLight(JTabbedPane tabbedPane) {
-            TabbedPaneUI ui = tabbedPane.getUI();
-            Rectangle rect = ui.getTabBounds(tabbedPane, currIndex);
-            Graphics graphics = tabbedPane.getGraphics();
-            graphics.setColor(Color.WHITE);
-            graphics.drawRect(rect.x, rect.y, rect.width - 1, rect.height - 1);
-        }
-
-    };
-
     /**
      * This method initializes jContentPane
      * 
@@ -2007,7 +1776,7 @@ public class FrontEnd extends JFrame {
     
     private Map<DefaultMutableTreeNode, Recognizable> nodeIcons;
 
-    private class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
+    public class CustomTreeCellRenderer extends DefaultTreeCellRenderer {
         private static final long serialVersionUID = 1L;
         public Component getTreeCellRendererComponent(
                             JTree tree,
@@ -2072,22 +1841,11 @@ public class FrontEnd extends JFrame {
         Properties options = null;
         switch (type) {
         case LOCAL:
-            JFileChooser jfc = new JFileChooser();
-            jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            jfc.setFileFilter(new FileFilter() {
-                @Override
-                public boolean accept(File file) {
-                    return file.isDirectory() || file.getName().matches(Constants.ZIP_FILE_PATTERN);
-                }
-                @Override
-                public String getDescription() {
-                    return Constants.ZIP_FILE_PATTERN_DESCRIPTION;
-                }
-            });
-            int rVal = jfc.showOpenDialog(FrontEnd.this);
+            ZipFileChooser zfc = new ZipFileChooser();
+            int rVal = zfc.showOpenDialog(FrontEnd.this);
             if (rVal == JFileChooser.APPROVE_OPTION) {
                 options = new Properties();
-                options.setProperty(Constants.TRANSFER_OPTION_FILEPATH, jfc.getSelectedFile().getAbsolutePath());
+                options.setProperty(Constants.TRANSFER_OPTION_FILEPATH, zfc.getSelectedFile().getAbsolutePath());
             }
             break;
         case FTP:
