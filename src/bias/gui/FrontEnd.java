@@ -1732,6 +1732,7 @@ public class FrontEnd extends JFrame {
                                         "Import authentification", 
                                         JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                                     File importDir = new File(Constants.TMP_DIR, "importDir");
+                                    FSUtils.delete(importDir);
                                     ArchUtils.extract(importedData, importDir);
                                     String password = new String(passField.getPassword());            
                                     if (password != null) {
@@ -1739,7 +1740,7 @@ public class FrontEnd extends JFrame {
                                             DataCategory data = BackEnd.getInstance().importData(importDir, getVisualEntriesIDs(), password);
                                             if (!data.getData().isEmpty()) {
                                                 representData(data);
-                                                displayMessage("Data have been successfully imported");
+                                                displayMessage("Data have been successfully imported.");
                                             } else {
                                                 displayErrorMessage("Nothing to import!");
                                             }
@@ -1762,9 +1763,9 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent e) {
-            // TODO: implement
             try {
                 DataCategory data = collectData();
+                // TODO: implement export data dialog
                 JTree dataTree = buildDataTree(data);
                 CheckTreeManager checkTreeManager = new CheckTreeManager(dataTree);
                 JOptionPane.showMessageDialog(
@@ -1776,37 +1777,42 @@ public class FrontEnd extends JFrame {
                 if (checkedPaths != null) {
                     Collection<Recognizable> selectedEntries = new LinkedList<Recognizable>();
                     for (TreePath tp : checkedPaths) {
-                        System.out.println(tp);
                         DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
                         for (Object o : tp.getPath()) {
                             DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
                             Recognizable entry = nodeEntries.get(node);
                             if (entry != null) {
-                                System.out.println("Corresponding entry: " + entry.getId() + " / " + entry.getCaption());
                                 selectedEntries.add(entry);
                             }
                             if (node.equals(lastNodeInPath)) {
-                                System.out.println("This is last node in selection path.");
                                 selectDescenantEntries(node, selectedEntries);
                             }
                         }
                     }
-                    System.out.println("==================================================");
-                    if (selectedEntries.isEmpty()) {
-                        System.out.println("No entries have been selected.");
-                    } else {
-                        System.out.println("List of all selected entries:");
-                        for (Recognizable r : selectedEntries) {
-                            System.out.println(">> " + r.getId() + " / " + r.getCaption());
-                        }
-                    }
-                    System.out.println("==================================================");
-                    System.out.println("Filtering data...");
                     filterData(data, selectedEntries);
-                    System.out.println("==================================================");
-                    System.out.println("Filtered data:");
-                    listData(data);
-                    // TODO: export filtered data
+                    boolean exportDataEntryConfigs = true; 
+                    boolean exportPreferences = true; 
+                    boolean exportGlobalConfig = true; 
+                    boolean exportIcons = true;
+                    boolean exportToolsData = true; 
+                    boolean exportAddOns = true; 
+                    boolean exportAddOnConfigs = true;
+                    ZipFileChooser zfc = new ZipFileChooser();
+                    int opt = zfc.showSaveDialog(FrontEnd.this);
+                    if (opt == JFileChooser.APPROVE_OPTION) {
+                        File file = zfc.getSelectedFile();
+                        BackEnd.getInstance().exportData(
+                                file,
+                                data, 
+                                exportDataEntryConfigs, 
+                                exportPreferences, 
+                                exportGlobalConfig, 
+                                exportIcons, 
+                                exportToolsData, 
+                                exportAddOns, 
+                                exportAddOnConfigs);
+                        JOptionPane.showMessageDialog(FrontEnd.this, "Data have been successfully exported.");
+                    }
                 }
             } catch (Throwable t) {
                 displayErrorMessage(t);
@@ -1841,18 +1847,6 @@ public class FrontEnd extends JFrame {
                 data.removeDataItem(r);
             } else if (r instanceof DataCategory) {
                 filterData((DataCategory) r, filterEntries);
-            }
-        }
-    }
-    
-    // TODO: remove this temporary (created for debug purposes) method
-    private void listData(DataCategory data) {
-        for (Recognizable r : data.getData()) {
-            if (r instanceof DataEntry) {
-                System.out.println("Entry: " + r.getId() + " / " + r.getCaption());
-            } else if (r instanceof DataCategory) {
-                System.out.println("Category: " + r.getId() + " / " + r.getCaption());
-                listData((DataCategory) r);
             }
         }
     }
