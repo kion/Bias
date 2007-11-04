@@ -932,6 +932,10 @@ public class BackEnd {
         newLAFs.remove(laf);
     }
     
+    public boolean unusedAddOnsFound() {
+        return !outOfClasspathAddOns.isEmpty();
+    }
+    
     public void removeUnusedAddOnDataAndConfigFiles() {
         for (String addonName : outOfClasspathAddOns) {
             File extensionDataFile = new File(Constants.DATA_DIR, addonName + Constants.TOOL_DATA_FILE_SUFFIX);
@@ -947,6 +951,7 @@ public class BackEnd {
                 FSUtils.delete(lafConfigFile);
             }
         }
+        outOfClasspathAddOns.clear();
     }
         
     private void addClassPathEntry(File jarFile) {
