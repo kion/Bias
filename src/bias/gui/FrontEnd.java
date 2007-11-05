@@ -1757,7 +1757,7 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    // TODO [P3] implement stored export configurations
+    // TODO [P2] implement stored export configurations
     private Action exportAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
@@ -1777,6 +1777,8 @@ public class FrontEnd extends JFrame {
                 JCheckBox exportToolsDataCB = new JCheckBox("Export tools data"); 
                 JCheckBox exportAddOnsCB = new JCheckBox("Export addons"); 
                 JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
+                JLabel passwordL = new JLabel("Encrypt exported data with password:");
+                JPasswordField passwordTF = new JPasswordField();
                 Component[] comps = new Component[]{
                         exportDataEntryConfigsCB,
                         exportPreferencesCB, 
@@ -1785,7 +1787,9 @@ public class FrontEnd extends JFrame {
                         exportToolsDataCB, 
                         exportAddOnsCB, 
                         exportAddOnConfigsCB,
-                        dataTree != null ? new JScrollPane(dataTree) : null
+                        dataTree != null ? new JScrollPane(dataTree) : null,
+                        passwordL,
+                        passwordTF
                 };
                 JOptionPane.showMessageDialog(
                         FrontEnd.this, 
@@ -1812,13 +1816,6 @@ public class FrontEnd extends JFrame {
                     }
                 }
                 filterData(data, selectedEntries);
-                boolean exportDataEntryConfigs = exportDataEntryConfigsCB.isSelected(); 
-                boolean exportPreferences = exportPreferencesCB.isSelected(); 
-                boolean exportGlobalConfig = exportGlobalConfigCB.isSelected(); 
-                boolean exportIcons = exportIconsCB.isSelected();
-                boolean exportToolsData = exportToolsDataCB.isSelected(); 
-                boolean exportAddOns = exportAddOnsCB.isSelected(); 
-                boolean exportAddOnConfigs = exportAddOnConfigsCB.isSelected();
                 ZipFileChooser zfc = new ZipFileChooser();
                 int opt = zfc.showSaveDialog(FrontEnd.this);
                 if (opt == JFileChooser.APPROVE_OPTION) {
@@ -1826,13 +1823,14 @@ public class FrontEnd extends JFrame {
                     BackEnd.getInstance().exportData(
                             file,
                             data, 
-                            exportDataEntryConfigs, 
-                            exportPreferences, 
-                            exportGlobalConfig, 
-                            exportIcons, 
-                            exportToolsData, 
-                            exportAddOns, 
-                            exportAddOnConfigs);
+                            exportDataEntryConfigsCB.isSelected(), 
+                            exportPreferencesCB.isSelected(), 
+                            exportGlobalConfigCB.isSelected(), 
+                            exportIconsCB.isSelected(), 
+                            exportToolsDataCB.isSelected(), 
+                            exportAddOnsCB.isSelected(), 
+                            exportAddOnConfigsCB.isSelected(),
+                            new String(passwordTF.getPassword()));
                     JOptionPane.showMessageDialog(FrontEnd.this, "Data have been successfully exported.");
                 }
             } catch (Throwable t) {

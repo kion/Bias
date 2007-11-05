@@ -279,7 +279,7 @@ public class BackEnd {
         loadedLAFs = getLAFs();
     }
     
-    // TODO [P2] optional overwriting should be possible during import
+    // TODO [P1] optional overwriting should be possible during import
     public DataCategory importData(File importDir, Collection<UUID> existingIDs, String password) throws Exception {
         Cipher cipher = initCipher(Cipher.DECRYPT_MODE, password);
         Map<String,DataEntry> importedIdentifiedData = new LinkedHashMap<String, DataEntry>();
@@ -508,7 +508,6 @@ public class BackEnd {
         }
     }
     
-    // TODO [P1] password for encryption should be configurable
     public void exportData(
             File file,
             DataCategory data,
@@ -518,7 +517,9 @@ public class BackEnd {
             boolean exportIcons,
             boolean exportToolsData, 
             boolean exportAddOns,
-            boolean exportAddOnConfigs) throws Exception {
+            boolean exportAddOnConfigs,
+            String password) throws Exception {
+        Cipher cipher = initCipher(Cipher.ENCRYPT_MODE, password);
         File exportDir = new File(Constants.TMP_DIR, "exportDir");
         FSUtils.delete(exportDir);
         exportDir.mkdirs();
@@ -535,11 +536,11 @@ public class BackEnd {
         if (!ids.isEmpty()) {
             metadata.appendChild(rootNode);
             File metadataFile = new File(dataDir, Constants.METADATA_FILE_NAME);
-            storeMetadata(metadata, metadataFile);
+            storeMetadata(metadata, metadataFile, cipher);
             for (File dataFile : Constants.DATA_DIR.listFiles(FILE_FILTER_DATA)) {
                 UUID id = UUID.fromString(dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
                 if (ids.contains(id)) {
-                    FSUtils.duplicateFile(dataFile, new File(dataDir, dataFile.getName()));
+                    reencryptFile(dataFile, dataDir, cipher);
                 }
             }
             // attachments
@@ -552,7 +553,7 @@ public class BackEnd {
                 attsDir.mkdir();
                 for (Entry<UUID, Collection<Attachment>> entryAtts : atts.entrySet()) {
                     for (Attachment att : entryAtts.getValue()) {
-                        addAttachment(entryAtts.getKey(), att, attsDir);
+                        addAttachment(entryAtts.getKey(), att, attsDir, cipher);
                     }
                 }
             }
@@ -594,8 +595,8 @@ public class BackEnd {
                 if (toolEntry.getValue() != null) {
                     String tool = toolEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                     File toolDataFile = new File(dataDir, tool + Constants.TOOL_DATA_FILE_SUFFIX);
-                    byte[] encryptedData = encrypt(toolEntry.getValue());
-                    FSUtils.writeFile(toolDataFile, encryptedData);
+                    byte[] reencryptedData = reencryptData(toolEntry.getValue(), cipher);
+                    FSUtils.writeFile(toolDataFile, reencryptedData);
                 }
             }
         }
@@ -621,7 +622,7 @@ public class BackEnd {
         }
         ArchUtils.compress(exportDir, file);
     }
-
+    
     public void store() throws Exception {
         // metadata file and data entries
         metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
@@ -633,7 +634,7 @@ public class BackEnd {
         Collection<UUID> ids = buildNode(metadata, rootNode, data, true);
         cleanUpOrphanedStuff(ids);
         metadata.appendChild(rootNode);
-        storeMetadata(metadata, metadataFile);
+        storeMetadata(metadata, metadataFile, CIPHER_ENCRYPT);
         // tools data files
         for (Entry<String, byte[]> toolEntry : toolsData.entrySet()) {
             if (toolEntry.getValue() != null) {
@@ -665,11 +666,11 @@ public class BackEnd {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
     }
     
-    private void storeMetadata(Document metadata, File file) throws Exception {
+    private void storeMetadata(Document metadata, File file, Cipher cipher) throws Exception {
         OutputFormat of = new OutputFormat();
         StringWriter sw = new StringWriter();
         new XMLSerializer(sw, of).serialize(metadata);
-        byte[] encryptedData = encrypt(sw.getBuffer().toString().getBytes());
+        byte[] encryptedData = useCipher(cipher, sw.getBuffer().toString().getBytes());
         FSUtils.writeFile(file, encryptedData);
     }
     
@@ -1205,6 +1206,17 @@ public class BackEnd {
         icons.remove(UUID.fromString(id));
     }
     
+    private void reencryptFile(File file, File dir, Cipher cipher) throws Exception {
+        byte[] reencryptedData = reencryptData(FSUtils.readFile(file), cipher);
+        File newDataFile = new File(dir, file.getName());
+        newDataFile.createNewFile();
+        FSUtils.writeFile(newDataFile, reencryptedData);
+    }
+    
+    private byte[] reencryptData(byte[] data, Cipher cipher) throws Exception {
+        return useCipher(cipher, decrypt(data));
+    }
+    
     private static void reencryptAttachments() throws Exception {
         for (File entryAttsDir : Constants.ATTACHMENTS_DIR.listFiles()) {
             File[] entryAtts = entryAttsDir.listFiles();
@@ -1249,10 +1261,10 @@ public class BackEnd {
     }
     
     public void addAttachment(UUID dataEntryID, Attachment attachment) throws Exception {
-        addAttachment(dataEntryID, attachment, Constants.ATTACHMENTS_DIR);
+        addAttachment(dataEntryID, attachment, Constants.ATTACHMENTS_DIR, CIPHER_ENCRYPT);
     }
 
-    private void addAttachment(UUID dataEntryID, Attachment attachment, File attachmentsDir) throws Exception {
+    private void addAttachment(UUID dataEntryID, Attachment attachment, File attachmentsDir, Cipher cipher) throws Exception {
         if (dataEntryID != null && attachment != null) {
             File entryAttsDir = new File(attachmentsDir, dataEntryID.toString());
             if (!entryAttsDir.exists()) {
@@ -1262,7 +1274,7 @@ public class BackEnd {
             if (att.exists()) {
                 throw new Exception("Duplicate attachment name!");
             }
-            byte[] encryptedData = encrypt(attachment.getData());
+            byte[] encryptedData = useCipher(cipher, attachment.getData());
             FSUtils.writeFile(att, encryptedData);
         } else {
             throw new Exception("Invalid parameters!");
