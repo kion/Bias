@@ -279,7 +279,7 @@ public class BackEnd {
         loadedLAFs = getLAFs();
     }
     
-    // TODO: optional overwriting should be possible during import
+    // TODO [P2] optional overwriting should be possible during import
     public DataCategory importData(File importDir, Collection<UUID> existingIDs, String password) throws Exception {
         Cipher cipher = initCipher(Cipher.DECRYPT_MODE, password);
         Map<String,DataEntry> importedIdentifiedData = new LinkedHashMap<String, DataEntry>();
@@ -508,7 +508,7 @@ public class BackEnd {
         }
     }
     
-    // TODO: password for encryption should be configurable
+    // TODO [P1] password for encryption should be configurable
     public void exportData(
             File file,
             DataCategory data,
