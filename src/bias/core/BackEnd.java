@@ -181,7 +181,7 @@ public class BackEnd {
         return useCipher(CIPHER_ENCRYPT, data);
     }
     
-    private byte[] useCipher(Cipher cipher, byte[] data) throws Exception {
+    private static byte[] useCipher(Cipher cipher, byte[] data) throws Exception {
         if (data == null) {
             return null;
         }
@@ -293,7 +293,7 @@ public class BackEnd {
                 data = FSUtils.readFile(dataFile);
                 String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                 DataEntry de = new DataEntry();
-                decryptedData = cipher.doFinal(data);
+                decryptedData = useCipher(cipher, data);
                 de.setData(decryptedData);
                 importedIdentifiedData.put(entryIDStr, de);
             }
@@ -304,7 +304,7 @@ public class BackEnd {
                             + tool + Constants.PACKAGE_PATH_SEPARATOR + tool;
                 if (!toolsData.containsKey(tool)) {
                     data = FSUtils.readFile(dataFile);
-                    decryptedData = cipher.doFinal(data);
+                    decryptedData = useCipher(cipher, data);
                     toolsData.put(tool, decryptedData);
                 }
             }
@@ -313,7 +313,7 @@ public class BackEnd {
         File metadataFile = new File(dataDir, Constants.METADATA_FILE_NAME);
         if (metadataFile.exists()) {
             data = FSUtils.readFile(metadataFile);
-            decryptedData = cipher.doFinal(data);
+            decryptedData = useCipher(cipher, data);
             metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
         }
         // config files
@@ -349,7 +349,7 @@ public class BackEnd {
             for (File entryAttsDir : attsDir.listFiles()) {
                 for (File attFile : entryAttsDir.listFiles()) {
                     data = FSUtils.readFile(attFile);
-                    decryptedData = cipher.doFinal(data);
+                    decryptedData = useCipher(cipher, data);
                     byte[] encryptedData = encrypt(decryptedData);
                     entryAttsDir = new File(Constants.ATTACHMENTS_DIR, entryAttsDir.getName());
                     if (!entryAttsDir.exists()) {
@@ -1210,8 +1210,8 @@ public class BackEnd {
             File[] entryAtts = entryAttsDir.listFiles();
             for (File entryAtt : entryAtts) {
                 byte[] data = FSUtils.readFile(entryAtt);
-                byte[] decryptedData = CIPHER_DECRYPT.doFinal(data);
-                byte[] encryptedData = CIPHER_ENCRYPT.doFinal(decryptedData);
+                byte[] decryptedData = useCipher(CIPHER_DECRYPT, data);
+                byte[] encryptedData = useCipher(CIPHER_ENCRYPT, decryptedData);
                 FSUtils.writeFile(entryAtt, encryptedData);
             }
         }
