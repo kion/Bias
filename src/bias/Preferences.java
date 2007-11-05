@@ -46,6 +46,8 @@ public class Preferences {
                         } else if ("boolean".equals(type)) {
                             field.setBoolean(this, Boolean.parseBoolean(value));
                         }
+                    } catch (NoSuchFieldException nsfe) {
+                        // field is not used anymore, ignore
                     } catch (Exception ex) {
                         FrontEnd.displayErrorMessage(ex);
                     }

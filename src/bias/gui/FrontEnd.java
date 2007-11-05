@@ -1759,18 +1759,35 @@ public class FrontEnd extends JFrame {
         }
     };
     
+    // TODO: implement stored export configurations
     private Action exportAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent e) {
             try {
                 DataCategory data = collectData();
-                // TODO: implement export data dialog
                 JTree dataTree = buildDataTree(data);
                 CheckTreeManager checkTreeManager = new CheckTreeManager(dataTree);
+                JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
+                JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
+                JCheckBox exportGlobalConfigCB = new JCheckBox("Export global config"); 
+                JCheckBox exportIconsCB = new JCheckBox("Export icons");
+                JCheckBox exportToolsDataCB = new JCheckBox("Export tools data"); 
+                JCheckBox exportAddOnsCB = new JCheckBox("Export addons"); 
+                JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
+                Component[] comps = new Component[]{
+                        exportDataEntryConfigsCB,
+                        exportPreferencesCB, 
+                        exportGlobalConfigCB, 
+                        exportIconsCB,
+                        exportToolsDataCB, 
+                        exportAddOnsCB, 
+                        exportAddOnConfigsCB,
+                        new JScrollPane(dataTree)
+                };
                 JOptionPane.showMessageDialog(
                         FrontEnd.this, 
-                        new JScrollPane(dataTree),
+                        comps,
                         "Choose data to export",
                         JOptionPane.QUESTION_MESSAGE);
                 TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
@@ -1790,13 +1807,13 @@ public class FrontEnd extends JFrame {
                         }
                     }
                     filterData(data, selectedEntries);
-                    boolean exportDataEntryConfigs = true; 
-                    boolean exportPreferences = true; 
-                    boolean exportGlobalConfig = true; 
-                    boolean exportIcons = true;
-                    boolean exportToolsData = true; 
-                    boolean exportAddOns = true; 
-                    boolean exportAddOnConfigs = true;
+                    boolean exportDataEntryConfigs = exportDataEntryConfigsCB.isSelected(); 
+                    boolean exportPreferences = exportPreferencesCB.isSelected(); 
+                    boolean exportGlobalConfig = exportGlobalConfigCB.isSelected(); 
+                    boolean exportIcons = exportIconsCB.isSelected();
+                    boolean exportToolsData = exportToolsDataCB.isSelected(); 
+                    boolean exportAddOns = exportAddOnsCB.isSelected(); 
+                    boolean exportAddOnConfigs = exportAddOnConfigsCB.isSelected();
                     ZipFileChooser zfc = new ZipFileChooser();
                     int opt = zfc.showSaveDialog(FrontEnd.this);
                     if (opt == JFileChooser.APPROVE_OPTION) {
@@ -2048,13 +2065,14 @@ public class FrontEnd extends JFrame {
                     for (final Field field : fields) {
                         PreferenceAnnotation prefAnn = field.getAnnotation(PreferenceAnnotation.class);
                         if (prefAnn != null) {
-                            JLabel prefTitle = new JLabel(prefAnn.title());
-                            prefTitle.setToolTipText(prefAnn.description());
-                            JPanel prefPanel = new JPanel(new GridLayout(1, 2));
-                            prefPanel.add(prefTitle);
+                            JPanel prefPanel = null;
                             Component prefControl = null;
                             String type = field.getType().getSimpleName().toLowerCase();
                             if ("string".equals(type)) {
+                                prefPanel = new JPanel(new GridLayout(1, 2));
+                                JLabel prefTitle = new JLabel(prefAnn.title() + Constants.BLANK_STR);
+                                prefTitle.setToolTipText(prefAnn.description());
+                                prefPanel.add(prefTitle);
                                 PreferenceProtectAnnotation prefProtectAnn = field.getAnnotation(PreferenceProtectAnnotation.class);
                                 if (prefProtectAnn != null) {
                                     prefControl = new JPasswordField();
@@ -2067,10 +2085,11 @@ public class FrontEnd extends JFrame {
                                 }
                                 ((JTextField) prefControl).setText(text);
                             } else if ("boolean".equals(type)) {
-                                prefControl = new JCheckBox();
+                                prefPanel = new JPanel(new GridLayout(1, 1));
+                                prefControl = new JCheckBox(prefAnn.title());
                                 ((JCheckBox) prefControl).setSelected(field.getBoolean(Preferences.getInstance()));
                             }
-                            if (prefControl != null) {
+                            if (prefPanel != null && prefControl != null) {
                                 prefEntries.put(prefControl, field);
                                 prefPanel.add(prefControl);
                                 prefPanels.add(prefPanel);

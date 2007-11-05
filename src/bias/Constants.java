@@ -56,6 +56,7 @@ public class Constants {
     public static final byte[] CIPHER_SALT = "kn+kv=lv".getBytes();
     
     public static final String EMPTY_STR = "";
+    public static final String BLANK_STR = " ";
     public static final String NEW_LINE = "\n";
 
     public static final String PATH_PREFIX_PATTERN = "^.*/";

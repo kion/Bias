@@ -6,9 +6,12 @@ package bias.utils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import bias.Constants;
 
@@ -41,6 +44,11 @@ public class ArchUtils {
                 }
                 baos.close();
                 File file = new File(destination, ze.getName());
+                File dir = file.getParentFile();
+                if (!dir.exists()) {
+                    dir.mkdirs();
+                }
+                file.createNewFile();
                 FSUtils.writeFile(file, baos.toByteArray());
             }
         }
@@ -48,15 +56,35 @@ public class ArchUtils {
     }
     
     public static void compress(File source, File destination) throws IOException {
-        // TODO: implement
         if (!destination.exists()) {
             File destinationDir = destination.getParentFile();
             if (!destinationDir.exists()) {
                 destinationDir.mkdirs();
             }
             destination.createNewFile();
+            ZipOutputStream out = new ZipOutputStream(new FileOutputStream(destination));
+            compress(source, source, out);
+            out.close();
         } else if (destination.isDirectory()) {
             throw new IOException("Compression can be done into file only!");
+        }
+    }
+    
+    private static void compress(File root, File in, ZipOutputStream out) throws IOException {
+        if (in.isDirectory()) {
+            for (File f : in.listFiles()) {
+                compress(root, f, out);
+            }
+        } else {
+            String path = root.toURI().relativize(in.toURI()).toString();
+            out.putNextEntry(new ZipEntry(path));
+            FileInputStream fin = new FileInputStream(in);
+            int b;
+            while ((b = fin.read()) != -1) {
+                out.write(b);
+            }
+            fin.close();
+            out.closeEntry();
         }
     }
 
