@@ -28,7 +28,9 @@ public class Preferences {
     
     private Document prefs;
     
-    private Preferences() {
+    private Preferences() {}
+    
+    private void init() {
         prefs = BackEnd.getInstance().getPrefs();
         if (prefs != null) {
             Node rootNode = prefs.getFirstChild();
@@ -60,6 +62,7 @@ public class Preferences {
         if (instance == null) {
             instance = new Preferences();
         }
+        instance.init();
         return instance;
     }
     

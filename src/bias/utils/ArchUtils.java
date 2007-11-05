@@ -61,13 +61,13 @@ public class ArchUtils {
             if (!destinationDir.exists()) {
                 destinationDir.mkdirs();
             }
-            destination.createNewFile();
-            ZipOutputStream out = new ZipOutputStream(new FileOutputStream(destination));
-            compress(source, source, out);
-            out.close();
         } else if (destination.isDirectory()) {
             throw new IOException("Compression can be done into file only!");
         }
+        destination.createNewFile();
+        ZipOutputStream out = new ZipOutputStream(new FileOutputStream(destination));
+        compress(source, source, out);
+        out.close();
     }
     
     private static void compress(File root, File in, ZipOutputStream out) throws IOException {

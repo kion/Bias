@@ -213,13 +213,7 @@ public class BackEnd {
             }
         }
         // preferences file
-        File prefsFile = new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE);
-        if (prefsFile.exists()) {
-            data = FSUtils.readFile(prefsFile);
-            if (data.length != 0) {
-                prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(data));
-            }
-        }
+        loadPreferences();
         // global config file
         File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
         if (configFile.exists()) {
@@ -316,9 +310,12 @@ public class BackEnd {
             }
         }
         // metadata file
-        data = FSUtils.readFile(new File(dataDir, Constants.METADATA_FILE_NAME));
-        decryptedData = cipher.doFinal(data);
-        metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
+        File metadataFile = new File(dataDir, Constants.METADATA_FILE_NAME);
+        if (metadataFile.exists()) {
+            data = FSUtils.readFile(metadataFile);
+            decryptedData = cipher.doFinal(data);
+            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
+        }
         // config files
         File configDir = new File(importDir, Constants.CONFIG_DIR.getName());
         if (configDir.exists()) {
@@ -330,6 +327,8 @@ public class BackEnd {
                     FSUtils.duplicateFile(configFile, localConfigFile);
                 }
             }
+            // reload preferences file
+            loadPreferences();
         }
         // icon files
         File iconsDir = new File(importDir, Constants.ICONS_DIR.getName());
@@ -411,6 +410,16 @@ public class BackEnd {
         // add imported data to existing data
         this.data.addDataItems(importedData.getData());
         return importedData;
+    }
+    
+    private void loadPreferences() throws Exception {
+        File prefsFile = new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE);
+        if (prefsFile.exists()) {
+            byte[] data = FSUtils.readFile(prefsFile);
+            if (data.length != 0) {
+                prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(data));
+            }
+        }
     }
     
     private DataCategory parseMetadata(Document metadata, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs) throws Exception {
@@ -520,29 +529,31 @@ public class BackEnd {
         if (data.getActiveIndex() != null) {
             rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, data.getActiveIndex().toString());
         }
-        Collection<UUID> ids = buildNode(metadata, rootNode, data, false);
-        metadata.appendChild(rootNode);
         File dataDir = new File(exportDir, Constants.DATA_DIR.getName());
         dataDir.mkdir();
-        File metadataFile = new File(dataDir, Constants.METADATA_FILE_NAME);
-        storeMetadata(metadata, metadataFile);
-        for (File dataFile : Constants.DATA_DIR.listFiles(FILE_FILTER_DATA)) {
-            UUID id = UUID.fromString(dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
-            if (ids.contains(id)) {
-                FSUtils.duplicateFile(dataFile, new File(dataDir, dataFile.getName()));
+        Collection<UUID> ids = buildNode(metadata, rootNode, data, false);
+        if (!ids.isEmpty()) {
+            metadata.appendChild(rootNode);
+            File metadataFile = new File(dataDir, Constants.METADATA_FILE_NAME);
+            storeMetadata(metadata, metadataFile);
+            for (File dataFile : Constants.DATA_DIR.listFiles(FILE_FILTER_DATA)) {
+                UUID id = UUID.fromString(dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
+                if (ids.contains(id)) {
+                    FSUtils.duplicateFile(dataFile, new File(dataDir, dataFile.getName()));
+                }
             }
-        }
-        // attachments
-        Map<UUID, Collection<Attachment>> atts = new HashMap<UUID, Collection<Attachment>>();
-        for (UUID id : ids) {
-            atts.put(id, getAttachments(id));
-        }
-        if (!atts.isEmpty()) {
-            File attsDir = new File(exportDir, Constants.ATTACHMENTS_DIR.getName());
-            attsDir.mkdir();
-            for (Entry<UUID, Collection<Attachment>> entryAtts : atts.entrySet()) {
-                for (Attachment att : entryAtts.getValue()) {
-                    addAttachment(entryAtts.getKey(), att, attsDir);
+            // attachments
+            Map<UUID, Collection<Attachment>> atts = new HashMap<UUID, Collection<Attachment>>();
+            for (UUID id : ids) {
+                atts.put(id, getAttachments(id));
+            }
+            if (!atts.isEmpty()) {
+                File attsDir = new File(exportDir, Constants.ATTACHMENTS_DIR.getName());
+                attsDir.mkdir();
+                for (Entry<UUID, Collection<Attachment>> entryAtts : atts.entrySet()) {
+                    for (Attachment att : entryAtts.getValue()) {
+                        addAttachment(entryAtts.getKey(), att, attsDir);
+                    }
                 }
             }
         }
@@ -604,6 +615,9 @@ public class BackEnd {
         }
         if (configDir.listFiles().length == 0) {
             configDir.delete();
+        }
+        if (dataDir.listFiles().length == 0) {
+            dataDir.delete();
         }
         ArchUtils.compress(exportDir, file);
     }

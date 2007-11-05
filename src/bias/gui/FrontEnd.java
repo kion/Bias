@@ -1740,10 +1740,8 @@ public class FrontEnd extends JFrame {
                                             DataCategory data = BackEnd.getInstance().importData(importDir, getVisualEntriesIDs(), password);
                                             if (!data.getData().isEmpty()) {
                                                 representData(data);
-                                                displayMessage("Data have been successfully imported.");
-                                            } else {
-                                                displayErrorMessage("Nothing to import!");
                                             }
+                                            displayMessage("Data have been successfully imported.");
                                         } catch (Exception ex) {
                                             displayErrorMessage("Failed to import data!", ex);
                                         }
@@ -1766,8 +1764,12 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent e) {
             try {
                 DataCategory data = collectData();
-                JTree dataTree = buildDataTree(data);
-                CheckTreeManager checkTreeManager = new CheckTreeManager(dataTree);
+                JTree dataTree = null;
+                CheckTreeManager checkTreeManager = null;
+                if (!data.getData().isEmpty()) {
+                    dataTree = buildDataTree(data);
+                    checkTreeManager = new CheckTreeManager(dataTree);
+                }
                 JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
                 JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
                 JCheckBox exportGlobalConfigCB = new JCheckBox("Export global config"); 
@@ -1783,53 +1785,55 @@ public class FrontEnd extends JFrame {
                         exportToolsDataCB, 
                         exportAddOnsCB, 
                         exportAddOnConfigsCB,
-                        new JScrollPane(dataTree)
+                        dataTree != null ? new JScrollPane(dataTree) : null
                 };
                 JOptionPane.showMessageDialog(
                         FrontEnd.this, 
                         comps,
                         "Choose data to export",
                         JOptionPane.QUESTION_MESSAGE);
-                TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
-                if (checkedPaths != null) {
-                    Collection<Recognizable> selectedEntries = new LinkedList<Recognizable>();
-                    for (TreePath tp : checkedPaths) {
-                        DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
-                        for (Object o : tp.getPath()) {
-                            DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
-                            Recognizable entry = nodeEntries.get(node);
-                            if (entry != null) {
-                                selectedEntries.add(entry);
-                            }
-                            if (node.equals(lastNodeInPath)) {
-                                selectDescenantEntries(node, selectedEntries);
+                Collection<Recognizable> selectedEntries = new LinkedList<Recognizable>();
+                if (checkTreeManager != null) {
+                    TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
+                    if (checkedPaths != null) {
+                        for (TreePath tp : checkedPaths) {
+                            DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
+                            for (Object o : tp.getPath()) {
+                                DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
+                                Recognizable entry = nodeEntries.get(node);
+                                if (entry != null) {
+                                    selectedEntries.add(entry);
+                                }
+                                if (node.equals(lastNodeInPath)) {
+                                    selectDescenantEntries(node, selectedEntries);
+                                }
                             }
                         }
                     }
-                    filterData(data, selectedEntries);
-                    boolean exportDataEntryConfigs = exportDataEntryConfigsCB.isSelected(); 
-                    boolean exportPreferences = exportPreferencesCB.isSelected(); 
-                    boolean exportGlobalConfig = exportGlobalConfigCB.isSelected(); 
-                    boolean exportIcons = exportIconsCB.isSelected();
-                    boolean exportToolsData = exportToolsDataCB.isSelected(); 
-                    boolean exportAddOns = exportAddOnsCB.isSelected(); 
-                    boolean exportAddOnConfigs = exportAddOnConfigsCB.isSelected();
-                    ZipFileChooser zfc = new ZipFileChooser();
-                    int opt = zfc.showSaveDialog(FrontEnd.this);
-                    if (opt == JFileChooser.APPROVE_OPTION) {
-                        File file = zfc.getSelectedFile();
-                        BackEnd.getInstance().exportData(
-                                file,
-                                data, 
-                                exportDataEntryConfigs, 
-                                exportPreferences, 
-                                exportGlobalConfig, 
-                                exportIcons, 
-                                exportToolsData, 
-                                exportAddOns, 
-                                exportAddOnConfigs);
-                        JOptionPane.showMessageDialog(FrontEnd.this, "Data have been successfully exported.");
-                    }
+                }
+                filterData(data, selectedEntries);
+                boolean exportDataEntryConfigs = exportDataEntryConfigsCB.isSelected(); 
+                boolean exportPreferences = exportPreferencesCB.isSelected(); 
+                boolean exportGlobalConfig = exportGlobalConfigCB.isSelected(); 
+                boolean exportIcons = exportIconsCB.isSelected();
+                boolean exportToolsData = exportToolsDataCB.isSelected(); 
+                boolean exportAddOns = exportAddOnsCB.isSelected(); 
+                boolean exportAddOnConfigs = exportAddOnConfigsCB.isSelected();
+                ZipFileChooser zfc = new ZipFileChooser();
+                int opt = zfc.showSaveDialog(FrontEnd.this);
+                if (opt == JFileChooser.APPROVE_OPTION) {
+                    File file = zfc.getSelectedFile();
+                    BackEnd.getInstance().exportData(
+                            file,
+                            data, 
+                            exportDataEntryConfigs, 
+                            exportPreferences, 
+                            exportGlobalConfig, 
+                            exportIcons, 
+                            exportToolsData, 
+                            exportAddOns, 
+                            exportAddOnConfigs);
+                    JOptionPane.showMessageDialog(FrontEnd.this, "Data have been successfully exported.");
                 }
             } catch (Throwable t) {
                 displayErrorMessage(t);
