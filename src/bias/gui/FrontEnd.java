@@ -1823,19 +1823,15 @@ public class FrontEnd extends JFrame {
     @SuppressWarnings("unchecked")
     private void selectDescenantEntries(DefaultMutableTreeNode node, Collection<Recognizable> selectedEntries) {
         if (node.getChildCount() != 0) {
-            System.out.println("Node has child nodes. Getting'em...");
             Enumeration<DefaultMutableTreeNode> childs = node.children();
             while (childs.hasMoreElements()) {
                 DefaultMutableTreeNode childNode = childs.nextElement();
                 Recognizable childEntry = nodeEntries.get(childNode);
                 if (childEntry != null) {
-                    System.out.println("Child entry: " + childEntry.getId() + " / " + childEntry.getCaption());
                     selectedEntries.add(childEntry);
                     selectDescenantEntries(childNode, selectedEntries);
                 }
             }
-        } else {
-            System.out.println("Node has no child nodes.");
         }
     }
     
@@ -1843,7 +1839,6 @@ public class FrontEnd extends JFrame {
         Collection<Recognizable> initialData = new ArrayList<Recognizable>(data.getData());
         for (Recognizable r : initialData) {
             if (!filterEntries.contains(r)) {
-                System.out.println("Removing: " + r.getId() + " / " + r.getCaption());
                 data.removeDataItem(r);
             } else if (r instanceof DataCategory) {
                 filterData((DataCategory) r, filterEntries);
