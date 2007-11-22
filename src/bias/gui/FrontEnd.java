@@ -529,12 +529,16 @@ public class FrontEnd extends JFrame {
     }
     
     private void representData(DataCategory data) {
+        UUID id = getSelectedVisualEntryID();
         if (data.getPlacement() != null) {
             getJTabbedPane().setTabPlacement(data.getPlacement());
         }
         int brokenExtensionsFound = representData(getJTabbedPane(), data);
         if (data.getActiveIndex() != null) {
             getJTabbedPane().setSelectedIndex(data.getActiveIndex());
+        }
+        if (id != null) {
+            switchToVisualEntry(id);
         }
         if (brokenExtensionsFound > 0) {
             System.err.println("Some entries (" + brokenExtensionsFound + ") have not been successfully represented." + Constants.NEW_LINE +
@@ -774,7 +778,7 @@ public class FrontEnd extends JFrame {
                 }
             }
         }
-        return null;
+        return UUID.fromString(tabPane.getName());
     }
 
     public static String getSelectedVisualEntryCaption() {
