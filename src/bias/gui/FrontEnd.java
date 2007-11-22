@@ -317,7 +317,7 @@ public class FrontEnd extends JFrame {
                 System.err.println(
                         "Current Look-&-Feel '" + laf + "' is broken (failed to initialize)!" + Constants.NEW_LINE +
                         "It will be uninstalled." + Constants.NEW_LINE + "Error details: " + Constants.NEW_LINE);
-                t.printStackTrace();
+                t.printStackTrace(System.err);
                 try {
                     String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                 + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
@@ -329,7 +329,7 @@ public class FrontEnd extends JFrame {
                 } catch (Throwable t2) {
                     System.err.println("Broken Look-&-Feel '" + laf + "' failed to uninstall :(" + Constants.NEW_LINE 
                             + "Error details: " + Constants.NEW_LINE);
-                    t2.printStackTrace();
+                    t2.printStackTrace(System.err);
                 }
             }
         } else {
@@ -566,7 +566,7 @@ public class FrontEnd extends JFrame {
                     try {
                         extension = ExtensionFactory.getInstance().newEntryExtension(de);
                     } catch (Throwable t) {
-                    	t.printStackTrace();
+                        t.printStackTrace(System.err);
                     	brokenExtensionsFound++;
                         extension = new MissingExtensionInformer(de);
                     }
@@ -1017,13 +1017,13 @@ public class FrontEnd extends JFrame {
     public static void displayErrorMessage(Throwable t) {
         Launcher.hideSplash();
         JOptionPane.showMessageDialog(instance, t.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        t.printStackTrace();
+        t.printStackTrace(System.err);
     }
 
     public static void displayErrorMessage(String message, Throwable t) {
         Launcher.hideSplash();
         JOptionPane.showMessageDialog(instance, message, "Error", JOptionPane.ERROR_MESSAGE);
-        t.printStackTrace();
+        t.printStackTrace(System.err);
     }
 
     public static void displayErrorMessage(String message) {
