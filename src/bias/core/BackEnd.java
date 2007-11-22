@@ -215,11 +215,7 @@ public class BackEnd {
         // preferences file
         loadPreferences();
         // global config file
-        File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
-        if (configFile.exists()) {
-            data = FSUtils.readFile(configFile);
-            config.load(new ByteArrayInputStream(data));
-        }
+        loadConfig();
         // metadata file
         File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
         if (metadataFile.exists()) {
@@ -422,6 +418,14 @@ public class BackEnd {
         }
     }
     
+    private void loadConfig() throws Exception {
+        File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
+        if (configFile.exists()) {
+            byte[] data = FSUtils.readFile(configFile);
+            config.load(new ByteArrayInputStream(data));
+        }
+    }
+
     private DataCategory parseMetadata(Document metadata, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs) throws Exception {
         DataCategory data = new DataCategory();
         if (metadata == null) {
