@@ -453,10 +453,10 @@ public class BackEnd {
             }
         } else if (node.getNodeName().equals(Constants.XML_ELEMENT_CATEGORY)) {
             NamedNodeMap attributes = node.getAttributes();
-            DataCategory dc = new DataCategory();
             Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
             UUID id = UUID.fromString(attID.getNodeValue());
             if (existingIDs == null || !existingIDs.contains(id)) {
+                DataCategory dc = new DataCategory();
                 dc.setId(id);
                 Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
                 String caption = attCaption.getNodeValue();
@@ -490,8 +490,8 @@ public class BackEnd {
             NamedNodeMap attributes = node.getAttributes();
             Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
             UUID id = UUID.fromString(attID.getNodeValue());
-            DataEntry dataEntry = identifiedData.get(id.toString());
             if (existingIDs == null || !existingIDs.contains(id)) {
+                DataEntry dataEntry = identifiedData.get(id.toString());
                 dataEntry.setId(id);
                 Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
                 String caption = attCaption.getNodeValue();
