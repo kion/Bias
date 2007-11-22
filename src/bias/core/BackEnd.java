@@ -443,6 +443,7 @@ public class BackEnd {
         return data;
     }
     
+    // FIXME [P1] Existing recognizable entries are not deeply parsed  
     private void buildData(DataCategory data, Node node, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs) throws Exception {
         if (node.getNodeName().equals(Constants.XML_ELEMENT_ROOT_CONTAINER)) {
             NodeList nodes = node.getChildNodes();
