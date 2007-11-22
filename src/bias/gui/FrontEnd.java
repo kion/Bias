@@ -107,6 +107,8 @@ import bias.utils.Validator;
  */
 public class FrontEnd extends JFrame {
 
+    // TODO [P3] internationalization
+
     private static final long serialVersionUID = 1L;
     
     private static final String DEFAULT_LOOK_AND_FEEL = "DefaultLAF";
@@ -748,7 +750,10 @@ public class FrontEnd extends JFrame {
     }
 
     public static UUID getSelectedVisualEntryID() {
-        return instance.getSelectedVisualEntryID(instance.getJTabbedPane());
+        if (instance != null) {
+            return instance.getSelectedVisualEntryID(instance.getJTabbedPane());
+        }
+        return null;
     }
 
     private UUID getSelectedVisualEntryID(JTabbedPane tabPane) {
@@ -914,7 +919,10 @@ public class FrontEnd extends JFrame {
     }
 
     public static boolean switchToVisualEntry(UUID id) {
-        return instance.switchToVisualEntry(instance.getJTabbedPane(), id, new LinkedList<Component>());
+        if (instance != null) {
+            return instance.switchToVisualEntry(instance.getJTabbedPane(), id, new LinkedList<Component>());
+        }
+        return false;
     }
 
     private boolean switchToVisualEntry(JTabbedPane rootTabPane, UUID id, LinkedList<Component> path) {
