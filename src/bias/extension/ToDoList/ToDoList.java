@@ -481,21 +481,17 @@ public class ToDoList extends EntryExtension {
         DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
         Collection<String> usedAttachmentNames = new ArrayList<String>();
         for (int i = 0; i < model.getRowCount(); i++) {
-            try {
-                ToDoEntry entry = new ToDoEntry();
-                UUID id = UUID.fromString((String) model.getValueAt(i, 0));
-                entry.setId(id);
-                entry.setTimestamp(originalTimestamps.get(id));
-                entry.setTitle((String) model.getValueAt(i, 2));
-                entry.setPriority((String) model.getValueAt(i, 3));
-                entry.setStatus((String) model.getValueAt(i, 4));
-                HTMLEditorPanel editorPanel = editorPanels.get(id);
-                entry.setDescription(editorPanel.getCode());
-                usedAttachmentNames.addAll(editorPanel.getProcessedAttachmentNames());
-                entries.add(entry);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            ToDoEntry entry = new ToDoEntry();
+            UUID id = UUID.fromString((String) model.getValueAt(i, 0));
+            entry.setId(id);
+            entry.setTimestamp(originalTimestamps.get(id));
+            entry.setTitle((String) model.getValueAt(i, 2));
+            entry.setPriority((String) model.getValueAt(i, 3));
+            entry.setStatus((String) model.getValueAt(i, 4));
+            HTMLEditorPanel editorPanel = editorPanels.get(id);
+            entry.setDescription(editorPanel.getCode());
+            usedAttachmentNames.addAll(editorPanel.getProcessedAttachmentNames());
+            entries.add(entry);
         }
         cleanUpUnUsedAttachments(usedAttachmentNames);
         return entries;
@@ -512,7 +508,6 @@ public class ToDoList extends EntryExtension {
         } catch (Exception ex) {
             // if some error occurred while cleaning up unused attachments,
             // ignore it, these attachments will be removed next time Bias persists data
-            ex.printStackTrace();
         }
     }
     

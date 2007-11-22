@@ -84,7 +84,6 @@ public class HTMLPage extends EntryExtension {
         } catch (Exception ex) {
             // if some error occurred while cleaning up unused attachments,
             // ignore it, these attachments will be removed next time Bias persists data
-            ex.printStackTrace();
         }
     }
     

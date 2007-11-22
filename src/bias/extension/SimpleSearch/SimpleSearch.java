@@ -341,7 +341,7 @@ public class SimpleSearch extends ToolExtension {
                     }
                 } catch (Throwable t) {
                     processLabel.setText("<html><font color=red>Error while processing search!</font></html>");
-                    t.printStackTrace();
+                    t.printStackTrace(System.err);
                 }
             }
         });
@@ -378,7 +378,13 @@ public class SimpleSearch extends ToolExtension {
                     searchStrings = new LinkedList<String>();
                     searchStrings.add(caption);
                 }
-                Collection<String> entrySearchStrings = entry.getSearchData();
+                Collection<String> entrySearchStrings = null;
+                try {
+                    entrySearchStrings = entry.getSearchData();
+                } catch (Throwable t) {
+                    System.err.println("Failed to get search data from entry " + entry.getClass() + "/" + entry.getId().toString());
+                    t.printStackTrace(System.err);
+                }
                 if (entrySearchStrings != null) {
                     if (searchStrings != null) {
                         searchStrings.addAll(entrySearchStrings);
