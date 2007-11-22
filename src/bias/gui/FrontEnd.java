@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -277,11 +278,15 @@ public class FrontEnd extends JFrame {
             BackEnd.getInstance().load();
             config = new Properties();
             config.putAll(BackEnd.getInstance().getConfig());
+        } catch (GeneralSecurityException gse) {
+            displayErrorMessage(
+                    "Bias has failed to load data!" + Constants.NEW_LINE +
+                    "It seems that you have typed wrong password...", gse);
+            System.exit(1);
         } catch (Throwable t) {
             displayErrorMessage(
                     "Bias has failed to load data!" + Constants.NEW_LINE +
-                    "It seems that you have typed wrong password...",
-                    t);
+                    "Terminating...", t);
             System.exit(1);
         }
     }
