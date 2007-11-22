@@ -1791,47 +1791,49 @@ public class FrontEnd extends JFrame {
                         passwordL,
                         passwordTF
                 };
-                JOptionPane.showMessageDialog(
+                int opt = JOptionPane.showConfirmDialog(
                         FrontEnd.this, 
                         comps,
                         "Choose data to export",
-                        JOptionPane.QUESTION_MESSAGE);
-                Collection<Recognizable> selectedEntries = new LinkedList<Recognizable>();
-                if (checkTreeManager != null) {
-                    TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
-                    if (checkedPaths != null) {
-                        for (TreePath tp : checkedPaths) {
-                            DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
-                            for (Object o : tp.getPath()) {
-                                DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
-                                Recognizable entry = nodeEntries.get(node);
-                                if (entry != null) {
-                                    selectedEntries.add(entry);
-                                }
-                                if (node.equals(lastNodeInPath)) {
-                                    selectDescenantEntries(node, selectedEntries);
+                        JOptionPane.OK_CANCEL_OPTION);
+                if (opt == JOptionPane.OK_OPTION) {
+                    Collection<Recognizable> selectedEntries = new LinkedList<Recognizable>();
+                    if (checkTreeManager != null) {
+                        TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
+                        if (checkedPaths != null) {
+                            for (TreePath tp : checkedPaths) {
+                                DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
+                                for (Object o : tp.getPath()) {
+                                    DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
+                                    Recognizable entry = nodeEntries.get(node);
+                                    if (entry != null) {
+                                        selectedEntries.add(entry);
+                                    }
+                                    if (node.equals(lastNodeInPath)) {
+                                        selectDescenantEntries(node, selectedEntries);
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                filterData(data, selectedEntries);
-                ZipFileChooser zfc = new ZipFileChooser();
-                int opt = zfc.showSaveDialog(FrontEnd.this);
-                if (opt == JFileChooser.APPROVE_OPTION) {
-                    File file = zfc.getSelectedFile();
-                    BackEnd.getInstance().exportData(
-                            file,
-                            data, 
-                            exportDataEntryConfigsCB.isSelected(), 
-                            exportPreferencesCB.isSelected(), 
-                            exportGlobalConfigCB.isSelected(), 
-                            exportIconsCB.isSelected(), 
-                            exportToolsDataCB.isSelected(), 
-                            exportAddOnsCB.isSelected(), 
-                            exportAddOnConfigsCB.isSelected(),
-                            new String(passwordTF.getPassword()));
-                    JOptionPane.showMessageDialog(FrontEnd.this, "Data have been successfully exported.");
+                    filterData(data, selectedEntries);
+                    ZipFileChooser zfc = new ZipFileChooser();
+                    opt = zfc.showSaveDialog(FrontEnd.this);
+                    if (opt == JFileChooser.APPROVE_OPTION) {
+                        File file = zfc.getSelectedFile();
+                        BackEnd.getInstance().exportData(
+                                file,
+                                data, 
+                                exportDataEntryConfigsCB.isSelected(), 
+                                exportPreferencesCB.isSelected(), 
+                                exportGlobalConfigCB.isSelected(), 
+                                exportIconsCB.isSelected(), 
+                                exportToolsDataCB.isSelected(), 
+                                exportAddOnsCB.isSelected(), 
+                                exportAddOnConfigsCB.isSelected(),
+                                new String(passwordTF.getPassword()));
+                        JOptionPane.showMessageDialog(FrontEnd.this, "Data have been successfully exported.");
+                    }
                 }
             } catch (Throwable t) {
                 displayErrorMessage(t);
