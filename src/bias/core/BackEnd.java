@@ -151,7 +151,7 @@ public class BackEnd {
         if ((password != null ? currentPassword != null : currentPassword == null) && newPassword != null) {
             if ((password == null && currentPassword == null) || currentPassword.equals(password)) {
                 password = newPassword;
-                // changing ecryption cipher
+                // changing encryption cipher
                 CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, password);
                 if (currentPassword != null) {
                     // the rest of the data will be encrypted with new password automatically on save, 
