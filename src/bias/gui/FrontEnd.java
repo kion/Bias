@@ -783,7 +783,7 @@ public class FrontEnd extends JFrame {
                 }
             }
         }
-        return UUID.fromString(tabPane.getName());
+        return tabPane.getName() == null ? null : UUID.fromString(tabPane.getName());
     }
 
     public static String getSelectedVisualEntryCaption() {

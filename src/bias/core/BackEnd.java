@@ -73,6 +73,8 @@ public class BackEnd {
     
     private static String password;
     
+    private static boolean passwordChanged = false;
+    
     private File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
 
     private static Collection<String> loadedExtensions;
@@ -159,6 +161,8 @@ public class BackEnd {
                 }
                 // now decryption cipher can be changed as well
                 CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, password);
+                // set password-changed flag
+                passwordChanged = true;
             } else {
                 throw new Exception("Current password is wrong!");
             }
@@ -197,11 +201,11 @@ public class BackEnd {
         if (Constants.DATA_DIR.exists()) {
             // entries data files
             for (File dataFile : Constants.DATA_DIR.listFiles(FILE_FILTER_DATA)) {
+                DataEntry de = new DataEntry();
                 data = FSUtils.readFile(dataFile);
                 decryptedData = decrypt(data);
-                String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                DataEntry de = new DataEntry();
                 de.setData(decryptedData);
+                String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                 identifiedData.put(entryIDStr, de);
             }
             // tools data files
@@ -667,6 +671,7 @@ public class BackEnd {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE), sw.getBuffer().toString().getBytes());
         // preferences file
         storePreferences();
+        passwordChanged = false;
     }
     
     public void storePreferences() throws Exception {
@@ -686,10 +691,6 @@ public class BackEnd {
         for (Recognizable item : data.getData()) {
             if (item instanceof DataEntry) {
                 DataEntry de = (DataEntry) item;
-                byte[] entryData = de.getData();
-                if (entryData == null) {
-                    entryData = new byte[]{};
-                }
                 storeDataEntrySettings(de);
                 Element entryNode = metadata.createElement(Constants.XML_ELEMENT_ENTRY);
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, de.getId().toString());
@@ -708,7 +709,11 @@ public class BackEnd {
                     // check if data of the entry have changed;
                     // if yes - write changed data to file, otherwise - skip data writing
                     DataEntry oldDE = identifiedData.get(de.getId().toString());
-                    if (oldDE == null || !Arrays.equals(de.getData(), oldDE.getData())) {
+                    byte[] entryData = de.getData();
+                    if (entryData == null) {
+                        entryData = new byte[]{};
+                    }
+                    if (oldDE == null || passwordChanged || !Arrays.equals(entryData, oldDE.getData())) {
                         byte[] encryptedData = encrypt(entryData);
                         File deFile = new File(Constants.DATA_DIR, de.getId().toString() + Constants.DATA_FILE_SUFFIX);
                         FSUtils.writeFile(deFile, encryptedData);
