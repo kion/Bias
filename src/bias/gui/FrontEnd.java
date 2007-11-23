@@ -2663,25 +2663,33 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
-        	JLabel aboutLabel = new JLabel(
-        							"<html>Bias Personal Information Manager, version 1.0.0<br>" +
-        							"(c) R. Kasianenko, 2007<br>"
-        						);
-        	JLabel linkLabel = new JLabel(
-        							"<html><u><font color=blue>http://bias.sourceforge.net</font></u>"
-        						);
-        	linkLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        	linkLabel.addMouseListener(new MouseAdapter(){
+            JLabel title1Label = new JLabel("Bias Personal Information Manager, version 1.0.0");
+            JLabel link1Label = new JLabel("<html><u><font color=blue>http://bias.sourceforge.net/");
+            JLabel title2Label = new JLabel("(c) EtweeSoft, 2007");
+        	JLabel link2Label = new JLabel("<html><u><font color=blue>http://etweesoft.org/");
+        	link1Label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        	link1Label.addMouseListener(new MouseAdapter(){
 				@Override
 				public void mouseClicked(MouseEvent e) {
 					try {
-						AppManager.getInstance().handleAddress("http://bias.sourceforge.net");
+						AppManager.getInstance().handleAddress("http://bias.sourceforge.net/");
 					} catch (Exception ex) {
 						// do nothing
 					}
 				}
         	});
-            JOptionPane.showMessageDialog(FrontEnd.this, new Component[]{aboutLabel, linkLabel} );
+        	link2Label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        	link2Label.addMouseListener(new MouseAdapter(){
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    try {
+                        AppManager.getInstance().handleAddress("http://etweesoft.org/");
+                    } catch (Exception ex) {
+                        // do nothing
+                    }
+                }
+            });
+            JOptionPane.showMessageDialog(FrontEnd.this, new Component[]{title1Label, link1Label, title2Label, link2Label} );
         }
     };
 
