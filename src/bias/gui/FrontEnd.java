@@ -533,44 +533,36 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private boolean tabsInitialized;
     private void representData(DataCategory data) {
         UUID id = getSelectedVisualEntryID();
         if (data.getPlacement() != null) {
             getJTabbedPane().setTabPlacement(data.getPlacement());
         }
-        int brokenExtensionsFound = representData(getJTabbedPane(), data);
+        tabsInitialized = false;
+        representData(getJTabbedPane(), data);
+        tabsInitialized = true;
         if (data.getActiveIndex() != null) {
             getJTabbedPane().setSelectedIndex(data.getActiveIndex());
+            currentTabPane = getJTabbedPane();
         }
         if (id != null) {
             switchToVisualEntry(id);
         }
-        if (brokenExtensionsFound > 0) {
-            System.err.println("Some entries (" + brokenExtensionsFound + ") have not been successfully represented." + Constants.NEW_LINE +
-                    "Corresponding extensions seem to be broken/missing." + Constants.NEW_LINE +
-                    "Try to open extensions management dialog, " +
-                    "it will autodetect and remove broken extensions (if any)." + Constants.NEW_LINE +
-                    "After that, try to (re)install broken/missing extensions." + Constants.NEW_LINE);
-        }
+        initTabContent();
     }
 
-    private int representData(JTabbedPane tabbedPane, DataCategory data) {
-        int brokenExtensionsFound = 0;
+    private void representData(JTabbedPane tabbedPane, DataCategory data) {
         try {
         	int idx = tabbedPane.getTabCount();
             for (Recognizable item : data.getData()) {
                 if (item instanceof DataEntry) {
                     DataEntry de = (DataEntry) item;
                     String caption = de.getCaption();
-                    EntryExtension extension;
-                    try {
-                        extension = ExtensionFactory.getInstance().newEntryExtension(de);
-                    } catch (Throwable t) {
-                        t.printStackTrace(System.err);
-                    	brokenExtensionsFound++;
-                        extension = new MissingExtensionInformer(de);
-                    }
-                    tabbedPane.addTab(caption, extension);
+                    dataEntries.put(de.getId().toString(), de);
+                    JPanel p = new JPanel(new BorderLayout());
+                    p.setName(de.getId().toString());
+                    tabbedPane.addTab(caption, p);
                     tabbedPane.setIconAt(idx++, item.getIcon());
                 } else if (item instanceof DataCategory) {
                     String caption = item.getCaption();
@@ -584,17 +576,38 @@ public class FrontEnd extends JFrame {
                     tabbedPane.addTab(caption, categoryTabPane);
                     tabbedPane.setIconAt(idx++, item.getIcon());
                     currentTabPane = categoryTabPane;
-                    brokenExtensionsFound += representData(categoryTabPane, dc);
+                    representData(categoryTabPane, dc);
                     if (dc.getActiveIndex() != null) {
-                        categoryTabPane.setSelectedIndex(dc.getActiveIndex());
+                        if (categoryTabPane.getTabCount() - 1 < dc.getActiveIndex()) {
+                            categoryTabPane.setSelectedIndex(Integer.valueOf(categoryTabPane.getTabCount() - 1));
+                        } else {
+                            categoryTabPane.setSelectedIndex(dc.getActiveIndex());
+                        }
                     }
                 }
             }
         } catch (Exception ex) {
-            displayErrorMessage("Critical error! Data can not be represented. Bias can not proceed further...");
+            displayErrorMessage("Critical error! Data can not be represented. Bias can not proceed further...", ex);
             System.exit(1);
         }
-        return brokenExtensionsFound;
+    }
+    
+    private static Map<String, DataEntry> dataEntries = new HashMap<String, DataEntry>();
+    
+    public static DataEntry getDataEntry(String id) {
+        return dataEntries.get(id);
+    }
+    
+    public static EntryExtension initEntryExtension(DataEntry de) throws Throwable {
+        BackEnd.getInstance().loadDataEntryData(de);
+        EntryExtension extension;
+        try {
+            extension = ExtensionFactory.getInstance().newEntryExtension(de);
+        } catch (Throwable t) {
+            t.printStackTrace(System.err);
+            extension = new MissingExtensionInformer(de);
+        }
+        return extension;
     }
     
     private void store() throws Throwable {
@@ -659,44 +672,50 @@ public class FrontEnd extends JFrame {
                     }
                 }
                 dc.setPlacement(tp.getTabPlacement());
-            } else if (c instanceof EntryExtension) {
-                EntryExtension extension = (EntryExtension) c;
+            } else if (c instanceof JPanel) {
+                EntryExtension extension = null;
+                JPanel p = (JPanel) c;
                 byte[] serializedData = null;
-                try {
-                    serializedData = extension.serializeData();
-                } catch (Throwable t) {
-                    displayErrorMessage(
-                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize data!" + Constants.NEW_LINE +
-                            "Data that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
-                            "This the most likely is an extension's bug." + Constants.NEW_LINE +
-                            "You can either:" + Constants.NEW_LINE +
-                                "* check for new version of extension (the bug may be fixed in new version)" + Constants.NEW_LINE +
-                                "* uninstall extension to avoid further instability and data loss" + Constants.NEW_LINE + 
-                                "* refer to extension's author for further help", t);
-                }
                 byte[] serializedSettings = null;
-                try {
-                    serializedSettings = extension.serializeSettings();
-                } catch (Throwable t) {
-                    displayErrorMessage(
-                            "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize settings!" + Constants.NEW_LINE +
-                            "Settings that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
-                            "This the most likely is an extension's bug." + Constants.NEW_LINE +
-                            "You can either:" + Constants.NEW_LINE +
-                                "* check for new version of extension (the bug may be fixed in new version)" + Constants.NEW_LINE +
-                                "* uninstall extension to avoid further instability and data loss" + Constants.NEW_LINE + 
-                                "* refer to extension's author for further help", t);
+                if (p.getComponentCount() != 0) {
+                    extension = (EntryExtension) p.getComponent(0);
+                    try {
+                        serializedData = extension.serializeData();
+                    } catch (Throwable t) {
+                        displayErrorMessage(
+                                "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize data!" + Constants.NEW_LINE +
+                                "Data that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
+                                "This the most likely is an extension's bug." + Constants.NEW_LINE +
+                                "You can either:" + Constants.NEW_LINE +
+                                    "* check for new version of extension (the bug may be fixed in new version)" + Constants.NEW_LINE +
+                                    "* uninstall extension to avoid further instability and data loss" + Constants.NEW_LINE + 
+                                    "* refer to extension's author for further help", t);
+                    }
+                    try {
+                        serializedSettings = extension.serializeSettings();
+                    } catch (Throwable t) {
+                        displayErrorMessage(
+                                "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize settings!" + Constants.NEW_LINE +
+                                "Settings that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
+                                "This the most likely is an extension's bug." + Constants.NEW_LINE +
+                                "You can either:" + Constants.NEW_LINE +
+                                    "* check for new version of extension (the bug may be fixed in new version)" + Constants.NEW_LINE +
+                                    "* uninstall extension to avoid further instability and data loss" + Constants.NEW_LINE + 
+                                    "* refer to extension's author for further help", t);
+                    }
                 }
                 DataEntry dataEntry;
-                String type = null;
-                if (extension instanceof MissingExtensionInformer) {
-                    dataEntry = ((MissingExtensionInformer) extension).getDataEntry();
-                    type = dataEntry.getType();
+                if (extension != null) {
+                    String type;
+                    if (extension instanceof MissingExtensionInformer) {
+                        type = ((MissingExtensionInformer) extension).getDataEntry().getType();
+                    } else {
+                        type = extension.getClass().getPackage().getName().replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                    }
+                    dataEntry = new DataEntry(extension.getId(), caption, icon, type, serializedData, serializedSettings);
                 } else {
-                    type = extension.getClass().getPackage().getName()
-                                .replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                    dataEntry = dataEntries.get(p.getName());
                 }
-                dataEntry = new DataEntry(extension.getId(), caption, icon, type, serializedData, serializedSettings);
                 data.addDataItem(dataEntry);
             }
         }
@@ -771,8 +790,8 @@ public class FrontEnd extends JFrame {
                 Component c = tabPane.getSelectedComponent();
                 if (c instanceof JTabbedPane) {
                     return getSelectedVisualEntryID((JTabbedPane) c);
-                } else if (c instanceof EntryExtension) {
-                    return ((EntryExtension) c).getId();
+                } else if (c instanceof JPanel) {
+                    return UUID.fromString(((JPanel) c).getName());
                 }
             } else {
                 String idStr = tabPane.getName();
@@ -796,7 +815,7 @@ public class FrontEnd extends JFrame {
                 Component c = tabPane.getSelectedComponent();
                 if (c instanceof JTabbedPane) {
                     return getSelectedVisualEntryCaption((JTabbedPane) c);
-                } else if (c instanceof EntryExtension) {
+                } else if (c instanceof JPanel) {
                     return tabPane.getTitleAt(tabPane.getSelectedIndex());
                 }
             }
@@ -817,10 +836,10 @@ public class FrontEnd extends JFrame {
         for (Component c : rootTabPane.getComponents()) {
             if (c instanceof JTabbedPane) {
                 ids.addAll(getVisualEntriesIDs((JTabbedPane) c));
-            } else if (c instanceof EntryExtension) {
-                EntryExtension ve = (EntryExtension) c;
-                if (ve.getId() != null) {
-                    ids.add(ve.getId());
+            } else if (c instanceof JPanel) {
+                JPanel p = (JPanel) c;
+                if (p.getName() != null) {
+                    ids.add(UUID.fromString(p.getName()));
                 }
             }
         }
@@ -841,6 +860,7 @@ public class FrontEnd extends JFrame {
         return null;
     }
 
+    // TODO [P1] add some interface instead of JComponent (?)
     private Map<VisualEntryDescriptor, JComponent> getVisualEntries(JTabbedPane tabPane, Class<? extends EntryExtension> filterClass, LinkedList<Recognizable> entryPath) {
         Map<VisualEntryDescriptor, JComponent> entries = new LinkedHashMap<VisualEntryDescriptor, JComponent>();
         for (int i = 0; i < tabPane.getTabCount(); i++) {
@@ -854,13 +874,13 @@ public class FrontEnd extends JFrame {
                 entries.put(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)), (JTabbedPane) c);
                 entries.putAll(getVisualEntries((JTabbedPane) c, filterClass, new LinkedList<Recognizable>(entryPath)));
                 entryPath.removeLast();
-            } else if (c instanceof EntryExtension) {
-                Recognizable entry = new Recognizable(((EntryExtension) c).getId(), caption, icon);
+            } else if (c instanceof JPanel) {
+                Recognizable entry = new Recognizable(UUID.fromString(((JPanel) c).getName()), caption, icon);
                 entryPath.addLast(entry);
                 if (filterClass == null) {
-                    entries.put(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)), (EntryExtension) c);
+                    entries.put(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)), (JPanel) c);
                 } else if (c.getClass().getName().equals(filterClass.getName())) {
-                    entries.put(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)), (EntryExtension) c);
+                    entries.put(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)), (JPanel) c);
                 }
                 entryPath.removeLast();
             }
@@ -888,8 +908,8 @@ public class FrontEnd extends JFrame {
                 vDescriptors.add(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
                 vDescriptors.addAll(getVisualEntryDescriptors((JTabbedPane) c, new LinkedList<Recognizable>(entryPath)));
                 entryPath.removeLast();
-            } else if (c instanceof EntryExtension) {
-                Recognizable entry = new Recognizable(((EntryExtension) c).getId(), caption, icon);
+            } else if (c instanceof JPanel) {
+                Recognizable entry = new Recognizable(UUID.fromString(((JPanel) c).getName()), caption, icon);
                 entryPath.addLast(entry);
                 vDescriptors.add(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
                 entryPath.removeLast();
@@ -917,8 +937,8 @@ public class FrontEnd extends JFrame {
                 veMap.put(entry.getId(), new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
                 veMap.putAll(getVisualEntriesMap((JTabbedPane) c, new LinkedList<Recognizable>(entryPath)));
                 entryPath.removeLast();
-            } else if (c instanceof EntryExtension) {
-                Recognizable entry = new Recognizable(((EntryExtension) c).getId(), caption, icon);
+            } else if (c instanceof JPanel) {
+                Recognizable entry = new Recognizable(UUID.fromString(((JPanel) c).getName()), caption, icon);
                 entryPath.addLast(entry);
                 veMap.put(entry.getId(), new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
                 entryPath.removeLast();
@@ -949,9 +969,9 @@ public class FrontEnd extends JFrame {
                 } else {
                     path.removeLast();
                 }
-            } else if (c instanceof EntryExtension) {
-                EntryExtension ve = (EntryExtension) c;
-                if (ve.getId().equals(id)) {
+            } else if (c instanceof JPanel) {
+                JPanel p = (JPanel) c;
+                if (p.getName().equals(id.toString())) {
                     switchToVisualEntry(getJTabbedPane(), path.iterator());
                     return true;
                 } else {
@@ -968,6 +988,7 @@ public class FrontEnd extends JFrame {
             tabPane.setSelectedComponent(selComp);
             if (selComp instanceof JTabbedPane) {
                 switchToVisualEntry((JTabbedPane) selComp, pathIterator);
+                currentTabPane = (JTabbedPane) selComp;
             }
         }
     }
@@ -1100,8 +1121,28 @@ public class FrontEnd extends JFrame {
     private ChangeListener tabChangeListener = new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
             currentTabPane = getActiveTabPane((JTabbedPane) e.getSource());
+            initTabContent();
         }
     };
+    
+    private void initTabContent() {
+        if (tabsInitialized && currentTabPane != null && currentTabPane.getSelectedIndex() != -1) {
+            Component c = currentTabPane.getSelectedComponent();
+            if (c instanceof JPanel) {
+                try {
+                    JPanel p = ((JPanel) c);
+                    String id = p.getName();
+                    DataEntry de = dataEntries.get(id);
+                    if (de != null && p.getComponentCount() == 0) {
+                        EntryExtension ee = initEntryExtension(de);
+                        ((JPanel) c).add(ee, BorderLayout.CENTER);
+                    }
+                } catch (Throwable t) {
+                    displayErrorMessage("Failed to initialize extension!", t);
+                }
+            }
+        }
+    }
     
     private TabMoveListener tabMoveListener = new TabMoveListener();
 

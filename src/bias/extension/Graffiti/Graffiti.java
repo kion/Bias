@@ -23,6 +23,7 @@ import javax.swing.JToolBar;
 import javax.swing.border.LineBorder;
 
 import bias.annotation.AddOnAnnotation;
+import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.extension.Graffiti.brush.LiveBrush;
 import bias.extension.Graffiti.brush.PaintBrush;
@@ -39,21 +40,19 @@ import com.sun.image.codec.jpeg.ImageFormatException;
         description = "Simple painting component")
 public class Graffiti extends EntryExtension {
 
+    // TODO [P1] implement existing image loading
+
     private static final long serialVersionUID = 1L;
     
     private static final String IMG_FORMAT = "PNG";
     
-    private static final ImageIcon ICON_PAINT_BRUSH = 
-        new ImageIcon(Graffiti.class.getResource("/bias/res/Graffiti/paint_brush.png"));
+    private static final ImageIcon ICON_PAINT_BRUSH = new ImageIcon(BackEnd.getInstance().getResourceURL(Graffiti.class, "paint_brush.png"));
 
-    private static final ImageIcon ICON_LIVE_BRUSH = 
-        new ImageIcon(Graffiti.class.getResource("/bias/res/Graffiti/live_brush.png"));
+    private static final ImageIcon ICON_LIVE_BRUSH = new ImageIcon(BackEnd.getInstance().getResourceURL(Graffiti.class, "live_brush.png"));
 
-    private static final ImageIcon ICON_ERASER = 
-        new ImageIcon(Graffiti.class.getResource("/bias/res/Graffiti/eraser.png"));
+    private static final ImageIcon ICON_ERASER = new ImageIcon(BackEnd.getInstance().getResourceURL(Graffiti.class, "eraser.png"));
 
-    private static final ImageIcon ICON_COLOR = 
-        new ImageIcon(Graffiti.class.getResource("/bias/res/Graffiti/color.png"));
+    private static final ImageIcon ICON_COLOR = new ImageIcon(BackEnd.getInstance().getResourceURL(Graffiti.class, "color.png"));
 
     private PaintingPanel pp;
     
@@ -86,8 +85,6 @@ public class Graffiti extends EntryExtension {
      * This is the default constructor
      * @throws IOException 
      * @throws ImageFormatException 
-     * @throws IOException 
-     * @throws ImageFormatException 
      */
     public Graffiti(UUID id, byte[] data, byte[] settings) throws ImageFormatException, IOException {
         super(id, data, settings);
@@ -105,6 +102,7 @@ public class Graffiti extends EntryExtension {
         this.setLayout(new BorderLayout());  
         this.add(getJToolBar(), BorderLayout.SOUTH);  
         JPanel panel = new JPanel(new GridBagLayout());
+        // TODO [P1] dimension should be customizable
         Dimension d = new Dimension(300,300);
         JPanel cp = new JPanel();
         pp = new PaintingPanel(d, getSimpleBrushInstance(), Color.BLACK);

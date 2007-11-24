@@ -44,6 +44,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import bias.annotation.AddOnAnnotation;
+import bias.core.BackEnd;
+import bias.core.DataEntry;
 import bias.core.Recognizable;
 import bias.extension.EntryExtension;
 import bias.extension.ExtensionFactory;
@@ -64,7 +66,7 @@ import bias.utils.Validator;
         description = "Simple search tool")
 public class SimpleSearch extends ToolExtension {
 
-    private static final ImageIcon ICON = new ImageIcon(SimpleSearch.class.getResource("/bias/res/SimpleSearch/icon.png"));
+    private static final ImageIcon ICON = new ImageIcon(BackEnd.getInstance().getResourceURL(SimpleSearch.class, "icon.png"));
     
     private static final String PROP_SEARCH_EXPRESSION = "SEARCH_EXPRESSION";
     private static final String PROP_IS_CASE_SENSITIVE = "IS_CASE_SENSITIVE";
@@ -368,8 +370,10 @@ public class SimpleSearch extends ToolExtension {
     private Map<UUID, Collection<String>> getSearchEntries(Map<VisualEntryDescriptor, JComponent> visualEntries) throws Throwable {
         Map<UUID, Collection<String>> entries = new LinkedHashMap<UUID, Collection<String>>();
         for (Entry<VisualEntryDescriptor, JComponent> visualEntry : visualEntries.entrySet()) {
-            if (visualEntry.getValue() instanceof EntryExtension) {
-                EntryExtension entry = (EntryExtension) visualEntry.getValue();
+            if (visualEntry.getValue() instanceof JPanel) {
+                JPanel panel = (JPanel) visualEntry.getValue();
+                DataEntry de = FrontEnd.getDataEntry(panel.getName());
+                EntryExtension entry = FrontEnd.initEntryExtension(de);
                 Collection<String> searchStrings = null;
                 String caption = visualEntry.getKey().getEntry().getCaption();
                 if (!Validator.isNullOrBlank(caption)) {

@@ -20,6 +20,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import bias.annotation.AddOnAnnotation;
+import bias.core.BackEnd;
 import bias.extension.ToolExtension;
 import bias.gui.FrontEnd;
 
@@ -33,7 +34,7 @@ import bias.gui.FrontEnd;
         description = "Simple statistics tool")
 public class SimpleStats extends ToolExtension {
 
-    private static final ImageIcon ICON = new ImageIcon(SimpleStats.class.getResource("/bias/res/SimpleStats/icon.png"));
+    private static final ImageIcon ICON = new ImageIcon(BackEnd.getInstance().getResourceURL(SimpleStats.class, "icon.png"));
     
     private static final String SEPARATOR = "_";
     

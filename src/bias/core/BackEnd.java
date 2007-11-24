@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ import org.w3c.dom.NodeList;
 
 import bias.Constants;
 import bias.Preferences;
+import bias.extension.Extension;
 import bias.utils.ArchUtils;
 import bias.utils.FSUtils;
 import bias.utils.Validator;
@@ -62,8 +64,6 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  * @author kion
  */
 public class BackEnd {
-    
-    // TODO [P1] implement on-demand data-loading (?)
     
     private static Cipher CIPHER_ENCRYPT;
     
@@ -146,6 +146,10 @@ public class BackEnd {
 		}
 		return instance;
 	}
+	
+	public URL getResourceURL(Class<? extends Extension> extensionClass, String resourceName) {
+	    return BackEnd.class.getResource("/bias/res/" + extensionClass.getSimpleName() + "/" + resourceName);
+	}
     
     public static void setPassword(String currentPassword, String newPassword) throws Exception {
         if ((password != null ? currentPassword != null : currentPassword == null) && newPassword != null) {
@@ -193,7 +197,7 @@ public class BackEnd {
         }
         return cipher.doFinal(data);
     }
-
+    
     public void load() throws Exception {
         byte[] data = null;
         byte[] decryptedData = null;
@@ -202,9 +206,6 @@ public class BackEnd {
             // entries data files
             for (File dataFile : Constants.DATA_DIR.listFiles(FILE_FILTER_DATA)) {
                 DataEntry de = new DataEntry();
-                data = FSUtils.readFile(dataFile);
-                decryptedData = decrypt(data);
-                de.setData(decryptedData);
                 String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                 identifiedData.put(entryIDStr, de);
             }
@@ -279,6 +280,17 @@ public class BackEnd {
         // get lists of loaded extensions and lafs
         loadedExtensions = getExtensions();
         loadedLAFs = getLAFs();
+    }
+    
+    public void loadDataEntryData(DataEntry de) throws Exception {
+        if (de.getData() != null) {
+            return;
+        }
+        File dataFile = new File(Constants.DATA_DIR, de.getId() + Constants.DATA_FILE_SUFFIX);
+        byte[] data = FSUtils.readFile(dataFile);
+        if (data != null) {
+            de.setData(decrypt(data));
+        }
     }
     
     // TODO [P1] optional overwriting should be possible during import
@@ -710,10 +722,7 @@ public class BackEnd {
                     // if yes - write changed data to file, otherwise - skip data writing
                     DataEntry oldDE = identifiedData.get(de.getId().toString());
                     byte[] entryData = de.getData();
-                    if (entryData == null) {
-                        entryData = new byte[]{};
-                    }
-                    if (oldDE == null || passwordChanged || !Arrays.equals(entryData, oldDE.getData())) {
+                    if (entryData != null && (oldDE == null || passwordChanged || !Arrays.equals(entryData, oldDE.getData()))) {
                         byte[] encryptedData = encrypt(entryData);
                         File deFile = new File(Constants.DATA_DIR, de.getId().toString() + Constants.DATA_FILE_SUFFIX);
                         FSUtils.writeFile(deFile, encryptedData);

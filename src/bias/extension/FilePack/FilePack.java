@@ -51,20 +51,15 @@ public class FilePack extends EntryExtension {
 
 	private static final long serialVersionUID = 1L;
     
-    private static final ImageIcon ICON_ADD = 
-        new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/add.png"));
+    private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "add.png"));
     
-    private static final ImageIcon ICON_DELETE = 
-        new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/delete.png"));
+    private static final ImageIcon ICON_DELETE = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "delete.png"));
     
-    private static final ImageIcon ICON_VIEW = 
-        new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/view.png"));
+    private static final ImageIcon ICON_VIEW = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "view.png"));
     
-    private static final ImageIcon ICON_APPLY = 
-        new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/apply.png"));
+    private static final ImageIcon ICON_APPLY = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "apply.png"));
     
-    private static final ImageIcon ICON_SAVE = 
-        new ImageIcon(FilePack.class.getResource("/bias/res/FilePack/save.png"));
+    private static final ImageIcon ICON_SAVE = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "save.png"));
     
 	private Map<Attachment, String> filePack;
     

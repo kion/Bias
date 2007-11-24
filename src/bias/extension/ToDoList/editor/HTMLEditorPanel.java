@@ -67,6 +67,7 @@ import javax.swing.text.html.HTML.Tag;
 import bias.Constants;
 import bias.core.Attachment;
 import bias.core.BackEnd;
+import bias.extension.ToDoList.ToDoList;
 import bias.gui.FrontEnd;
 import bias.gui.ImageFileChooser;
 import bias.gui.VisualEntryDescriptor;
@@ -81,23 +82,23 @@ public class HTMLEditorPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     
-    private static final ImageIcon ICON_ENTRY_LINK = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/ToDoList/editor/entry_link.png"));
+    private static final ImageIcon ICON_ENTRY_LINK = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/entry_link.png"));
 
-    private static final ImageIcon ICON_URL_LINK = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/ToDoList/editor/url_link.png"));
+    private static final ImageIcon ICON_URL_LINK = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/url_link.png"));
 
-    private static final ImageIcon ICON_IMAGE = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/ToDoList/editor/image.png"));
+    private static final ImageIcon ICON_IMAGE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/image.png"));
 
-    private static final ImageIcon ICON_COLOR = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/ToDoList/editor/color.png"));
+    private static final ImageIcon ICON_COLOR = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/color.png"));
 
-    private static final ImageIcon ICON_TEXT_UNDERLINE = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/ToDoList/editor/text_underlined.png"));
+    private static final ImageIcon ICON_TEXT_UNDERLINE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/text_underlined.png"));
 
-    private static final ImageIcon ICON_TEXT_ITALIC = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/ToDoList/editor/text_italic.png"));
+    private static final ImageIcon ICON_TEXT_ITALIC = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/text_italic.png"));
 
-    private static final ImageIcon ICON_TEXT_BOLD = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/ToDoList/editor/text_bold.png"));
+    private static final ImageIcon ICON_TEXT_BOLD = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/text_bold.png"));
 
-    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/ToDoList/editor/switch_mode.png"));
+    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/switch_mode.png"));
 
-    private static final ImageIcon ICON_SAVE = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/ToDoList/editor/save.png"));
+    private static final ImageIcon ICON_SAVE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/save.png"));
 
     private static final String HTML_PAGE_FILE_NAME_PATTERN = "(?i).+\\.(htm|html)$";
 

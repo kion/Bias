@@ -81,9 +81,9 @@ public class ToDoList extends EntryExtension {
 
     private static final long serialVersionUID = 1L;
     
-    private static final ImageIcon ICON_CONFIG = new ImageIcon(ToDoList.class.getResource("/bias/res/ToDoList/config.png"));
-    private static final ImageIcon ICON_ADD = new ImageIcon(ToDoList.class.getResource("/bias/res/ToDoList/add.png"));
-    private static final ImageIcon ICON_DELETE = new ImageIcon(ToDoList.class.getResource("/bias/res/ToDoList/del.png"));
+    private static final ImageIcon ICON_CONFIG = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "config.png"));
+    private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "add.png"));
+    private static final ImageIcon ICON_DELETE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "del.png"));
 
     private static final String XML_ELEMENT_ROOT = "root";
     private static final String XML_ELEMENT_ENTRY = "entry";

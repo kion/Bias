@@ -31,6 +31,7 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
 import bias.annotation.AddOnAnnotation;
+import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.utils.PropertiesUtils;
 
@@ -46,8 +47,7 @@ public class PlainText extends EntryExtension {
 
     private static final long serialVersionUID = 1L;
 
-    private static final ImageIcon ICON_SWITCH_MODE = 
-        new ImageIcon(PlainText.class.getResource("/bias/res/PlainText/switch_mode.png"));
+    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(BackEnd.getInstance().getResourceURL(PlainText.class, "switch_mode.png"));
     
     private static final String PROPERTY_FONT_SIZE = "FONT_SIZE";
     
