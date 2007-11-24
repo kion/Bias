@@ -508,25 +508,27 @@ public class BackEnd {
             UUID id = UUID.fromString(attID.getNodeValue());
             if (existingIDs == null || !existingIDs.contains(id)) {
                 DataEntry dataEntry = identifiedData.get(id.toString());
-                dataEntry.setId(id);
-                Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
-                String caption = attCaption.getNodeValue();
-                caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
-                dataEntry.setCaption(caption);
-                Node attIcon = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ICON);
-                if (attIcon != null) {
-                	String iconID = attIcon.getNodeValue();
-                	byte[] imageData = icons.get(UUID.fromString(iconID));
-                	if (imageData != null) {
-                    	ImageIcon icon = new ImageIcon(imageData, iconID);
-                    	dataEntry.setIcon(icon);
-                	}
+                if (dataEntry != null) {
+                    dataEntry.setId(id);
+                    Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
+                    String caption = attCaption.getNodeValue();
+                    caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+                    dataEntry.setCaption(caption);
+                    Node attIcon = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ICON);
+                    if (attIcon != null) {
+                        String iconID = attIcon.getNodeValue();
+                        byte[] imageData = icons.get(UUID.fromString(iconID));
+                        if (imageData != null) {
+                            ImageIcon icon = new ImageIcon(imageData, iconID);
+                            dataEntry.setIcon(icon);
+                        }
+                    }
+                    Node attType = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_TYPE);
+                    String type = attType.getNodeValue();
+                    dataEntry.setType(type);
+                    setDataEntrySettings(dataEntry);
+                    data.addDataItem(dataEntry);
                 }
-                Node attType = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_TYPE);
-                String type = attType.getNodeValue();
-                dataEntry.setType(type);
-                setDataEntrySettings(dataEntry);
-                data.addDataItem(dataEntry);
             }
         }
     }
