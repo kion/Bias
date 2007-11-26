@@ -46,7 +46,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -92,6 +91,7 @@ import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.MissingExtensionInformer;
 import bias.extension.ToolExtension;
+import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
 import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 import bias.transfer.Transferrer;
@@ -594,11 +594,8 @@ public class FrontEnd extends JFrame {
     
     private static Map<String, DataEntry> dataEntries = new HashMap<String, DataEntry>();
     
-    public static DataEntry getDataEntry(String id) {
-        return dataEntries.get(id);
-    }
-    
-    public static EntryExtension initEntryExtension(DataEntry de) throws Throwable {
+    public static EntryExtension initEntryExtension(UUID entryId) throws Throwable {
+        DataEntry de = dataEntries.get(entryId.toString());
         BackEnd.getInstance().loadDataEntryData(de);
         EntryExtension extension;
         try {
@@ -846,105 +843,46 @@ public class FrontEnd extends JFrame {
         return ids;
     }
 
-    public static Map<VisualEntryDescriptor, JComponent> getVisualEntries() {
+    public static Map<UUID, VisualEntryDescriptor> getVisualEntryDescriptors() {
         if (instance != null) {
-            return instance.getVisualEntries(instance.getJTabbedPane(), null, new LinkedList<Recognizable>());
+            return instance.getVisualEntryDescriptors(instance.getJTabbedPane(), null, new LinkedList<Recognizable>());
         }
         return null;
     }
 
-    public static Map<VisualEntryDescriptor, JComponent> getVisualEntries(Class<? extends EntryExtension> filterClass) {
+    public static Map<UUID, VisualEntryDescriptor> getVisualEntryDescriptors(Class<? extends EntryExtension> filterClass) {
         if (instance != null) {
-            return instance.getVisualEntries(instance.getJTabbedPane(), filterClass, new LinkedList<Recognizable>());
+            return instance.getVisualEntryDescriptors(instance.getJTabbedPane(), filterClass, new LinkedList<Recognizable>());
         }
         return null;
     }
 
-    // TODO [P1] add some interface instead of JComponent (?)
-    private Map<VisualEntryDescriptor, JComponent> getVisualEntries(JTabbedPane tabPane, Class<? extends EntryExtension> filterClass, LinkedList<Recognizable> entryPath) {
-        Map<VisualEntryDescriptor, JComponent> entries = new LinkedHashMap<VisualEntryDescriptor, JComponent>();
+    private Map<UUID, VisualEntryDescriptor> getVisualEntryDescriptors(JTabbedPane tabPane, Class<? extends EntryExtension> filterClass, LinkedList<Recognizable> entryPath) {
+        Map<UUID, VisualEntryDescriptor> entries = new LinkedHashMap<UUID, VisualEntryDescriptor>();
         for (int i = 0; i < tabPane.getTabCount(); i++) {
             Component c = tabPane.getComponent(i);
             String caption = tabPane.getTitleAt(i);
             Icon icon = tabPane.getIconAt(i);
             if (c instanceof JTabbedPane) {
-                String id = c.getName();
-                Recognizable entry = new Recognizable(UUID.fromString(id), caption, icon);
+                UUID id = UUID.fromString(c.getName());
+                Recognizable entry = new Recognizable(id, caption, icon);
                 entryPath.addLast(entry);
-                entries.put(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)), (JTabbedPane) c);
-                entries.putAll(getVisualEntries((JTabbedPane) c, filterClass, new LinkedList<Recognizable>(entryPath)));
+                entries.put(id, new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath), ENTRY_TYPE.CATEGORY));
+                entries.putAll(getVisualEntryDescriptors((JTabbedPane) c, filterClass, new LinkedList<Recognizable>(entryPath)));
                 entryPath.removeLast();
             } else if (c instanceof JPanel) {
-                Recognizable entry = new Recognizable(UUID.fromString(((JPanel) c).getName()), caption, icon);
+                UUID id = UUID.fromString(c.getName());
+                Recognizable entry = new Recognizable(id, caption, icon);
                 entryPath.addLast(entry);
                 if (filterClass == null) {
-                    entries.put(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)), (JPanel) c);
-                } else if (c.getClass().getName().equals(filterClass.getName())) {
-                    entries.put(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)), (JPanel) c);
+                    entries.put(id, new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath), ENTRY_TYPE.ENTRY));
+                } else if (((JPanel) c).getComponent(0).getClass().getName().equals(filterClass.getName())) {
+                    entries.put(id, new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath), ENTRY_TYPE.ENTRY));
                 }
                 entryPath.removeLast();
             }
         }
         return entries;
-    }
-
-    public static Collection<VisualEntryDescriptor> getVisualEntryDescriptors() {
-        if (instance != null) {
-            return instance.getVisualEntryDescriptors(instance.getJTabbedPane(), new LinkedList<Recognizable>());
-        }
-        return null;
-    }
-
-    private Collection<VisualEntryDescriptor> getVisualEntryDescriptors(JTabbedPane tabPane, LinkedList<Recognizable> entryPath) {
-        Collection<VisualEntryDescriptor> vDescriptors = new LinkedList<VisualEntryDescriptor>();
-        for (int i = 0; i < tabPane.getTabCount(); i++) {
-            Component c = tabPane.getComponent(i);
-            String caption = tabPane.getTitleAt(i);
-            Icon icon = tabPane.getIconAt(i);
-            if (c instanceof JTabbedPane) {
-                String id = c.getName();
-                Recognizable entry = new Recognizable(UUID.fromString(id), caption, icon);
-                entryPath.addLast(entry);
-                vDescriptors.add(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
-                vDescriptors.addAll(getVisualEntryDescriptors((JTabbedPane) c, new LinkedList<Recognizable>(entryPath)));
-                entryPath.removeLast();
-            } else if (c instanceof JPanel) {
-                Recognizable entry = new Recognizable(UUID.fromString(((JPanel) c).getName()), caption, icon);
-                entryPath.addLast(entry);
-                vDescriptors.add(new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
-                entryPath.removeLast();
-            }
-        }
-        return vDescriptors;
-    }
-
-    public static Map<UUID, VisualEntryDescriptor> getVisualEntriesMap() {
-        if (instance != null) {
-            return instance.getVisualEntriesMap(instance.getJTabbedPane(), new LinkedList<Recognizable>());
-        }
-        return null;
-    }
-
-    private Map<UUID, VisualEntryDescriptor> getVisualEntriesMap(JTabbedPane tabPane, LinkedList<Recognizable> entryPath) {
-        Map<UUID, VisualEntryDescriptor> veMap = new LinkedHashMap<UUID, VisualEntryDescriptor>();
-        for (int i = 0; i < tabPane.getTabCount(); i++) {
-            Component c = tabPane.getComponent(i);
-            String caption = tabPane.getTitleAt(i);
-            Icon icon = tabPane.getIconAt(i);
-            if (c instanceof JTabbedPane) {
-                Recognizable entry = new Recognizable(UUID.fromString(c.getName()), caption, icon);
-                entryPath.addLast(entry);
-                veMap.put(entry.getId(), new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
-                veMap.putAll(getVisualEntriesMap((JTabbedPane) c, new LinkedList<Recognizable>(entryPath)));
-                entryPath.removeLast();
-            } else if (c instanceof JPanel) {
-                Recognizable entry = new Recognizable(UUID.fromString(((JPanel) c).getName()), caption, icon);
-                entryPath.addLast(entry);
-                veMap.put(entry.getId(), new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath)));
-                entryPath.removeLast();
-            }
-        }
-        return veMap;
     }
 
     public static boolean switchToVisualEntry(UUID id) {
@@ -1132,9 +1070,8 @@ public class FrontEnd extends JFrame {
                 try {
                     JPanel p = ((JPanel) c);
                     String id = p.getName();
-                    DataEntry de = dataEntries.get(id);
-                    if (de != null && p.getComponentCount() == 0) {
-                        EntryExtension ee = initEntryExtension(de);
+                    if (id != null && p.getComponentCount() == 0) {
+                        EntryExtension ee = initEntryExtension(UUID.fromString(id));
                         ((JPanel) c).add(ee, BorderLayout.CENTER);
                     }
                 } catch (Throwable t) {

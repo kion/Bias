@@ -13,16 +13,19 @@ import bias.core.Recognizable;
  */
 public class VisualEntryDescriptor {
     
-    private Recognizable entry;
-    private Collection<Recognizable> entryPath;
-    
-    public VisualEntryDescriptor() {
-        // default constructor
+    public enum ENTRY_TYPE {
+        CATEGORY,
+        ENTRY
     }
     
-    public VisualEntryDescriptor(Recognizable entry, Collection<Recognizable> entryPath) {
+    private Recognizable entry;
+    private Collection<Recognizable> entryPath;
+    private ENTRY_TYPE entryType;
+    
+    public VisualEntryDescriptor(Recognizable entry, Collection<Recognizable> entryPath, ENTRY_TYPE entryType) {
         this.entry = entry;
         this.entryPath = entryPath;
+        this.entryType = entryType;
     }
 
     public Recognizable getEntry() {
@@ -41,6 +44,14 @@ public class VisualEntryDescriptor {
         this.entryPath = entryPath;
     }
     
+    public ENTRY_TYPE getEntryType() {
+        return entryType;
+    }
+
+    public void setEntryType(ENTRY_TYPE entryType) {
+        this.entryType = entryType;
+    }
+
     @Override
     public String toString() {
         StringBuffer entryPathStr = new StringBuffer();

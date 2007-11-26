@@ -110,6 +110,9 @@ public class SearchEngine {
                                         endIndex = index + scope/2 + sc.getSearchExpression().length();
                                         hlIndex = index - beginIndex;
                                     }
+                                    if (endIndex >= searchDataPiece.length()) {
+                                        endIndex = searchDataPiece.length();
+                                    }
                                     searchDataPiece = searchDataPiece.substring(beginIndex, endIndex); 
                                     stringsFound.put(searchDataPiece, new HighLightMarker(hlIndex, hlIndex + sc.getSearchExpression().length()));
                                     matchesFound.put(entry.getKey(), stringsFound);

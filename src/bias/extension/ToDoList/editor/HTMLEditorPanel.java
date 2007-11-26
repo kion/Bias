@@ -747,7 +747,7 @@ public class HTMLEditorPanel extends JPanel {
                     VisualEntryDescriptor currDescriptor = null;
                     JLabel entryLabel = new JLabel("entry:");
                     JComboBox hrefComboBox = new JComboBox();
-                    for (VisualEntryDescriptor veDescriptor : FrontEnd.getVisualEntryDescriptors()) {
+                    for (VisualEntryDescriptor veDescriptor : FrontEnd.getVisualEntryDescriptors().values()) {
                         hrefComboBox.addItem(veDescriptor);
                         if (veDescriptor.getEntry().getId().toString().equals(id)) {
                             currDescriptor = veDescriptor;
