@@ -148,6 +148,8 @@ public class FrontEnd extends JFrame {
     
     private static Map<String, DataEntry> dataEntries = new HashMap<String, DataEntry>();
 
+    private Map<UUID, EntryExtension> entryExtensions = new LinkedHashMap<UUID, EntryExtension>();
+
     private String lastAddedEntryType = null;
     
     private static String activeLAF = null;
@@ -852,10 +854,9 @@ public class FrontEnd extends JFrame {
         return ids;
     }
 
-    // FIXME data added during current session, is not found during search;
-
     public static Map<UUID, EntryExtension> getEntryExtensions() throws Throwable {
         if (instance != null) {
+            instance.entryExtensions.clear();
             return instance.getEntryExtensions(instance.getJTabbedPane(), null);
         }
         return null;
@@ -863,17 +864,17 @@ public class FrontEnd extends JFrame {
 
     public static Map<UUID, EntryExtension> getEntryExtensions(Class<? extends EntryExtension> filterClass) throws Throwable {
         if (instance != null) {
+            instance.entryExtensions.clear();
             return instance.getEntryExtensions(instance.getJTabbedPane(), filterClass);
         }
         return null;
     }
 
     private Map<UUID, EntryExtension> getEntryExtensions(JTabbedPane tabPane, Class<? extends EntryExtension> filterClass) throws Throwable {
-        Map<UUID, EntryExtension> entries = new LinkedHashMap<UUID, EntryExtension>();
         for (int i = 0; i < tabPane.getTabCount(); i++) {
             Component c = tabPane.getComponent(i);
             if (c instanceof JTabbedPane) {
-                entries.putAll(getEntryExtensions((JTabbedPane) c, filterClass));
+                entryExtensions.putAll(getEntryExtensions((JTabbedPane) c, filterClass));
             } else if (c instanceof JPanel) {
                 UUID id = UUID.fromString(c.getName());
                 JPanel p = ((JPanel) c);
@@ -885,13 +886,13 @@ public class FrontEnd extends JFrame {
                     ext = (EntryExtension) p.getComponent(0);
                 }
                 if (filterClass == null) {
-                    entries.put(id, ext);
+                    entryExtensions.put(id, ext);
                 } else if (ext.getClass().getName().equals(filterClass.getName())) {
-                    entries.put(id, ext);
+                    entryExtensions.put(id, ext);
                 }
             }
         }
-        return entries;
+        return entryExtensions;
     }
 
     public static Map<UUID, VisualEntryDescriptor> getVisualEntryDescriptors() {
