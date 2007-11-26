@@ -283,13 +283,12 @@ public class BackEnd {
     }
     
     public void loadDataEntryData(DataEntry de) throws Exception {
-        if (de.getData() != null) {
-            return;
-        }
         File dataFile = new File(Constants.DATA_DIR, de.getId() + Constants.DATA_FILE_SUFFIX);
-        byte[] data = FSUtils.readFile(dataFile);
-        if (data != null) {
-            de.setData(decrypt(data));
+        if (dataFile.exists()) {
+            byte[] data = FSUtils.readFile(dataFile);
+            if (data != null) {
+                de.setData(decrypt(data));
+            }
         }
     }
     

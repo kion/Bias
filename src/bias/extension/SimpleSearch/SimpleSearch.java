@@ -250,7 +250,6 @@ public class SimpleSearch extends ToolExtension {
                             "Search", 
                             JOptionPane.OK_CANCEL_OPTION);
                     if (option == JOptionPane.OK_OPTION && !Validator.isNullOrBlank(searchExpressionTF.getText())) {
-                        
                         JPanel entryPathItemsPanel = new JPanel();
                         entryPathItemsPanel.setLayout(new BorderLayout());
                         processLabel.setText("searching...");
@@ -351,7 +350,8 @@ public class SimpleSearch extends ToolExtension {
     private Map<VisualEntryDescriptor, Map<String, HighLightMarker>> search(SearchCriteria sc, Class<? extends EntryExtension> filterClass) throws Throwable {
         Map<VisualEntryDescriptor, Map<String, HighLightMarker>> result = new LinkedHashMap<VisualEntryDescriptor, Map<String, HighLightMarker>>();
         Map<UUID, VisualEntryDescriptor> vedMap = FrontEnd.getVisualEntryDescriptors(filterClass);
-        Map<UUID, Collection<String>> entries = getSearchEntries(vedMap.values());
+        Map<UUID, EntryExtension> extensions = FrontEnd.getEntryExtensions(filterClass);
+        Map<UUID, Collection<String>> entries = getSearchEntries(vedMap.values(), extensions);
         Map<UUID, Map<String, HighLightMarker>> matchesFound = SearchEngine.search(sc, entries);
         if (!matchesFound.isEmpty()) {
             for (Entry<UUID, Map<String, HighLightMarker>> matchesFoundEntry : matchesFound.entrySet()) {
@@ -365,13 +365,13 @@ public class SimpleSearch extends ToolExtension {
         return result;
     }
     
-    private Map<UUID, Collection<String>> getSearchEntries(Collection<VisualEntryDescriptor> visualEntries) throws Throwable {
+    private Map<UUID, Collection<String>> getSearchEntries(Collection<VisualEntryDescriptor> visualEntryDescriptors, Map<UUID, EntryExtension> extensions) throws Throwable {
         Map<UUID, Collection<String>> entries = new LinkedHashMap<UUID, Collection<String>>();
-        for (VisualEntryDescriptor visualEntry : visualEntries) {
-            if (visualEntry.getEntryType() == ENTRY_TYPE.ENTRY) {
-                EntryExtension entry = FrontEnd.initEntryExtension(visualEntry.getEntry().getId());
+        for (VisualEntryDescriptor visualEntryDescriptor : visualEntryDescriptors) {
+            if (visualEntryDescriptor.getEntryType() == ENTRY_TYPE.ENTRY) {
+                EntryExtension entry = extensions.get(visualEntryDescriptor.getEntry().getId());
                 Collection<String> searchStrings = null;
-                String caption = visualEntry.getEntry().getCaption();
+                String caption = visualEntryDescriptor.getEntry().getCaption();
                 if (!Validator.isNullOrBlank(caption)) {
                     // add visual entry caption to entry search data,
                     // so it will be considered while searching
@@ -395,14 +395,14 @@ public class SimpleSearch extends ToolExtension {
                 if (searchStrings != null) {
                     entries.put(entry.getId(), searchStrings);
                 }
-            } else if (visualEntry.getEntryType() == ENTRY_TYPE.CATEGORY) {
-                String caption = visualEntry.getEntry().getCaption();
+            } else if (visualEntryDescriptor.getEntryType() == ENTRY_TYPE.CATEGORY) {
+                String caption = visualEntryDescriptor.getEntry().getCaption();
                 if (!Validator.isNullOrBlank(caption)) {
                     // add visual entry caption to entry search data,
                     // so it will be considered while searching
                     Collection<String> searchStrings = new ArrayList<String>();
                     searchStrings.add(caption);
-                    entries.put(visualEntry.getEntry().getId(), searchStrings);
+                    entries.put(visualEntryDescriptor.getEntry().getId(), searchStrings);
                 }
             }
         }

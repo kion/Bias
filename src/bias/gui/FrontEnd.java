@@ -146,6 +146,8 @@ public class FrontEnd extends JFrame {
     
     private static Map<String, byte[]> initialLAFSettings = new HashMap<String, byte[]>();
     
+    private static Map<String, DataEntry> dataEntries = new HashMap<String, DataEntry>();
+
     private String lastAddedEntryType = null;
     
     private static String activeLAF = null;
@@ -560,9 +562,7 @@ public class FrontEnd extends JFrame {
                     DataEntry de = (DataEntry) item;
                     String caption = de.getCaption();
                     dataEntries.put(de.getId().toString(), de);
-                    JPanel p = new JPanel(new BorderLayout());
-                    p.setName(de.getId().toString());
-                    tabbedPane.addTab(caption, p);
+                    tabbedPane.addTab(caption, getEntryExtensionPanel(de.getId(), null));
                     tabbedPane.setIconAt(idx++, item.getIcon());
                 } else if (item instanceof DataCategory) {
                     String caption = item.getCaption();
@@ -592,11 +592,20 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private static Map<String, DataEntry> dataEntries = new HashMap<String, DataEntry>();
+    private JPanel getEntryExtensionPanel(UUID entryId, EntryExtension extension) {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setName(entryId.toString());
+        if (extension != null) {
+            p.add(extension, BorderLayout.CENTER);
+        }
+        return p;
+    }
     
-    public static EntryExtension initEntryExtension(UUID entryId) throws Throwable {
+    private static EntryExtension initEntryExtension(String entryId) throws Throwable {
         DataEntry de = dataEntries.get(entryId.toString());
-        BackEnd.getInstance().loadDataEntryData(de);
+        if (de.getData() == null) {
+            BackEnd.getInstance().loadDataEntryData(de);
+        }
         EntryExtension extension;
         try {
             extension = ExtensionFactory.getInstance().newEntryExtension(de);
@@ -843,6 +852,48 @@ public class FrontEnd extends JFrame {
         return ids;
     }
 
+    // FIXME data added during current session, is not found during search;
+
+    public static Map<UUID, EntryExtension> getEntryExtensions() throws Throwable {
+        if (instance != null) {
+            return instance.getEntryExtensions(instance.getJTabbedPane(), null);
+        }
+        return null;
+    }
+
+    public static Map<UUID, EntryExtension> getEntryExtensions(Class<? extends EntryExtension> filterClass) throws Throwable {
+        if (instance != null) {
+            return instance.getEntryExtensions(instance.getJTabbedPane(), filterClass);
+        }
+        return null;
+    }
+
+    private Map<UUID, EntryExtension> getEntryExtensions(JTabbedPane tabPane, Class<? extends EntryExtension> filterClass) throws Throwable {
+        Map<UUID, EntryExtension> entries = new LinkedHashMap<UUID, EntryExtension>();
+        for (int i = 0; i < tabPane.getTabCount(); i++) {
+            Component c = tabPane.getComponent(i);
+            if (c instanceof JTabbedPane) {
+                entries.putAll(getEntryExtensions((JTabbedPane) c, filterClass));
+            } else if (c instanceof JPanel) {
+                UUID id = UUID.fromString(c.getName());
+                JPanel p = ((JPanel) c);
+                EntryExtension ext;
+                if (p.getComponentCount() == 0) {
+                    ext = initEntryExtension(id.toString());
+                    p.add(ext);
+                } else {
+                    ext = (EntryExtension) p.getComponent(0);
+                }
+                if (filterClass == null) {
+                    entries.put(id, ext);
+                } else if (ext.getClass().getName().equals(filterClass.getName())) {
+                    entries.put(id, ext);
+                }
+            }
+        }
+        return entries;
+    }
+
     public static Map<UUID, VisualEntryDescriptor> getVisualEntryDescriptors() {
         if (instance != null) {
             return instance.getVisualEntryDescriptors(instance.getJTabbedPane(), null, new LinkedList<Recognizable>());
@@ -1070,8 +1121,8 @@ public class FrontEnd extends JFrame {
                 try {
                     JPanel p = ((JPanel) c);
                     String id = p.getName();
-                    if (id != null && p.getComponentCount() == 0) {
-                        EntryExtension ee = initEntryExtension(UUID.fromString(id));
+                    if (p.getComponentCount() == 0) {
+                        EntryExtension ee = initEntryExtension(id);
                         ((JPanel) c).add(ee, BorderLayout.CENTER);
                     }
                 } catch (Throwable t) {
@@ -1545,8 +1596,9 @@ public class FrontEnd extends JFrame {
             }
             EntryExtension extension = ExtensionFactory.getInstance().newEntryExtension(type);
             if (extension != null) {
-                getJTabbedPane().addTab(caption, extension);
-                getJTabbedPane().setSelectedComponent(extension);
+                JPanel p = getEntryExtensionPanel(extension.getId(), extension);
+                getJTabbedPane().addTab(caption, p);
+                getJTabbedPane().setSelectedComponent(p);
                 ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
                 if (icon != null) {
                     getJTabbedPane().setIconAt(getJTabbedPane().getSelectedIndex(), icon);
@@ -1647,8 +1699,9 @@ public class FrontEnd extends JFrame {
                         }
                         EntryExtension extension = ExtensionFactory.getInstance().newEntryExtension(type);
                         if (extension != null) {
-                            currentTabPane.addTab(caption, extension);
-                            currentTabPane.setSelectedComponent(extension);
+                            JPanel p = getEntryExtensionPanel(extension.getId(), extension);
+                            currentTabPane.addTab(caption, p);
+                            currentTabPane.setSelectedComponent(p);
                             ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
                             if (icon != null) {
                                 currentTabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
