@@ -40,7 +40,7 @@ import com.sun.image.codec.jpeg.ImageFormatException;
         description = "Simple painting component")
 public class Graffiti extends EntryExtension {
 
-    // TODO [P1] implement existing image loading
+    // TODO [P2] implement existing image loading
 
     private static final long serialVersionUID = 1L;
     
@@ -102,7 +102,7 @@ public class Graffiti extends EntryExtension {
         this.setLayout(new BorderLayout());  
         this.add(getJToolBar(), BorderLayout.SOUTH);  
         JPanel panel = new JPanel(new GridBagLayout());
-        // TODO [P1] dimension should be customizable
+        // TODO [P2] dimension should be customizable
         Dimension d = new Dimension(300,300);
         JPanel cp = new JPanel();
         pp = new PaintingPanel(d, getSimpleBrushInstance(), Color.BLACK);
