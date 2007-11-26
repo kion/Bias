@@ -24,6 +24,8 @@ import javax.swing.JToolBar;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledEditorKit;
@@ -129,7 +131,14 @@ public class PlainText extends EntryExtension {
     @Override
     public Collection<String> getSearchData() throws Throwable {
         Collection<String> searchData = new ArrayList<String>();
-        searchData.add(getJTextPane().getText());
+        Document doc = getJTextPane().getDocument();
+        String text = null;
+        try {
+            text = doc.getText(0, doc.getLength());
+        } catch (BadLocationException e) {
+            // ignore, shouldn't happen ever
+        }
+        searchData.add(text);
         return searchData;
     }
 
