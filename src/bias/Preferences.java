@@ -61,8 +61,8 @@ public class Preferences {
     public static Preferences getInstance() {
         if (instance == null) {
             instance = new Preferences();
+            instance.init();
         }
-        instance.init();
         return instance;
     }
     
