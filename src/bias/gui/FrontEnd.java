@@ -2107,6 +2107,8 @@ public class FrontEnd extends JFrame {
         }
     };
     
+    // FIXME [P1] preferences saving does not work!!!
+    
     private Action preferencesAction = new AbstractAction() {
 
         private static final long serialVersionUID = 1L;
