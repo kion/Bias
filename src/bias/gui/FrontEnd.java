@@ -854,6 +854,10 @@ public class FrontEnd extends JFrame {
         return ids;
     }
 
+    // TODO [P2] some optimization might be needed here 
+    //      (do not iterate over all tabs (to get full extensions list) each time, 
+    //      some caching would be nice)
+    
     public static Map<UUID, EntryExtension> getEntryExtensions() throws Throwable {
         if (instance != null) {
             instance.entryExtensions.clear();
