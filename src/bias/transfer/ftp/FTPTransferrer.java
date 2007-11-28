@@ -18,7 +18,7 @@ import bias.transfer.Transferrer;
  */
 public class FTPTransferrer extends Transferrer {
     
-    // TODO [P2] test if it works with SFTP, and fix if it does not
+    // TODO [P2] would be nice to be able to use SFTP protocol...
 
     private static final String PROTOCOL_PREFIX = "ftp://";
 

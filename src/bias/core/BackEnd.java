@@ -532,8 +532,7 @@ public class BackEnd {
         }
     }
     
-    public void exportData(
-            File file,
+    public File exportData(
             DataCategory data,
             boolean exportDataEntryConfigs,
             boolean exportPreferences,
@@ -644,7 +643,9 @@ public class BackEnd {
         if (dataDir.listFiles().length == 0) {
             dataDir.delete();
         }
+        File file = new File(Constants.TMP_DIR, "data.zip");
         ArchUtils.compress(exportDir, file);
+        return file;
     }
     
     public void store() throws Exception {

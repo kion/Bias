@@ -13,6 +13,8 @@ import bias.Constants;
  * @author kion
  */
 public abstract class Transferrer {
+    
+    // TODO [P2] transfer-providers as functional plugins (?)
 
     /**
      * Available transfer types
@@ -39,6 +41,8 @@ public abstract class Transferrer {
         }
         return instance;
     }
+    
+    // TODO [P2] refactor: looks like it's better to use Input/Output streams instead of byte arrays during transfer (memory usage optimization)
 
     public abstract byte[] doImport(Properties options) throws Exception;
 

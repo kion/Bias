@@ -7,27 +7,27 @@
                    
      author: kion                                                                
      ====================================================================== -->
-<project name="Bias" default="BuildAndExecuteJarPackage">
+<project name="Bias" default="BuildAndRunApp">
 	<description>
     	Bias OpenSource Personal Information Manager Project
     </description>
 
 	<!-- ================================= 
-          target: ExecuteJarPackage              
+          target: RunApp              
          ================================= -->
-	<target name="ExecuteJarPackage">
+	<target name="RunApp">
 		<exec dir="build" command="./bias.sh" />
 	</target>
 
 	<!-- ================================= 
-          target: BuildAndExecuteJarPackage              
+          target: BuildAndRunApp              
          ================================= -->
-	<target name="BuildAndExecuteJarPackage" depends="BuildJarPackage,ExecuteJarPackage" />
+	<target name="BuildAndRunApp" depends="BuildApp,RunApp" />
 
 	<!-- ================================= 
-          target: BuildJarPackage              
+          target: BuildApp              
          ================================= -->
-	<target name="BuildJarPackage" description="Bias JAR">
+	<target name="BuildApp" description="Bias JAR">
 		<delete>
 			<fileset dir="build">
 				<include name="bias.jar" />
@@ -38,9 +38,9 @@
 	</target>
 
 	<!-- ================================= 
-          target: BuildSDKJarPackage              
+          target: BuildSDK              
          ================================= -->
-	<target name="BuildSDKJarPackage" description="Bias SDK">
+	<target name="BuildSDK" description="Bias SDK">
 		<delete>
 			<fileset dir="build">
 				<include name="bias-sdk.jar" />

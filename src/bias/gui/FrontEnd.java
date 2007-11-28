@@ -118,15 +118,25 @@ public class FrontEnd extends JFrame {
      * Application icon
      */
     private static final ImageIcon ICON_APP = new ImageIcon(FrontEnd.class.getResource("/bias/res/app_icon.png"));
+
     private static final ImageIcon ICON_CLOSE = new ImageIcon(FrontEnd.class.getResource("/bias/res/close.png"));
 
     private static final String RESTART_MESSAGE = "Changes will take effect after Bias restart";
     
-    private static final Placement[] PLACEMENTS = new Placement[] { new Placement(JTabbedPane.TOP),
-            new Placement(JTabbedPane.LEFT), new Placement(JTabbedPane.RIGHT),
-            new Placement(JTabbedPane.BOTTOM) };
+    private static enum DATA_OPERATION_TYPE {
+        IMPORT,
+        EXPORT
+    }
+
+    private static final Placement[] PLACEMENTS = new Placement[] { 
+            new Placement(JTabbedPane.TOP),
+            new Placement(JTabbedPane.LEFT), 
+            new Placement(JTabbedPane.RIGHT),
+            new Placement(JTabbedPane.BOTTOM)
+        };
 
     private static AddOnFilesChooser extensionFileChooser = new AddOnFilesChooser();
+
     private static AddOnFilesChooser lafFileChooser = new AddOnFilesChooser();
 
     private static IconsFileChooser iconsFileChooser = new IconsFileChooser();
@@ -1759,7 +1769,7 @@ public class FrontEnd extends JFrame {
                 int opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose import type", JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
                     TRANSFER_TYPE type = (TRANSFER_TYPE) cb.getSelectedItem();
-                    Properties options = displayTransferOptionsDialog(type);
+                    Properties options = displayTransferOptionsDialog(type, DATA_OPERATION_TYPE.IMPORT);
                     if (options != null) {
                         if (options.isEmpty()) {
                             throw new Exception("Import source options are missing! Import canceled.");
@@ -1871,22 +1881,39 @@ public class FrontEnd extends JFrame {
                         }
                     }
                     filterData(data, selectedEntries);
-                    ZipFileChooser zfc = new ZipFileChooser();
-                    opt = zfc.showSaveDialog(FrontEnd.this);
-                    if (opt == JFileChooser.APPROVE_OPTION) {
-                        File file = zfc.getSelectedFile();
-                        BackEnd.getInstance().exportData(
-                                file,
-                                data, 
-                                exportDataEntryConfigsCB.isSelected(), 
-                                exportPreferencesCB.isSelected(), 
-                                exportGlobalConfigCB.isSelected(), 
-                                exportIconsCB.isSelected(), 
-                                exportToolsDataCB.isSelected(), 
-                                exportAddOnsCB.isSelected(), 
-                                exportAddOnConfigsCB.isSelected(),
-                                new String(passwordTF.getPassword()));
-                        JOptionPane.showMessageDialog(FrontEnd.this, "Data have been successfully exported.");
+                    File file = BackEnd.getInstance().exportData(
+                            data, 
+                            exportDataEntryConfigsCB.isSelected(), 
+                            exportPreferencesCB.isSelected(), 
+                            exportGlobalConfigCB.isSelected(), 
+                            exportIconsCB.isSelected(), 
+                            exportToolsDataCB.isSelected(), 
+                            exportAddOnsCB.isSelected(), 
+                            exportAddOnConfigsCB.isSelected(),
+                            new String(passwordTF.getPassword()));
+
+                    JComboBox cb = new JComboBox();
+                    for (TRANSFER_TYPE type : Transferrer.TRANSFER_TYPE.values()) {
+                        cb.addItem(type);
+                    }
+                    opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose export type", JOptionPane.OK_CANCEL_OPTION);
+                    if (opt == JOptionPane.OK_OPTION) {
+                        TRANSFER_TYPE type = (TRANSFER_TYPE) cb.getSelectedItem();
+                        Properties options = displayTransferOptionsDialog(type, DATA_OPERATION_TYPE.EXPORT);
+                        if (options != null) {
+                            if (options.isEmpty()) {
+                                throw new Exception("Export target options are missing! Export canceled.");
+                            } else {
+                                try {
+                                    Transferrer transferrer = Transferrer.getInstance(type);
+                                    byte[] exportedData = FSUtils.readFile(file);
+                                    transferrer.doExport(exportedData, options);
+                                    JOptionPane.showMessageDialog(FrontEnd.this, "Data have been successfully exported.");
+                                } catch (Exception ex) {
+                                    displayErrorMessage("Failed to export data!", ex);
+                                }
+                            }
+                        }
                     }
                 }
             } catch (Throwable t) {
@@ -1982,19 +2009,27 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private Properties displayTransferOptionsDialog(TRANSFER_TYPE type) {
+    private Properties displayTransferOptionsDialog(TRANSFER_TYPE transferType, DATA_OPERATION_TYPE operationType) {
         Properties options = null;
-        switch (type) {
+        switch (transferType) {
         case LOCAL:
             ZipFileChooser zfc = new ZipFileChooser();
-            int rVal = zfc.showOpenDialog(FrontEnd.this);
+            int rVal = 0;
+            switch (operationType) {
+            case IMPORT:
+                rVal = zfc.showOpenDialog(FrontEnd.this);
+                break;
+            case EXPORT:
+                rVal = zfc.showSaveDialog(FrontEnd.this);
+                break;
+            }
             if (rVal == JFileChooser.APPROVE_OPTION) {
                 options = new Properties();
                 options.setProperty(Constants.TRANSFER_OPTION_FILEPATH, zfc.getSelectedFile().getAbsolutePath());
             }
             break;
         case FTP:
-            JLabel serverL = new JLabel("FTP Server (domain name or IP, including port if using non-default)");
+            JLabel serverL = new JLabel("FTP Server (domain name or IP, including port if using non-default one)");
             JTextField serverTF = new JTextField();
             JLabel filepathL = new JLabel("Path to import file on server");
             JTextField filepathTF = new JTextField();
@@ -2014,7 +2049,7 @@ public class FrontEnd extends JFrame {
                             passwordL,
                             passwordTF
                     }, 
-                    "FTP import options", 
+                    "FTP transfer options", 
                     JOptionPane.OK_CANCEL_OPTION);
             if (opt == JOptionPane.OK_OPTION) {
                 options = new Properties();
