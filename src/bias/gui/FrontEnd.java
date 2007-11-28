@@ -1810,6 +1810,7 @@ public class FrontEnd extends JFrame {
         }
     };
     
+    // TODO [P1] export type should be choosable
     // TODO [P2] implement stored export configurations
     private Action exportAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
