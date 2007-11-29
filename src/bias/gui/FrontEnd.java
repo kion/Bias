@@ -2273,6 +2273,8 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    // TODO [P2] memory-usage optimization needed (instantiate extensions used in addons-management dialog only once)
+    
     private Action manageAddOnsAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
