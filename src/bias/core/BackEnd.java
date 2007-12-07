@@ -443,6 +443,8 @@ public class BackEnd {
         }
     }
 
+    // TODO: refactor and use JAXB (?) 
+    
     private DataCategory parseMetadata(Document metadata, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs) throws Exception {
         DataCategory data = new DataCategory();
         if (metadata == null) {
