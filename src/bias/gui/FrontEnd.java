@@ -1756,7 +1756,22 @@ public class FrontEnd extends JFrame {
             }
         }
     };
+    
+    private void createDependentCheckboxChangeListener(final JCheckBox main, final JCheckBox dependent) {
+        dependent.setEnabled(main.isEnabled() && main.isSelected());
+        main.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e) {
+                dependent.setEnabled(main.isEnabled() && main.isSelected());
+            }
+        });
+        main.addPropertyChangeListener("enabled", new PropertyChangeListener(){
+            public void propertyChange(PropertyChangeEvent evt) {
+                dependent.setEnabled(main.isEnabled() && main.isEnabled());
+            }
+        });
+    }
 
+    // TODO [P2] implement stored import configurations
     private Action importAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
         
@@ -1779,28 +1794,84 @@ public class FrontEnd extends JFrame {
                             if (importedData == null) {
                                 throw new Exception("Import source initialization failure!");
                             } else {
-                                JLabel label = new JLabel("password:");
-                                final JPasswordField passField = new JPasswordField();
-                                ActionListener al = new ActionListener(){
-                                    public void actionPerformed(ActionEvent ae){
-                                        passField.requestFocusInWindow();
-                                    }
-                                };
-                                Timer timer = new Timer(500,al);
-                                timer.setRepeats(false);
-                                timer.start();
+                                String oe = "Overwrite existing";
+                                JPanel p1 = new JPanel(new GridLayout(5, 2));
+                                
+                                JCheckBox importPreferencesCB = new JCheckBox("Import preferences");
+                                p1.add(importPreferencesCB);
+                                JCheckBox overwritePreferencesCB = new JCheckBox(oe); 
+                                p1.add(overwritePreferencesCB);
+                                createDependentCheckboxChangeListener(importPreferencesCB, overwritePreferencesCB);
+                                
+                                JCheckBox importGlobalConfigCB = new JCheckBox("Import global config"); 
+                                p1.add(importGlobalConfigCB);
+                                JCheckBox overwriteGlobalConfigCB = new JCheckBox(oe); 
+                                p1.add(overwriteGlobalConfigCB);
+                                createDependentCheckboxChangeListener(importGlobalConfigCB, overwriteGlobalConfigCB);
+
+                                JCheckBox importDataEntryConfigsCB = new JCheckBox("Import data entry configs"); 
+                                p1.add(importDataEntryConfigsCB);
+                                JCheckBox overwriteDataEntryConfigsCB = new JCheckBox(oe); 
+                                p1.add(overwriteDataEntryConfigsCB);
+                                createDependentCheckboxChangeListener(importDataEntryConfigsCB, overwriteDataEntryConfigsCB);
+                                
+                                JCheckBox importToolsDataCB = new JCheckBox("Import tools data"); 
+                                p1.add(importToolsDataCB);
+                                JCheckBox overwriteToolsDataCB = new JCheckBox(oe); 
+                                p1.add(overwriteToolsDataCB);
+                                createDependentCheckboxChangeListener(importToolsDataCB, overwriteToolsDataCB);
+                                
+                                JCheckBox importIconsCB = new JCheckBox("Import icons");
+                                p1.add(importIconsCB);
+                                JCheckBox overwriteIconsCB = new JCheckBox(oe);
+                                p1.add(overwriteIconsCB);
+                                createDependentCheckboxChangeListener(importIconsCB, overwriteIconsCB);
+                                
+                                JCheckBox importAddOnsCB = new JCheckBox("Import addons");
+                                JPanel p2 = new JPanel(new GridLayout(1, 2));
+                                JCheckBox importAddOnConfigsCB = new JCheckBox("Import addon configs");
+                                p2.add(importAddOnConfigsCB);
+                                JCheckBox overwriteAddOnConfigsCB = new JCheckBox(oe);
+                                p2.add(overwriteAddOnConfigsCB);
+                                createDependentCheckboxChangeListener(importAddOnsCB, importAddOnConfigsCB);
+                                createDependentCheckboxChangeListener(importAddOnConfigsCB, overwriteAddOnConfigsCB);
+                                
+                                JLabel passwordL = new JLabel("Decrypt imported data using password:");
+                                JPasswordField passwordTF = new JPasswordField();
                                 if (JOptionPane.showConfirmDialog(
-                                        FrontEnd.this, 
-                                        new Component[]{label, passField}, 
-                                        "Import authentification", 
+                                        FrontEnd.this,
+                                        new Component[] {
+                                                p1,
+                                                importAddOnsCB,
+                                                p2,
+                                                passwordL,
+                                                passwordTF
+                                        },
+                                        "Import data", 
                                         JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                                     File importDir = new File(Constants.TMP_DIR, "importDir");
                                     FSUtils.delete(importDir);
                                     ArchUtils.extract(importedData, importDir);
-                                    String password = new String(passField.getPassword());            
+                                    String password = new String(passwordTF.getPassword());            
                                     if (password != null) {
                                         try {
-                                            DataCategory data = BackEnd.getInstance().importData(importDir, getVisualEntriesIDs(), password);
+                                            DataCategory data = BackEnd.getInstance().importData(
+                                                    importDir, 
+                                                    getVisualEntriesIDs(),
+                                                    importPreferencesCB.isSelected(),
+                                                    overwritePreferencesCB.isSelected(),
+                                                    importGlobalConfigCB.isSelected(),
+                                                    overwriteGlobalConfigCB.isSelected(),
+                                                    importDataEntryConfigsCB.isSelected(),
+                                                    overwriteDataEntryConfigsCB.isSelected(),
+                                                    importToolsDataCB.isSelected(),
+                                                    overwriteToolsDataCB.isSelected(),
+                                                    importIconsCB.isSelected(),
+                                                    overwriteIconsCB.isSelected(),
+                                                    importAddOnsCB.isSelected(),
+                                                    importAddOnConfigsCB.isSelected(),
+                                                    overwriteAddOnConfigsCB.isSelected(),
+                                                    password);
                                             if (!data.getData().isEmpty()) {
                                                 representData(data);
                                             }
@@ -1833,21 +1904,21 @@ public class FrontEnd extends JFrame {
                     dataTree = buildDataTree(data);
                     checkTreeManager = new CheckTreeManager(dataTree);
                 }
-                JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
                 JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
                 JCheckBox exportGlobalConfigCB = new JCheckBox("Export global config"); 
-                JCheckBox exportIconsCB = new JCheckBox("Export icons");
+                JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
                 JCheckBox exportToolsDataCB = new JCheckBox("Export tools data"); 
+                JCheckBox exportIconsCB = new JCheckBox("Export icons");
                 JCheckBox exportAddOnsCB = new JCheckBox("Export addons"); 
                 JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
-                JLabel passwordL = new JLabel("Encrypt exported data with password:");
+                JLabel passwordL = new JLabel("Encrypt exported data using password:");
                 JPasswordField passwordTF = new JPasswordField();
                 Component[] comps = new Component[]{
-                        exportDataEntryConfigsCB,
                         exportPreferencesCB, 
                         exportGlobalConfigCB, 
-                        exportIconsCB,
+                        exportDataEntryConfigsCB,
                         exportToolsDataCB, 
+                        exportIconsCB,
                         exportAddOnsCB, 
                         exportAddOnConfigsCB,
                         dataTree != null ? new JScrollPane(dataTree) : null,
@@ -1857,7 +1928,7 @@ public class FrontEnd extends JFrame {
                 int opt = JOptionPane.showConfirmDialog(
                         FrontEnd.this, 
                         comps,
-                        "Choose data to export",
+                        "Export data",
                         JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
                     Collection<Recognizable> selectedEntries = new LinkedList<Recognizable>();
@@ -1882,11 +1953,11 @@ public class FrontEnd extends JFrame {
                     filterData(data, selectedEntries);
                     File file = BackEnd.getInstance().exportData(
                             data, 
-                            exportDataEntryConfigsCB.isSelected(), 
                             exportPreferencesCB.isSelected(), 
                             exportGlobalConfigCB.isSelected(), 
-                            exportIconsCB.isSelected(), 
+                            exportDataEntryConfigsCB.isSelected(), 
                             exportToolsDataCB.isSelected(), 
+                            exportIconsCB.isSelected(), 
                             exportAddOnsCB.isSelected(), 
                             exportAddOnConfigsCB.isSelected(),
                             new String(passwordTF.getPassword()));

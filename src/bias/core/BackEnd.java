@@ -293,7 +293,23 @@ public class BackEnd {
     }
     
     // TODO [P1] optional overwriting should be possible during import
-    public DataCategory importData(File importDir, Collection<UUID> existingIDs, String password) throws Exception {
+    public DataCategory importData(
+            File importDir, 
+            Collection<UUID> existingIDs,
+            boolean importPrefs,
+            boolean overwritePrefs,
+            boolean importGlobalConfig,
+            boolean overwriteGlobalConfig,
+            boolean importDataEntryConfigs,
+            boolean overwriteDataEntryConfigs,
+            boolean importToolsData,
+            boolean overwriteToolsData,
+            boolean importIcons,
+            boolean overwriteIcons,
+            boolean importAddOns,
+            boolean importAddOnConfigs,
+            boolean overwriteAddOnConfigs,
+            String password) throws Exception {
         Cipher cipher = initCipher(Cipher.DECRYPT_MODE, password);
         Map<String,DataEntry> importedIdentifiedData = new LinkedHashMap<String, DataEntry>();
         Document metadata = null;
@@ -534,11 +550,11 @@ public class BackEnd {
     
     public File exportData(
             DataCategory data,
-            boolean exportDataEntryConfigs,
             boolean exportPreferences,
             boolean exportGlobalConfig,
-            boolean exportIcons,
+            boolean exportDataEntryConfigs,
             boolean exportToolsData, 
+            boolean exportIcons,
             boolean exportAddOns,
             boolean exportAddOnConfigs,
             String password) throws Exception {
