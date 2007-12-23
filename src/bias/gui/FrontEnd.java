@@ -2847,11 +2847,13 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
-            // TODO [P4] define links properly
+            // TODO [P1] define links properly
             JLabel title1Label = new JLabel("Bias Personal Information Manager, version 1.0.0");
             JLabel link1Label = new JLabel("<html><u><font color=blue>http://bias.sourceforge.net/");
             JLabel title2Label = new JLabel("(c) Roman Kasianenko, 2007");
         	JLabel link2Label = new JLabel("<html><u><font color=blue>http://kion.name/");
+            JLabel title3Label = new JLabel("EtweeSoft (Software Development Organization)");
+            JLabel link3Label = new JLabel("<html><u><font color=blue>http://etweesoft.org/");
         	link1Label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         	link1Label.addMouseListener(new MouseAdapter(){
 				@Override
@@ -2874,7 +2876,24 @@ public class FrontEnd extends JFrame {
                     }
                 }
             });
-            JOptionPane.showMessageDialog(FrontEnd.this, new Component[]{title1Label, link1Label, title2Label, link2Label} );
+            link3Label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            link3Label.addMouseListener(new MouseAdapter(){
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    try {
+                        AppManager.getInstance().handleAddress("http://etweesoft.org/");
+                    } catch (Exception ex) {
+                        // do nothing
+                    }
+                }
+            });
+            JOptionPane.showMessageDialog(
+                    FrontEnd.this, 
+                    new Component[]{
+                            title1Label, link1Label, 
+                            title2Label, link2Label,
+                            title3Label, link3Label
+                            });
         }
     };
 
