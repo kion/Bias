@@ -2847,10 +2847,11 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
+            // TODO [P4] define links properly
             JLabel title1Label = new JLabel("Bias Personal Information Manager, version 1.0.0");
             JLabel link1Label = new JLabel("<html><u><font color=blue>http://bias.sourceforge.net/");
-            JLabel title2Label = new JLabel("(c) EtweeSoft, 2007");
-        	JLabel link2Label = new JLabel("<html><u><font color=blue>http://etweesoft.org/");
+            JLabel title2Label = new JLabel("(c) Roman Kasianenko, 2007");
+        	JLabel link2Label = new JLabel("<html><u><font color=blue>http://kion.name/");
         	link1Label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         	link1Label.addMouseListener(new MouseAdapter(){
 				@Override
