@@ -2868,7 +2868,7 @@ public class FrontEnd extends JFrame {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     try {
-                        AppManager.getInstance().handleAddress("http://etweesoft.org/");
+                        AppManager.getInstance().handleAddress("http://kion.name/");
                     } catch (Exception ex) {
                         // do nothing
                     }
