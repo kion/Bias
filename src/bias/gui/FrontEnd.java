@@ -1795,6 +1795,14 @@ public class FrontEnd extends JFrame {
                                 throw new Exception("Import source initialization failure!");
                             } else {
                                 String oe = "Overwrite existing";
+                                
+                                JPanel p0 = new JPanel(new GridLayout(1, 2));
+                                JCheckBox importDataEntriesCB = new JCheckBox("Import data entries");
+                                p0.add(importDataEntriesCB);
+                                JCheckBox overwriteDataEntriesCB = new JCheckBox(oe);
+                                p0.add(overwriteDataEntriesCB);
+                                createDependentCheckboxChangeListener(importDataEntriesCB, overwriteDataEntriesCB);
+
                                 JPanel p1 = new JPanel(new GridLayout(5, 2));
                                 
                                 JCheckBox importPreferencesCB = new JCheckBox("Import preferences");
@@ -1841,6 +1849,7 @@ public class FrontEnd extends JFrame {
                                 if (JOptionPane.showConfirmDialog(
                                         FrontEnd.this,
                                         new Component[] {
+                                                p0,
                                                 p1,
                                                 importAddOnsCB,
                                                 p2,
@@ -1858,6 +1867,8 @@ public class FrontEnd extends JFrame {
                                             DataCategory data = BackEnd.getInstance().importData(
                                                     importDir, 
                                                     getVisualEntriesIDs(),
+                                                    importDataEntriesCB.isSelected(),
+                                                    overwriteDataEntriesCB.isSelected(),
                                                     importPreferencesCB.isSelected(),
                                                     overwritePreferencesCB.isSelected(),
                                                     importGlobalConfigCB.isSelected(),

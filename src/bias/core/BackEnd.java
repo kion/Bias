@@ -296,6 +296,8 @@ public class BackEnd {
     public DataCategory importData(
             File importDir, 
             Collection<UUID> existingIDs,
+            boolean importDataEntries,
+            boolean overwriteDataEntries,
             boolean importPrefs,
             boolean overwritePrefs,
             boolean importGlobalConfig,
