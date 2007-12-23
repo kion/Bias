@@ -276,7 +276,7 @@ public class BackEnd {
             }
         }
         // parse metadata file
-        this.data = parseMetadata(metadata, identifiedData, null);
+        this.data = parseMetadata(metadata, identifiedData, null, false);
         // get lists of loaded extensions and lafs
         loadedExtensions = getExtensions();
         loadedLAFs = getLAFs();
@@ -292,18 +292,17 @@ public class BackEnd {
         }
     }
     
-    // TODO [P1] optional overwriting should be possible during import
     public DataCategory importData(
             File importDir, 
             Collection<UUID> existingIDs,
             boolean importDataEntries,
             boolean overwriteDataEntries,
+            boolean importDataEntryConfigs,
+            boolean overwriteDataEntryConfigs,
             boolean importPrefs,
             boolean overwritePrefs,
             boolean importGlobalConfig,
             boolean overwriteGlobalConfig,
-            boolean importDataEntryConfigs,
-            boolean overwriteDataEntryConfigs,
             boolean importToolsData,
             boolean overwriteToolsData,
             boolean importIcons,
@@ -317,114 +316,168 @@ public class BackEnd {
         Document metadata = null;
         byte[] data = null;
         byte[] decryptedData = null;
+        byte[] encryptedData = null;
         File dataDir = new File(importDir, Constants.DATA_DIR.getName());
         if (dataDir.exists()) {
-            // data files
-            for (File dataFile : dataDir.listFiles(FILE_FILTER_DATA)) {
-                data = FSUtils.readFile(dataFile);
-                String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                DataEntry de = new DataEntry();
-                decryptedData = useCipher(cipher, data);
-                de.setData(decryptedData);
-                importedIdentifiedData.put(entryIDStr, de);
-            }
-            // tools data files
-            for (File dataFile : dataDir.listFiles(FILE_FILTER_TOOL_DATA)) {
-                String tool = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                tool = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                            + tool + Constants.PACKAGE_PATH_SEPARATOR + tool;
-                if (!toolsData.containsKey(tool)) {
-                    data = FSUtils.readFile(dataFile);
+            if (importDataEntries) {
+                // data entry files
+                for (File dataFile : dataDir.listFiles(FILE_FILTER_DATA)) {
+                    String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    File localDataFile = new File(Constants.DATA_DIR, entryIDStr + Constants.DATA_FILE_SUFFIX);
+                    if (!localDataFile.exists() || overwriteDataEntries) {
+                        data = FSUtils.readFile(dataFile);
+                        decryptedData = useCipher(cipher, data);
+                        encryptedData = encrypt(decryptedData);
+                        FSUtils.writeFile(localDataFile, encryptedData);
+                        UUID id = UUID.fromString(entryIDStr);
+                        DataEntry de = new DataEntry();
+                        de.setId(id);
+                        importedIdentifiedData.put(entryIDStr, de);
+                    }
+                }
+                // attachments
+                File attsDir = new File(importDir, Constants.ATTACHMENTS_DIR.getName());
+                if (attsDir.exists()) {
+                    for (File entryAttsDir : attsDir.listFiles()) {
+                        for (File attFile : entryAttsDir.listFiles()) {
+                            data = FSUtils.readFile(attFile);
+                            decryptedData = useCipher(cipher, data);
+                            encryptedData = encrypt(decryptedData);
+                            entryAttsDir = new File(Constants.ATTACHMENTS_DIR, entryAttsDir.getName());
+                            if (!entryAttsDir.exists()) {
+                                entryAttsDir.mkdir();
+                            }
+                            attFile = new File(entryAttsDir, attFile.getName());
+                            FSUtils.writeFile(attFile, encryptedData);
+                        }
+                    }
+                }
+                // metadata file
+                File metadataFile = new File(dataDir, Constants.METADATA_FILE_NAME);
+                if (metadataFile.exists()) {
+                    data = FSUtils.readFile(metadataFile);
                     decryptedData = useCipher(cipher, data);
-                    toolsData.put(tool, decryptedData);
+                    metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
                 }
             }
-        }
-        // metadata file
-        File metadataFile = new File(dataDir, Constants.METADATA_FILE_NAME);
-        if (metadataFile.exists()) {
-            data = FSUtils.readFile(metadataFile);
-            decryptedData = useCipher(cipher, data);
-            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
+            // tools data files
+            if (importToolsData) {
+                for (File dataFile : dataDir.listFiles(FILE_FILTER_TOOL_DATA)) {
+                    String iDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    File localDataFile = new File(Constants.DATA_DIR, iDStr + Constants.TOOL_DATA_FILE_SUFFIX);
+                    if (!localDataFile.exists() || overwriteToolsData) {
+                        data = FSUtils.readFile(dataFile);
+                        decryptedData = useCipher(cipher, data);
+                        encryptedData = encrypt(decryptedData);
+                        FSUtils.writeFile(localDataFile, encryptedData);
+                        String tool = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                        tool = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + tool + Constants.PACKAGE_PATH_SEPARATOR + tool;
+                        toolsData.put(tool, decryptedData);
+                    }
+                }
+            }
         }
         // config files
         File configDir = new File(importDir, Constants.CONFIG_DIR.getName());
         if (configDir.exists()) {
-            for (File configFile : configDir.listFiles()) {
-                File localConfigFile = new File(Constants.CONFIG_DIR, configFile.getName());
-                // if local config file does not exist, use imported one, 
-                // otherwise - skip it (already existing local configuration will be used)
-                if (!localConfigFile.exists()) {
-                    FSUtils.duplicateFile(configFile, localConfigFile);
+            // preferences
+            if (importPrefs) {
+                File prefsFile = new File(configDir, Constants.PREFERENCES_FILE);
+                if (prefsFile.exists()) {
+                    File localPrefsFile = new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE);
+                    if (!localPrefsFile.exists() || overwritePrefs) {
+                        FSUtils.duplicateFile(prefsFile, localPrefsFile);
+                        // reload preferences file
+                        loadPreferences();
+                    }
                 }
             }
-            // reload preferences file
-            loadPreferences();
+            // global config
+            if (importGlobalConfig) {
+                File globalConfFile = new File(configDir, Constants.GLOBAL_CONFIG_FILE);
+                if (globalConfFile.exists()) {
+                    File localGlobalConfFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
+                    if (!localGlobalConfFile.exists() || overwriteGlobalConfig) {
+                        FSUtils.duplicateFile(globalConfFile, localGlobalConfFile);
+                        // reload global config file
+                        loadConfig();
+                    }
+                }
+            }
+            // data entry configs
+            if (importDataEntryConfigs) {
+                for (File configFile : configDir.listFiles(FILE_FILTER_DATA_ENTRY_CONFIG)) {
+                    File localConfigFile = new File(Constants.CONFIG_DIR, configFile.getName());
+                    if (!localConfigFile.exists() || overwriteDataEntryConfigs) {
+                        FSUtils.duplicateFile(configFile, localConfigFile);
+                    }
+                }
+            }
+            // add-on configs
+            if (importAddOnConfigs) {
+                for (File configFile : configDir.listFiles(FILE_FILTER_ADDON_CONFIG)) {
+                    File localConfigFile = new File(Constants.CONFIG_DIR, configFile.getName());
+                    if (!localConfigFile.exists() || overwriteAddOnConfigs) {
+                        FSUtils.duplicateFile(configFile, localConfigFile);
+                    }
+                }
+            }
         }
         // icon files
-        File iconsDir = new File(importDir, Constants.ICONS_DIR.getName());
-        File iconsListFile = new File(configDir, Constants.ICONS_CONFIG_FILE);
-        if (iconsListFile.exists()) {
-            String[] iconsList = new String(FSUtils.readFile(iconsListFile)).split(Constants.NEW_LINE);
-            for (String iconId : iconsList) {
-                if (!Validator.isNullOrBlank(iconId)) {
-                    File iconFile = new File(iconsDir, iconId + Constants.ICON_FILE_SUFFIX);
-                    data = FSUtils.readFile(iconFile);
-                    icons.put(UUID.fromString(iconId), data);
-                }
-            }
-        }
-        // attachements
-        File attsDir = new File(importDir, Constants.ATTACHMENTS_DIR.getName());
-        if (attsDir.exists()) {
-            for (File entryAttsDir : attsDir.listFiles()) {
-                for (File attFile : entryAttsDir.listFiles()) {
-                    data = FSUtils.readFile(attFile);
-                    decryptedData = useCipher(cipher, data);
-                    byte[] encryptedData = encrypt(decryptedData);
-                    entryAttsDir = new File(Constants.ATTACHMENTS_DIR, entryAttsDir.getName());
-                    if (!entryAttsDir.exists()) {
-                        entryAttsDir.mkdir();
+        if (importIcons) {
+            File iconsDir = new File(importDir, Constants.ICONS_DIR.getName());
+            File iconsListFile = new File(configDir, Constants.ICONS_CONFIG_FILE);
+            if (iconsListFile.exists()) {
+                String[] iconsList = new String(FSUtils.readFile(iconsListFile)).split(Constants.NEW_LINE);
+                for (String iconId : iconsList) {
+                    if (!Validator.isNullOrBlank(iconId)) {
+                        File iconFile = new File(iconsDir, iconId + Constants.ICON_FILE_SUFFIX);
+                        File localIconFile = new File(Constants.ICONS_DIR, iconId + Constants.ICON_FILE_SUFFIX);
+                        if (!localIconFile.exists() || overwriteIcons) {
+                            data = FSUtils.readFile(iconFile);
+                            FSUtils.writeFile(localIconFile, data);
+                            icons.put(UUID.fromString(iconId), data);
+                        }
                     }
-                    attFile = new File(entryAttsDir, attFile.getName());
-                    FSUtils.writeFile(attFile, encryptedData);
                 }
             }
         }
         // classpath and addons/libs files
-        File classPathConfigFile = new File(configDir, Constants.CLASSPATH_CONFIG_FILE);
-        if (classPathConfigFile.exists()) {
-            // read classpath entries
-            byte[] cpData = FSUtils.readFile(classPathConfigFile);
-            if (cpData != null) {
-                for (String cpEntry : new String(cpData).split(Constants.CLASSPATH_SEPARATOR)) {
-                    if (!classPathEntries.contains(cpEntry)) {
-                        String[] addonFilePath = cpEntry.split(Constants.PATH_SEPARATOR);
-                        if (addonFilePath.length == 2) {
-                            File dir = new File(importDir, addonFilePath[0]);
-                            File addonFile = new File(dir, addonFilePath[1]);
-                            if (addonFile.exists()) {
-                                File localDir = new File(Constants.ROOT_DIR, addonFilePath[0]);
-                                File localAddOnFile = new File(localDir, addonFilePath[1]);
-                                if (localDir.exists() && !localAddOnFile.exists()) {
-                                    FSUtils.duplicateFile(addonFile, localAddOnFile);
-                                    classPathEntries.add(cpEntry);
-                                    if (!cpEntry.startsWith(Constants.LIBS_DIR.getName())) {
-                                        if (cpEntry.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
-                                            String extension = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                            extension = extension.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                                            extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                                        + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-                                            if (!newExtensions.keySet().contains(extension)) {
-                                                newExtensions.put(extension, Constants.COMMENT_ADDON_IMPORTED);
-                                            }
-                                        } else if (cpEntry.matches(Constants.LAF_JAR_FILE_PATTERN)) {
-                                            String laf = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                            laf = laf.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                                            laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                                        + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                                            if (!newLAFs.keySet().contains(laf)) {
-                                                newLAFs.put(laf, Constants.COMMENT_ADDON_IMPORTED);
+        if (importAddOns) {
+            File classPathConfigFile = new File(configDir, Constants.CLASSPATH_CONFIG_FILE);
+            if (classPathConfigFile.exists()) {
+                // read classpath entries
+                byte[] cpData = FSUtils.readFile(classPathConfigFile);
+                if (cpData != null) {
+                    for (String cpEntry : new String(cpData).split(Constants.CLASSPATH_SEPARATOR)) {
+                        if (!classPathEntries.contains(cpEntry)) {
+                            String[] addonFilePath = cpEntry.split(Constants.PATH_SEPARATOR);
+                            if (addonFilePath.length == 2) {
+                                File dir = new File(importDir, addonFilePath[0]);
+                                File addonFile = new File(dir, addonFilePath[1]);
+                                if (addonFile.exists()) {
+                                    File localDir = new File(Constants.ROOT_DIR, addonFilePath[0]);
+                                    File localAddOnFile = new File(localDir, addonFilePath[1]);
+                                    if (localDir.exists() && !localAddOnFile.exists()) {
+                                        FSUtils.duplicateFile(addonFile, localAddOnFile);
+                                        classPathEntries.add(cpEntry);
+                                        if (!cpEntry.startsWith(Constants.LIBS_DIR.getName())) {
+                                            if (cpEntry.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
+                                                String extension = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                                                extension = extension.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                                                extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                                            + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
+                                                if (!newExtensions.keySet().contains(extension)) {
+                                                    newExtensions.put(extension, Constants.COMMENT_ADDON_IMPORTED);
+                                                }
+                                            } else if (cpEntry.matches(Constants.LAF_JAR_FILE_PATTERN)) {
+                                                String laf = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                                                laf = laf.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                                                laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                                            + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                                                if (!newLAFs.keySet().contains(laf)) {
+                                                    newLAFs.put(laf, Constants.COMMENT_ADDON_IMPORTED);
+                                                }
                                             }
                                         }
                                     }
@@ -433,11 +486,11 @@ public class BackEnd {
                         }
                     }
                 }
+                storeClassPathConfiguration();
             }
-            storeClassPathConfiguration();
         }
         // parse metadata file
-        DataCategory importedData = parseMetadata(metadata, importedIdentifiedData, existingIDs);
+        DataCategory importedData = parseMetadata(metadata, importedIdentifiedData, existingIDs, overwriteDataEntries);
         // add imported data to existing data
         this.data.addDataItems(importedData.getData());
         return importedData;
@@ -461,12 +514,12 @@ public class BackEnd {
         }
     }
 
-    private DataCategory parseMetadata(Document metadata, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs) throws Exception {
+    private DataCategory parseMetadata(Document metadata, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs, boolean overwrite) throws Exception {
         DataCategory data = new DataCategory();
         if (metadata == null) {
             metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         } else {
-            buildData(data, metadata.getFirstChild(), identifiedData, existingIDs);
+            buildData(data, metadata.getFirstChild(), identifiedData, existingIDs, overwrite);
             data.setPlacement(Integer.valueOf(metadata.getFirstChild().getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT).getNodeValue()));
             Node activeIdxNode = metadata.getFirstChild().getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX);
             if (activeIdxNode != null) {
@@ -476,19 +529,18 @@ public class BackEnd {
         return data;
     }
     
-    // FIXME [P1] Existing recognizable entries are not deeply parsed  
-    private void buildData(DataCategory data, Node node, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs) throws Exception {
+    private void buildData(DataCategory data, Node node, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs, boolean overwrite) throws Exception {
         if (node.getNodeName().equals(Constants.XML_ELEMENT_ROOT_CONTAINER)) {
             NodeList nodes = node.getChildNodes();
             for (int i = 0; i < nodes.getLength(); i++) {
                 Node n = nodes.item(i);
-                buildData(data, n, identifiedData, existingIDs);
+                buildData(data, n, identifiedData, existingIDs, overwrite);
             }
         } else if (node.getNodeName().equals(Constants.XML_ELEMENT_CATEGORY)) {
             NamedNodeMap attributes = node.getAttributes();
             Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
             UUID id = UUID.fromString(attID.getNodeValue());
-            if (existingIDs == null || !existingIDs.contains(id)) {
+            if (overwrite || existingIDs == null || !existingIDs.contains(id)) {
                 DataCategory dc = new DataCategory();
                 dc.setId(id);
                 Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
@@ -516,14 +568,14 @@ public class BackEnd {
                 NodeList nodes = node.getChildNodes();
                 for (int i = 0; i < nodes.getLength(); i++) {
                     Node n = nodes.item(i);
-                    buildData(dc, n, identifiedData, existingIDs);
+                    buildData(dc, n, identifiedData, existingIDs, overwrite);
                 }
             }
         } else if (node.getNodeName().equals(Constants.XML_ELEMENT_ENTRY)) {
             NamedNodeMap attributes = node.getAttributes();
             Node attID = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ID);
             UUID id = UUID.fromString(attID.getNodeValue());
-            if (existingIDs == null || !existingIDs.contains(id)) {
+            if (overwrite || existingIDs == null || !existingIDs.contains(id)) {
                 DataEntry dataEntry = identifiedData.get(id.toString());
                 if (dataEntry != null) {
                     dataEntry.setId(id);
@@ -636,8 +688,7 @@ public class BackEnd {
                 if (toolEntry.getValue() != null) {
                     String tool = toolEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                     File toolDataFile = new File(dataDir, tool + Constants.TOOL_DATA_FILE_SUFFIX);
-                    byte[] reencryptedData = reencryptData(toolEntry.getValue(), cipher);
-                    FSUtils.writeFile(toolDataFile, reencryptedData);
+                    FSUtils.writeFile(toolDataFile, useCipher(cipher, toolEntry.getValue()));
                 }
             }
         }

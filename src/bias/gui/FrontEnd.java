@@ -506,6 +506,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    // TODO [P2] some memory-usage optimization would be nice (rea tools initialization after tools data import in overwrite mode)
     private void representTools() {
         Map<String, Class<? extends ToolExtension>> extensions = null;
         try {
@@ -514,6 +515,7 @@ public class FrontEnd extends JFrame {
             displayErrorMessage("Failed to initialize tools!", t);
         }
         if (extensions != null) {
+            getJToolBar3().removeAll();
             tools = new LinkedHashMap<Class<? extends ToolExtension>, ToolExtension>();
             Map<String, byte[]> toolsData = BackEnd.getInstance().getToolsData();
             int toolCnt = 0;
@@ -568,14 +570,12 @@ public class FrontEnd extends JFrame {
 
     private void representData(JTabbedPane tabbedPane, DataCategory data) {
         try {
-        	int idx = tabbedPane.getTabCount();
             for (Recognizable item : data.getData()) {
                 if (item instanceof DataEntry) {
                     DataEntry de = (DataEntry) item;
                     String caption = de.getCaption();
                     dataEntries.put(de.getId().toString(), de);
-                    tabbedPane.addTab(caption, getEntryExtensionPanel(de.getId(), null));
-                    tabbedPane.setIconAt(idx++, item.getIcon());
+                    putTab(tabbedPane, caption, item.getIcon(), getEntryExtensionPanel(de.getId(), null));
                 } else if (item instanceof DataCategory) {
                     String caption = item.getCaption();
                     JTabbedPane categoryTabPane = new JTabbedPane();
@@ -585,8 +585,7 @@ public class FrontEnd extends JFrame {
                     DataCategory dc = (DataCategory) item;
                     categoryTabPane.setTabPlacement(dc.getPlacement());
                     addTabPaneListeners(categoryTabPane);
-                    tabbedPane.addTab(caption, categoryTabPane);
-                    tabbedPane.setIconAt(idx++, item.getIcon());
+                    categoryTabPane = (JTabbedPane) putTab(tabbedPane, caption, item.getIcon(), categoryTabPane);
                     currentTabPane = categoryTabPane;
                     representData(categoryTabPane, dc);
                     if (dc.getActiveIndex() != null) {
@@ -602,6 +601,36 @@ public class FrontEnd extends JFrame {
             displayErrorMessage("Critical error! Data can not be represented. Bias can not proceed further...", ex);
             System.exit(1);
         }
+    }
+    
+    private Component putTab(JTabbedPane tabbedPane, String caption, Icon icon, Component cmp) {
+        String putId = cmp.getName();
+        boolean overwrite = false;
+        Component c = null;
+        int i;
+        for (i = 0; i < tabbedPane.getTabCount(); i++) {
+            c = tabbedPane.getComponent(i);
+            if (c != null) {
+                String id = c.getName();
+                if (putId.equals(id)) {
+                    overwrite = true;
+                    break;
+                }
+            }
+        }
+        if (overwrite) {
+            if (cmp instanceof JTabbedPane) {
+                tabbedPane.setTitleAt(i, caption);
+                tabbedPane.setIconAt(i, icon);
+                cmp = c;
+            } else if (cmp instanceof JPanel) {
+                tabbedPane.removeTabAt(i);
+                tabbedPane.addTab(caption, icon, cmp);
+            }
+        } else {
+            tabbedPane.addTab(caption, icon, cmp);
+        }
+        return cmp;
     }
     
     private JPanel getEntryExtensionPanel(UUID entryId, EntryExtension extension) {
@@ -1796,14 +1825,19 @@ public class FrontEnd extends JFrame {
                             } else {
                                 String oe = "Overwrite existing";
                                 
-                                JPanel p0 = new JPanel(new GridLayout(1, 2));
+                                JPanel p1 = new JPanel(new GridLayout(6, 2));
+                                
                                 JCheckBox importDataEntriesCB = new JCheckBox("Import data entries");
-                                p0.add(importDataEntriesCB);
+                                p1.add(importDataEntriesCB);
                                 JCheckBox overwriteDataEntriesCB = new JCheckBox(oe);
-                                p0.add(overwriteDataEntriesCB);
+                                p1.add(overwriteDataEntriesCB);
                                 createDependentCheckboxChangeListener(importDataEntriesCB, overwriteDataEntriesCB);
 
-                                JPanel p1 = new JPanel(new GridLayout(5, 2));
+                                JCheckBox importDataEntryConfigsCB = new JCheckBox("Import data entry configs"); 
+                                p1.add(importDataEntryConfigsCB);
+                                JCheckBox overwriteDataEntryConfigsCB = new JCheckBox(oe); 
+                                p1.add(overwriteDataEntryConfigsCB);
+                                createDependentCheckboxChangeListener(importDataEntryConfigsCB, overwriteDataEntryConfigsCB);
                                 
                                 JCheckBox importPreferencesCB = new JCheckBox("Import preferences");
                                 p1.add(importPreferencesCB);
@@ -1817,12 +1851,6 @@ public class FrontEnd extends JFrame {
                                 p1.add(overwriteGlobalConfigCB);
                                 createDependentCheckboxChangeListener(importGlobalConfigCB, overwriteGlobalConfigCB);
 
-                                JCheckBox importDataEntryConfigsCB = new JCheckBox("Import data entry configs"); 
-                                p1.add(importDataEntryConfigsCB);
-                                JCheckBox overwriteDataEntryConfigsCB = new JCheckBox(oe); 
-                                p1.add(overwriteDataEntryConfigsCB);
-                                createDependentCheckboxChangeListener(importDataEntryConfigsCB, overwriteDataEntryConfigsCB);
-                                
                                 JCheckBox importToolsDataCB = new JCheckBox("Import tools data"); 
                                 p1.add(importToolsDataCB);
                                 JCheckBox overwriteToolsDataCB = new JCheckBox(oe); 
@@ -1835,13 +1863,12 @@ public class FrontEnd extends JFrame {
                                 p1.add(overwriteIconsCB);
                                 createDependentCheckboxChangeListener(importIconsCB, overwriteIconsCB);
                                 
-                                JCheckBox importAddOnsCB = new JCheckBox("Import addons");
+                                JCheckBox importAddOnsCB = new JCheckBox("Import addons (existing add-ons won't be overwritten)");
                                 JPanel p2 = new JPanel(new GridLayout(1, 2));
                                 JCheckBox importAddOnConfigsCB = new JCheckBox("Import addon configs");
                                 p2.add(importAddOnConfigsCB);
                                 JCheckBox overwriteAddOnConfigsCB = new JCheckBox(oe);
                                 p2.add(overwriteAddOnConfigsCB);
-                                createDependentCheckboxChangeListener(importAddOnsCB, importAddOnConfigsCB);
                                 createDependentCheckboxChangeListener(importAddOnConfigsCB, overwriteAddOnConfigsCB);
                                 
                                 JLabel passwordL = new JLabel("Decrypt imported data using password:");
@@ -1849,7 +1876,6 @@ public class FrontEnd extends JFrame {
                                 if (JOptionPane.showConfirmDialog(
                                         FrontEnd.this,
                                         new Component[] {
-                                                p0,
                                                 p1,
                                                 importAddOnsCB,
                                                 p2,
@@ -1869,12 +1895,12 @@ public class FrontEnd extends JFrame {
                                                     getVisualEntriesIDs(),
                                                     importDataEntriesCB.isSelected(),
                                                     overwriteDataEntriesCB.isSelected(),
+                                                    importDataEntryConfigsCB.isSelected(),
+                                                    overwriteDataEntryConfigsCB.isSelected(),
                                                     importPreferencesCB.isSelected(),
                                                     overwritePreferencesCB.isSelected(),
                                                     importGlobalConfigCB.isSelected(),
                                                     overwriteGlobalConfigCB.isSelected(),
-                                                    importDataEntryConfigsCB.isSelected(),
-                                                    overwriteDataEntryConfigsCB.isSelected(),
                                                     importToolsDataCB.isSelected(),
                                                     overwriteToolsDataCB.isSelected(),
                                                     importIconsCB.isSelected(),
@@ -1885,6 +1911,9 @@ public class FrontEnd extends JFrame {
                                                     password);
                                             if (!data.getData().isEmpty()) {
                                                 representData(data);
+                                            }
+                                            if (importToolsDataCB.isSelected()) {
+                                                representTools();
                                             }
                                             displayMessage("Data have been successfully imported.");
                                         } catch (Exception ex) {

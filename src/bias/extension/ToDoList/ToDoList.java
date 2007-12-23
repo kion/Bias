@@ -313,7 +313,7 @@ public class ToDoList extends EntryExtension {
             model.addColumn("Timestamp");
             model.addColumn("Title");
             model.addColumn("Priority");
-            model.addColumn("State");
+            model.addColumn("Status");
             
             // hide ID column
             TableColumn idCol = todoEntriesTable.getColumnModel().getColumn(0);

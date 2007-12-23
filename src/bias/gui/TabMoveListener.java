@@ -114,12 +114,12 @@ public class TabMoveListener extends MouseAdapter {
             icons[i] = (ImageIcon) tabPane.getIconAt(i);
         }
 
-        // remember component/caption that has to be moved
+        // remember component/caption/icon that has to be moved
         Component srcComp = components[srcIndex];
         String srcCap = captions[srcIndex];
         ImageIcon srcIcon = icons[srcIndex];
 
-        // rearrange components/captions using shifting
+        // rearrange components/captions/icons using shifting
         if (srcIndex > dstIndex) {
             for (int i = srcIndex; i > dstIndex; i--) {
                 components[i] = components[i - 1];
@@ -134,7 +134,7 @@ public class TabMoveListener extends MouseAdapter {
             }
         }
 
-        // set moved component/caption to its new position
+        // set moved component/caption/icon to its new position
         components[dstIndex] = srcComp;
         captions[dstIndex] = srcCap;
         icons[dstIndex] = srcIcon;
