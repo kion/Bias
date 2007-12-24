@@ -4,14 +4,12 @@
 package bias.gui;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import javax.swing.ImageIcon;
 import javax.swing.JTabbedPane;
 import javax.swing.plaf.TabbedPaneUI;
 
@@ -47,7 +45,7 @@ public class TabMoveListener extends MouseAdapter {
         if (!e.isPopupTrigger()) {
             int dstIndex = tabbedPane.indexAtLocation(e.getX(), e.getY());
             if (srcIndex != -1 && dstIndex != -1 && srcIndex != dstIndex) {
-                moveTab(tabbedPane, srcIndex, dstIndex);
+                TabMoveUtil.moveTab(tabbedPane, srcIndex, dstIndex);
             }
         }
         deHighLight(tabbedPane);
@@ -88,71 +86,6 @@ public class TabMoveListener extends MouseAdapter {
     public void mouseExited(MouseEvent e) {
         deHighLight((JTabbedPane) e.getSource());
         currIndex = -1;
-    }
-
-    /**
-     * As far as internal structure of JTabbedPane data model does not correspond to its visual representation, that is, component located
-     * on tab with index X is <b>not</b> located in the internal components array using the same index, we have to rearrange this array
-     * each time tab has been moved and repopulate/repaint JTabbedPane instance after that.
-     * 
-     */
-    private void moveTab(JTabbedPane tabPane, int srcIndex, int dstIndex) {
-
-        int cnt = tabPane.getTabCount();
-
-        // get tabpane's components/captions/icons
-        Component[] components = new Component[cnt];
-        for (int i = 0; i < cnt; i++) {
-            components[i] = tabPane.getComponent(i);
-        }
-        String[] captions = new String[cnt];
-        for (int i = 0; i < cnt; i++) {
-            captions[i] = tabPane.getTitleAt(i);
-        }
-        ImageIcon[] icons = new ImageIcon[cnt];
-        for (int i = 0; i < cnt; i++) {
-            icons[i] = (ImageIcon) tabPane.getIconAt(i);
-        }
-
-        // remember component/caption/icon that has to be moved
-        Component srcComp = components[srcIndex];
-        String srcCap = captions[srcIndex];
-        ImageIcon srcIcon = icons[srcIndex];
-
-        // rearrange components/captions/icons using shifting
-        if (srcIndex > dstIndex) {
-            for (int i = srcIndex; i > dstIndex; i--) {
-                components[i] = components[i - 1];
-                captions[i] = captions[i - 1];
-                icons[i] = icons[i - 1];
-            }
-        } else {
-            for (int i = srcIndex; i < dstIndex; i++) {
-                components[i] = components[i + 1];
-                captions[i] = captions[i + 1];
-                icons[i] = icons[i + 1];
-            }
-        }
-
-        // set moved component/caption/icon to its new position
-        components[dstIndex] = srcComp;
-        captions[dstIndex] = srcCap;
-        icons[dstIndex] = srcIcon;
-
-        // remove everything from tabpane before repopulating it
-        tabPane.removeAll();
-
-        // repopulate tabpane with resulting components/captions
-        for (int i = 0; i < cnt; i++) {
-            tabPane.addTab(captions[i], icons[i], components[i]);
-        }
-
-        // set moved component as selected
-        tabPane.setSelectedIndex(dstIndex);
-
-        // repaint tabpane
-        tabPane.repaint();
-
     }
 
     private void deHighLight(JTabbedPane tabbedPane) {

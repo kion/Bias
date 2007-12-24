@@ -598,8 +598,7 @@ public class FrontEnd extends JFrame {
                 }
             }
         } catch (Exception ex) {
-            displayErrorMessage("Critical error! Data can not be represented. Bias can not proceed further...", ex);
-            System.exit(1);
+            displayErrorMessage("Failed to represented data correctly!", ex);
         }
     }
     
@@ -626,6 +625,7 @@ public class FrontEnd extends JFrame {
             } else if (cmp instanceof JPanel) {
                 tabbedPane.removeTabAt(i);
                 tabbedPane.addTab(caption, icon, cmp);
+                TabMoveUtil.moveTab(tabbedPane, tabbedPane.getTabCount() - 1, i);
             }
         } else {
             tabbedPane.addTab(caption, icon, cmp);
