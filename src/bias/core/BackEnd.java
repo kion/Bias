@@ -103,6 +103,12 @@ public class BackEnd {
     
     private Properties config = new Properties();
     
+    private Map<String, Properties> importConfigs;
+    private Map<String, String> importConfigIDs;
+    
+    private Map<String, Properties> exportConfigs;
+    private Map<String, String> exportConfigIDs;
+    
     private static final FilenameFilter FILE_FILTER_DATA_ENTRY_CONFIG = new FilenameFilter(){
         public boolean accept(File dir, String name) {
             return name.endsWith(Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX);
@@ -118,6 +124,18 @@ public class BackEnd {
     private static final FilenameFilter FILE_FILTER_TOOL_DATA = new FilenameFilter(){
         public boolean accept(File dir, String name) {
             return name.endsWith(Constants.TOOL_DATA_FILE_SUFFIX);
+        }
+    };
+    
+    private static final FilenameFilter FILE_FILTER_IMPORT_CONFIG = new FilenameFilter(){
+        public boolean accept(File dir, String name) {
+            return name.endsWith(Constants.IMPORT_CONFIG_FILE_SUFFIX);
+        }
+    };
+    
+    private static final FilenameFilter FILE_FILTER_EXPORT_CONFIG = new FilenameFilter(){
+        public boolean accept(File dir, String name) {
+            return name.endsWith(Constants.EXPORT_CONFIG_FILE_SUFFIX);
         }
     };
     
@@ -292,6 +310,7 @@ public class BackEnd {
         }
     }
     
+    // TODO [P2] implement import of import/export configs
     public DataCategory importData(
             File importDir, 
             Collection<UUID> existingIDs,
@@ -602,6 +621,7 @@ public class BackEnd {
         }
     }
     
+    // TODO [P2] implement export of import/export configs
     public File exportData(
             DataCategory data,
             boolean exportPreferences,
@@ -759,6 +779,76 @@ public class BackEnd {
     
     public void storePreferences() throws Exception {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
+    }
+    
+    public Map<String, Properties> getImportConfigurations() throws Exception {
+        if (importConfigs == null) {
+            importConfigs = new HashMap<String, Properties>();
+            importConfigIDs = new HashMap<String, String>();
+            File[] configFiles = Constants.CONFIG_DIR.listFiles(FILE_FILTER_IMPORT_CONFIG);
+            for (File file : configFiles) {
+                Properties props = new Properties();
+                byte[] encryptedData = FSUtils.readFile(file);
+                byte[] decryptedData = decrypt(encryptedData);
+                props.load(new ByteArrayInputStream(decryptedData));
+                String name = props.getProperty(Constants.OPTION_CONFIG_NAME);
+                String id = file.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                importConfigs.put(name, props);
+                importConfigIDs.put(name, id);
+            }
+        }
+        return importConfigs;
+    }
+    
+    public Map<String, Properties> getExportConfigurations() throws Exception {
+        if (exportConfigs == null) {
+            exportConfigs = new HashMap<String, Properties>();
+            exportConfigIDs = new HashMap<String, String>();
+            File[] configFiles = Constants.CONFIG_DIR.listFiles(FILE_FILTER_EXPORT_CONFIG);
+            for (File file : configFiles) {
+                Properties props = new Properties();
+                byte[] encryptedData = FSUtils.readFile(file);
+                byte[] decryptedData = decrypt(encryptedData);
+                props.load(new ByteArrayInputStream(decryptedData));
+                String name = props.getProperty(Constants.OPTION_CONFIG_NAME);
+                String id = file.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                exportConfigs.put(name, props);
+                exportConfigIDs.put(name, id);
+            }
+        }
+        return exportConfigs;
+    }
+    
+    public void storeImportConfiguration(String name, Properties config) throws Exception {
+        String fileName = importConfigIDs.get(name);
+        if (fileName == null) {
+            UUID id = UUID.randomUUID();
+            importConfigIDs.put(name, id.toString());
+            fileName = id.toString();
+            importConfigs.put(name, config);
+        }
+        fileName += Constants.IMPORT_CONFIG_FILE_SUFFIX;
+        File configFile = new File(Constants.CONFIG_DIR, fileName);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        config.store(baos, null);
+        byte[] encryptedData = encrypt(baos.toByteArray());
+        FSUtils.writeFile(configFile, encryptedData);
+    }
+    
+    public void storeExportConfiguration(String name, Properties config) throws Exception {
+        String fileName = exportConfigIDs.get(name);
+        if (fileName == null) {
+            UUID id = UUID.randomUUID();
+            exportConfigIDs.put(name, id.toString());
+            fileName = id.toString();
+            exportConfigs.put(name, config);
+        }
+        fileName += Constants.EXPORT_CONFIG_FILE_SUFFIX;
+        File configFile = new File(Constants.CONFIG_DIR, fileName);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        config.store(baos, null);
+        byte[] encryptedData = encrypt(baos.toByteArray());
+        FSUtils.writeFile(configFile, encryptedData);
     }
     
     private void storeMetadata(Document metadata, File file, Cipher cipher) throws Exception {

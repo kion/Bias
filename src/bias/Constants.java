@@ -64,6 +64,7 @@ public class Constants {
     
     public static final String ADDON_LIB_FILENAME_SEPARATOR = "_";
     public static final String CLASSPATH_SEPARATOR = ":";
+    public static final String PROPERTY_VALUES_SEPARATOR = ",";
     
     public static final String PACKAGE_PATH_SEPARATOR = ".";
     public static final String PACKAGE_PREFIX_PATTERN = "^.*\\.";
@@ -95,6 +96,8 @@ public class Constants {
     public static final String LAF_JAR_FILE_PATTERN = "(?i)" + ".+\\.laf\\.jar$";
     public static final String EXTENSION_JAR_FILE_SUFFIX = ".ext.jar";
     public static final String LAF_JAR_FILE_SUFFIX = ".laf.jar";
+    public static final String IMPORT_CONFIG_FILE_SUFFIX = ".import.properties";
+    public static final String EXPORT_CONFIG_FILE_SUFFIX = ".export.properties";
     public static final String EXTENSION_DIR_PACKAGE_NAME = Extension.class.getPackage().getName();
     public static final String LAF_DIR_PACKAGE_NAME = LookAndFeel.class.getPackage().getName();
     public static final String ICON_FORMAT = "PNG";
@@ -105,10 +108,21 @@ public class Constants {
     public static final String LAF_CONFIG_FILE_SUFFIX = ".laf.conf";
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
     
+    public static final String OPTION_TRANSFER_TYPE = "TRANSFER_TYPE";
+    public static final String OPTION_CONFIG_NAME = "CONFIG_NAME";
+    public static final String OPTION_SELECTED_IDS = "SELECTED_IDS";
+    public static final String OPTION_DATA_ENCRYPTION_PASSWORD = "DATA_ENCRYPTION_PASSWORD";
+    public static final String OPTION_PROCESS_PREFERENCES = "PROCESS_PREFERENCES";
+    public static final String OPTION_PROCESS_GLOBAL_CONFIG = "PROCESS_GLOBAL_CONFIG";
+    public static final String OPTION_PROCESS_DATA_ENTRY_CONFIGS = "PROCESS_DATA_ENTRY_CONFIGS";
+    public static final String OPTION_PROCESS_TOOLS_DATA = "PROCESS_TOOLS_DATA";
+    public static final String OPTION_PROCESS_ICONS = "PROCESS_ICONS";
+    public static final String OPTION_PROCESS_ADDONS = "PROCESS_ADDONS";
+    public static final String OPTION_PROCESS_ADDON_CONFIGS = "PROCESS_ADDON_CONFIGS";
     public static final String TRANSFER_OPTION_FILEPATH = "FILEPATH";
     public static final String TRANSFER_OPTION_SERVER = "SERVER";
     public static final String TRANSFER_OPTION_USERNAME = "USERNAME";
-    public static final String TRANSFER_OPTION_PASSWORD = "PASSWORD";
+    public static final String TRANSFER_OPTION_PASSWORD = "TRANSFER_PASSWORD";
     
     public static final String PROPERTY_LOOK_AND_FEEL = "LOOK_AND_FEEL";
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";

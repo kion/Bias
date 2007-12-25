@@ -1931,96 +1931,176 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    // TODO [P2] implement stored export configurations
     private Action exportAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent e) {
             try {
-                DataCategory data = collectData();
-                JTree dataTree = null;
-                CheckTreeManager checkTreeManager = null;
-                if (!data.getData().isEmpty()) {
-                    dataTree = buildDataTree(data);
-                    checkTreeManager = new CheckTreeManager(dataTree);
+                JComboBox configsCB = new JComboBox();
+                configsCB.addItem(Constants.EMPTY_STR);
+                for (String configName : BackEnd.getInstance().getExportConfigurations().keySet()) {
+                    configsCB.addItem(configName);
                 }
-                JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
-                JCheckBox exportGlobalConfigCB = new JCheckBox("Export global config"); 
-                JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
-                JCheckBox exportToolsDataCB = new JCheckBox("Export tools data"); 
-                JCheckBox exportIconsCB = new JCheckBox("Export icons");
-                JCheckBox exportAddOnsCB = new JCheckBox("Export addons"); 
-                JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
-                JLabel passwordL = new JLabel("Encrypt exported data using password:");
-                JPasswordField passwordTF = new JPasswordField();
-                Component[] comps = new Component[]{
-                        exportPreferencesCB, 
-                        exportGlobalConfigCB, 
-                        exportDataEntryConfigsCB,
-                        exportToolsDataCB, 
-                        exportIconsCB,
-                        exportAddOnsCB, 
-                        exportAddOnConfigsCB,
-                        dataTree != null ? new JScrollPane(dataTree) : null,
-                        passwordL,
-                        passwordTF
+                Component[] c = new Component[] {
+                        new JLabel("Choose existing export configuration to use,"),
+                        new JLabel("or leave just press enter for custom export."),
+                        configsCB          
                 };
-                int opt = JOptionPane.showConfirmDialog(
-                        FrontEnd.this, 
-                        comps,
-                        "Export data",
-                        JOptionPane.OK_CANCEL_OPTION);
-                if (opt == JOptionPane.OK_OPTION) {
-                    Collection<Recognizable> selectedEntries = new LinkedList<Recognizable>();
-                    if (checkTreeManager != null) {
-                        TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
-                        if (checkedPaths != null) {
-                            for (TreePath tp : checkedPaths) {
-                                DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
-                                for (Object o : tp.getPath()) {
-                                    DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
-                                    Recognizable entry = nodeEntries.get(node);
-                                    if (entry != null) {
-                                        selectedEntries.add(entry);
-                                    }
-                                    if (node.equals(lastNodeInPath)) {
-                                        selectDescenantEntries(node, selectedEntries);
+                JOptionPane.showMessageDialog(FrontEnd.this, c);
+                
+                DataCategory data = collectData();
+                Collection<UUID> selectedEntries = new LinkedList<UUID>();
+
+                if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
+                    try {
+                        Properties props = BackEnd.getInstance().getExportConfigurations().get(configsCB.getSelectedItem().toString());
+                        String idsStr = props.getProperty(Constants.OPTION_SELECTED_IDS);
+                        if (!Validator.isNullOrBlank(idsStr)) {
+                            String[] ids = idsStr.split(Constants.PROPERTY_VALUES_SEPARATOR);
+                            for (String id : ids) {
+                                selectedEntries.add(UUID.fromString(id));
+                            }
+                        }
+                        filterData(data, selectedEntries);
+                        String password = props.getProperty(Constants.OPTION_DATA_ENCRYPTION_PASSWORD);
+                        if (password == null) {
+                            password = Constants.EMPTY_STR;
+                        }
+                        File file = BackEnd.getInstance().exportData(
+                                data, 
+                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES)), 
+                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG)), 
+                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS)), 
+                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA)), 
+                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ICONS)), 
+                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDONS)), 
+                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS)),
+                                password);
+                        TRANSFER_TYPE type = TRANSFER_TYPE.valueOf(props.getProperty(Constants.OPTION_TRANSFER_TYPE));
+                        Transferrer transferrer = Transferrer.getInstance(type);
+                        byte[] exportedData = FSUtils.readFile(file);
+                        transferrer.doExport(exportedData, props);
+                        JOptionPane.showMessageDialog(FrontEnd.this, "Data have been successfully exported.");
+                    } catch (Exception ex) {
+                        displayErrorMessage("Failed to export data!", ex);
+                    }
+                } else {
+                    JTree dataTree = null;
+                    CheckTreeManager checkTreeManager = null;
+                    if (!data.getData().isEmpty()) {
+                        dataTree = buildDataTree(data);
+                        checkTreeManager = new CheckTreeManager(dataTree);
+                    }
+                    JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
+                    JCheckBox exportGlobalConfigCB = new JCheckBox("Export global config"); 
+                    JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
+                    JCheckBox exportToolsDataCB = new JCheckBox("Export tools data"); 
+                    JCheckBox exportIconsCB = new JCheckBox("Export icons");
+                    JCheckBox exportAddOnsCB = new JCheckBox("Export addons"); 
+                    JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
+                    JLabel passwordL = new JLabel("Encrypt exported data using password:");
+                    JPasswordField passwordTF = new JPasswordField();
+                    Component[] comps = new Component[]{
+                            exportPreferencesCB, 
+                            exportGlobalConfigCB, 
+                            exportDataEntryConfigsCB,
+                            exportToolsDataCB, 
+                            exportIconsCB,
+                            exportAddOnsCB, 
+                            exportAddOnConfigsCB,
+                            dataTree != null ? new JScrollPane(dataTree) : null,
+                            passwordL,
+                            passwordTF
+                    };
+                    int opt = JOptionPane.showConfirmDialog(
+                            FrontEnd.this, 
+                            comps,
+                            "Export data",
+                            JOptionPane.OK_CANCEL_OPTION);
+                    if (opt == JOptionPane.OK_OPTION) {
+                        if (checkTreeManager != null) {
+                            TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
+                            if (checkedPaths != null) {
+                                for (TreePath tp : checkedPaths) {
+                                    DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
+                                    for (Object o : tp.getPath()) {
+                                        DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
+                                        Recognizable entry = nodeEntries.get(node);
+                                        if (entry != null) {
+                                            selectedEntries.add(entry.getId());
+                                        }
+                                        if (node.equals(lastNodeInPath)) {
+                                            selectDescenantEntries(node, selectedEntries);
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                    filterData(data, selectedEntries);
-                    File file = BackEnd.getInstance().exportData(
-                            data, 
-                            exportPreferencesCB.isSelected(), 
-                            exportGlobalConfigCB.isSelected(), 
-                            exportDataEntryConfigsCB.isSelected(), 
-                            exportToolsDataCB.isSelected(), 
-                            exportIconsCB.isSelected(), 
-                            exportAddOnsCB.isSelected(), 
-                            exportAddOnConfigsCB.isSelected(),
-                            new String(passwordTF.getPassword()));
-
-                    JComboBox cb = new JComboBox();
-                    for (TRANSFER_TYPE type : Transferrer.TRANSFER_TYPE.values()) {
-                        cb.addItem(type);
-                    }
-                    opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose export type", JOptionPane.OK_CANCEL_OPTION);
-                    if (opt == JOptionPane.OK_OPTION) {
-                        TRANSFER_TYPE type = (TRANSFER_TYPE) cb.getSelectedItem();
-                        Properties options = displayTransferOptionsDialog(type, DATA_OPERATION_TYPE.EXPORT);
-                        if (options != null) {
-                            if (options.isEmpty()) {
-                                throw new Exception("Export target options are missing! Export canceled.");
-                            } else {
-                                try {
-                                    Transferrer transferrer = Transferrer.getInstance(type);
-                                    byte[] exportedData = FSUtils.readFile(file);
-                                    transferrer.doExport(exportedData, options);
-                                    JOptionPane.showMessageDialog(FrontEnd.this, "Data have been successfully exported.");
-                                } catch (Exception ex) {
-                                    displayErrorMessage("Failed to export data!", ex);
+                        filterData(data, selectedEntries);
+                        File file = BackEnd.getInstance().exportData(
+                                data, 
+                                exportPreferencesCB.isSelected(), 
+                                exportGlobalConfigCB.isSelected(), 
+                                exportDataEntryConfigsCB.isSelected(), 
+                                exportToolsDataCB.isSelected(), 
+                                exportIconsCB.isSelected(), 
+                                exportAddOnsCB.isSelected(), 
+                                exportAddOnConfigsCB.isSelected(),
+                                new String(passwordTF.getPassword()));
+                        JComboBox cb = new JComboBox();
+                        for (TRANSFER_TYPE type : Transferrer.TRANSFER_TYPE.values()) {
+                            cb.addItem(type);
+                        }
+                        opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose export type", JOptionPane.OK_CANCEL_OPTION);
+                        if (opt == JOptionPane.OK_OPTION) {
+                            TRANSFER_TYPE type = (TRANSFER_TYPE) cb.getSelectedItem();
+                            Properties options = displayTransferOptionsDialog(type, DATA_OPERATION_TYPE.EXPORT);
+                            if (options != null) {
+                                if (options.isEmpty()) {
+                                    throw new Exception("Export target options are missing! Export canceled.");
+                                } else {
+                                    try {
+                                        Transferrer transferrer = Transferrer.getInstance(type);
+                                        byte[] exportedData = FSUtils.readFile(file);
+                                        transferrer.doExport(exportedData, options);
+                                        configsCB.setEditable(true);
+                                        c = new Component[] {
+                                                new JLabel("Data have been successfully exported."),
+                                                new JLabel("If you want to save this export configuration,"),
+                                                new JLabel("input a name for it (or select existing one to overwrite):"),
+                                                configsCB          
+                                        };
+                                        JOptionPane.showMessageDialog(FrontEnd.this, c);
+                                        if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
+                                            String configName = configsCB.getSelectedItem().toString();
+                                            options.setProperty(Constants.OPTION_CONFIG_NAME, configName);
+                                            options.setProperty(Constants.OPTION_TRANSFER_TYPE, type.name());
+                                            options.setProperty(Constants.OPTION_PROCESS_PREFERENCES, "" + exportPreferencesCB.isSelected());
+                                            options.setProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG, "" + exportGlobalConfigCB.isSelected());
+                                            options.setProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS, "" + exportDataEntryConfigsCB.isSelected());
+                                            options.setProperty(Constants.OPTION_PROCESS_TOOLS_DATA, "" + exportToolsDataCB.isSelected());
+                                            options.setProperty(Constants.OPTION_PROCESS_ICONS, "" + exportIconsCB.isSelected());
+                                            options.setProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS, "" + exportAddOnConfigsCB.isSelected());
+                                            String password = new String(passwordTF.getPassword());
+                                            if (!Validator.isNullOrBlank(password)) {
+                                                options.setProperty(Constants.OPTION_DATA_ENCRYPTION_PASSWORD, password);
+                                            }
+                                            if (!selectedEntries.isEmpty()) {
+                                                StringBuffer ids = new StringBuffer();
+                                                Iterator<UUID> it = selectedEntries.iterator();
+                                                while (it.hasNext()) {
+                                                    ids.append(it.next());
+                                                    if (it.hasNext()) {
+                                                        ids.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                                                    }
+                                                }
+                                                options.setProperty(Constants.OPTION_SELECTED_IDS, ids.toString());
+                                            }
+                                            BackEnd.getInstance().storeExportConfiguration(configName, options);
+                                        }
+                                    } catch (Exception ex) {
+                                        displayErrorMessage("Failed to export data!", ex);
+                                    }
                                 }
                             }
                         }
@@ -2033,24 +2113,24 @@ public class FrontEnd extends JFrame {
     };
     
     @SuppressWarnings("unchecked")
-    private void selectDescenantEntries(DefaultMutableTreeNode node, Collection<Recognizable> selectedEntries) {
+    private void selectDescenantEntries(DefaultMutableTreeNode node, Collection<UUID> selectedEntries) {
         if (node.getChildCount() != 0) {
             Enumeration<DefaultMutableTreeNode> childs = node.children();
             while (childs.hasMoreElements()) {
                 DefaultMutableTreeNode childNode = childs.nextElement();
                 Recognizable childEntry = nodeEntries.get(childNode);
                 if (childEntry != null) {
-                    selectedEntries.add(childEntry);
+                    selectedEntries.add(childEntry.getId());
                     selectDescenantEntries(childNode, selectedEntries);
                 }
             }
         }
     }
     
-    private void filterData(DataCategory data, Collection<Recognizable> filterEntries) {
+    private void filterData(DataCategory data, Collection<UUID> filterEntries) {
         Collection<Recognizable> initialData = new ArrayList<Recognizable>(data.getData());
         for (Recognizable r : initialData) {
-            if (!filterEntries.contains(r)) {
+            if (!filterEntries.contains(r.getId())) {
                 data.removeDataItem(r);
             } else if (r instanceof DataCategory) {
                 filterData((DataCategory) r, filterEntries);
