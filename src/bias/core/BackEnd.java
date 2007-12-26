@@ -1079,7 +1079,7 @@ public class BackEnd {
                             error = true;
                             break;
                         }
-                    } else if (jeName.matches(Constants.LIBS_FILE_PATH_PATTERN)) {
+                    } else if (jeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
                         type = 2;
                     }
                     if (type != 0) {
@@ -1243,7 +1243,7 @@ public class BackEnd {
                             error = true;
                             break;
                         }
-                    } else if (jeName.matches(Constants.LIBS_FILE_PATH_PATTERN)) {
+                    } else if (jeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
                         type = 2;
                     }
                     if (type != 0) {

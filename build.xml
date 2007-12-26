@@ -7,10 +7,15 @@
                    
      author: kion                                                                
      ====================================================================== -->
-<project name="Bias" default="BuildAndRunApp">
+	<project name="Bias" default="BuildAndRunApp">
 	<description>
     	Bias OpenSource Personal Information Manager Project
     </description>
+
+	<!-- =================================
+		  properties
+		 ================================= -->
+	<property file="build.properties" />
 
 	<!-- ================================= 
           target: RunApp              
@@ -38,22 +43,9 @@
 	</target>
 
 	<!-- ================================= 
-          target: BuildSDK              
+          target: Build_Extension_FilePack
          ================================= -->
-	<target name="BuildSDK" description="Bias SDK">
-		<delete>
-			<fileset dir="build">
-				<include name="bias-sdk.jar" />
-			</fileset>
-		</delete>
-		<jar basedir="bin" destfile="build/bias-sdk.jar" 
-			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/** bias/transfer/**" />
-	</target>
-
-	<!-- ================================= 
-          target: BuildAddOn_FilePack
-         ================================= -->
-	<target name="BuildAddOn_FilePack" description="FilePack Add-On" depends="prepare">
+	<target name="Build_Extension_FilePack" description="FilePack Add-On" depends="prepare_ext_build">
 		<copy todir="tmp/tmp">
 			<fileset dir="bin" includes="bias/extension/FilePack/** bias/res/FilePack/**" />
 		</copy>
@@ -65,10 +57,11 @@
 			</manifest>
 		</jar>	
 	</target>
+
 	<!-- ================================= 
-          target: BuildAddOn_Graffiti              
+          target: Build_Extension_Graffiti              
          ================================= -->
-	<target name="BuildAddOn_Graffiti" description="Graffiti Add-On" depends="prepare">
+	<target name="Build_Extension_Graffiti" description="Graffiti Add-On" depends="prepare_ext_build">
 		<copy todir="tmp/tmp">
 			<fileset dir="bin" includes="bias/extension/Graffiti/** bias/res/Graffiti/**" />
 		</copy>
@@ -80,10 +73,11 @@
 			</manifest>
 		</jar>	
 	</target>
+
 	<!-- ================================= 
-          target: BuildAddOn_HTMLPage              
+          target: Build_Extension_HTMLPage              
          ================================= -->
-	<target name="BuildAddOn_HTMLPage" description="HTMLPage Add-On" depends="prepare">
+	<target name="Build_Extension_HTMLPage" description="HTMLPage Add-On" depends="prepare_ext_build">
 		<copy todir="tmp/tmp">
 			<fileset dir="bin" includes="bias/extension/HTMLPage/** bias/res/HTMLPage/**" />
 		</copy>
@@ -95,10 +89,11 @@
 			</manifest>
 		</jar>	
 	</target>
+	
 	<!-- ================================= 
-          target: BuildAddOn_PlainText
+          target: Build_Extension_PlainText
          ================================= -->
-	<target name="BuildAddOn_PlainText" description="PlainText Add-On" depends="prepare">
+	<target name="Build_Extension_PlainText" description="PlainText Add-On" depends="prepare_ext_build">
 		<copy todir="tmp/tmp">
 			<fileset dir="bin" includes="bias/extension/PlainText/** bias/res/PlainText/**" />
 		</copy>
@@ -110,10 +105,11 @@
 			</manifest>
 		</jar>	
 	</target>
+
 	<!-- ================================= 
-          target: BuildAddOn_ToDoList
+          target: Build_Extension_ToDoList
          ================================= -->
-	<target name="BuildAddOn_ToDoList" description="ToDoList Add-On" depends="prepare">
+	<target name="Build_Extension_ToDoList" description="ToDoList Add-On" depends="prepare_ext_build">
 		<copy todir="tmp/tmp">
 			<fileset dir="bin" includes="bias/extension/ToDoList/** bias/res/ToDoList/**" />
 		</copy>
@@ -125,10 +121,11 @@
 			</manifest>
 		</jar>	
 	</target>
+	
 	<!-- ================================= 
-          target: BuildAddOn_SimpleSearch
+          target: Build_Extension_SimpleSearch
          ================================= -->
-	<target name="BuildAddOn_SimpleSearch" description="SimpleSearch Add-On" depends="prepare">
+	<target name="Build_Extension_SimpleSearch" description="SimpleSearch Add-On" depends="prepare_ext_build">
 		<copy todir="tmp/tmp">
 			<fileset dir="bin" includes="bias/extension/SimpleSearch/** bias/res/SimpleSearch/**" />
 		</copy>
@@ -140,10 +137,11 @@
 			</manifest>
 		</jar>	
 	</target>
+	
 	<!-- ================================= 
-          target: BuildAddOn_SimpleStats
+          target: Build_Extension_SimpleStats
          ================================= -->
-	<target name="BuildAddOn_SimpleStats" description="SimpleStats Add-On" depends="prepare">
+	<target name="Build_Extension_SimpleStats" description="SimpleStats Add-On" depends="prepare_ext_build">
 		<copy todir="tmp/tmp">
 			<fileset dir="bin" includes="bias/extension/SimpleStats/** bias/res/SimpleStats/**" />
 		</copy>
@@ -157,12 +155,213 @@
 	</target>
 
 	<!-- ================================= 
-          target: prepare
+          target: Build_LAF_JGLooksLAF             
+         ================================= -->
+	<target name="Build_LAF_JGLooksLAF" description="JGoodies Looks Look-And-Feel" depends="prepare_laf_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/laf/BiasJGLooksLAF/** bias/res/BiasJGLooksLAF/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasJGLooksLAF.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${lafLibsDir}">
+				<include name="looks.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/BiasJGLooksLAF.jar" includes="laf/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="BiasJGLooksLAF" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Build_LAF_LipstikLAF             
+         ================================= -->
+	<target name="Build_LAF_LipstikLAF" description="Lipstik Look-And-Feel" depends="prepare_laf_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/laf/BiasLipstikLAF/** bias/res/BiasLipstikLAF/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasLipstikLAF.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${lafLibsDir}">
+				<include name="lipstikLF.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/BiasLipstikLAF.jar" includes="laf/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="BiasLipstikLAF" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Build_LAF_TinyLAF             
+         ================================= -->
+	<target name="Build_LAF_TinyLAF" description="Tiny Look-And-Feel" depends="prepare_laf_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/laf/BiasTinyLAF/** bias/res/BiasTinyLAF/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasTinyLAF.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${lafLibsDir}">
+				<include name="tinylaf.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/BiasTinyLAF.jar" includes="laf/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="BiasTinyLAF" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Build_LAF_FHLAF             
+         ================================= -->
+	<target name="Build_LAF_FHLAF" description="FH Look-And-Feel" depends="prepare_laf_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/laf/BiasFHLAF/** bias/res/BiasFHLAF/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasFHLAF.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${lafLibsDir}">
+				<include name="fhlaf.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/BiasFHLAF.jar" includes="laf/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="BiasFHLAF" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Build_LAF_LiquidLAF             
+         ================================= -->
+	<target name="Build_LAF_LiquidLAF" description="Liquid Look-And-Feel" depends="prepare_laf_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/laf/BiasLiquidLAF/** bias/res/BiasLiquidLAF/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasLiquidLAF.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${lafLibsDir}">
+				<include name="liquidlnf.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/BiasLiquidLAF.jar" includes="laf/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="BiasLiquidLAF" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Build_LAF_SyntheticaLAF             
+         ================================= -->
+	<target name="Build_LAF_SyntheticaLAF" description="Synthetica Look-And-Feel" depends="prepare_laf_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/laf/BiasSyntheticaLAF/** bias/res/BiasSyntheticaLAF/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasSyntheticaLAF.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${lafLibsDir}">
+				<include name="synthetica.jar" />
+				<include name="syntheticaBlackMoon.jar" />
+				<include name="syntheticaSilverMoon.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/BiasSyntheticaLAF.jar" includes="laf/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="BiasSyntheticaLAF" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Build_LAF_InfoNodeLAF             
+         ================================= -->
+	<target name="Build_LAF_InfoNodeLAF" description="InfoNode Look-And-Feel" depends="prepare_laf_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/laf/BiasInfoNodeLAF/** bias/res/BiasInfoNodeLAF/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasInfoNodeLAF.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${lafLibsDir}">
+				<include name="ilf-gpl.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/BiasInfoNodeLAF.jar" includes="laf/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="BiasInfoNodeLAF" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Build_LAF_TonicSlimLAF             
+         ================================= -->
+	<target name="Build_LAF_TonicSlimLAF" description="Tonic Slim Look-And-Feel" depends="prepare_laf_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/laf/BiasTonicSlimLAF/** bias/res/BiasTonicSlimLAF/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasTonicSlimLAF.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${lafLibsDir}">
+				<include name="toniclf_slim.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/BiasTonicSlimLAF.jar" includes="laf/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="BiasTonicSlimLAF" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Build_LAF_SubstanceLAF             
+         ================================= -->
+	<target name="Build_LAF_SubstanceLAF" description="Substance Look-And-Feel" depends="prepare_laf_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/laf/BiasSubstanceLAF/** bias/res/BiasSubstanceLAF/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasSubstanceLAF.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${lafLibsDir}">
+				<include name="substance.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/BiasSubstanceLAF.jar" includes="laf/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="BiasSubstanceLAF" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Prepare Extension Build
     	 ================================= -->
-	<target name="prepare">
+	<target name="prepare_ext_build">
 		<deltree dir="tmp"/>
 		<mkdir dir="tmp/tmp"/>
 		<mkdir dir="tmp/ext"/>
+	</target>
+
+	<!-- ================================= 
+          target: Prepare LAF Build
+    	 ================================= -->
+	<target name="prepare_laf_build">
+		<deltree dir="tmp"/>
+		<mkdir dir="tmp/tmp"/>
+		<mkdir dir="tmp/laf"/>
+		<mkdir dir="tmp/lib"/>
 	</target>
 
 </project>

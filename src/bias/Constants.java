@@ -102,8 +102,8 @@ public class Constants {
     public static final String LAF_DIR_PACKAGE_NAME = LookAndFeel.class.getPackage().getName();
     public static final String ICON_FORMAT = "PNG";
     public static final String ICON_FILE_SUFFIX = ".png";
-    public static final String LIBS_DIR_PATTERN = "^libs/";
-    public static final String LIBS_FILE_PATH_PATTERN = "(?i)" + LIBS_DIR_PATTERN + "[^/]+\\.jar$";
+    public static final String LIB_DIR_PATTERN = "^lib/";
+    public static final String LIB_FILE_PATH_PATTERN = "(?i)" + LIB_DIR_PATTERN + "[^/]+\\.jar$";
     public static final String EXTENSION_CONFIG_FILE_SUFFIX = ".ext.conf";
     public static final String LAF_CONFIG_FILE_SUFFIX = ".laf.conf";
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
