@@ -28,9 +28,11 @@ public class Preferences {
     
     private Document prefs;
     
-    private Preferences() {}
+    private Preferences() {
+        // hidden default constructor
+    }
     
-    private void init() {
+    public void init() {
         prefs = BackEnd.getInstance().getPrefs();
         if (prefs != null) {
             Node rootNode = prefs.getFirstChild();

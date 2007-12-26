@@ -20,7 +20,7 @@ public class Constants {
     public static final File DATA_DIR = new File(ROOT_DIR, "data");
     public static final File ATTACHMENTS_DIR = new File(ROOT_DIR, "atts");
     public static final File ICONS_DIR = new File(ROOT_DIR, "icons");
-    public static final File TMP_DIR = new File(ROOT_DIR, "tmp");
+    public static final File TMP_DIR = new File(ROOT_DIR, ".tmp");
     
     static {
         if (!ADDONS_DIR.exists()) {
@@ -111,14 +111,26 @@ public class Constants {
     public static final String OPTION_TRANSFER_TYPE = "TRANSFER_TYPE";
     public static final String OPTION_CONFIG_NAME = "CONFIG_NAME";
     public static final String OPTION_SELECTED_IDS = "SELECTED_IDS";
-    public static final String OPTION_DATA_ENCRYPTION_PASSWORD = "DATA_ENCRYPTION_PASSWORD";
+    public static final String OPTION_DATA_PASSWORD = "DATA_PASSWORD";
     public static final String OPTION_PROCESS_PREFERENCES = "PROCESS_PREFERENCES";
+    public static final String OPTION_OVERWRITE_PREFERENCES = "OVERWRITE_PREFERENCES";
     public static final String OPTION_PROCESS_GLOBAL_CONFIG = "PROCESS_GLOBAL_CONFIG";
+    public static final String OPTION_OVERWRITE_GLOBAL_CONFIG = "OVERWRITE_GLOBAL_CONFIG";
+    public static final String OPTION_PROCESS_DATA_ENTRIES = "PROCESS_DATA_ENTRIES";
+    public static final String OPTION_OVERWRITE_DATA_ENTRIES = "OVERWRITE_DATA_ENTRIES";
+    public static final String OPTION_PROCESS_ONLY_RELATED_DATA_ENTRY_CONFIGS = "PROCESS_ONLY_RELATED_DATA_ENTRY_CONFIGS";
     public static final String OPTION_PROCESS_DATA_ENTRY_CONFIGS = "PROCESS_DATA_ENTRY_CONFIGS";
+    public static final String OPTION_OVERWRITE_DATA_ENTRY_CONFIGS = "OVERWRITE_DATA_ENTRY_CONFIGS";
     public static final String OPTION_PROCESS_TOOLS_DATA = "PROCESS_TOOLS_DATA";
+    public static final String OPTION_OVERWRITE_TOOLS_DATA = "OVERWRITE_TOOLS_DATA";
+    public static final String OPTION_PROCESS_ONLY_RELATED_ICONS = "PROCESS_ONLY_RELATED_ICONS";
     public static final String OPTION_PROCESS_ICONS = "PROCESS_ICONS";
+    public static final String OPTION_OVERWRITE_ICONS = "OVERWRITE_ICONS";
     public static final String OPTION_PROCESS_ADDONS = "PROCESS_ADDONS";
     public static final String OPTION_PROCESS_ADDON_CONFIGS = "PROCESS_ADDON_CONFIGS";
+    public static final String OPTION_PROCESS_IMPORT_EXPORT_CONFIGS = "PROCESS_IMPORT_EXPORT_CONFIGS";
+    public static final String OPTION_OVERWRITE_IMPORT_EXPORT_CONFIGS = "OVERWRITE_IMPORT_EXPORT_CONFIGS";
+    public static final String OPTION_OVERWRITE_ADDON_CONFIGS = "OVERWRITE_ADDON_CONFIGS";
     public static final String TRANSFER_OPTION_FILEPATH = "FILEPATH";
     public static final String TRANSFER_OPTION_SERVER = "SERVER";
     public static final String TRANSFER_OPTION_USERNAME = "USERNAME";

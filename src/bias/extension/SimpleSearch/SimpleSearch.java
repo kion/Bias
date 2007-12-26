@@ -140,9 +140,15 @@ public class SimpleSearch extends ToolExtension {
     public byte[] serializeSettings() throws Throwable {
         Properties props = new Properties();
         if (lastSearchCriteria != null) {
-            props.setProperty(PROP_SEARCH_EXPRESSION, lastSearchCriteria.getSearchExpression());
-            props.setProperty(PROP_IS_CASE_SENSITIVE, "" + lastSearchCriteria.isCaseSensitive());
-            props.setProperty(PROP_IS_REGULAR_EXPRESSION, "" + lastSearchCriteria.isRegularExpression());
+            if (!Validator.isNullOrBlank(lastSearchCriteria.getSearchExpression())) {
+                props.setProperty(PROP_SEARCH_EXPRESSION, lastSearchCriteria.getSearchExpression());
+            }
+            if (!Validator.isNullOrBlank(lastSearchCriteria.isCaseSensitive())) {
+                props.setProperty(PROP_IS_CASE_SENSITIVE, "" + lastSearchCriteria.isCaseSensitive());
+            }
+            if (!Validator.isNullOrBlank(lastSearchCriteria.isRegularExpression())) {
+                props.setProperty(PROP_IS_REGULAR_EXPRESSION, "" + lastSearchCriteria.isRegularExpression());
+            }
         }
         if (filterClass != null) {
             props.setProperty(PROP_FILTER_TYPE, filterClass.getName());
