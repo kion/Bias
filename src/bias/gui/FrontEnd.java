@@ -295,12 +295,12 @@ public class FrontEnd extends JFrame {
             displayErrorMessage(
                     "Bias has failed to load data!" + Constants.NEW_LINE +
                     "It seems that you have typed wrong password...", gse);
-            System.exit(1);
+            BackEnd.getInstance().shutdown(-1);
         } catch (Throwable t) {
             displayErrorMessage(
                     "Bias has failed to load data!" + Constants.NEW_LINE +
                     "Terminating...", t);
-            System.exit(1);
+            BackEnd.getInstance().shutdown(-1);
         }
     }
     
@@ -781,19 +781,13 @@ public class FrontEnd extends JFrame {
         if (Preferences.getInstance().autoSaveOnExit) {
             try {
                 store();
-                cleanUp();
-                System.exit(0);
+                BackEnd.getInstance().shutdown(0);
             } catch (Throwable t) {
                 displayErrorMessage("Failed to save!", t);
             }
         } else {
-            cleanUp();
-            System.exit(0);
+            BackEnd.getInstance().shutdown(0);
         }
-    }
-    
-    private void cleanUp() {
-        FSUtils.delete(Constants.TMP_DIR);
     }
     
     private void exit() {
@@ -810,8 +804,7 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             store();
-                            cleanUp();
-                            System.exit(0);
+                            BackEnd.getInstance().shutdown(0);
                         } catch (Throwable t) {
                             displayErrorMessage("Failed to save data!", t);
                         }

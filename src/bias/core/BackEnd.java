@@ -73,8 +73,6 @@ public class BackEnd {
     
     private static String password;
     
-    private static boolean passwordChanged = false;
-    
     private File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
 
     private static Collection<String> loadedExtensions;
@@ -182,16 +180,12 @@ public class BackEnd {
                 // changing encryption cipher
                 CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, password);
                 if (currentPassword != null) {
-                    // the rest of the data will be encrypted with new password automatically on save, 
-                    // but attachments and some settings have to be decrypted and encrypted back with new password explicitly
-                    // because they are stored on FS and not kept in memory like the rest of the data
+                    reencryptData();
                     reencryptAttachments();
                     reencryptSettings();
                 }
                 // now decryption cipher can be changed as well
                 CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, password);
-                // set password-changed flag
-                passwordChanged = true;
             } else {
                 throw new Exception("Current password is wrong!");
             }
@@ -823,7 +817,6 @@ public class BackEnd {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE), sw.getBuffer().toString().getBytes());
         // preferences file
         storePreferences();
-        passwordChanged = false;
     }
     
     public void storePreferences() throws Exception {
@@ -944,7 +937,7 @@ public class BackEnd {
                     // if yes - write changed data to file, otherwise - skip data writing
                     DataEntry oldDE = identifiedData.get(de.getId().toString());
                     byte[] entryData = de.getData();
-                    if (entryData != null && (oldDE == null || passwordChanged || !Arrays.equals(entryData, oldDE.getData()))) {
+                    if (entryData != null && (oldDE == null || !Arrays.equals(entryData, oldDE.getData()))) {
                         byte[] encryptedData = encrypt(entryData);
                         File deFile = new File(Constants.DATA_DIR, de.getId().toString() + Constants.DATA_FILE_SUFFIX);
                         FSUtils.writeFile(deFile, encryptedData);
@@ -1460,6 +1453,10 @@ public class BackEnd {
         return useCipher(cipher, decrypt(data));
     }
     
+    private static void reencryptData() throws Exception {
+        reencryptFiles(Constants.DATA_DIR.listFiles(FILE_FILTER_DATA));
+    }
+    
     private static void reencryptAttachments() throws Exception {
         for (File entryAttsDir : Constants.ATTACHMENTS_DIR.listFiles()) {
             File[] entryAtts = entryAttsDir.listFiles();
@@ -1556,6 +1553,31 @@ public class BackEnd {
         if (entryAttsDir.listFiles().length == 0) {
             entryAttsDir.delete();
         }
+    }
+    
+    public void shutdown(int code) {
+        try {
+            cleanUpOrphanedStuff(collectDataEntryIDs(data));
+            FSUtils.delete(Constants.TMP_DIR);
+        } catch (Throwable t) {
+            System.err.println("Error on shutdown: ");
+            t.printStackTrace(System.err);
+            code = -1;
+        } finally {
+            System.exit(code);
+        }
+    }
+    
+    private Collection<UUID> collectDataEntryIDs(DataCategory data) {
+        Collection<UUID> ids = new ArrayList<UUID>();
+        for (Recognizable r : data.getData()) {
+            if (r instanceof DataCategory) {
+                ids.addAll(collectDataEntryIDs((DataCategory) r));
+            } else if (r instanceof DataEntry) {
+                ids.add(r.getId());
+            }
+        }
+        return ids;
     }
     
     private void cleanUpOrphanedStuff(Collection<UUID> ids) throws Exception {
