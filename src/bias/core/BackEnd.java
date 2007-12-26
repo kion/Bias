@@ -183,9 +183,10 @@ public class BackEnd {
                 CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, password);
                 if (currentPassword != null) {
                     // the rest of the data will be encrypted with new password automatically on save, 
-                    // but attachments have to be decrypted and encrypted back with new password explicitly
+                    // but attachments and some settings have to be decrypted and encrypted back with new password explicitly
                     // because they are stored on FS and not kept in memory like the rest of the data
                     reencryptAttachments();
+                    reencryptSettings();
                 }
                 // now decryption cipher can be changed as well
                 CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, password);
@@ -1468,6 +1469,21 @@ public class BackEnd {
                 byte[] encryptedData = useCipher(CIPHER_ENCRYPT, decryptedData);
                 FSUtils.writeFile(entryAtt, encryptedData);
             }
+        }
+    }
+    
+    private static void reencryptSettings() throws Exception {
+        reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_DATA_ENTRY_CONFIG));
+        reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_ADDON_CONFIG));
+        reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_IMPORT_EXPORT_CONFIG));
+    }
+    
+    private static void reencryptFiles(File[] files) throws Exception {
+        for (File f : files) {
+            byte[] data = FSUtils.readFile(f);
+            byte[] decryptedData = useCipher(CIPHER_DECRYPT, data);
+            byte[] encryptedData = useCipher(CIPHER_ENCRYPT, decryptedData);
+            FSUtils.writeFile(f, encryptedData);
         }
     }
     
