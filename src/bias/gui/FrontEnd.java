@@ -1052,15 +1052,15 @@ public class FrontEnd extends JFrame {
             instance.getJPanel3().removeAll();
             instance.getJPanel3().setLayout(new BorderLayout());
             instance.getJPanel3().add(title, BorderLayout.CENTER);
-            JButton closeSearchResultsButton = new JButton(new AbstractAction(){
+            JButton closeButton = new JButton(new AbstractAction(){
                 private static final long serialVersionUID = 1L;
                 public void actionPerformed(ActionEvent e) {
                     instance.getJPanel2().setVisible(false);
                 }
             });
-            closeSearchResultsButton.setIcon(ICON_CLOSE);
-            closeSearchResultsButton.setPreferredSize(new Dimension(18, 18));
-            instance.getJPanel3().add(closeSearchResultsButton, BorderLayout.EAST);
+            closeButton.setIcon(ICON_CLOSE);
+            closeButton.setPreferredSize(new Dimension(18, 18));
+            instance.getJPanel3().add(closeButton, BorderLayout.EAST);
             instance.getJPanel3().setVisible(true);
             instance.getJPanel2().add(instance.getJPanel3(), BorderLayout.NORTH);
             instance.getJPanel2().add(new JScrollPane(content), BorderLayout.CENTER);
@@ -1068,7 +1068,13 @@ public class FrontEnd extends JFrame {
             instance.getJPanel2().setVisible(true);
         }
     }
-
+    
+    public static void hideBottomPanel() {
+        if (instance != null) {
+            instance.getJPanel2().setVisible(false);
+        }
+    }
+    
     public static void displayErrorMessage(Throwable t) {
         Launcher.hideSplash();
         JOptionPane.showMessageDialog(instance, t.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -1809,7 +1815,7 @@ public class FrontEnd extends JFrame {
         
         public void actionPerformed(ActionEvent evt) {
             try {
-                JComboBox configsCB = new JComboBox();
+                final JComboBox configsCB = new JComboBox();
                 configsCB.addItem(Constants.EMPTY_STR);
                 for (String configName : BackEnd.getInstance().getImportConfigurations().keySet()) {
                     configsCB.addItem(configName);
@@ -1823,60 +1829,91 @@ public class FrontEnd extends JFrame {
                 if (opt == JOptionPane.OK_OPTION) {
                     if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
                         try {
-                            Properties props = BackEnd.getInstance().getImportConfigurations().get(configsCB.getSelectedItem().toString());
-                            TRANSFER_TYPE type = TRANSFER_TYPE.valueOf(props.getProperty(Constants.OPTION_TRANSFER_TYPE));
-                            String password = props.getProperty(Constants.OPTION_DATA_PASSWORD);
-                            if (password == null) {
-                                password = Constants.EMPTY_STR;
-                            }
-                            Transferrer transferrer = Transferrer.getInstance(type);
-                            byte[] importedData = transferrer.doImport(props);
-                            if (importedData == null) {
-                                throw new Exception("Import source initialization failure!");
-                            } else {
-                                try {
-                                    File importDir = new File(Constants.TMP_DIR, "importDir");
-                                    FSUtils.delete(importDir);
-                                    ArchUtils.extract(importedData, importDir);
-                                    DataCategory data = BackEnd.getInstance().importData(
-                                            importDir, 
-                                            getVisualEntriesIDs(),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRIES)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_DATA_ENTRIES)), 
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_DATA_ENTRY_CONFIGS)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_PREFERENCES)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_GLOBAL_CONFIG)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_TOOLS_DATA)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ICONS)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_ICONS)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDONS)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_ADDON_CONFIGS)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS)),
-                                            Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_IMPORT_EXPORT_CONFIGS)),
-                                            props.getProperty(Constants.OPTION_DATA_PASSWORD));
-                                    if (!data.getData().isEmpty()) {
-                                        representData(data);
+                            final JPanel panel = new JPanel(new BorderLayout());
+                            final JLabel processLabel = new JLabel("Importing data...");
+                            panel.add(processLabel, BorderLayout.CENTER);
+                            final JLabel label = new JLabel("Import data");
+                            displayBottomPanel(label, panel);
+                            Thread importThread = new Thread(new Runnable(){
+                                public void run() {
+                                    try {
+                                        Properties props = BackEnd.getInstance().getImportConfigurations().get(configsCB.getSelectedItem().toString());
+                                        TRANSFER_TYPE type = TRANSFER_TYPE.valueOf(props.getProperty(Constants.OPTION_TRANSFER_TYPE));
+                                        String password = props.getProperty(Constants.OPTION_DATA_PASSWORD);
+                                        if (password == null) {
+                                            password = Constants.EMPTY_STR;
+                                        }
+                                        Transferrer transferrer = Transferrer.getInstance(type);
+                                        byte[] importedData = transferrer.doImport(props);
+                                        if (importedData == null) {
+                                            throw new Exception("Import source initialization failure!");
+                                        } else {
+                                            try {
+                                                File importDir = new File(Constants.TMP_DIR, "importDir");
+                                                FSUtils.delete(importDir);
+                                                ArchUtils.extract(importedData, importDir);
+                                                DataCategory data = BackEnd.getInstance().importData(
+                                                        importDir, 
+                                                        getVisualEntriesIDs(),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRIES)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_DATA_ENTRIES)), 
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_DATA_ENTRY_CONFIGS)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_PREFERENCES)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_GLOBAL_CONFIG)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_TOOLS_DATA)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ICONS)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_ICONS)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDONS)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_ADDON_CONFIGS)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_IMPORT_EXPORT_CONFIGS)),
+                                                        props.getProperty(Constants.OPTION_DATA_PASSWORD));
+                                                if (!data.getData().isEmpty()) {
+                                                    representData(data);
+                                                }
+                                                if (Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA))) {
+                                                    representTools();
+                                                }
+                                                if (Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES))) {
+                                                    Preferences.getInstance().init();
+                                                }
+                                                if (Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG))) {
+                                                    initGlobalSettings();
+                                                    applyGlobalSettings();
+                                                }
+                                                label.setText("<html><font color=green>Data import - Completed</font></html>");
+                                                processLabel.setText("Data have been successfully imported.");
+                                            } catch (GeneralSecurityException gse) {
+                                                processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
+                                                label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                                gse.printStackTrace(System.err);
+                                            } catch (Exception ex) {
+                                                String errMsg = "Failed to import data!";
+                                                if (ex.getMessage() != null) {
+                                                    errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                                                }
+                                                processLabel.setText(errMsg);
+                                                label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                                ex.printStackTrace(System.err);
+                                            }
+                                        }
+                                    } catch (Exception ex) {
+                                        String errMsg = "Failed to import data!";
+                                        if (ex.getMessage() != null) {
+                                            errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                                        }
+                                        processLabel.setText(errMsg);
+                                        label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                        ex.printStackTrace(System.err);
                                     }
-                                    if (Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA))) {
-                                        representTools();
-                                    }
-                                    if (Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES))) {
-                                        Preferences.getInstance().init();
-                                    }
-                                    if (Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG))) {
-                                        initGlobalSettings();
-                                        applyGlobalSettings();
-                                    }
-                                    displayMessage("Data have been successfully imported.");
-                                } catch (Exception ex) {
-                                    displayErrorMessage("Failed to import data!", ex);
                                 }
-                            }
+                            });
+                            importThread.start();
                         } catch (Exception ex) {
                             displayErrorMessage("Failed to import data!", ex);
                         }
@@ -1887,168 +1924,206 @@ public class FrontEnd extends JFrame {
                         }
                         opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose import type", JOptionPane.OK_CANCEL_OPTION);
                         if (opt == JOptionPane.OK_OPTION) {
-                            TRANSFER_TYPE type = (TRANSFER_TYPE) cb.getSelectedItem();
-                            Properties options = displayTransferOptionsDialog(type, DATA_OPERATION_TYPE.IMPORT);
+                            final TRANSFER_TYPE type = (TRANSFER_TYPE) cb.getSelectedItem();
+                            final Properties options = displayTransferOptionsDialog(type, DATA_OPERATION_TYPE.IMPORT);
                             if (options != null) {
                                 if (options.isEmpty()) {
                                     throw new Exception("Import source options are missing! Import canceled.");
                                 } else {
-                                    Transferrer transferrer = Transferrer.getInstance(type);
-                                    byte[] importedData = transferrer.doImport(options);
-                                    if (importedData == null) {
-                                        throw new Exception("Import source initialization failure!");
-                                    } else {
-                                        String oe = "Overwrite existing";
-                                        
-                                        JPanel p1 = new JPanel(new GridLayout(6, 2));
-                                        
-                                        JCheckBox importDataEntriesCB = new JCheckBox("Import data entries");
-                                        p1.add(importDataEntriesCB);
-                                        JCheckBox overwriteDataEntriesCB = new JCheckBox(oe);
-                                        p1.add(overwriteDataEntriesCB);
-                                        createDependentCheckboxChangeListener(importDataEntriesCB, overwriteDataEntriesCB);
+                                    final JPanel panel = new JPanel(new BorderLayout());
+                                    final DefaultListModel processModel = new DefaultListModel();
+                                    JList processList = new JList(processModel);
+                                    panel.add(processList, BorderLayout.CENTER);
+                                    final JLabel label = new JLabel("Data import");
+                                    processModel.addElement("Transferring data to be imported...");
+                                    displayBottomPanel(label, panel);
+                                    Thread importThread = new Thread(new Runnable(){
+                                        public void run() {
+                                            try {
+                                                Transferrer transferrer = Transferrer.getInstance(type);
+                                                byte[] importedData = transferrer.doImport(options);
+                                                if (importedData == null) {
+                                                    processModel.addElement("Import source initialization failure: no data have been retrieved!");
+                                                    label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                                } else {
+                                                    processModel.addElement("Data to be imported successfully transferred.");
+                                                    String oe = "Overwrite existing";
+                                                    
+                                                    JPanel p1 = new JPanel(new GridLayout(6, 2));
+                                                    
+                                                    JCheckBox importDataEntriesCB = new JCheckBox("Import data entries");
+                                                    p1.add(importDataEntriesCB);
+                                                    JCheckBox overwriteDataEntriesCB = new JCheckBox(oe);
+                                                    p1.add(overwriteDataEntriesCB);
+                                                    createDependentCheckboxChangeListener(importDataEntriesCB, overwriteDataEntriesCB);
 
-                                        JCheckBox importDataEntryConfigsCB = new JCheckBox("Import data entry configs"); 
-                                        p1.add(importDataEntryConfigsCB);
-                                        JCheckBox overwriteDataEntryConfigsCB = new JCheckBox(oe); 
-                                        p1.add(overwriteDataEntryConfigsCB);
-                                        createDependentCheckboxChangeListener(importDataEntryConfigsCB, overwriteDataEntryConfigsCB);
-                                        
-                                        JCheckBox importPreferencesCB = new JCheckBox("Import preferences");
-                                        p1.add(importPreferencesCB);
-                                        JCheckBox overwritePreferencesCB = new JCheckBox(oe); 
-                                        p1.add(overwritePreferencesCB);
-                                        createDependentCheckboxChangeListener(importPreferencesCB, overwritePreferencesCB);
-                                        
-                                        JCheckBox importGlobalConfigCB = new JCheckBox("Import global config"); 
-                                        p1.add(importGlobalConfigCB);
-                                        JCheckBox overwriteGlobalConfigCB = new JCheckBox(oe); 
-                                        p1.add(overwriteGlobalConfigCB);
-                                        createDependentCheckboxChangeListener(importGlobalConfigCB, overwriteGlobalConfigCB);
+                                                    JCheckBox importDataEntryConfigsCB = new JCheckBox("Import data entry configs"); 
+                                                    p1.add(importDataEntryConfigsCB);
+                                                    JCheckBox overwriteDataEntryConfigsCB = new JCheckBox(oe); 
+                                                    p1.add(overwriteDataEntryConfigsCB);
+                                                    createDependentCheckboxChangeListener(importDataEntryConfigsCB, overwriteDataEntryConfigsCB);
+                                                    
+                                                    JCheckBox importPreferencesCB = new JCheckBox("Import preferences");
+                                                    p1.add(importPreferencesCB);
+                                                    JCheckBox overwritePreferencesCB = new JCheckBox(oe); 
+                                                    p1.add(overwritePreferencesCB);
+                                                    createDependentCheckboxChangeListener(importPreferencesCB, overwritePreferencesCB);
+                                                    
+                                                    JCheckBox importGlobalConfigCB = new JCheckBox("Import global config"); 
+                                                    p1.add(importGlobalConfigCB);
+                                                    JCheckBox overwriteGlobalConfigCB = new JCheckBox(oe); 
+                                                    p1.add(overwriteGlobalConfigCB);
+                                                    createDependentCheckboxChangeListener(importGlobalConfigCB, overwriteGlobalConfigCB);
 
-                                        JCheckBox importToolsDataCB = new JCheckBox("Import tools data"); 
-                                        p1.add(importToolsDataCB);
-                                        JCheckBox overwriteToolsDataCB = new JCheckBox(oe); 
-                                        p1.add(overwriteToolsDataCB);
-                                        createDependentCheckboxChangeListener(importToolsDataCB, overwriteToolsDataCB);
-                                        
-                                        JCheckBox importIconsCB = new JCheckBox("Import icons");
-                                        p1.add(importIconsCB);
-                                        JCheckBox overwriteIconsCB = new JCheckBox(oe);
-                                        p1.add(overwriteIconsCB);
-                                        createDependentCheckboxChangeListener(importIconsCB, overwriteIconsCB);
-                                        
-                                        JCheckBox importAddOnsCB = new JCheckBox("Import addons (existing add-ons won't be overwritten)");
+                                                    JCheckBox importToolsDataCB = new JCheckBox("Import tools data"); 
+                                                    p1.add(importToolsDataCB);
+                                                    JCheckBox overwriteToolsDataCB = new JCheckBox(oe); 
+                                                    p1.add(overwriteToolsDataCB);
+                                                    createDependentCheckboxChangeListener(importToolsDataCB, overwriteToolsDataCB);
+                                                    
+                                                    JCheckBox importIconsCB = new JCheckBox("Import icons");
+                                                    p1.add(importIconsCB);
+                                                    JCheckBox overwriteIconsCB = new JCheckBox(oe);
+                                                    p1.add(overwriteIconsCB);
+                                                    createDependentCheckboxChangeListener(importIconsCB, overwriteIconsCB);
+                                                    
+                                                    JCheckBox importAddOnsCB = new JCheckBox("Import addons (existing add-ons won't be overwritten)");
 
-                                        JPanel p2 = new JPanel(new GridLayout(2, 2));
+                                                    JPanel p2 = new JPanel(new GridLayout(2, 2));
 
-                                        JCheckBox importAddOnConfigsCB = new JCheckBox("Import addon configs");
-                                        p2.add(importAddOnConfigsCB);
-                                        JCheckBox overwriteAddOnConfigsCB = new JCheckBox(oe);
-                                        p2.add(overwriteAddOnConfigsCB);
-                                        createDependentCheckboxChangeListener(importAddOnConfigsCB, overwriteAddOnConfigsCB);
-                                        
-                                        JCheckBox importImportExportConfigsCB = new JCheckBox("Import import/export cofigs");
-                                        p2.add(importImportExportConfigsCB);
-                                        JCheckBox overwriteImportExportConfigsCB = new JCheckBox(oe);
-                                        p2.add(overwriteImportExportConfigsCB);
-                                        createDependentCheckboxChangeListener(importImportExportConfigsCB, overwriteImportExportConfigsCB);
-                                        
-                                        JLabel passwordL = new JLabel("Decrypt imported data using password:");
-                                        JPasswordField passwordTF = new JPasswordField();
-                                        if (JOptionPane.showConfirmDialog(
-                                                FrontEnd.this,
-                                                new Component[] {
-                                                        p1,
-                                                        importAddOnsCB,
-                                                        p2,
-                                                        passwordL,
-                                                        passwordTF
-                                                },
-                                                "Import data", 
-                                                JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-                                            File importDir = new File(Constants.TMP_DIR, "importDir");
-                                            FSUtils.delete(importDir);
-                                            ArchUtils.extract(importedData, importDir);
-                                            String password = new String(passwordTF.getPassword());            
-                                            if (password != null) {
-                                                try {
-                                                    DataCategory data = BackEnd.getInstance().importData(
-                                                            importDir, 
-                                                            getVisualEntriesIDs(),
-                                                            importDataEntriesCB.isSelected(),
-                                                            overwriteDataEntriesCB.isSelected(),
-                                                            importDataEntryConfigsCB.isSelected(),
-                                                            overwriteDataEntryConfigsCB.isSelected(),
-                                                            importPreferencesCB.isSelected(),
-                                                            overwritePreferencesCB.isSelected(),
-                                                            importGlobalConfigCB.isSelected(),
-                                                            overwriteGlobalConfigCB.isSelected(),
-                                                            importToolsDataCB.isSelected(),
-                                                            overwriteToolsDataCB.isSelected(),
-                                                            importIconsCB.isSelected(),
-                                                            overwriteIconsCB.isSelected(),
-                                                            importAddOnsCB.isSelected(),
-                                                            importAddOnConfigsCB.isSelected(),
-                                                            overwriteAddOnConfigsCB.isSelected(),
-                                                            importImportExportConfigsCB.isSelected(),
-                                                            overwriteImportExportConfigsCB.isSelected(),
-                                                            password);
-                                                    if (!data.getData().isEmpty()) {
-                                                        representData(data);
-                                                    }
-                                                    if (importToolsDataCB.isSelected()) {
-                                                        representTools();
-                                                    }
-                                                    if (importPreferencesCB.isSelected()) {
-                                                        Preferences.getInstance().init();
-                                                    }
-                                                    if (importGlobalConfigCB.isSelected()) {
-                                                        initGlobalSettings();
-                                                        applyGlobalSettings();
-                                                    }
-                                                    configsCB.setEditable(true);
-                                                    c = new Component[] {
-                                                            new JLabel("Data have been successfully imported."),
-                                                            new JLabel("If you want to save this import configuration,"),
-                                                            new JLabel("input a name for it (or select existing one to overwrite):"),
-                                                            configsCB          
-                                                    };
-                                                    JOptionPane.showMessageDialog(FrontEnd.this, c);
-                                                    if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
-                                                        String configName = configsCB.getSelectedItem().toString();
-                                                        options.setProperty(Constants.OPTION_CONFIG_NAME, configName);
-                                                        options.setProperty(Constants.OPTION_TRANSFER_TYPE, type.name());
-                                                        
-                                                        options.setProperty(Constants.OPTION_PROCESS_DATA_ENTRIES, "" + importDataEntriesCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_OVERWRITE_DATA_ENTRIES, "" + overwriteDataEntriesCB.isSelected()); 
-                                                        options.setProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS, "" + importDataEntryConfigsCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_OVERWRITE_DATA_ENTRY_CONFIGS, "" + overwriteDataEntryConfigsCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_PROCESS_PREFERENCES, "" + importPreferencesCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_OVERWRITE_PREFERENCES, "" + overwritePreferencesCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG, "" + importGlobalConfigCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_OVERWRITE_GLOBAL_CONFIG, "" + overwriteGlobalConfigCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_PROCESS_TOOLS_DATA, "" + importToolsDataCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_OVERWRITE_TOOLS_DATA, "" + overwriteToolsDataCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_PROCESS_ICONS, "" + importIconsCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_OVERWRITE_ICONS, "" + overwriteIconsCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_PROCESS_ADDONS, "" + importAddOnsCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS, "" + importAddOnConfigsCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_OVERWRITE_ADDON_CONFIGS, "" + overwriteAddOnConfigsCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS, "" + importImportExportConfigsCB.isSelected());
-                                                        options.setProperty(Constants.OPTION_OVERWRITE_IMPORT_EXPORT_CONFIGS, "" + overwriteImportExportConfigsCB.isSelected());
+                                                    JCheckBox importAddOnConfigsCB = new JCheckBox("Import addon configs");
+                                                    p2.add(importAddOnConfigsCB);
+                                                    JCheckBox overwriteAddOnConfigsCB = new JCheckBox(oe);
+                                                    p2.add(overwriteAddOnConfigsCB);
+                                                    createDependentCheckboxChangeListener(importAddOnConfigsCB, overwriteAddOnConfigsCB);
+                                                    
+                                                    JCheckBox importImportExportConfigsCB = new JCheckBox("Import import/export cofigs");
+                                                    p2.add(importImportExportConfigsCB);
+                                                    JCheckBox overwriteImportExportConfigsCB = new JCheckBox(oe);
+                                                    p2.add(overwriteImportExportConfigsCB);
+                                                    createDependentCheckboxChangeListener(importImportExportConfigsCB, overwriteImportExportConfigsCB);
+                                                    
+                                                    JLabel passwordL = new JLabel("Decrypt imported data using password:");
+                                                    JPasswordField passwordTF = new JPasswordField();
+                                                    if (JOptionPane.showConfirmDialog(
+                                                            FrontEnd.this,
+                                                            new Component[] {
+                                                                    p1,
+                                                                    importAddOnsCB,
+                                                                    p2,
+                                                                    passwordL,
+                                                                    passwordTF
+                                                            },
+                                                            "Import data", 
+                                                            JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
+                                                        hideBottomPanel();
+                                                    } else {    
+                                                        processModel.addElement("Extracting data to be imported...");
+                                                        File importDir = new File(Constants.TMP_DIR, "importDir");
+                                                        FSUtils.delete(importDir);
+                                                        ArchUtils.extract(importedData, importDir);
+                                                        processModel.addElement("Data to be imported have been successfully extracted.");
+                                                        String password = new String(passwordTF.getPassword());            
+                                                        try {
+                                                            DataCategory data = BackEnd.getInstance().importData(
+                                                                    importDir, 
+                                                                    getVisualEntriesIDs(),
+                                                                    importDataEntriesCB.isSelected(),
+                                                                    overwriteDataEntriesCB.isSelected(),
+                                                                    importDataEntryConfigsCB.isSelected(),
+                                                                    overwriteDataEntryConfigsCB.isSelected(),
+                                                                    importPreferencesCB.isSelected(),
+                                                                    overwritePreferencesCB.isSelected(),
+                                                                    importGlobalConfigCB.isSelected(),
+                                                                    overwriteGlobalConfigCB.isSelected(),
+                                                                    importToolsDataCB.isSelected(),
+                                                                    overwriteToolsDataCB.isSelected(),
+                                                                    importIconsCB.isSelected(),
+                                                                    overwriteIconsCB.isSelected(),
+                                                                    importAddOnsCB.isSelected(),
+                                                                    importAddOnConfigsCB.isSelected(),
+                                                                    overwriteAddOnConfigsCB.isSelected(),
+                                                                    importImportExportConfigsCB.isSelected(),
+                                                                    overwriteImportExportConfigsCB.isSelected(),
+                                                                    password);
+                                                            if (!data.getData().isEmpty()) {
+                                                                representData(data);
+                                                            }
+                                                            if (importToolsDataCB.isSelected()) {
+                                                                representTools();
+                                                            }
+                                                            if (importPreferencesCB.isSelected()) {
+                                                                Preferences.getInstance().init();
+                                                            }
+                                                            if (importGlobalConfigCB.isSelected()) {
+                                                                initGlobalSettings();
+                                                                applyGlobalSettings();
+                                                            }
+                                                            configsCB.setEditable(true);
+                                                            label.setText("<html><font color=green>Data import - Completed</font></html>");
+                                                            processModel.addElement("Data have been successfully imported.");
+                                                            Component[] c = new Component[] {
+                                                                    new JLabel("Data have been successfully imported."),
+                                                                    new JLabel("If you want to save this import configuration,"),
+                                                                    new JLabel("input a name for it (or select existing one to overwrite):"),
+                                                                    configsCB          
+                                                            };
+                                                            JOptionPane.showMessageDialog(FrontEnd.this, c);
+                                                            if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
+                                                                String configName = configsCB.getSelectedItem().toString();
+                                                                options.setProperty(Constants.OPTION_CONFIG_NAME, configName);
+                                                                options.setProperty(Constants.OPTION_TRANSFER_TYPE, type.name());
+                                                                
+                                                                options.setProperty(Constants.OPTION_PROCESS_DATA_ENTRIES, "" + importDataEntriesCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_OVERWRITE_DATA_ENTRIES, "" + overwriteDataEntriesCB.isSelected()); 
+                                                                options.setProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS, "" + importDataEntryConfigsCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_OVERWRITE_DATA_ENTRY_CONFIGS, "" + overwriteDataEntryConfigsCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_PROCESS_PREFERENCES, "" + importPreferencesCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_OVERWRITE_PREFERENCES, "" + overwritePreferencesCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG, "" + importGlobalConfigCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_OVERWRITE_GLOBAL_CONFIG, "" + overwriteGlobalConfigCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_PROCESS_TOOLS_DATA, "" + importToolsDataCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_OVERWRITE_TOOLS_DATA, "" + overwriteToolsDataCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_PROCESS_ICONS, "" + importIconsCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_OVERWRITE_ICONS, "" + overwriteIconsCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_PROCESS_ADDONS, "" + importAddOnsCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS, "" + importAddOnConfigsCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_OVERWRITE_ADDON_CONFIGS, "" + overwriteAddOnConfigsCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS, "" + importImportExportConfigsCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_OVERWRITE_IMPORT_EXPORT_CONFIGS, "" + overwriteImportExportConfigsCB.isSelected());
 
-                                                        if (!Validator.isNullOrBlank(password)) {
-                                                            options.setProperty(Constants.OPTION_DATA_PASSWORD, password);
+                                                                if (!Validator.isNullOrBlank(password)) {
+                                                                    options.setProperty(Constants.OPTION_DATA_PASSWORD, password);
+                                                                }
+                                                                BackEnd.getInstance().storeImportConfiguration(configName, options);
+                                                                processModel.addElement("Import configuration stored as '" + configName + "'");
+                                                            }
+                                                        } catch (GeneralSecurityException gse) {
+                                                            processModel.addElement("Failed to import data!");
+                                                            processModel.addElement("Error details: It seems that you have typed wrong password...");
+                                                            label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                                            gse.printStackTrace(System.err);
+                                                        } catch (Exception ex) {
+                                                            processModel.addElement("Failed to import data!");
+                                                            if (ex.getMessage() != null) {
+                                                                processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
+                                                            }
+                                                            label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                                            ex.printStackTrace(System.err);
                                                         }
-                                                        BackEnd.getInstance().storeImportConfiguration(configName, options);
                                                     }
-                                                } catch (Exception ex) {
-                                                    displayErrorMessage("Failed to import data!", ex);
                                                 }
+                                            } catch (Exception ex) {
+                                                processModel.addElement("Failed to import data!");
+                                                if (ex.getMessage() != null) {
+                                                    processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
+                                                }
+                                                label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                                ex.printStackTrace(System.err);
                                             }
                                         }
-                                    }
+                                    });
+                                    importThread.start();
                                 }
                             }
                         }
@@ -2060,12 +2135,14 @@ public class FrontEnd extends JFrame {
         }
     };
     
+    private File exportFile;
+    private int opt;
     private Action exportAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent e) {
             try {
-                JComboBox configsCB = new JComboBox();
+                final JComboBox configsCB = new JComboBox();
                 configsCB.addItem(Constants.EMPTY_STR);
                 for (String configName : BackEnd.getInstance().getExportConfigurations().keySet()) {
                     configsCB.addItem(configName);
@@ -2075,68 +2152,85 @@ public class FrontEnd extends JFrame {
                         new JLabel("or leave just press enter for custom export."),
                         configsCB          
                 };
-                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Import", JOptionPane.OK_CANCEL_OPTION);
+                opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Export", JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
-                    DataCategory data = collectData();
-                    Collection<UUID> selectedEntries = new LinkedList<UUID>();
+                    final DataCategory data = collectData();
+                    final Collection<UUID> selectedEntries = new LinkedList<UUID>();
 
                     if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
                         try {
-                            Properties props = BackEnd.getInstance().getExportConfigurations().get(configsCB.getSelectedItem().toString());
-                            String idsStr = props.getProperty(Constants.OPTION_SELECTED_IDS);
-                            if (!Validator.isNullOrBlank(idsStr)) {
-                                String[] ids = idsStr.split(Constants.PROPERTY_VALUES_SEPARATOR);
-                                for (String id : ids) {
-                                    selectedEntries.add(UUID.fromString(id));
+                            final JPanel panel = new JPanel(new BorderLayout());
+                            final JLabel processLabel = new JLabel("Exporting data...");
+                            panel.add(processLabel, BorderLayout.CENTER);
+                            final JLabel label = new JLabel("Export data");
+                            displayBottomPanel(label, panel);
+                            Thread exportThread = new Thread(new Runnable(){
+                                public void run() {
+                                    try {
+                                        final Properties props = BackEnd.getInstance().getExportConfigurations().get(configsCB.getSelectedItem().toString());
+                                        String idsStr = props.getProperty(Constants.OPTION_SELECTED_IDS);
+                                        if (!Validator.isNullOrBlank(idsStr)) {
+                                            String[] ids = idsStr.split(Constants.PROPERTY_VALUES_SEPARATOR);
+                                            for (String id : ids) {
+                                                selectedEntries.add(UUID.fromString(id));
+                                            }
+                                        }
+                                        filterData(data, selectedEntries);
+                                        final String password = props.getProperty(Constants.OPTION_DATA_PASSWORD) != null ? props.getProperty(Constants.OPTION_DATA_PASSWORD) : Constants.EMPTY_STR;
+                                        File file = BackEnd.getInstance().exportData(
+                                                data, 
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES)), 
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG)), 
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS)), 
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ONLY_RELATED_DATA_ENTRY_CONFIGS)), 
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA)), 
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ICONS)), 
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ONLY_RELATED_ICONS)), 
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDONS)), 
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS)),
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS)),
+                                                password);
+                                        TRANSFER_TYPE type = TRANSFER_TYPE.valueOf(props.getProperty(Constants.OPTION_TRANSFER_TYPE));
+                                        Transferrer transferrer = Transferrer.getInstance(type);
+                                        byte[] exportedData = FSUtils.readFile(file);
+                                        transferrer.doExport(exportedData, props);
+                                        label.setText("<html><font color=green>Data export - Completed</font></html>");
+                                        processLabel.setText("Data have been successfully exported.");
+                                    } catch (Exception ex) {
+                                        if (ex.getMessage() != null) {
+                                            processLabel.setText("<html><font color=red>Failed to export data! Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage() + "</font></html>");
+                                        }
+                                        ex.printStackTrace(System.err);
+                                    }
                                 }
-                            }
-                            filterData(data, selectedEntries);
-                            String password = props.getProperty(Constants.OPTION_DATA_PASSWORD);
-                            if (password == null) {
-                                password = Constants.EMPTY_STR;
-                            }
-                            File file = BackEnd.getInstance().exportData(
-                                    data, 
-                                    Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES)), 
-                                    Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG)), 
-                                    Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS)), 
-                                    Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ONLY_RELATED_DATA_ENTRY_CONFIGS)), 
-                                    Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA)), 
-                                    Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ICONS)), 
-                                    Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ONLY_RELATED_ICONS)), 
-                                    Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDONS)), 
-                                    Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS)),
-                                    Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS)),
-                                    password);
-                            TRANSFER_TYPE type = TRANSFER_TYPE.valueOf(props.getProperty(Constants.OPTION_TRANSFER_TYPE));
-                            Transferrer transferrer = Transferrer.getInstance(type);
-                            byte[] exportedData = FSUtils.readFile(file);
-                            transferrer.doExport(exportedData, props);
-                            JOptionPane.showMessageDialog(FrontEnd.this, "Data have been successfully exported.");
+                            });
+                            exportThread.start();
                         } catch (Exception ex) {
                             displayErrorMessage("Failed to export data!", ex);
                         }
                     } else {
                         JTree dataTree = null;
-                        CheckTreeManager checkTreeManager = null;
+                        final CheckTreeManager checkTreeManager;
                         if (!data.getData().isEmpty()) {
                             dataTree = buildDataTree(data);
                             checkTreeManager = new CheckTreeManager(dataTree);
+                        } else {
+                            checkTreeManager = null;
                         }
-                        JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
-                        JCheckBox exportGlobalConfigCB = new JCheckBox("Export global config"); 
-                        JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
-                        JCheckBox exportOnlyRelatedDataEntryConfigsCB = new JCheckBox("Export data entry configs related to exported data entries only"); 
+                        final JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
+                        final JCheckBox exportGlobalConfigCB = new JCheckBox("Export global config"); 
+                        final JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
+                        final JCheckBox exportOnlyRelatedDataEntryConfigsCB = new JCheckBox("Export data entry configs related to exported data entries only"); 
                         createDependentCheckboxChangeListener(exportDataEntryConfigsCB, exportOnlyRelatedDataEntryConfigsCB);
-                        JCheckBox exportToolsDataCB = new JCheckBox("Export tools data"); 
-                        JCheckBox exportIconsCB = new JCheckBox("Export icons");
-                        JCheckBox exportOnlyRelatedIconsCB = new JCheckBox("Export icons related to exported data entries only");
+                        final JCheckBox exportToolsDataCB = new JCheckBox("Export tools data"); 
+                        final JCheckBox exportIconsCB = new JCheckBox("Export icons");
+                        final JCheckBox exportOnlyRelatedIconsCB = new JCheckBox("Export icons related to exported data entries only");
                         createDependentCheckboxChangeListener(exportIconsCB, exportOnlyRelatedIconsCB);
-                        JCheckBox exportAddOnsCB = new JCheckBox("Export addons"); 
-                        JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
-                        JCheckBox exportImportExportConfigsCB = new JCheckBox("Export import/export configs");
-                        JLabel passwordL = new JLabel("Encrypt exported data using password:");
-                        JPasswordField passwordTF = new JPasswordField();
+                        final JCheckBox exportAddOnsCB = new JCheckBox("Export addons"); 
+                        final JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
+                        final JCheckBox exportImportExportConfigsCB = new JCheckBox("Export import/export configs");
+                        final JLabel passwordL = new JLabel("Encrypt exported data using password:");
+                        final JPasswordField passwordTF = new JPasswordField();
                         Component[] comps = new Component[]{
                                 exportPreferencesCB, 
                                 exportGlobalConfigCB, 
@@ -2158,99 +2252,133 @@ public class FrontEnd extends JFrame {
                                 "Export data",
                                 JOptionPane.OK_CANCEL_OPTION);
                         if (opt == JOptionPane.OK_OPTION) {
-                            if (checkTreeManager != null) {
-                                TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
-                                if (checkedPaths != null) {
-                                    for (TreePath tp : checkedPaths) {
-                                        DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
-                                        for (Object o : tp.getPath()) {
-                                            DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
-                                            Recognizable entry = nodeEntries.get(node);
-                                            if (entry != null) {
-                                                selectedEntries.add(entry.getId());
-                                            }
-                                            if (node.equals(lastNodeInPath)) {
-                                                selectDescenantEntries(node, selectedEntries);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            filterData(data, selectedEntries);
-                            File file = BackEnd.getInstance().exportData(
-                                    data, 
-                                    exportPreferencesCB.isSelected(), 
-                                    exportGlobalConfigCB.isSelected(), 
-                                    exportDataEntryConfigsCB.isSelected(),
-                                    exportOnlyRelatedDataEntryConfigsCB.isSelected(),
-                                    exportToolsDataCB.isSelected(), 
-                                    exportIconsCB.isSelected(), 
-                                    exportOnlyRelatedIconsCB.isSelected(),
-                                    exportAddOnsCB.isSelected(), 
-                                    exportAddOnConfigsCB.isSelected(),
-                                    exportImportExportConfigsCB.isSelected(),
-                                    new String(passwordTF.getPassword()));
-                            JComboBox cb = new JComboBox();
-                            for (TRANSFER_TYPE type : Transferrer.TRANSFER_TYPE.values()) {
-                                cb.addItem(type);
-                            }
-                            opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose export type", JOptionPane.OK_CANCEL_OPTION);
-                            if (opt == JOptionPane.OK_OPTION) {
-                                TRANSFER_TYPE type = (TRANSFER_TYPE) cb.getSelectedItem();
-                                Properties options = displayTransferOptionsDialog(type, DATA_OPERATION_TYPE.EXPORT);
-                                if (options != null) {
-                                    if (options.isEmpty()) {
-                                        throw new Exception("Export target options are missing! Export canceled.");
-                                    } else {
-                                        try {
-                                            Transferrer transferrer = Transferrer.getInstance(type);
-                                            byte[] exportedData = FSUtils.readFile(file);
-                                            transferrer.doExport(exportedData, options);
-                                            configsCB.setEditable(true);
-                                            c = new Component[] {
-                                                    new JLabel("Data have been successfully exported."),
-                                                    new JLabel("If you want to save this export configuration,"),
-                                                    new JLabel("input a name for it (or select existing one to overwrite):"),
-                                                    configsCB          
-                                            };
-                                            JOptionPane.showMessageDialog(FrontEnd.this, c);
-                                            if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
-                                                String configName = configsCB.getSelectedItem().toString();
-                                                options.setProperty(Constants.OPTION_CONFIG_NAME, configName);
-                                                options.setProperty(Constants.OPTION_TRANSFER_TYPE, type.name());
-                                                options.setProperty(Constants.OPTION_PROCESS_PREFERENCES, "" + exportPreferencesCB.isSelected());
-                                                options.setProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG, "" + exportGlobalConfigCB.isSelected());
-                                                options.setProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS, "" + exportDataEntryConfigsCB.isSelected());
-                                                options.setProperty(Constants.OPTION_PROCESS_ONLY_RELATED_DATA_ENTRY_CONFIGS, "" + exportOnlyRelatedDataEntryConfigsCB.isSelected());
-                                                options.setProperty(Constants.OPTION_PROCESS_TOOLS_DATA, "" + exportToolsDataCB.isSelected());
-                                                options.setProperty(Constants.OPTION_PROCESS_ICONS, "" + exportIconsCB.isSelected());
-                                                options.setProperty(Constants.OPTION_PROCESS_ONLY_RELATED_ICONS, "" + exportOnlyRelatedIconsCB.isSelected());
-                                                options.setProperty(Constants.OPTION_PROCESS_ADDONS, "" + exportAddOnsCB.isSelected());
-                                                options.setProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS, "" + exportAddOnConfigsCB.isSelected());
-                                                options.setProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS, "" + exportImportExportConfigsCB.isSelected());
-                                                String password = new String(passwordTF.getPassword());
-                                                if (!Validator.isNullOrBlank(password)) {
-                                                    options.setProperty(Constants.OPTION_DATA_PASSWORD, password);
-                                                }
-                                                if (!selectedEntries.isEmpty()) {
-                                                    StringBuffer ids = new StringBuffer();
-                                                    Iterator<UUID> it = selectedEntries.iterator();
-                                                    while (it.hasNext()) {
-                                                        ids.append(it.next());
-                                                        if (it.hasNext()) {
-                                                            ids.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                            final JPanel panel = new JPanel(new BorderLayout());
+                            final DefaultListModel processModel = new DefaultListModel();
+                            JList processList = new JList(processModel);
+                            panel.add(processList, BorderLayout.CENTER);
+                            final JLabel label = new JLabel("Data export");
+                            processModel.addElement("Compressing data to be exported...");
+                            displayBottomPanel(label, panel);
+                            Thread exportThread = new Thread(new Runnable(){
+                                public void run() {
+                                    try {
+                                        if (checkTreeManager != null) {
+                                            TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
+                                            if (checkedPaths != null) {
+                                                for (TreePath tp : checkedPaths) {
+                                                    DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
+                                                    for (Object o : tp.getPath()) {
+                                                        DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
+                                                        Recognizable entry = nodeEntries.get(node);
+                                                        if (entry != null) {
+                                                            selectedEntries.add(entry.getId());
+                                                        }
+                                                        if (node.equals(lastNodeInPath)) {
+                                                            selectDescenantEntries(node, selectedEntries);
                                                         }
                                                     }
-                                                    options.setProperty(Constants.OPTION_SELECTED_IDS, ids.toString());
                                                 }
-                                                BackEnd.getInstance().storeExportConfiguration(configName, options);
                                             }
-                                        } catch (Exception ex) {
-                                            displayErrorMessage("Failed to export data!", ex);
                                         }
+                                        filterData(data, selectedEntries);
+                                        exportFile = BackEnd.getInstance().exportData(
+                                                data, 
+                                                exportPreferencesCB.isSelected(), 
+                                                exportGlobalConfigCB.isSelected(), 
+                                                exportDataEntryConfigsCB.isSelected(),
+                                                exportOnlyRelatedDataEntryConfigsCB.isSelected(),
+                                                exportToolsDataCB.isSelected(), 
+                                                exportIconsCB.isSelected(), 
+                                                exportOnlyRelatedIconsCB.isSelected(),
+                                                exportAddOnsCB.isSelected(), 
+                                                exportAddOnConfigsCB.isSelected(),
+                                                exportImportExportConfigsCB.isSelected(),
+                                                new String(passwordTF.getPassword()));
+                                        processModel.addElement("Data to be exported have been successfully compressed.");
+                                        JComboBox cb = new JComboBox();
+                                        for (TRANSFER_TYPE type : Transferrer.TRANSFER_TYPE.values()) {
+                                            cb.addItem(type);
+                                        }
+                                        opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose export type", JOptionPane.OK_CANCEL_OPTION);
+                                        if (opt != JOptionPane.OK_OPTION) {
+                                            hideBottomPanel();
+                                        } else {    
+                                            TRANSFER_TYPE type = (TRANSFER_TYPE) cb.getSelectedItem();
+                                            final Properties options = displayTransferOptionsDialog(type, DATA_OPERATION_TYPE.EXPORT);
+                                            if (options != null) {
+                                                if (options.isEmpty()) {
+                                                    hideBottomPanel();
+                                                    throw new Exception("Export target options are missing! Export canceled.");
+                                                } else {
+                                                    try {
+                                                        final Transferrer transferrer = Transferrer.getInstance(type);
+                                                        final byte[] exportedData = FSUtils.readFile(exportFile);
+                                                        processModel.addElement("Data is being transferred...");
+                                                        transferrer.doExport(exportedData, options);
+                                                        label.setText("<html><font color=green>Data export - Completed</font></html>");
+                                                        processModel.addElement("Data have been successfully transferred.");
+                                                        configsCB.setEditable(true);
+                                                        Component[] c = new Component[] {
+                                                                new JLabel("Data have been successfully exported."),
+                                                                new JLabel("If you want to save this export configuration,"),
+                                                                new JLabel("input a name for it (or select existing one to overwrite):"),
+                                                                configsCB          
+                                                        };
+                                                        JOptionPane.showMessageDialog(FrontEnd.this, c);
+                                                        if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
+                                                            String configName = configsCB.getSelectedItem().toString();
+                                                            options.setProperty(Constants.OPTION_CONFIG_NAME, configName);
+                                                            options.setProperty(Constants.OPTION_TRANSFER_TYPE, type.name());
+                                                            options.setProperty(Constants.OPTION_PROCESS_PREFERENCES, "" + exportPreferencesCB.isSelected());
+                                                            options.setProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG, "" + exportGlobalConfigCB.isSelected());
+                                                            options.setProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS, "" + exportDataEntryConfigsCB.isSelected());
+                                                            options.setProperty(Constants.OPTION_PROCESS_ONLY_RELATED_DATA_ENTRY_CONFIGS, "" + exportOnlyRelatedDataEntryConfigsCB.isSelected());
+                                                            options.setProperty(Constants.OPTION_PROCESS_TOOLS_DATA, "" + exportToolsDataCB.isSelected());
+                                                            options.setProperty(Constants.OPTION_PROCESS_ICONS, "" + exportIconsCB.isSelected());
+                                                            options.setProperty(Constants.OPTION_PROCESS_ONLY_RELATED_ICONS, "" + exportOnlyRelatedIconsCB.isSelected());
+                                                            options.setProperty(Constants.OPTION_PROCESS_ADDONS, "" + exportAddOnsCB.isSelected());
+                                                            options.setProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS, "" + exportAddOnConfigsCB.isSelected());
+                                                            options.setProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS, "" + exportImportExportConfigsCB.isSelected());
+                                                            String password = new String(passwordTF.getPassword());
+                                                            if (!Validator.isNullOrBlank(password)) {
+                                                                options.setProperty(Constants.OPTION_DATA_PASSWORD, password);
+                                                            }
+                                                            if (!selectedEntries.isEmpty()) {
+                                                                StringBuffer ids = new StringBuffer();
+                                                                Iterator<UUID> it = selectedEntries.iterator();
+                                                                while (it.hasNext()) {
+                                                                    ids.append(it.next());
+                                                                    if (it.hasNext()) {
+                                                                        ids.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                                                                    }
+                                                                }
+                                                                options.setProperty(Constants.OPTION_SELECTED_IDS, ids.toString());
+                                                            }
+                                                            BackEnd.getInstance().storeExportConfiguration(configName, options);
+                                                            processModel.addElement("Export configuration stored as '" + configName + "'");
+                                                        }
+                                                    } catch (Exception ex) {
+                                                        processModel.addElement("Failed to export data!");
+                                                        if (ex.getMessage() != null) {
+                                                            processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
+                                                        }
+                                                        label.setText("<html><font color=red>Data export - Failed</font></html>");
+                                                        ex.printStackTrace(System.err);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } catch (Exception ex) {
+                                        processModel.addElement("Failed to export data!");
+                                        if (ex.getMessage() != null) {
+                                            processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
+                                        }
+                                        label.setText("<html><font color=red>Data export - Failed</font></html>");
+                                        ex.printStackTrace(System.err);
                                     }
                                 }
-                            }
+                            });
+                            exportThread.start();
                         }
                     }
                 }
@@ -2347,6 +2475,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    // TODO [P2] add special variables syntax ? (to be able to backup using date-based filenames for example)
     private Properties displayTransferOptionsDialog(TRANSFER_TYPE transferType, DATA_OPERATION_TYPE operationType) {
         Properties options = null;
         switch (transferType) {

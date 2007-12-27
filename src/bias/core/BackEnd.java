@@ -703,7 +703,7 @@ public class BackEnd {
             for (File dataConfig : Constants.CONFIG_DIR.listFiles(FILE_FILTER_DATA_ENTRY_CONFIG)) {
                 UUID id = UUID.fromString(dataConfig.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
                 if (!exportOnlyRelatedDataEntryConfigs || ids.contains(id)) {
-                    FSUtils.duplicateFile(dataConfig, new File(configDir, dataConfig.getName()));
+                    reencryptFile(dataConfig, configDir, cipher);
                 }
             }
         }
@@ -756,17 +756,13 @@ public class BackEnd {
         // addon configs
         if (exportAddOnConfigs) {
             for (File addOnConfig : Constants.CONFIG_DIR.listFiles(FILE_FILTER_ADDON_CONFIG)) {
-                FSUtils.duplicateFile(addOnConfig, new File(configDir, addOnConfig.getName()));
+                reencryptFile(addOnConfig, configDir, cipher);
             }
         }
         // import/export configs
         if (exportImportExportConfigs) {
             for (File localConfig : Constants.CONFIG_DIR.listFiles(FILE_FILTER_IMPORT_EXPORT_CONFIG)) {
-                File config = new File(configDir, localConfig.getName());
-                byte[] encryptedData = FSUtils.readFile(localConfig);
-                byte[] decryptedData = decrypt(encryptedData);
-                encryptedData = useCipher(cipher, decryptedData);
-                FSUtils.writeFile(config, encryptedData);
+                reencryptFile(localConfig, configDir, cipher);
             }
         }
         if (configDir.listFiles().length == 0) {
@@ -904,6 +900,8 @@ public class BackEnd {
         byte[] encryptedData = encrypt(baos.toByteArray());
         FSUtils.writeFile(configFile, encryptedData);
     }
+    
+    // TODO [P1] implement import/export configurations management
     
     private void storeMetadata(Document metadata, File file, Cipher cipher) throws Exception {
         OutputFormat of = new OutputFormat();
