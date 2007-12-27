@@ -128,7 +128,7 @@ public class Launcher extends Window {
         if (JOptionPane.showConfirmDialog(
                 null, 
                 new Component[]{label, passField}, 
-                "Load authentification", 
+                "Bias :: Authorization", 
                 JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
             String password = new String(passField.getPassword());            
             if (password != null) {
