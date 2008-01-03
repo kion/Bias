@@ -433,12 +433,6 @@ public class FrontEnd extends JFrame {
                 }
             });
             
-            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable(){
-                public void run() {
-                    exitWithOptionalAutoSave();
-                }
-            }));
-
         } catch (Exception ex) {
             displayErrorMessage(ex);
         }
