@@ -75,7 +75,7 @@ public class Constants {
     public static final String ZIP_FILE_PATTERN = "(?i).+\\.zip$";
     public static final String ZIP_FILE_PATTERN_DESCRIPTION = "ZIP archive file";
 
-    public static final String FILE_PROTOCOL_PREFIX = "file://";
+    public static final String CLASSPATH_FILE_PROTOCOL_PREFIX = "file:";
     public static final String ENTRY_PROTOCOL_PREFIX = "entry://";
     
     public static final String GLOBAL_CONFIG_FILE = "config.properties";

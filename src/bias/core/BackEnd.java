@@ -1011,10 +1011,10 @@ public class BackEnd {
         for (String name : classPathEntries) {
             if (name.startsWith(Constants.LIBS_DIR.getName())) {
                 name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                addClassPathURL(Constants.FILE_PROTOCOL_PREFIX + Constants.LIBS_DIR.getAbsolutePath() + Constants.PATH_SEPARATOR + name);
+                addClassPathURL(Constants.CLASSPATH_FILE_PROTOCOL_PREFIX + Constants.LIBS_DIR.getAbsolutePath() + File.separator + name);
             } else {    
                 name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                addClassPathURL(Constants.FILE_PROTOCOL_PREFIX + Constants.ADDONS_DIR.getAbsolutePath() + Constants.PATH_SEPARATOR + name);
+                addClassPathURL(Constants.CLASSPATH_FILE_PROTOCOL_PREFIX + Constants.ADDONS_DIR.getAbsolutePath() + File.separator + name);
                 if (name.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
                     String extension = name.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
