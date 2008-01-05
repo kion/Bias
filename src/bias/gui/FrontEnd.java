@@ -2852,8 +2852,8 @@ public class FrontEnd extends JFrame {
                                     extModel.addRow(new Object[]{installedExt, null, null, Constants.COMMENT_ADDON_INSTALLED});
                                     modified = true;
                                 }
-                            } catch (Exception ex) {
-                                displayErrorMessage(ex);
+                            } catch (Throwable t) {
+                                displayErrorMessage(t);
                             }
                         }
                     }
@@ -3196,8 +3196,8 @@ public class FrontEnd extends JFrame {
                     displayMessage(RESTART_MESSAGE);
                 }
                 
-            } catch (Exception ex) {
-                displayErrorMessage(ex);
+            } catch (Throwable t) {
+                displayErrorMessage(t);
             }
         	
         }

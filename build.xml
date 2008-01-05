@@ -39,7 +39,11 @@
 			</fileset>
 		</delete>
 		<jar basedir="bin" destfile="build/bias.jar" 
-			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/** bias/transfer/**" />
+			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/** bias/transfer/**">
+			<manifest>
+				<attribute name="Main-Class" value="bias.Launcher" />
+			</manifest>
+		</jar>	
 	</target>
 
 	<!-- ================================= 

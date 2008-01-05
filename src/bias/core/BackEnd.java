@@ -13,8 +13,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -217,7 +219,7 @@ public class BackEnd {
         return cipher.doFinal(data);
     }
     
-    public void load() throws Exception {
+    public void load() throws Throwable {
         byte[] data = null;
         byte[] decryptedData = null;
         // data files
@@ -991,15 +993,28 @@ public class BackEnd {
         }
     }
 
+    private void addClassPathURL(String path) throws Throwable {
+        URL u = new URL(path);
+        URLClassLoader urlClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+        Class<?> urlClass = URLClassLoader.class;
+        Method method = urlClass.getDeclaredMethod("addURL", new Class[]{ URL.class });
+        method.setAccessible(true);
+        method.invoke(urlClassLoader, new Object[]{ u });
+    }
+
     public Map<String, String> getNewExtensions() {
         return newExtensions;
     }
     
-    public Collection<String> getExtensions() {
+    public Collection<String> getExtensions() throws Throwable {
         Collection<String> extensions = new LinkedHashSet<String>();
         for (String name : classPathEntries) {
-            if (!name.startsWith(Constants.LIBS_DIR.getName())) {
+            if (name.startsWith(Constants.LIBS_DIR.getName())) {
                 name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                addClassPathURL(Constants.FILE_PROTOCOL_PREFIX + Constants.LIBS_DIR.getAbsolutePath() + Constants.PATH_SEPARATOR + name);
+            } else {    
+                name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                addClassPathURL(Constants.FILE_PROTOCOL_PREFIX + Constants.ADDONS_DIR.getAbsolutePath() + Constants.PATH_SEPARATOR + name);
                 if (name.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
                     String extension = name.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
@@ -1033,7 +1048,7 @@ public class BackEnd {
         }
     }
 
-    public String installExtension(File extensionFile) throws Exception {
+    public String installExtension(File extensionFile) throws Throwable {
         String installedExtensionName = null;
         if (extensionFile != null && extensionFile.exists() && !extensionFile.isDirectory()) {
             boolean jarFound = false;
