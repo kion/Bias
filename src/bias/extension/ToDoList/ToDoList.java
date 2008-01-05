@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,7 +76,7 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  */
 
 @AddOnAnnotation(
-        version="0.5.5",
+        version="0.5.7",
         author="kion",
         description = "ToDo List")
 public class ToDoList extends EntryExtension {
@@ -249,49 +251,53 @@ public class ToDoList extends EntryExtension {
                 doc = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(getData()));
             }
         } catch (Exception e) {
-            FrontEnd.displayErrorMessage("Failed to parse todo-list data!", e);
+            FrontEnd.displayErrorMessage("Failed to parse todo-list XML data file!", e);
         }
-        if (doc != null) {
-            NodeList entryNodes = doc.getFirstChild().getChildNodes();
-            for (int i = 0; i < entryNodes.getLength(); i++) {
-                ToDoEntry todoEntry = new ToDoEntry();
-                Node entryNode = entryNodes.item(i);
-                if (entryNode.getNodeName().equals(XML_ELEMENT_ENTRY)) {
-                    NodeList entryChildNodes = entryNode.getChildNodes();
-                    for (int j = 0; j < entryChildNodes.getLength(); j++) {
-                        Node entryChildNode = entryChildNodes.item(j);
-                        if (entryChildNode.getNodeName().equals(XML_ELEMENT_TITLE)) {
-                            String title = entryChildNode.getTextContent();
-                            todoEntry.setTitle(title);
-                        } else if (entryChildNode.getNodeName().equals(XML_ELEMENT_DESCRIPTION)) {
-                            String description = entryChildNode.getTextContent();
-                            todoEntry.setDescription(description);
+        try {
+            if (doc != null) {
+                NodeList entryNodes = doc.getFirstChild().getChildNodes();
+                for (int i = 0; i < entryNodes.getLength(); i++) {
+                    ToDoEntry todoEntry = new ToDoEntry();
+                    Node entryNode = entryNodes.item(i);
+                    if (entryNode.getNodeName().equals(XML_ELEMENT_ENTRY)) {
+                        NodeList entryChildNodes = entryNode.getChildNodes();
+                        for (int j = 0; j < entryChildNodes.getLength(); j++) {
+                            Node entryChildNode = entryChildNodes.item(j);
+                            if (entryChildNode.getNodeName().equals(XML_ELEMENT_TITLE)) {
+                                String decodedText = URLDecoder.decode(entryChildNode.getTextContent(), Constants.UNICODE_ENCODING);
+                                todoEntry.setTitle(decodedText);
+                            } else if (entryChildNode.getNodeName().equals(XML_ELEMENT_DESCRIPTION)) {
+                                String description = entryChildNode.getTextContent();
+                                todoEntry.setDescription(description);
+                            }
                         }
+                        NamedNodeMap attributes = entryNode.getAttributes();
+                        Node attID = attributes.getNamedItem(XML_ELEMENT_ATTRIBUTE_ID);
+                        if (attID != null) {
+                            UUID id = UUID.fromString(attID.getNodeValue());
+                            todoEntry.setId(id);
+                        }
+                        Node attTS = attributes.getNamedItem(XML_ELEMENT_ATTRIBUTE_TIMESTAMP);
+                        if (attTS != null) {
+                            long timestamp = Long.valueOf(attTS.getNodeValue());
+                            todoEntry.setTimestamp(new Date(timestamp));
+                        }
+                        Node attPriority = attributes.getNamedItem(XML_ELEMENT_ATTRIBUTE_PRIORITY);
+                        if (attPriority != null) {
+                            String decodedText = URLDecoder.decode(attPriority.getNodeValue(), Constants.UNICODE_ENCODING);
+                            todoEntry.setPriority(decodedText);
+                        }
+                        Node attStatus = attributes.getNamedItem(XML_ELEMENT_ATTRIBUTE_STATUS);
+                        if (attStatus != null) {
+                            String decodedText = URLDecoder.decode(attStatus.getNodeValue(), Constants.UNICODE_ENCODING);
+                            todoEntry.setStatus(decodedText);
+                        }
+                        addToDoEntry(todoEntry);
                     }
-                    NamedNodeMap attributes = entryNode.getAttributes();
-                    Node attID = attributes.getNamedItem(XML_ELEMENT_ATTRIBUTE_ID);
-                    if (attID != null) {
-                        UUID id = UUID.fromString(attID.getNodeValue());
-                        todoEntry.setId(id);
-                    }
-                    Node attTS = attributes.getNamedItem(XML_ELEMENT_ATTRIBUTE_TIMESTAMP);
-                    if (attTS != null) {
-                        long timestamp = Long.valueOf(attTS.getNodeValue());
-                        todoEntry.setTimestamp(new Date(timestamp));
-                    }
-                    Node attPriority = attributes.getNamedItem(XML_ELEMENT_ATTRIBUTE_PRIORITY);
-                    if (attPriority != null) {
-                        String priority = attPriority.getNodeValue();
-                        todoEntry.setPriority(priority);
-                    }
-                    Node attStatus = attributes.getNamedItem(XML_ELEMENT_ATTRIBUTE_STATUS);
-                    if (attStatus != null) {
-                        String status = attStatus.getNodeValue();
-                        todoEntry.setStatus(status);
-                    }
-                    addToDoEntry(todoEntry);
                 }
             }
+        } catch (Exception e) {
+            FrontEnd.displayErrorMessage("Failed to parse todo-list data!", e);
         }
     }
     
@@ -537,15 +543,18 @@ public class ToDoList extends EntryExtension {
         for (ToDoEntry entry : getToDoEntries()) {
             Element entryNode = doc.createElement(XML_ELEMENT_ENTRY);
             Element titleNode = doc.createElement(XML_ELEMENT_TITLE);
-            titleNode.setTextContent(entry.getTitle());
+            String encodedText = URLEncoder.encode(entry.getTitle(), Constants.UNICODE_ENCODING);
+            titleNode.setTextContent(encodedText);
             entryNode.appendChild(titleNode);
             Element descriptionNode = doc.createElement(XML_ELEMENT_DESCRIPTION);
             descriptionNode.setTextContent(entry.getDescription());
             entryNode.appendChild(descriptionNode);
             entryNode.setAttribute(XML_ELEMENT_ATTRIBUTE_ID, entry.getId().toString());
             entryNode.setAttribute(XML_ELEMENT_ATTRIBUTE_TIMESTAMP, "" + entry.getTimestamp().getTime());
-            entryNode.setAttribute(XML_ELEMENT_ATTRIBUTE_PRIORITY, entry.getPriority());
-            entryNode.setAttribute(XML_ELEMENT_ATTRIBUTE_STATUS, entry.getStatus());
+            encodedText = URLEncoder.encode(entry.getPriority(), Constants.UNICODE_ENCODING);
+            entryNode.setAttribute(XML_ELEMENT_ATTRIBUTE_PRIORITY, encodedText);
+            encodedText = URLEncoder.encode(entry.getStatus(), Constants.UNICODE_ENCODING);
+            entryNode.setAttribute(XML_ELEMENT_ATTRIBUTE_STATUS, encodedText);
             rootNode.appendChild(entryNode);
         }
         OutputFormat of = new OutputFormat();
