@@ -2746,7 +2746,6 @@ public class FrontEnd extends JFrame {
     }
     
     // TODO [P2] memory-usage optimization needed (instantiate extensions used in addons-management dialog only once)
-    
     private Action manageAddOnsAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
@@ -2870,6 +2869,7 @@ public class FrontEnd extends JFrame {
                                         Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                 + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
                                     BackEnd.getInstance().uninstallExtension(extFullClassName);
+                                    idx = extSorter.convertRowIndexToModel(idx);
                                     extModel.removeRow(idx);
                                     modified = true;
                                 }
@@ -3024,6 +3024,7 @@ public class FrontEnd extends JFrame {
                                             Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                     + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
                                         BackEnd.getInstance().uninstallLAF(fullLAFClassName);
+                                        idx = lafSorter.convertRowIndexToModel(idx);
                                         lafModel.removeRow(idx);
                                         // if look-&-feel that has been uninstalled was active one...
                                         if (laf.equals(currentLAF)) {
@@ -3033,9 +3034,7 @@ public class FrontEnd extends JFrame {
                                         modified = true;
                                     } else {
                                         displayErrorMessage("Default Look-&-Feel can not be uninstalled!");
-                                        if (lafList.getSelectedRowCount() == 1) {
-                                            break;
-                                        }
+                                        break;
                                     }
                                 }
                             }

@@ -993,6 +993,7 @@ public class BackEnd {
         }
     }
 
+    // TODO [P1] move classpath processing before the rest of functionality to ensure all classes are loaded properly (?)
     private void addClassPathURL(String path) throws Throwable {
         URL u = new URL(path);
         URLClassLoader urlClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();

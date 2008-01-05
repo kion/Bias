@@ -76,7 +76,7 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  */
 
 @AddOnAnnotation(
-        version="0.5.7",
+        version="0.5.7.2",
         author="kion",
         description = "ToDo List")
 public class ToDoList extends EntryExtension {
@@ -140,6 +140,8 @@ public class ToDoList extends EntryExtension {
     private JTable todoEntriesTable = null;
     
     private JSplitPane splitPane = null;
+    
+    private TableRowSorter<TableModel> sorter;
     
     public ToDoList(UUID id, byte[] data, byte[] settings) {
         super(id, data, settings);
@@ -325,7 +327,7 @@ public class ToDoList extends EntryExtension {
             TableColumn idCol = todoEntriesTable.getColumnModel().getColumn(0);
             todoEntriesTable.getColumnModel().removeColumn(idCol);
             
-            final TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+            sorter = new TableRowSorter<TableModel>(model);
             sorter.setMaxSortKeys(MAX_SORT_KEYS_NUMBER);
             List<SortKey> sortKeys = new LinkedList<SortKey>();
             for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
@@ -445,9 +447,9 @@ public class ToDoList extends EntryExtension {
         buttDel.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
                 DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
-                int i;
-                while ((i = todoEntriesTable.getSelectedRow()) != -1) {
-                    model.removeRow(i);
+                if (todoEntriesTable.getSelectedRow() != -1) {
+                    int idx = sorter.convertRowIndexToModel(todoEntriesTable.getSelectedRow());
+                    model.removeRow(idx);
                 }
             }
         });
