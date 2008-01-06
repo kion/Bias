@@ -75,7 +75,7 @@ public class Constants {
     public static final String ZIP_FILE_PATTERN = "(?i).+\\.zip$";
     public static final String ZIP_FILE_PATTERN_DESCRIPTION = "ZIP archive file";
 
-    public static final String CLASSPATH_FILE_PROTOCOL_PREFIX = "file:";
+    public static final String FILE_PROTOCOL_PREFIX = "file:";
     public static final String ENTRY_PROTOCOL_PREFIX = "entry://";
     
     public static final String GLOBAL_CONFIG_FILE = "config.properties";
@@ -108,6 +108,7 @@ public class Constants {
     public static final String EXTENSION_CONFIG_FILE_SUFFIX = ".ext.conf";
     public static final String LAF_CONFIG_FILE_SUFFIX = ".laf.conf";
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
+    public static final String CLASS_FILE_SUFFIX = ".class";
     
     public static final String OPTION_TRANSFER_TYPE = "TRANSFER_TYPE";
     public static final String OPTION_CONFIG_NAME = "CONFIG_NAME";

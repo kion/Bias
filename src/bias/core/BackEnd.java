@@ -265,7 +265,7 @@ public class BackEnd {
                 }
             }
         }
-        // classpath
+        // classpath entries
         File classPathConfigFile = new File(Constants.CONFIG_DIR, Constants.CLASSPATH_CONFIG_FILE);
         if (classPathConfigFile.exists()) {
             // read classpath entries
@@ -276,6 +276,7 @@ public class BackEnd {
                 }
             }
         }
+        loadClassPathEntries();
         // remove addon-files that are not in classpath
         for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
             URI rootURI = Constants.ROOT_DIR.toURI();
@@ -992,9 +993,21 @@ public class BackEnd {
             }
         }
     }
+    
+    private void loadClassPathEntries() throws Throwable {
+        for (String name : classPathEntries) {
+            if (name.startsWith(Constants.LIBS_DIR.getName())) {
+                name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                addClassPathURL(Constants.FILE_PROTOCOL_PREFIX + Constants.LIBS_DIR.getAbsolutePath() + File.separator + name);
+            } else {    
+                name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                addClassPathURL(Constants.FILE_PROTOCOL_PREFIX + Constants.ADDONS_DIR.getAbsolutePath() + File.separator + name);
+            }
+        }
+    }
 
-    // TODO [P1] move classpath processing before the rest of functionality to ensure all classes are loaded properly (?)
     private void addClassPathURL(String path) throws Throwable {
+        System.out.println(path);
         URL u = new URL(path);
         URLClassLoader urlClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
         Class<?> urlClass = URLClassLoader.class;
@@ -1007,15 +1020,11 @@ public class BackEnd {
         return newExtensions;
     }
     
-    public Collection<String> getExtensions() throws Throwable {
+    public Collection<String> getExtensions() {
         Collection<String> extensions = new LinkedHashSet<String>();
         for (String name : classPathEntries) {
-            if (name.startsWith(Constants.LIBS_DIR.getName())) {
+            if (!name.startsWith(Constants.LIBS_DIR.getName())) {
                 name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                addClassPathURL(Constants.CLASSPATH_FILE_PROTOCOL_PREFIX + Constants.LIBS_DIR.getAbsolutePath() + File.separator + name);
-            } else {    
-                name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                addClassPathURL(Constants.CLASSPATH_FILE_PROTOCOL_PREFIX + Constants.ADDONS_DIR.getAbsolutePath() + File.separator + name);
                 if (name.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
                     String extension = name.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 

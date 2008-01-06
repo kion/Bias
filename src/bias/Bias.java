@@ -22,9 +22,9 @@ public class Bias {
 
     public static void launchApp(String password) throws Throwable {
         // find out what JAR file application is run from
-        URL url = Bias.class.getResource(Bias.class.getSimpleName() + ".class");
+        URL url = Bias.class.getResource(Bias.class.getSimpleName() + Constants.CLASS_FILE_SUFFIX);
         String jarFilePath = url.getFile().substring(0, url.getFile().indexOf(Bias.class.getName().replaceAll("\\.", "/")) - 2);
-        jarFilePath = jarFilePath.substring("file:".length(), jarFilePath.length());
+        jarFilePath = jarFilePath.substring(Constants.FILE_PROTOCOL_PREFIX.length(), jarFilePath.length());
         jarFile = new File(jarFilePath);
 
         // pass password to back-end
