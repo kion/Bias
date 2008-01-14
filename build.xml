@@ -21,7 +21,7 @@
           target: RunApp              
          ================================= -->
 	<target name="RunApp">
-		<exec dir="build" command="./bias.sh" />
+		<exec dir="build" command="java -jar bias.jar" />
 	</target>
 
 	<!-- ================================= 

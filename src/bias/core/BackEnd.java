@@ -196,7 +196,7 @@ public class BackEnd {
     
     private static Cipher initCipher(int mode, String password) throws Exception {
         PBEParameterSpec paramSpec = new PBEParameterSpec(Constants.CIPHER_SALT, 20);
-        PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray());
+        PBEKeySpec keySpec = new PBEKeySpec(password != null ? password.toCharArray() : new char[]{});
         SecretKeyFactory kf = SecretKeyFactory.getInstance(Constants.CIPHER_ALGORITHM);
         SecretKey key = kf.generateSecret(keySpec);
         Cipher cipher = Cipher.getInstance(Constants.CIPHER_ALGORITHM);
@@ -888,6 +888,15 @@ public class BackEnd {
         FSUtils.writeFile(configFile, encryptedData);
     }
     
+    public void removeImportConfiguration(String name) throws Exception {
+        String fileName = importConfigIDs.get(name);
+        fileName += Constants.IMPORT_CONFIG_FILE_SUFFIX;
+        File configFile = new File(Constants.CONFIG_DIR, fileName);
+        configFile.delete();
+        importConfigs.remove(name);
+        importConfigIDs.remove(name);
+    }
+    
     public void storeExportConfiguration(String name, Properties config) throws Exception {
         String fileName = exportConfigIDs.get(name);
         if (fileName == null) {
@@ -904,7 +913,14 @@ public class BackEnd {
         FSUtils.writeFile(configFile, encryptedData);
     }
     
-    // TODO [P1] implement import/export configurations management
+    public void removeExportConfiguration(String name) throws Exception {
+        String fileName = exportConfigIDs.get(name);
+        fileName += Constants.EXPORT_CONFIG_FILE_SUFFIX;
+        File configFile = new File(Constants.CONFIG_DIR, fileName);
+        configFile.delete();
+        exportConfigs.remove(name);
+        exportConfigIDs.remove(name);
+    }
     
     private void storeMetadata(Document metadata, File file, Cipher cipher) throws Exception {
         OutputFormat of = new OutputFormat();

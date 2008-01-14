@@ -1820,10 +1820,35 @@ public class FrontEnd extends JFrame {
                 for (String configName : BackEnd.getInstance().getImportConfigurations().keySet()) {
                     configsCB.addItem(configName);
                 }
+                final JButton delButt = new JButton("Delete");
+                delButt.setEnabled(false);
+                delButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            String name = (String) configsCB.getSelectedItem();
+                            BackEnd.getInstance().removeImportConfiguration(name);
+                            configsCB.removeItem(name);
+                        } catch (Exception ex) {
+                            displayErrorMessage("Failed to delete selected import-configuration!", ex);
+                        }
+                    }
+                });
+                configsCB.addItemListener(new ItemListener(){
+                    public void itemStateChanged(ItemEvent e) {
+                        if (!Constants.EMPTY_STR.equals(configsCB.getSelectedItem())) {
+                            delButt.setEnabled(true);
+                        } else {
+                            delButt.setEnabled(false);
+                        }
+                    }
+                });
+                JPanel p = new JPanel(new BorderLayout());
+                p.add(configsCB, BorderLayout.CENTER);
+                p.add(delButt, BorderLayout.EAST);
                 Component[] c = new Component[] {
                         new JLabel("Choose existing export configuration to use,"),
                         new JLabel("or leave just press enter for custom export."),
-                        configsCB          
+                        p          
                 };
                 int opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Import", JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
@@ -2147,10 +2172,35 @@ public class FrontEnd extends JFrame {
                 for (String configName : BackEnd.getInstance().getExportConfigurations().keySet()) {
                     configsCB.addItem(configName);
                 }
+                final JButton delButt = new JButton("Delete");
+                delButt.setEnabled(false);
+                delButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            String name = (String) configsCB.getSelectedItem();
+                            BackEnd.getInstance().removeExportConfiguration(name);
+                            configsCB.removeItem(name);
+                        } catch (Exception ex) {
+                            displayErrorMessage("Failed to delete selected export-configuration!", ex);
+                        }
+                    }
+                });
+                configsCB.addItemListener(new ItemListener(){
+                    public void itemStateChanged(ItemEvent e) {
+                        if (!Constants.EMPTY_STR.equals(configsCB.getSelectedItem())) {
+                            delButt.setEnabled(true);
+                        } else {
+                            delButt.setEnabled(false);
+                        }
+                    }
+                });
+                JPanel p = new JPanel(new BorderLayout());
+                p.add(configsCB, BorderLayout.CENTER);
+                p.add(delButt, BorderLayout.EAST);
                 Component[] c = new Component[] {
                         new JLabel("Choose existing export configuration to use,"),
                         new JLabel("or leave just press enter for custom export."),
-                        configsCB          
+                        p          
                 };
                 opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Export", JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
@@ -3207,7 +3257,6 @@ public class FrontEnd extends JFrame {
         private static final long serialVersionUID = 1L;
 
         public void actionPerformed(ActionEvent evt) {
-            // TODO [P1] define links properly
             JLabel title1Label = new JLabel("Bias Personal Information Manager, version 1.0.0");
             JLabel link1Label = new JLabel("<html><u><font color=blue>http://bias.sourceforge.net/");
             JLabel title2Label = new JLabel("(c) Roman Kasianenko, 2007");
