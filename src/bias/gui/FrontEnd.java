@@ -1846,8 +1846,8 @@ public class FrontEnd extends JFrame {
                 p.add(configsCB, BorderLayout.CENTER);
                 p.add(delButt, BorderLayout.EAST);
                 Component[] c = new Component[] {
-                        new JLabel("Choose existing export configuration to use,"),
-                        new JLabel("or leave just press enter for custom export."),
+                        new JLabel("Choose existing import configuration to use,"),
+                        new JLabel("or leave just press enter for custom import."),
                         p          
                 };
                 int opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Import", JOptionPane.OK_CANCEL_OPTION);
