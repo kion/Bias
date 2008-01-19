@@ -36,7 +36,7 @@ public class Launcher {
                 JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
             String password = new String(passField.getPassword());            
             if (password != null) {
-                Splash.showSplash(Splash.SPLASH_IMAGE_LOAD, false);
+                Splash.showSplash(Splash.SPLASH_IMAGE_LOAD);
                 invokeApp(password);
                 Splash.hideSplash();
             } else {

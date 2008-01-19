@@ -2894,7 +2894,7 @@ public class FrontEnd extends JFrame {
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extensionFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, true);
+                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
@@ -3055,7 +3055,7 @@ public class FrontEnd extends JFrame {
                 lafInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, true);
+                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
@@ -3126,7 +3126,7 @@ public class FrontEnd extends JFrame {
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, true);
+                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {

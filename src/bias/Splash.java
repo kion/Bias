@@ -11,8 +11,6 @@ import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
 import java.awt.Window;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.net.URL;
 
 /**
@@ -34,7 +32,7 @@ public class Splash extends Window {
     
     private boolean painted = false;
     
-    private Splash(URL imageURL, boolean hiddable) {
+    private Splash(URL imageURL) {
         super(new Frame());
         this.image = Toolkit.getDefaultToolkit().createImage(imageURL);
         
@@ -59,23 +57,11 @@ public class Splash extends Window {
         Dimension screenDim = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation((screenDim.width - imgWidth) / 2, (screenDim.height - imgHeight) / 2);
         
-        if (!hiddable) {
-            MouseAdapter disposeOnClick = new MouseAdapter() {
-                public void mouseClicked(MouseEvent evt) {
-                    synchronized(Splash.this) {
-                        Splash.this.painted = true;
-                        Splash.this.notifyAll();
-                    }
-                    dispose();
-                }
-            };
-            addMouseListener(disposeOnClick);
-        }
     }
 
-    public static void showSplash(URL imageURL, boolean hiddable) {
+    public static void showSplash(URL imageURL) {
         if (instance == null || !imageURL.equals(instance.imageURL)) {
-            instance = new Splash(imageURL, hiddable);
+            instance = new Splash(imageURL);
             instance.setVisible(true);
             if (!EventQueue.isDispatchThread()
                     && Runtime.getRuntime().availableProcessors() == 1) {
