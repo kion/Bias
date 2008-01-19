@@ -76,8 +76,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 import bias.Constants;
-import bias.Launcher;
 import bias.Preferences;
+import bias.Splash;
 import bias.annotation.AddOnAnnotation;
 import bias.annotation.PreferenceAnnotation;
 import bias.annotation.PreferenceEnableAnnotation;
@@ -1076,24 +1076,24 @@ public class FrontEnd extends JFrame {
     }
     
     public static void displayErrorMessage(Throwable t) {
-        Launcher.hideSplash();
+        Splash.hideSplash();
         JOptionPane.showMessageDialog(instance, t.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace(System.err);
     }
 
     public static void displayErrorMessage(String message, Throwable t) {
-        Launcher.hideSplash();
+        Splash.hideSplash();
         JOptionPane.showMessageDialog(instance, message, "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace(System.err);
     }
 
     public static void displayErrorMessage(String message) {
-        Launcher.hideSplash();
+        Splash.hideSplash();
         JOptionPane.showMessageDialog(instance, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
     
     public static void displayMessage(String message) {
-        Launcher.hideSplash();
+        Splash.hideSplash();
         JOptionPane.showMessageDialog(instance, message, "Information", JOptionPane.INFORMATION_MESSAGE);
     }
 
@@ -2894,16 +2894,24 @@ public class FrontEnd extends JFrame {
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extensionFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
-                            try {
-                                for (File file : extensionFileChooser.getSelectedFiles()) {
-                                    String installedExt = BackEnd.getInstance().installExtension(file);
-                                    installedExt = installedExt.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                    extModel.addRow(new Object[]{installedExt, null, null, Constants.COMMENT_ADDON_INSTALLED});
-                                    modified = true;
+                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, true);
+                            Thread installThread = new Thread(new Runnable(){
+                                public void run() {
+                                    try {
+                                        for (File file : extensionFileChooser.getSelectedFiles()) {
+                                            String installedExt = BackEnd.getInstance().installExtension(file);
+                                            installedExt = installedExt.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                                            extModel.addRow(new Object[]{installedExt, null, null, Constants.COMMENT_ADDON_INSTALLED});
+                                            modified = true;
+                                        }
+                                    } catch (Throwable t) {
+                                        displayErrorMessage(t);
+                                    } finally {
+                                        Splash.hideSplash();
+                                    }
                                 }
-                            } catch (Throwable t) {
-                                displayErrorMessage(t);
-                            }
+                            });
+                            installThread.start();
                         }
                     }
                 });
@@ -3047,16 +3055,24 @@ public class FrontEnd extends JFrame {
                 lafInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
-                            try {
-                                for (File file : lafFileChooser.getSelectedFiles()) {
-                                    String installedLAF = BackEnd.getInstance().installLAF(file);
-                                    installedLAF = installedLAF.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                    lafModel.addRow(new Object[]{installedLAF, null, null, Constants.COMMENT_ADDON_INSTALLED});
-                                    modified = true;
+                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, true);
+                            Thread installThread = new Thread(new Runnable(){
+                                public void run() {
+                                    try {
+                                        for (File file : lafFileChooser.getSelectedFiles()) {
+                                            String installedLAF = BackEnd.getInstance().installLAF(file);
+                                            installedLAF = installedLAF.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                                            lafModel.addRow(new Object[]{installedLAF, null, null, Constants.COMMENT_ADDON_INSTALLED});
+                                            modified = true;
+                                        }
+                                    } catch (Exception ex) {
+                                        displayErrorMessage(ex);
+                                    } finally {
+                                        Splash.hideSplash();
+                                    }
                                 }
-                            } catch (Exception ex) {
-                                displayErrorMessage(ex);
-                            }
+                            });
+                            installThread.start();
                         }
                     }
                 });
@@ -3110,25 +3126,33 @@ public class FrontEnd extends JFrame {
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
-                            try {
-                                boolean added = false;
-                                for (File file : iconsFileChooser.getSelectedFiles()) {
-                                    Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
-                                    if (!icons.isEmpty()) {
-                                        for (ImageIcon icon : icons) {
-                                            icModel.addElement(icon);
+                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, true);
+                            Thread installThread = new Thread(new Runnable(){
+                                public void run() {
+                                    try {
+                                        boolean added = false;
+                                        for (File file : iconsFileChooser.getSelectedFiles()) {
+                                            Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
+                                            if (!icons.isEmpty()) {
+                                                for (ImageIcon icon : icons) {
+                                                    icModel.addElement(icon);
+                                                }
+                                                added = true;
+                                            }
                                         }
-                                        added = true;
+                                        if (added) {
+                                            displayMessage("Icon(s) have been successfully installed!");
+                                        } else {
+                                            displayErrorMessage("Nothing to install!");
+                                        }
+                                    } catch (Exception ex) {
+                                        displayErrorMessage(ex);
+                                    } finally {
+                                        Splash.hideSplash();
                                     }
                                 }
-                                if (added) {
-                                    displayMessage("Icon(s) have been successfully installed!");
-                                } else {
-                                    displayErrorMessage("Nothing to install!");
-                                }
-                            } catch (Exception ex) {
-                                displayErrorMessage(ex);
-                            }
+                            });
+                            installThread.start();
                         }
                     }
                 });
