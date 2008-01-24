@@ -19,7 +19,7 @@ import com.birosoft.liquid.LiquidLookAndFeel;
         author="R. Kasianenko",
         description = "Bias Liquid Look-&-Feel",
         details = "<i>BiasLiquidLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +
-                  "It uses <a href=\"https://liquidlnf.dev.java.net/\">Liquid Look-&-Feel</a> for Java/Swing applications.")
+                  "It uses <a href=\"http://liquidlnf.dev.java.net/\">Liquid Look-&-Feel</a> for Java/Swing applications.")
 public class BiasLiquidLAF extends LookAndFeel {
 
     /* (non-Javadoc)
