@@ -2799,10 +2799,6 @@ public class FrontEnd extends JFrame {
     private Action manageAddOnsAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
 
-        private Collection<ImageIcon> icons;
-        private JList icList;
-        private DefaultListModel icModel;
-        
         private boolean modified;
         
         @SuppressWarnings("unchecked")
@@ -3112,12 +3108,10 @@ public class FrontEnd extends JFrame {
                 
                 // icons
                 JLabel icLabel = new JLabel("Icons Management");
-                icModel = new DefaultListModel();
-                icList = new JList(icModel);
-                icons = new LinkedList<ImageIcon>();
+                final DefaultListModel icModel = new DefaultListModel();
+                final JList icList = new JList(icModel);
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                     icModel.addElement(icon);
-                    icons.add(icon);
                 }
                 JScrollPane jsp = new JScrollPane(icList);
                 jsp.setPreferredSize(new Dimension(200,200));
@@ -3142,6 +3136,7 @@ public class FrontEnd extends JFrame {
                                         }
                                         if (added) {
                                             displayMessage("Icon(s) have been successfully installed!");
+                                            icList.repaint();
                                         } else {
                                             displayErrorMessage("Nothing to install!");
                                         }

@@ -1465,7 +1465,7 @@ public class BackEnd {
                 if (id == null) {
                     id = UUID.randomUUID();
                 }
-                icon.setDescription(idStr.toString());
+                icon.setDescription(id.toString());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(image, Constants.ICON_FORMAT, baos);
                 this.icons.put(id, baos.toByteArray());
