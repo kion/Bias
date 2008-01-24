@@ -18,7 +18,7 @@ import bias.core.DataEntry;
 
 @AddOnAnnotation(
         version="1.0",
-        author="kion",
+        author="R. Kasianenko",
         description = "Special extension to inform about missing extensions")
 public class MissingExtensionInformer extends EntryExtension {
 

@@ -15,9 +15,11 @@ import de.muntjak.tinylookandfeel.TinyLookAndFeel;
 
 @AddOnAnnotation(
         version="0.1",
-        author="kion",
-        description = "Bias Tiny Look-&-Feel")
-        // TODO [P1] add LAF details to add-on annotation
+        author="R. Kasianenko",
+        description = "Bias Tiny Look-&-Feel",
+        details = "<i>BiasTinyLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +
+                  "It uses <a href=\"http://www.muntjak.de/hans/java/tinylaf/index.html\">Tiny Look-&-Feel</a> for Java/Swing applications<br>" +
+                  "provided by <a href=\"http://www.muntjak.de/index.html\">Hans Bickel</a>.")
 public class BiasTinyLAF extends LookAndFeel {
 
     /* (non-Javadoc)

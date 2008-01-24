@@ -180,6 +180,27 @@
 	</target>
 
 	<!-- ================================= 
+          target: Build_LAF_PgsLAF             
+         ================================= -->
+	<target name="Build_LAF_PgsLAF" description="Pgs Look-And-Feel" depends="prepare_laf_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/laf/BiasPgsLAF/** bias/res/BiasPgsLAF/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasPgsLAF.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${lafLibsDir}">
+				<include name="PgsLookAndFeel-jide.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/BiasPgsLAF.jar" includes="laf/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="BiasPgsLAF" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
           target: Build_LAF_LipstikLAF             
          ================================= -->
 	<target name="Build_LAF_LipstikLAF" description="Lipstik Look-And-Feel" depends="prepare_laf_build">
@@ -196,6 +217,27 @@
 		<jar basedir="tmp" destfile="build/BiasLipstikLAF.jar" includes="laf/** lib/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasLipstikLAF" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Build_LAF_SquarenessLAF             
+         ================================= -->
+	<target name="Build_LAF_SquarenessLAF" description="Squareness Look-And-Feel" depends="prepare_laf_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/laf/BiasSquarenessLAF/** bias/res/BiasSquarenessLAF/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasSquarenessLAF.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${lafLibsDir}">
+				<include name="squareness.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/BiasSquarenessLAF.jar" includes="laf/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="BiasSquarenessLAF" />
 			</manifest>
 		</jar>	
 	</target>

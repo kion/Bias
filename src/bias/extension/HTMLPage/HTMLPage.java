@@ -20,9 +20,9 @@ import bias.extension.HTMLPage.editor.HTMLEditorPanel;
 
 @AddOnAnnotation(
         version = "0.4.5", 
-        author = "kion", 
+        author = "R. Kasianenko", 
         description = "WYSIWYG HTML page editor",
-        details = "HTMLPage extension for Bias is a part<br>" +
+        details = "<i>HTMLPage</i> extension for Bias is a part<br>" +
                   "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
                   "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
                   "an author of Bias application.")

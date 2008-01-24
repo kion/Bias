@@ -77,9 +77,9 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
 @AddOnAnnotation(
         version="0.5.7.2",
-        author="kion",
+        author="R. Kasianenko",
         description = "ToDo List",
-        details = "ToDoList extension for Bias is a part<br>" +
+        details = "<i>ToDoList</i> extension for Bias is a part<br>" +
                   "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
                   "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
                   "an author of Bias application.")

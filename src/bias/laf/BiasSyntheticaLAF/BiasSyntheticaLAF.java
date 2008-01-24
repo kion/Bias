@@ -16,9 +16,11 @@ import de.javasoft.plaf.synthetica.SyntheticaLookAndFeel;
 
 @AddOnAnnotation(
         version="0.1",
-        author="kion",
-        description = "Bias Synthetica Look-&-Feel")
-        // TODO [P1] add LAF details to add-on annotation
+        author="R. Kasianenko",
+        description = "Bias Synthetica Look-&-Feel",
+        details = "<i>BiasSyntheticaLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +
+                  "It uses <a href=\"http://www.javasoft.de/jsf/public/products/synthetica\">Synthetica Look-&-Feel</a> for Java/Swing applications<br>" +
+                  "provided by <a href=\"http://www.javasoft.de/\">JAVASOFT Software Engineering</a>.")
 public class BiasSyntheticaLAF extends LookAndFeel {
 
     /* (non-Javadoc)

@@ -36,9 +36,9 @@ import com.sun.image.codec.jpeg.ImageFormatException;
 
 @AddOnAnnotation(
         version="0.1.1",
-        author="kion",
+        author="R. Kasianenko",
         description = "Simple painting component",
-        details = "Graffiti extension for Bias is a part<br>" +
+        details = "<i>Graffiti</i> extension for Bias is a part<br>" +
                   "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
                   "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
                   "an author of Bias application.")

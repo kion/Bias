@@ -16,9 +16,10 @@ import com.shfarr.ui.plaf.fh.FhLookAndFeel;
 
 @AddOnAnnotation(
         version="0.1",
-        author="kion",
-        description="Bias FH Look-&-Feel")
-        // TODO [P1] add LAF details to add-on annotation
+        author="R. Kasianenko",
+        description="Bias FH Look-&-Feel",
+        details = "<i>BiasFHLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +
+                  "It uses FH Look-&-Feel for Java/Swing applications provided by <a href=\"http://www.geocities.com/shfarr/\">Stefan Harsan Fárr</a>.")
 public class BiasFHLAF extends LookAndFeel {
 
     /* (non-Javadoc)
