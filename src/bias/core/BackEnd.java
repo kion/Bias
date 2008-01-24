@@ -1023,7 +1023,6 @@ public class BackEnd {
     }
 
     private void addClassPathURL(String path) throws Throwable {
-        System.out.println(path);
         URL u = new URL(path);
         URLClassLoader urlClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
         Class<?> urlClass = URLClassLoader.class;

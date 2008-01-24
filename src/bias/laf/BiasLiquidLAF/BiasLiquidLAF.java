@@ -18,6 +18,7 @@ import com.birosoft.liquid.LiquidLookAndFeel;
         version="0.1",
         author="kion",
         description = "Bias Liquid Look-&-Feel")
+        // TODO [P1] add LAF details to add-on annotation
 public class BiasLiquidLAF extends LookAndFeel {
 
     /* (non-Javadoc)

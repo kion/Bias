@@ -18,7 +18,14 @@ import bias.extension.HTMLPage.editor.HTMLEditorPanel;
  * @author kion
  */
 
-@AddOnAnnotation(version = "0.4.5", author = "kion", description = "WYSIWYG HTML page editor")
+@AddOnAnnotation(
+        version = "0.4.5", 
+        author = "kion", 
+        description = "WYSIWYG HTML page editor",
+        details = "HTMLPage extension for Bias is a part<br>" +
+                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
+                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
+                  "an author of Bias application.")
 public class HTMLPage extends EntryExtension {
 
     private static final long serialVersionUID = 1L;

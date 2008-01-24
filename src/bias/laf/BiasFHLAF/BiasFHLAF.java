@@ -18,6 +18,7 @@ import com.shfarr.ui.plaf.fh.FhLookAndFeel;
         version="0.1",
         author="kion",
         description="Bias FH Look-&-Feel")
+        // TODO [P1] add LAF details to add-on annotation
 public class BiasFHLAF extends LookAndFeel {
 
     /* (non-Javadoc)

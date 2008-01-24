@@ -25,6 +25,7 @@ import com.digitprop.tonic.TonicLookAndFeel;
         version="0.1.1",
         author="kion",
         description = "Bias Tonic Slim Look-&-Feel")
+        // TODO [P1] add LAF details to add-on annotation
 public class BiasTonicSlimLAF extends LookAndFeel {
 
     private static final String PROPERTY_THICK_BORDERS = "THICK_BORDERS";

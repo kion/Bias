@@ -8,6 +8,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import bias.Constants;
+
 /**
  * @author kion
  */
@@ -18,4 +20,5 @@ public @interface AddOnAnnotation {
     String description();
     String version();
     String author();
+    String details() default Constants.EMPTY_STR;
 }

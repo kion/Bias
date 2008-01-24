@@ -44,7 +44,11 @@ import bias.utils.PropertiesUtils;
 @AddOnAnnotation(
         version="0.9.5",
         author="kion",
-        description = "Simple plain text editor")
+        description = "Simple plain text editor",
+        details = "PlainText extension for Bias is a part<br>" +
+                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
+                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
+                  "an author of Bias application.")
 public class PlainText extends EntryExtension {
 
     private static final long serialVersionUID = 1L;

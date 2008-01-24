@@ -18,6 +18,7 @@ import com.lipstikLF.LipstikLookAndFeel;
         version="0.1",
         author="kion",
         description = "Bias Lipstik Look-&-Feel")
+        // TODO [P1] add LAF details to add-on annotation
 public class BiasLipstikLAF extends LookAndFeel {
 
     /* (non-Javadoc)

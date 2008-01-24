@@ -17,6 +17,7 @@ import de.muntjak.tinylookandfeel.TinyLookAndFeel;
         version="0.1",
         author="kion",
         description = "Bias Tiny Look-&-Feel")
+        // TODO [P1] add LAF details to add-on annotation
 public class BiasTinyLAF extends LookAndFeel {
 
     /* (non-Javadoc)

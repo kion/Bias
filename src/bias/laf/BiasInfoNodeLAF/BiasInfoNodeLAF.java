@@ -17,6 +17,7 @@ import bias.laf.LookAndFeel;
         version="0.1",
         author="kion",
         description = "Bias InfoNode Look-&-Feel")
+        // TODO [P1] add LAF details to add-on annotation
 public class BiasInfoNodeLAF extends LookAndFeel {
 
     @Override

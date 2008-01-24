@@ -58,6 +58,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.JTree;
 import javax.swing.RowFilter;
@@ -66,10 +67,13 @@ import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -168,6 +172,10 @@ public class FrontEnd extends JFrame {
     
     private static TrayIcon trayIcon = null;
 
+    private JScrollPane detailsPane = null;
+
+    private JTextPane detailsTextPane = null;
+    
     private JTabbedPane currentTabPane = null;
     
     private JPanel jContentPane = null;
@@ -2806,6 +2814,7 @@ public class FrontEnd extends JFrame {
 
             try {
                 // extensions
+                boolean brokenFixed = false;
                 JLabel extLabel = new JLabel("Extensions Management");
                 final DefaultTableModel extModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
@@ -2820,7 +2829,7 @@ public class FrontEnd extends JFrame {
                 extModel.addColumn("Version");
                 extModel.addColumn("Author");
                 extModel.addColumn("Description");
-                boolean brokenFixed = false;
+                final Map<String, String> extDetails = new HashMap<String, String>();
                 for (String extension : BackEnd.getInstance().getExtensions()) {
                     try {
                         Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
@@ -2835,6 +2844,10 @@ public class FrontEnd extends JFrame {
                                     extAnn.version(),
                                     extAnn.author(),
                                     extAnn.description()});
+                            String detailsInfo = extAnn.details();
+                            if (!Validator.isNullOrBlank(detailsInfo)) {
+                                extDetails.put(extClass.getSimpleName(), detailsInfo);
+                            }
                         } else {
                             extModel.addRow(new Object[]{
                                     extClass.getSimpleName(),
@@ -2861,6 +2874,33 @@ public class FrontEnd extends JFrame {
                     String extension = extensionEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                     extModel.addRow(new Object[]{extension, null, null, extensionEntry.getValue()});
                 }
+                JButton extDetailsButt = new JButton("Show extension's details");
+                extDetailsButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        if (extList.getSelectedRowCount() == 1) {
+                            try {
+                                String version = (String) extList.getValueAt(extList.getSelectedRow(), 1);
+                                if (Validator.isNullOrBlank(version)) {
+                                    displayMessage(
+                                            "Detailed information about this extension can not be shown yet." + Constants.NEW_LINE +
+                                            "Restart Bias first.");
+                                } else {
+                                    String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
+                                    String detailsInfo = extDetails.get(extension);
+                                    if (detailsInfo != null) {
+                                        JOptionPane.showMessageDialog(FrontEnd.this, getDetailsPane(detailsInfo), extension + " :: extension details", JOptionPane.INFORMATION_MESSAGE);
+                                    } else {
+                                        displayMessage("No detailed information provided with this extension.");
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                displayErrorMessage(ex);
+                            }
+                        } else {
+                            displayMessage("Please, choose only one extension from the list");
+                        }
+                    }
+                });
                 JButton extConfigButt = new JButton("Configure selected");
                 extConfigButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -2972,6 +3012,7 @@ public class FrontEnd extends JFrame {
                 lafModel.addColumn("Author");
                 lafModel.addColumn("Description");
                 lafModel.addRow(new Object[]{DEFAULT_LOOK_AND_FEEL,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Look-&-Feel"});
+                final Map<String, String> lafDetails = new HashMap<String, String>();
                 for (String laf : BackEnd.getInstance().getLAFs()) {
                     try {
                         Class<?> lafClass = Class.forName(laf);
@@ -2986,6 +3027,10 @@ public class FrontEnd extends JFrame {
                                     lafAnn.version(),
                                     lafAnn.author(),
                                     lafAnn.description()});
+                            String detailsInfo = lafAnn.details();
+                            if (!Validator.isNullOrBlank(detailsInfo)) {
+                                lafDetails.put(lafClass.getSimpleName(), detailsInfo);
+                            }
                         } else {
                             lafModel.addRow(new Object[]{
                                     lafClass.getSimpleName(),
@@ -3012,6 +3057,33 @@ public class FrontEnd extends JFrame {
                     String laf = lafEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                     lafModel.addRow(new Object[]{laf, null, null, lafEntry.getValue()});
                 }
+                JButton lafDetailsButt = new JButton("Show look-&-feel's details");
+                lafDetailsButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        if (lafList.getSelectedRowCount() == 1) {
+                            try {
+                                String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
+                                if (Validator.isNullOrBlank(version)) {
+                                    displayMessage(
+                                            "Detailed information about this look-&-feel can not be shown yet." + Constants.NEW_LINE +
+                                            "Restart Bias first.");
+                                } else {
+                                    String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
+                                    String detailsInfo = lafDetails.get(laf);
+                                    if (detailsInfo != null) {
+                                        JOptionPane.showMessageDialog(FrontEnd.this, getDetailsPane(detailsInfo), laf + " :: look-&-feel details", JOptionPane.INFORMATION_MESSAGE);
+                                    } else {
+                                        displayMessage("No detailed information provided with this look-&-feel.");
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                displayErrorMessage(ex);
+                            }
+                        } else {
+                            displayMessage("Please, choose only one extension from the list");
+                        }
+                    }
+                });
                 JButton lafActivateButt = new JButton("(Re)Activate Look-&-Feel");
                 lafActivateButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -3171,7 +3243,8 @@ public class FrontEnd extends JFrame {
                 // dialog
                 JTabbedPane addOnsPane = new JTabbedPane();
 
-                JPanel extControlsPanel = new JPanel(new GridLayout(1,3));
+                JPanel extControlsPanel = new JPanel(new GridLayout(1,4));
+                extControlsPanel.add(extDetailsButt);
                 extControlsPanel.add(extConfigButt);
                 extControlsPanel.add(extInstButt);
                 extControlsPanel.add(extUninstButt);
@@ -3193,6 +3266,7 @@ public class FrontEnd extends JFrame {
                 addOnsPane.addTab("Extensions", controlIcons.getIconExtensions(), extPanel);
                 
                 JPanel lafControlsPanel = new JPanel(new GridLayout(1,4));
+                lafControlsPanel.add(lafDetailsButt);
                 lafControlsPanel.add(lafActivateButt);
                 lafControlsPanel.add(lafInstButt);
                 lafControlsPanel.add(lafUninstButt);
@@ -3271,6 +3345,28 @@ public class FrontEnd extends JFrame {
         }
         
     };
+    
+    private JScrollPane getDetailsPane(String detailsInfo) {
+        if (detailsPane == null) {
+            detailsTextPane = new JTextPane();
+            detailsTextPane.setEditable(false);
+            detailsTextPane.setEditorKit(new HTMLEditorKit());
+            detailsTextPane.addHyperlinkListener(new HyperlinkListener() {
+                public void hyperlinkUpdate(HyperlinkEvent e) {
+                    if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
+                        try {
+                            AppManager.getInstance().handleAddress(e.getDescription());
+                        } catch (Exception ex) {
+                            FrontEnd.displayErrorMessage(ex);
+                        }
+                    }
+                }
+            });
+            detailsPane = new JScrollPane(detailsTextPane);
+        }
+        detailsTextPane.setText(detailsInfo);
+        return detailsPane;
+    }
     
     private Action displayAboutInfoAction = new AbstractAction() {
         private static final long serialVersionUID = 1L;
