@@ -3062,18 +3062,22 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         if (lafList.getSelectedRowCount() == 1) {
                             try {
-                                String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
-                                if (Validator.isNullOrBlank(version)) {
-                                    displayMessage(
-                                            "Detailed information about this look-&-feel can not be shown yet." + Constants.NEW_LINE +
-                                            "Restart Bias first.");
+                                String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
+                                if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
+                                    displayMessage("This is a default native Java's cross-platform Look-&-Feel.");
                                 } else {
-                                    String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
-                                    String detailsInfo = lafDetails.get(laf);
-                                    if (detailsInfo != null) {
-                                        JOptionPane.showMessageDialog(FrontEnd.this, getDetailsPane(detailsInfo), laf + " :: look-&-feel details", JOptionPane.INFORMATION_MESSAGE);
+                                    String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
+                                    if (Validator.isNullOrBlank(version)) {
+                                        displayMessage(
+                                                "Detailed information about this look-&-feel can not be shown yet." + Constants.NEW_LINE +
+                                                "Restart Bias first.");
                                     } else {
-                                        displayMessage("No detailed information provided with this look-&-feel.");
+                                        String detailsInfo = lafDetails.get(laf);
+                                        if (detailsInfo != null) {
+                                            JOptionPane.showMessageDialog(FrontEnd.this, getDetailsPane(detailsInfo), laf + " :: look-&-feel details", JOptionPane.INFORMATION_MESSAGE);
+                                        } else {
+                                            displayMessage("No detailed information provided with this look-&-feel.");
+                                        }
                                     }
                                 }
                             } catch (Exception ex) {
