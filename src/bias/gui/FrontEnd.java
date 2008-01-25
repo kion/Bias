@@ -2874,7 +2874,7 @@ public class FrontEnd extends JFrame {
                     String extension = extensionEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                     extModel.addRow(new Object[]{extension, null, null, extensionEntry.getValue()});
                 }
-                JButton extDetailsButt = new JButton("Show extension's details");
+                JButton extDetailsButt = new JButton("Show Extension's details");
                 extDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extList.getSelectedRowCount() == 1) {
@@ -2888,7 +2888,7 @@ public class FrontEnd extends JFrame {
                                     String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
                                     String detailsInfo = extDetails.get(extension);
                                     if (detailsInfo != null) {
-                                        JOptionPane.showMessageDialog(FrontEnd.this, getDetailsPane(detailsInfo), extension + " :: extension details", JOptionPane.INFORMATION_MESSAGE);
+                                        JOptionPane.showMessageDialog(FrontEnd.this, getDetailsPane(detailsInfo), extension + " :: Extension's details", JOptionPane.INFORMATION_MESSAGE);
                                     } else {
                                         displayMessage("No detailed information provided with this extension.");
                                     }
@@ -3057,7 +3057,7 @@ public class FrontEnd extends JFrame {
                     String laf = lafEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                     lafModel.addRow(new Object[]{laf, null, null, lafEntry.getValue()});
                 }
-                JButton lafDetailsButt = new JButton("Show look-&-feel's details");
+                JButton lafDetailsButt = new JButton("Show Look-&-Feel's details");
                 lafDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafList.getSelectedRowCount() == 1) {
@@ -3074,7 +3074,7 @@ public class FrontEnd extends JFrame {
                                     } else {
                                         String detailsInfo = lafDetails.get(laf);
                                         if (detailsInfo != null) {
-                                            JOptionPane.showMessageDialog(FrontEnd.this, getDetailsPane(detailsInfo), laf + " :: look-&-feel details", JOptionPane.INFORMATION_MESSAGE);
+                                            JOptionPane.showMessageDialog(FrontEnd.this, getDetailsPane(detailsInfo), laf + " :: Look-&-Feel's details", JOptionPane.INFORMATION_MESSAGE);
                                         } else {
                                             displayMessage("No detailed information provided with this look-&-feel.");
                                         }
