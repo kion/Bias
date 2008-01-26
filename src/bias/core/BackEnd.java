@@ -1522,6 +1522,14 @@ public class BackEnd {
         }
     }
     
+    public File getDataEntryAttachmentsDir(UUID dataEntryID) throws Exception {
+        File entryAttsDir = new File(Constants.ATTACHMENTS_DIR, dataEntryID.toString());
+        if (!entryAttsDir.exists()) {
+            entryAttsDir.mkdir();
+        }
+        return entryAttsDir;
+    }
+    
     public Collection<Attachment> getAttachments(UUID dataEntryID) throws Exception {
         Collection<Attachment> atts = new LinkedList<Attachment>();
         File entryAttsDir = new File(Constants.ATTACHMENTS_DIR, dataEntryID.toString());
