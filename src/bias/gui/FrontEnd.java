@@ -20,6 +20,8 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -426,9 +428,9 @@ public class FrontEnd extends JFrame {
             
             applyGlobalSettings();
 
-            this.addWindowListener(new java.awt.event.WindowAdapter() {
+            this.addWindowListener(new WindowAdapter() {
                 @Override
-                public void windowClosing(java.awt.event.WindowEvent e) {
+                public void windowClosing(WindowEvent e) {
                     try {
                         if (Preferences.getInstance().remainInSysTrayOnWindowClose) {
                             showSysTrayIcon();
