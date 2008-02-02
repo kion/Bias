@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:bias="http://bias.sourceforge.net" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://bias.sourceforge.net">
+	<xs:element name="parts">
+		<xs:complexType>
+			<xs:choice>
+				<xs:element name="single" type="bias:singleFlows"/>
+				<xs:element name="regular" type="bias:regularFlows"/>
+			</xs:choice>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="singleFlows">
+		<xs:sequence>
+			<xs:element name="flow" type="bias:singleFlow" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="regularFlows">
+		<xs:sequence>
+			<xs:element name="flow" type="bias:regularFlow" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="singleFlow">
+		<xs:attribute name="direction" type="bias:direction" use="required"/>
+		<xs:attribute name="type" type="xs:string" use="required"/>
+		<xs:attribute name="date" type="xs:date" use="required"/>
+		<xs:attribute name="amount" type="xs:float" use="required"/>
+		<xs:attribute name="purpose" type="xs:string" use="optional"/>
+	</xs:complexType>
+	<xs:complexType name="regularFlow">
+		<xs:complexContent>
+			<xs:extension base="bias:singleFlow">
+				<xs:attribute name="endDate" type="xs:date" use="required"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:simpleType name="direction">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="INCOME"/>
+			<xs:enumeration value="OUTGO"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

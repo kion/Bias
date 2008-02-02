@@ -63,6 +63,31 @@
 	</target>
 
 	<!-- ================================= 
+          target: Build_Extension_FinancialFlows
+         ================================= -->
+	<target name="Build_Extension_FinancialFlows" description="FinancialFlows Add-On" depends="prepare_ext_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/extension/FinancialFlows/** bias/res/FinancialFlows/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/ext/FinancialFlows.jar" 
+			includes="*/**" />
+		<copy todir="tmp/lib">
+			<fileset dir="${swingComponentsLibsDir}">
+				<include name="jcalendar.jar" />
+			</fileset>
+			<fileset dir="${toolsAndUtilsLibsDir}">
+				<include name="jcommon.jar" />
+				<include name="jfreechart.jar" />
+			</fileset>
+		</copy>
+		<jar basedir="tmp" destfile="build/FinancialFlows.jar" includes="ext/** lib/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="FinancialFlows" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
           target: Build_Extension_Graffiti              
          ================================= -->
 	<target name="Build_Extension_Graffiti" description="Graffiti Add-On" depends="prepare_ext_build">
