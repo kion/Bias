@@ -564,8 +564,6 @@ public class ToDoList extends EntryExtension {
             rootNode.appendChild(entryNode);
         }
         OutputFormat of = new OutputFormat();
-        of.setIndenting(true);
-        of.setIndent(4);
         StringWriter sw = new StringWriter();
         new XMLSerializer(sw, of).serialize(doc);
         return sw.getBuffer().toString().getBytes();
