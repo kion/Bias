@@ -2374,6 +2374,7 @@ public class FrontEnd extends JFrame {
                                                 } else {
                                                     try {
                                                         final Transferrer transferrer = Transferrer.getInstance(type);
+                                                        System.out.println(exportFile);
                                                         final byte[] exportedData = FSUtils.readFile(exportFile);
                                                         processModel.addElement("Data is being transferred...");
                                                         transferrer.doExport(exportedData, options);

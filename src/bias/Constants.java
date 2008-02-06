@@ -7,6 +7,7 @@ import java.io.File;
 
 import bias.extension.Extension;
 import bias.laf.LookAndFeel;
+import bias.utils.FSUtils;
 
 /**
  * @author kion
@@ -41,9 +42,10 @@ public class Constants {
         if (!ICONS_DIR.exists()) {
             ICONS_DIR.mkdir();
         }
-        if (!TMP_DIR.exists()) {
-            TMP_DIR.mkdir();
+        if (TMP_DIR.exists()) {
+            FSUtils.delete(TMP_DIR);
         }
+        TMP_DIR.mkdir();
     }
     
     public static final String COMMENT_ADDON_IMPORTED = "Imported  [restart needed]";

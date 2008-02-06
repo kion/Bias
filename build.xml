@@ -63,6 +63,15 @@
 	</target>
 
 	<!-- ================================= 
+          target: Test_Extension_FilePack
+         ================================= -->
+	<target name="Test_Extension_FilePack" depends="Build_Extension_FilePack">
+		<delete file="build/addons/FilePack.ext.jar"/>
+		<copy file="tmp/ext/FilePack.jar" tofile="build/addons/FilePack.ext.jar"/>
+		<antcall target="BuildAndRunApp"/>
+	</target>
+
+	<!-- ================================= 
           target: Build_Extension_FinancialFlows
          ================================= -->
 	<target name="Build_Extension_FinancialFlows" description="FinancialFlows Add-On" depends="prepare_ext_build">
@@ -88,6 +97,21 @@
 	</target>
 
 	<!-- ================================= 
+          target: Test_Extension_FinancialFlows
+         ================================= -->
+	<target name="Test_Extension_FinancialFlows" depends="Build_Extension_FinancialFlows">
+		<delete file="build/libs/jcalendar_FinancialFlows.ext.jar"/>
+		<delete file="build/libs/jcalendar_FinancialFlows.ext.jar"/>
+		<delete file="build/libs/jcalendar_FinancialFlows.ext.jar"/>
+		<delete file="build/addons/FinancialFlows.ext.jar"/>
+		<copy file="tmp/lib/jcalendar.jar" tofile="build/libs/jcalendar_FinancialFlows.ext.jar"/>
+		<copy file="tmp/lib/jcommon.jar" tofile="build/libs/jcommon_FinancialFlows.ext.jar"/>
+		<copy file="tmp/lib/jfreechart.jar" tofile="build/libs/jfreechart_FinancialFlows.ext.jar"/>
+		<copy file="tmp/ext/FinancialFlows.jar" tofile="build/addons/FinancialFlows.ext.jar"/>
+		<antcall target="BuildAndRunApp"/>
+	</target>
+
+	<!-- ================================= 
           target: Build_Extension_Graffiti              
          ================================= -->
 	<target name="Build_Extension_Graffiti" description="Graffiti Add-On" depends="prepare_ext_build">
@@ -101,6 +125,15 @@
 				<attribute name="Bias-Add-On-Name" value="Graffiti" />
 			</manifest>
 		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Test_Extension_Graffiti
+         ================================= -->
+	<target name="Test_Extension_Graffiti" depends="Build_Extension_Graffiti">
+		<delete file="build/addons/Graffiti.ext.jar"/>
+		<copy file="tmp/ext/Graffiti.jar" tofile="build/addons/Graffiti.ext.jar"/>
+		<antcall target="BuildAndRunApp"/>
 	</target>
 
 	<!-- ================================= 
@@ -120,6 +153,15 @@
 	</target>
 	
 	<!-- ================================= 
+          target: Test_Extension_HTMLPage
+         ================================= -->
+		<target name="Test_Extension_HTMLPage" depends="Build_Extension_HTMLPage">
+		<delete file="build/addons/HTMLPage.ext.jar"/>
+		<copy file="tmp/ext/HTMLPage.jar" tofile="build/addons/HTMLPage.ext.jar"/>
+		<antcall target="BuildAndRunApp"/>
+	</target>
+
+	<!-- ================================= 
           target: Build_Extension_PlainText
          ================================= -->
 	<target name="Build_Extension_PlainText" description="PlainText Add-On" depends="prepare_ext_build">
@@ -133,6 +175,15 @@
 				<attribute name="Bias-Add-On-Name" value="PlainText" />
 			</manifest>
 		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Test_Extension_PlainText
+         ================================= -->
+	<target name="Test_Extension_PlainText" depends="Build_Extension_PlainText">
+		<delete file="build/addons/PlainText.ext.jar"/>
+		<copy file="tmp/ext/PlainText.jar" tofile="build/addons/PlainText.ext.jar"/>
+		<antcall target="BuildAndRunApp"/>
 	</target>
 
 	<!-- ================================= 
@@ -152,6 +203,15 @@
 	</target>
 	
 	<!-- ================================= 
+          target: Test_Extension_ToDoList
+         ================================= -->
+	<target name="Test_Extension_ToDoList" depends="Build_Extension_ToDoList">
+		<delete file="build/addons/ToDoList.ext.jar"/>
+		<copy file="tmp/ext/ToDoList.jar" tofile="build/addons/ToDoList.ext.jar"/>
+		<antcall target="BuildAndRunApp"/>
+	</target>
+
+	<!-- ================================= 
           target: Build_Extension_SimpleSearch
          ================================= -->
 	<target name="Build_Extension_SimpleSearch" description="SimpleSearch Add-On" depends="prepare_ext_build">
@@ -168,6 +228,15 @@
 	</target>
 	
 	<!-- ================================= 
+          target: Test_Extension_SimpleSearch
+         ================================= -->
+	<target name="Test_Extension_SimpleSearch" depends="Build_Extension_SimpleSearch">
+		<delete file="build/addons/SimpleSearch.ext.jar"/>
+		<copy file="tmp/ext/SimpleSearch.jar" tofile="build/addons/SimpleSearch.ext.jar"/>
+		<antcall target="BuildAndRunApp"/>
+	</target>
+
+	<!-- ================================= 
           target: Build_Extension_SimpleStats
          ================================= -->
 	<target name="Build_Extension_SimpleStats" description="SimpleStats Add-On" depends="prepare_ext_build">
@@ -181,6 +250,15 @@
 				<attribute name="Bias-Add-On-Name" value="SimpleStats" />
 			</manifest>
 		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Test_Extension_SimpleStats
+         ================================= -->
+	<target name="Test_Extension_SimpleStats" depends="Build_Extension_SimpleStats">
+		<delete file="build/addons/SimpleStats.ext.jar"/>
+		<copy file="tmp/ext/SimpleStats.jar" tofile="build/addons/SimpleStats.ext.jar"/>
+		<antcall target="BuildAndRunApp"/>
 	</target>
 
 	<!-- ================================= 

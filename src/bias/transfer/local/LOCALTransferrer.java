@@ -22,7 +22,9 @@ public class LOCALTransferrer extends Transferrer {
     public void doExport(byte[] data, Properties options) throws Exception {
         String filePath = options.getProperty(Constants.TRANSFER_OPTION_FILEPATH);
         File file = new File(filePath);
-        if (!file.getParentFile().exists()) {
+        if (file.exists()) {
+            file.delete();
+        } else if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
         file.createNewFile();

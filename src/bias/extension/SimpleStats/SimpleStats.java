@@ -20,6 +20,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import bias.annotation.AddOnAnnotation;
+import bias.annotation.IgnoreDataOnExport;
 import bias.core.BackEnd;
 import bias.extension.ToolExtension;
 import bias.gui.FrontEnd;
@@ -28,6 +29,7 @@ import bias.gui.FrontEnd;
  * @author kion
  */
 
+@IgnoreDataOnExport
 @AddOnAnnotation(
         version="0.1.1",
         author="R. Kasianenko",

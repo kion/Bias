@@ -66,6 +66,9 @@ public class ArchUtils {
         } else if (destination.isDirectory()) {
             throw new IOException("Compression can be done into file only!");
         }
+        if (destination.exists()) {
+            destination.delete();
+        }
         destination.createNewFile();
         ZipOutputStream out = new ZipOutputStream(new FileOutputStream(destination));
         compress(source, source, out);
