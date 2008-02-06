@@ -31,7 +31,7 @@ import bias.gui.FrontEnd;
 
 @IgnoreDataOnExport
 @AddOnAnnotation(
-        version="0.1.1",
+        version="0.1.2",
         author="R. Kasianenko",
         description = "Simple statistics tool",
         details = "<i>SimpleStats</i> extension for Bias is a part<br>" +
