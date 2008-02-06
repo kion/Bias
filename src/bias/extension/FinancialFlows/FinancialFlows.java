@@ -99,7 +99,7 @@ import com.toedter.calendar.JDateChooserCellEditor;
         author = "R. Kasianenko", 
         description = "Financial Flows Management & Statistics", 
         details = "<i>FinancialFlows</i> extension for Bias is a part of standard \"all-inclusive-delivery-set\" of Bias application.<br>" + 
-                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" + 
+                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br><br>" + 
                   "Extension uses:<br><ul>" + 
                   "<li><a href=\"http://www.jfree.org/jfreechart/\">JFreeChart</a> - a free Java chart library that makes it easy<br>" + 
                   "to display professional quality charts in Java applications,<br>" + 
