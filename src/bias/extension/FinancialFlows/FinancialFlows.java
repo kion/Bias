@@ -169,6 +169,8 @@ public class FinancialFlows extends EntryExtension {
 
     private JButton jButton1;
 
+    // TODO [P1] implement purpose-handling
+    
     private static JAXBContext getContext() throws JAXBException {
         if (context == null) {
             context = JAXBContext.newInstance(ObjectFactory.class.getPackage().getName());
