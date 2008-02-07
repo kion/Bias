@@ -325,8 +325,7 @@ public class FrontEnd extends JFrame {
             this.switchToVisualEntry(getJTabbedPane(), UUID.fromString(lsid), new LinkedList<Component>());
         }
         
-        // TODO [P1] save/restore maximized(both/vert/horiz) window state
-
+        // TODO [P3] save/restore maximized(both/vert/horiz) window state
         int wpxValue;
         int wpyValue;
         int wwValue;
@@ -337,29 +336,25 @@ public class FrontEnd extends JFrame {
         } else {
             getToolkit().getScreenSize().getWidth();
             Double.valueOf(wpx);
-            wpxValue = Math.round(Float
-                    .valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getWidth() * Double.valueOf(wpx))));
+            wpxValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getWidth() * Double.valueOf(wpx))));
         }
         String wpy = config.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_Y);
         if (wpy == null) {
             wpyValue = getToolkit().getScreenSize().height / 4;
         } else {
-            wpyValue = Math.round(Float.valueOf(Constants.EMPTY_STR
-                    + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wpy))));
+            wpyValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wpy))));
         }
         String ww = config.getProperty(Constants.PROPERTY_WINDOW_WIDTH);
         if (ww == null) {
             wwValue = (getToolkit().getScreenSize().width / 4) * 2;
         } else {
-            wwValue = Math
-                    .round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(ww))));
+            wwValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(ww))));
         }
         String wh = config.getProperty(Constants.PROPERTY_WINDOW_HEIGHT);
         if (wh == null) {
             whValue = (getToolkit().getScreenSize().height / 4) * 2;
         } else {
-            whValue = Math
-                    .round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wh))));
+            whValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(wh))));
         }
 
         this.setLocation(wpxValue, wpyValue);
