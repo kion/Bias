@@ -324,6 +324,8 @@ public class FrontEnd extends JFrame {
         if (lsid != null) {
             this.switchToVisualEntry(getJTabbedPane(), UUID.fromString(lsid), new LinkedList<Component>());
         }
+        
+        // TODO [P1] save/restore maximized window state
 
         int wpxValue;
         int wpyValue;
@@ -2374,7 +2376,6 @@ public class FrontEnd extends JFrame {
                                                 } else {
                                                     try {
                                                         final Transferrer transferrer = Transferrer.getInstance(type);
-                                                        System.out.println(exportFile);
                                                         final byte[] exportedData = FSUtils.readFile(exportFile);
                                                         processModel.addElement("Data is being transferred...");
                                                         transferrer.doExport(exportedData, options);
