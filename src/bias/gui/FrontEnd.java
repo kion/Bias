@@ -325,7 +325,7 @@ public class FrontEnd extends JFrame {
             this.switchToVisualEntry(getJTabbedPane(), UUID.fromString(lsid), new LinkedList<Component>());
         }
         
-        // TODO [P3] save/restore maximized(both/vert/horiz) window state
+        // TODO [P3] would be nice to have window state (maximized: both/vert/horiz) restored on load
         int wpxValue;
         int wpyValue;
         int wwValue;
