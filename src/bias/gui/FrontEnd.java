@@ -325,7 +325,7 @@ public class FrontEnd extends JFrame {
             this.switchToVisualEntry(getJTabbedPane(), UUID.fromString(lsid), new LinkedList<Component>());
         }
         
-        // TODO [P1] save/restore maximized window state
+        // TODO [P1] save/restore maximized(both/vert/horiz) window state
 
         int wpxValue;
         int wpyValue;
