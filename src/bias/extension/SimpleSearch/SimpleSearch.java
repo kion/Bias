@@ -249,7 +249,7 @@ public class SimpleSearch extends ToolExtension {
                 JLabel processLabel = new JLabel();
                 try {
                     int option = JOptionPane.showConfirmDialog(
-                            null, 
+                            FrontEnd.getActiveWindow(), 
                             new Component[]{
                                 searchExpressionL,
                                 searchExpressionTF,
