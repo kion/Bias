@@ -3,6 +3,7 @@
  */
 package bias;
 
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Frame;
@@ -32,8 +33,8 @@ public class Splash extends Window {
     
     private boolean painted = false;
     
-    private Splash(URL imageURL) {
-        super(new Frame());
+    private Splash(URL imageURL, Window parent) {
+        super(parent != null ? parent : new Frame());
         this.image = Toolkit.getDefaultToolkit().createImage(imageURL);
         
         MediaTracker mt = new MediaTracker(this);
@@ -54,14 +55,16 @@ public class Splash extends Window {
         int imgWidth = image.getWidth(this);
         int imgHeight = image.getHeight(this);
         setSize(imgWidth, imgHeight);
-        Dimension screenDim = Toolkit.getDefaultToolkit().getScreenSize();
-        setLocation((screenDim.width - imgWidth) / 2, (screenDim.height - imgHeight) / 2);
+        Dimension screenDim = parent != null ? parent.getSize() : Toolkit.getDefaultToolkit().getScreenSize();
+        int x = parent != null ? parent.getLocation().x : 0;
+        int y = parent != null ? parent.getLocation().y : 0;
+        setLocation(x + (screenDim.width - imgWidth) / 2, y + (screenDim.height - imgHeight) / 2);
         
     }
 
-    public static void showSplash(URL imageURL) {
+    public static void showSplash(URL imageURL, Window parent) {
         if (instance == null || !imageURL.equals(instance.imageURL)) {
-            instance = new Splash(imageURL);
+            instance = new Splash(imageURL, parent);
             instance.setVisible(true);
             if (!EventQueue.isDispatchThread()
                     && Runtime.getRuntime().availableProcessors() == 1) {
@@ -78,7 +81,10 @@ public class Splash extends Window {
     
     public static void hideSplash() {
         if (instance != null) {
-            instance.getOwner().dispose();
+            if (!(instance.getOwner() instanceof Dialog)) {
+                instance.getOwner().dispose();
+            }
+            instance.dispose();
             instance = null;
         }
     }

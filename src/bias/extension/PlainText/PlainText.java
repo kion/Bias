@@ -35,6 +35,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import bias.annotation.AddOnAnnotation;
 import bias.core.BackEnd;
 import bias.extension.EntryExtension;
+import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
 
 /**
@@ -99,7 +100,7 @@ public class PlainText extends EntryExtension {
         }
         fsCb.setSelectedItem(selValue);
         JOptionPane.showMessageDialog(
-                this, 
+                FrontEnd.getActiveWindow(), 
                 new Component[]{fsLb, fsCb}, 
                 "Settings for " + this.getClass().getSimpleName() + " extension", 
                 JOptionPane.INFORMATION_MESSAGE);

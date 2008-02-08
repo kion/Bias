@@ -8,11 +8,13 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Cursor;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -174,6 +176,8 @@ public class FrontEnd extends JFrame {
     
     private static TrayIcon trayIcon = null;
 
+    private Dialog dialog = null;
+    
     private JScrollPane detailsPane = null;
 
     private JTextPane detailsTextPane = null;
@@ -520,6 +524,11 @@ public class FrontEnd extends JFrame {
                             "* refer to extension's author for further help", t);
             }
         }
+    }
+    
+    public static Window getActiveWindow() {
+        if (instance == null) return null;
+        return instance.dialog.isVisible() ? instance.dialog : instance;
     }
     
     // TODO [P1] tools fail to initialize if some of the extensions are broken - this should be separated somehow... 
@@ -1104,6 +1113,28 @@ public class FrontEnd extends JFrame {
     public static void displayMessage(String message) {
         Splash.hideSplash();
         JOptionPane.showMessageDialog(instance, message, "Information", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void displayAddOnsScreenErrorMessage(String message, Throwable t) {
+        Splash.hideSplash();
+        JOptionPane.showMessageDialog(dialog, message, "Error", JOptionPane.ERROR_MESSAGE);
+        t.printStackTrace(System.err);
+    }
+
+    private void displayAddOnsScreenErrorMessage(String message) {
+        Splash.hideSplash();
+        JOptionPane.showMessageDialog(dialog, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    
+    private void displayAddOnsScreenErrorMessage(Throwable t) {
+        Splash.hideSplash();
+        JOptionPane.showMessageDialog(dialog, t.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        t.printStackTrace(System.err);
+    }
+
+    private void displayAddOnsScreenMessage(String message) {
+        Splash.hideSplash();
+        JOptionPane.showMessageDialog(dialog, message, "Information", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void addTabPaneListeners(JTabbedPane tabPane) {
@@ -2859,15 +2890,15 @@ public class FrontEnd extends JFrame {
                     } catch (Throwable t) {
                         // broken extension found, inform user about that...
                         String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                        displayErrorMessage("Extension [ " + extensionName + " ] is broken and will be uninstalled!", t);
+                        displayAddOnsScreenErrorMessage("Extension [ " + extensionName + " ] is broken and will be uninstalled!", t);
                         // ... and try uninstall broken extension...
                         try {
                             BackEnd.getInstance().uninstallExtension(extension);
-                            displayMessage("Broken extension [ " + extensionName + " ] has been uninstalled");
+                            displayAddOnsScreenMessage("Broken extension [ " + extensionName + " ] has been uninstalled");
                             brokenFixed = true;
                         } catch (Exception ex2) {
                             // ... if unsuccessfully - inform user about that, do nothing else
-                            displayErrorMessage("Error occured while uninstalling broken extension [ " + extensionName + " ]!" + Constants.NEW_LINE + ex2);
+                            displayAddOnsScreenErrorMessage("Error occured while uninstalling broken extension [ " + extensionName + " ]!" + Constants.NEW_LINE + ex2);
                         }
                     }
                 }
@@ -2882,23 +2913,23 @@ public class FrontEnd extends JFrame {
                             try {
                                 String version = (String) extList.getValueAt(extList.getSelectedRow(), 1);
                                 if (Validator.isNullOrBlank(version)) {
-                                    displayMessage(
+                                    displayAddOnsScreenMessage(
                                             "Detailed information about this extension can not be shown yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
                                     String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
                                     String detailsInfo = extDetails.get(extension);
                                     if (detailsInfo != null) {
-                                        JOptionPane.showMessageDialog(FrontEnd.this, getDetailsPane(detailsInfo), extension + " :: Extension's details", JOptionPane.INFORMATION_MESSAGE);
+                                        JOptionPane.showMessageDialog(dialog, getDetailsPane(detailsInfo), extension + " :: Extension's details", JOptionPane.INFORMATION_MESSAGE);
                                     } else {
-                                        displayMessage("No detailed information provided with this extension.");
+                                        displayAddOnsScreenMessage("No detailed information provided with this extension.");
                                     }
                                 }
                             } catch (Exception ex) {
-                                displayErrorMessage(ex);
+                                displayAddOnsScreenErrorMessage(ex);
                             }
                         } else {
-                            displayMessage("Please, choose only one extension from the list");
+                            displayAddOnsScreenMessage("Please, choose only one extension from the list");
                         }
                     }
                 });
@@ -2909,7 +2940,7 @@ public class FrontEnd extends JFrame {
                             try {
                                 String version = (String) extList.getValueAt(extList.getSelectedRow(), 1);
                                 if (Validator.isNullOrBlank(version)) {
-                                    displayMessage(
+                                    displayAddOnsScreenMessage(
                                             "This Extension can not be configured yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
@@ -2920,10 +2951,10 @@ public class FrontEnd extends JFrame {
                                     configureExtension(extFullClassName, false);
                                 }
                             } catch (Exception ex) {
-                                displayErrorMessage(ex);
+                                displayAddOnsScreenErrorMessage(ex);
                             }
                         } else {
-                            displayMessage("Please, choose only one extension from the list");
+                            displayAddOnsScreenMessage("Please, choose only one extension from the list");
                         }
                     }
                 });
@@ -2931,7 +2962,7 @@ public class FrontEnd extends JFrame {
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extensionFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL);
+                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, dialog);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
@@ -2942,7 +2973,7 @@ public class FrontEnd extends JFrame {
                                             modified = true;
                                         }
                                     } catch (Throwable t) {
-                                        displayErrorMessage(t);
+                                        displayAddOnsScreenErrorMessage(t);
                                     } finally {
                                         Splash.hideSplash();
                                     }
@@ -2970,7 +3001,7 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         } catch (Exception ex) {
-                            displayErrorMessage(ex);
+                            displayAddOnsScreenErrorMessage(ex);
                         }
                     }
                 });
@@ -3042,15 +3073,15 @@ public class FrontEnd extends JFrame {
                     } catch (Throwable t) {
                         // broken laf found, inform user about that...
                         String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                        displayErrorMessage("Look-&-Feel [ " + lafName + " ] is broken and will be uninstalled!", t);
+                        displayAddOnsScreenErrorMessage("Look-&-Feel [ " + lafName + " ] is broken and will be uninstalled!", t);
                         // ... and try uninstall broken laf...
                         try {
                             BackEnd.getInstance().uninstallLAF(laf);
-                            displayMessage("Broken Look-&-Feel [ " + lafName + " ] has been uninstalled");
+                            displayAddOnsScreenMessage("Broken Look-&-Feel [ " + lafName + " ] has been uninstalled");
                             brokenFixed = true;
                         } catch (Exception ex2) {
                             // ... if unsuccessfully - inform user about that, do nothing else
-                            displayErrorMessage("Error occured while uninstalling broken Look-&-Feel [ " + lafName + " ]!" + Constants.NEW_LINE + ex2);
+                            displayAddOnsScreenErrorMessage("Error occured while uninstalling broken Look-&-Feel [ " + lafName + " ]!" + Constants.NEW_LINE + ex2);
                         }
                     }
                 }
@@ -3065,27 +3096,27 @@ public class FrontEnd extends JFrame {
                             try {
                                 String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
                                 if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
-                                    displayMessage("This is a default native Java's cross-platform Look-&-Feel.");
+                                    displayAddOnsScreenMessage("This is a default native Java's cross-platform Look-&-Feel.");
                                 } else {
                                     String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
                                     if (Validator.isNullOrBlank(version)) {
-                                        displayMessage(
+                                        displayAddOnsScreenMessage(
                                                 "Detailed information about this look-&-feel can not be shown yet." + Constants.NEW_LINE +
                                                 "Restart Bias first.");
                                     } else {
                                         String detailsInfo = lafDetails.get(laf);
                                         if (detailsInfo != null) {
-                                            JOptionPane.showMessageDialog(FrontEnd.this, getDetailsPane(detailsInfo), laf + " :: Look-&-Feel's details", JOptionPane.INFORMATION_MESSAGE);
+                                            JOptionPane.showMessageDialog(dialog, getDetailsPane(detailsInfo), laf + " :: Look-&-Feel's details", JOptionPane.INFORMATION_MESSAGE);
                                         } else {
-                                            displayMessage("No detailed information provided with this look-&-feel.");
+                                            displayAddOnsScreenMessage("No detailed information provided with this look-&-feel.");
                                         }
                                     }
                                 }
                             } catch (Exception ex) {
-                                displayErrorMessage(ex);
+                                displayAddOnsScreenErrorMessage(ex);
                             }
                         } else {
-                            displayMessage("Please, choose only one extension from the list");
+                            displayAddOnsScreenMessage("Please, choose only one extension from the list");
                         }
                     }
                 });
@@ -3099,12 +3130,12 @@ public class FrontEnd extends JFrame {
                                     modified = setActiveLAF(null);
                                     lafList.repaint();
                                 } catch (Exception t) {
-                                    displayErrorMessage(t);
+                                    displayAddOnsScreenErrorMessage(t);
                                 }
                             } else {
                                 String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
                                 if (Validator.isNullOrBlank(version)) {
-                                    displayMessage(
+                                    displayAddOnsScreenMessage(
                                             "This Look-&-Feel can not be activated yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
@@ -3115,12 +3146,12 @@ public class FrontEnd extends JFrame {
                                         modified = setActiveLAF(fullLAFClassName);
                                         lafList.repaint();
                                     } catch (Exception t) {
-                                        displayErrorMessage(t);
+                                        displayAddOnsScreenErrorMessage(t);
                                     }
                                 }
                             }
                         } else {
-                            displayMessage("Please, choose only one look-&-feel from the list");
+                            displayAddOnsScreenMessage("Please, choose only one look-&-feel from the list");
                         }    
                     }
                 });
@@ -3128,7 +3159,7 @@ public class FrontEnd extends JFrame {
                 lafInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL);
+                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, dialog);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
@@ -3139,7 +3170,7 @@ public class FrontEnd extends JFrame {
                                             modified = true;
                                         }
                                     } catch (Exception ex) {
-                                        displayErrorMessage(ex);
+                                        displayAddOnsScreenErrorMessage(ex);
                                     } finally {
                                         Splash.hideSplash();
                                     }
@@ -3172,13 +3203,13 @@ public class FrontEnd extends JFrame {
                                         }
                                         modified = true;
                                     } else {
-                                        displayErrorMessage("Default Look-&-Feel can not be uninstalled!");
+                                        displayAddOnsScreenErrorMessage("Default Look-&-Feel can not be uninstalled!");
                                         break;
                                     }
                                 }
                             }
                         } catch (Exception ex) {
-                            displayErrorMessage(ex);
+                            displayAddOnsScreenErrorMessage(ex);
                         }
                     }
                 });
@@ -3197,7 +3228,7 @@ public class FrontEnd extends JFrame {
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL);
+                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, dialog);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
@@ -3212,13 +3243,13 @@ public class FrontEnd extends JFrame {
                                             }
                                         }
                                         if (added) {
-                                            displayMessage("Icon(s) have been successfully installed!");
+                                            displayAddOnsScreenMessage("Icon(s) have been successfully installed!");
                                             icList.repaint();
                                         } else {
-                                            displayErrorMessage("Nothing to install!");
+                                            displayAddOnsScreenErrorMessage("Nothing to install!");
                                         }
                                     } catch (Exception ex) {
-                                        displayErrorMessage(ex);
+                                        displayAddOnsScreenErrorMessage(ex);
                                     } finally {
                                         Splash.hideSplash();
                                     }
@@ -3237,10 +3268,10 @@ public class FrontEnd extends JFrame {
                                     BackEnd.getInstance().removeIcon((ImageIcon)icon);
                                     icModel.removeElement(icon);
                                 }
-                                displayMessage("Icon(s) have been successfully removed!");
+                                displayAddOnsScreenMessage("Icon(s) have been successfully removed!");
                             }
                         } catch (Exception ex) {
-                            displayErrorMessage(ex);
+                            displayAddOnsScreenErrorMessage(ex);
                         }
                     }
                 });
@@ -3332,12 +3363,11 @@ public class FrontEnd extends JFrame {
                 addOnsPane.addTab("Advanced", controlIcons.getIconPreferences(), advPanel);
                 
                 modified = false;
-                JOptionPane.showMessageDialog(
-                    FrontEnd.this, 
-                    addOnsPane,
-                    "Manage Add-Ons",
-                    JOptionPane.INFORMATION_MESSAGE
-                );
+                JOptionPane op = new JOptionPane();
+                op.setMessage(addOnsPane);
+                op.setMessageType(JOptionPane.INFORMATION_MESSAGE);
+                dialog = op.createDialog(FrontEnd.this, "Manage Add-Ons");
+                dialog.setVisible(true);
 
                 if (modified || brokenFixed) {
                     displayMessage(RESTART_MESSAGE);

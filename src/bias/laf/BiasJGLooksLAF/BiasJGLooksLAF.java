@@ -17,6 +17,7 @@ import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
 import bias.annotation.AddOnAnnotation;
+import bias.gui.FrontEnd;
 import bias.laf.LookAndFeel;
 import bias.utils.PropertiesUtils;
 
@@ -141,7 +142,7 @@ public class BiasJGLooksLAF extends LookAndFeel {
             components.add(fcb);
         }
         JOptionPane.showMessageDialog(
-                null, 
+                FrontEnd.getActiveWindow(), 
                 components.toArray(), 
                 "Settings for JGoodies Looks Look-&-Feel", 
                 JOptionPane.INFORMATION_MESSAGE);

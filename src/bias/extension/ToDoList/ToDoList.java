@@ -611,7 +611,7 @@ public class ToDoList extends EntryExtension {
         dateTimeFormatTF.setToolTipText(sdf.format(new Date()));
         FormatChangeListener formatChangeListener = new FormatChangeListener(dateTimeFormatTF);
         int opt = JOptionPane.showConfirmDialog(
-                ToDoList.this, 
+                FrontEnd.getActiveWindow(), 
                 new Component[]{
                         new JLabel("Comma-separated list of priorities:"),
                         prioritiesTF,

@@ -116,7 +116,7 @@ public class SimpleStats extends ToolExtension {
                 dates = null;
             }
         });
-        JOptionPane.showMessageDialog(null, new Component[]{ clearButt }, "Configuration", JOptionPane.PLAIN_MESSAGE);
+        JOptionPane.showMessageDialog(FrontEnd.getActiveWindow(), new Component[]{ clearButt }, "Configuration", JOptionPane.PLAIN_MESSAGE);
         return null;
     }
 

@@ -12,6 +12,7 @@ import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
 import bias.annotation.AddOnAnnotation;
+import bias.gui.FrontEnd;
 import bias.laf.LookAndFeel;
 import bias.utils.PropertiesUtils;
 
@@ -47,7 +48,7 @@ public class BiasTonicSlimLAF extends LookAndFeel {
             tb.setSelected(false);
         }
         JOptionPane.showMessageDialog(
-                null, 
+                FrontEnd.getActiveWindow(), 
                 new Component[]{tbL, tb}, 
                 "Settings for Tonic Slim Look-&-Feel", 
                 JOptionPane.INFORMATION_MESSAGE);
