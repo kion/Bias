@@ -528,6 +528,7 @@ public class FrontEnd extends JFrame {
     
     public static Window getActiveWindow() {
         if (instance == null) return null;
+        if (instance.dialog == null) return instance;
         return instance.dialog.isVisible() ? instance.dialog : instance;
     }
     
