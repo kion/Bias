@@ -454,7 +454,6 @@ public class FrontEnd extends JFrame {
                         showSysTrayIcon();
                         setVisible(false);
                     }
-                    super.windowIconified(e);
                 }
             });
             
