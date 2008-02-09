@@ -282,6 +282,7 @@ public class FrontEnd extends JFrame {
                             }
                             if (instance.isVisible()) {
                                 instance.setState(JFrame.NORMAL);
+                                // TODO [P3] window does not get focus always here... maybe there's another, more reliable way to force focused window state
                                 instance.requestFocusInWindow();
                             }
                         }
