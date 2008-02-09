@@ -115,6 +115,11 @@ public class Preferences {
     public boolean remainInSysTrayOnWindowClose;
     
     @PreferenceAnnotation(
+            title = "Minimize to system tray",
+            description = "Defines if application should be minimized to system tray instead of task panel")
+    public boolean minimizeToSysTray;
+    
+    @PreferenceAnnotation(
             title = "Exit without confirmation",
             description = "Defines if exit-confirmation should be displayed on exit")
     public boolean exitWithoutConfirmation;

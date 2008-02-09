@@ -280,6 +280,10 @@ public class FrontEnd extends JFrame {
                             if (!Preferences.getInstance().useSysTrayIcon) {
                                 hideSysTrayIcon();
                             }
+                            if (instance.isVisible()) {
+                                instance.setState(JFrame.NORMAL);
+                                instance.requestFocusInWindow();
+                            }
                         }
                     });
                 }
@@ -441,6 +445,15 @@ public class FrontEnd extends JFrame {
                         }
                     } catch (Throwable t) {
                         displayErrorMessage(t);
+                    }
+                }
+                @Override
+                public void windowIconified(WindowEvent e) {
+                    if (Preferences.getInstance().minimizeToSysTray) {
+                        showSysTrayIcon();
+                        setVisible(false);
+                    } else {
+                        super.windowIconified(e);
                     }
                 }
             });
