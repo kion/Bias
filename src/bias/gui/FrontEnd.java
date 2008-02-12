@@ -1131,6 +1131,7 @@ public class FrontEnd extends JFrame {
     
     public static void displayBottomPanel(JLabel title, JPanel content) {
         if (instance != null) {
+            int dl = instance.getJPanel2().isVisible() ? instance.getJSplitPane().getDividerLocation() : instance.getHeight()/5*3;
             instance.getJPanel2().setVisible(false);
             instance.getJPanel2().removeAll();
             instance.getJPanel2().setLayout(new BorderLayout());
@@ -1150,7 +1151,7 @@ public class FrontEnd extends JFrame {
             instance.getJPanel3().setVisible(true);
             instance.getJPanel2().add(instance.getJPanel3(), BorderLayout.NORTH);
             instance.getJPanel2().add(new JScrollPane(content), BorderLayout.CENTER);
-            instance.getJSplitPane().setDividerLocation(instance.getHeight()/5*3);
+            instance.getJSplitPane().setDividerLocation(dl);
             instance.getJPanel2().setVisible(true);
         }
     }
