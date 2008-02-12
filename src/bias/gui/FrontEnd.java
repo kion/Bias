@@ -17,8 +17,10 @@ import java.awt.TrayIcon;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -29,9 +31,11 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.security.GeneralSecurityException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,6 +54,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -65,6 +70,7 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import javax.swing.RowFilter;
 import javax.swing.Timer;
 import javax.swing.event.CaretEvent;
@@ -168,6 +174,10 @@ public class FrontEnd extends JFrame {
 
     private Map<UUID, EntryExtension> entryExtensions = new LinkedHashMap<UUID, EntryExtension>();
 
+    private File exportFile;
+
+    private int opt;
+    
     private String lastAddedEntryType = null;
     
     private static String activeLAF = null;
@@ -210,6 +220,10 @@ public class FrontEnd extends JFrame {
 
     private JPanel jPanel4 = null;
 
+    private JPanel jPanelStatusBar = null;
+
+    private JLabel jLabelStatusBarMsg = null;
+
     private JPanel jPanel5 = null;
 
     private JPanel jPanel2 = null;
@@ -242,6 +256,7 @@ public class FrontEnd extends JFrame {
 
     public static void display() {
         getInstance().setVisible(true);
+        getInstance().statusMessage("loaded & ready");
     }
     
     private static FrontEnd getInstance() {
@@ -260,6 +275,32 @@ public class FrontEnd extends JFrame {
         } else {
             hideSysTrayIcon();
         }
+        if (instance != null) {
+            instance.bindHotKeys();
+        }
+    }
+    
+    // TODO [P3] hot-keys-bindings should be customizable
+    private void bindHotKeys() {
+        
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK), saveAction.getValue(Action.NAME));
+        getJPanel().getActionMap().put(saveAction.getValue(Action.NAME), saveAction);
+        
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK), importAction.getValue(Action.NAME));
+        getJPanel().getActionMap().put(importAction.getValue(Action.NAME), importAction);
+        
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK), exportAction.getValue(Action.NAME));
+        getJPanel().getActionMap().put(exportAction.getValue(Action.NAME), exportAction);
+        
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK), preferencesAction.getValue(Action.NAME));
+        getJPanel().getActionMap().put(preferencesAction.getValue(Action.NAME), preferencesAction);
+        
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK), manageAddOnsAction.getValue(Action.NAME));
+        getJPanel().getActionMap().put(manageAddOnsAction.getValue(Action.NAME), manageAddOnsAction);
+        
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK), exitAction.getValue(Action.NAME));
+        getJPanel().getActionMap().put(exitAction.getValue(Action.NAME), exitAction);
+        
     }
     
     private static void showSysTrayIcon() {
@@ -1240,6 +1281,28 @@ public class FrontEnd extends JFrame {
     }
     
     private TabMoveListener tabMoveListener = new TabMoveListener();
+    
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy @ HH:mm:ss");
+    private static final String STATUS_MESSAGE_PREFIX = "<html>";
+    private static final String STATUS_MESSAGE_HTML_COLOR_NORMAL = "<font color=\"#000000\">";
+    private static final String STATUS_MESSAGE_HTML_COLOR_HIGHLIGHTED = "<font color=\"#00A000\">";
+    private static final String STATUS_MESSAGE_SUFFIX = "</font></html>";
+    private void statusMessage(final String message) {
+        new Thread(new Runnable(){
+            public void run() {
+                final String timestamp = DATE_FORMAT.format(new Date()) + " # ";
+                getJLabelStatusBarMsg().setText(STATUS_MESSAGE_PREFIX + timestamp + STATUS_MESSAGE_HTML_COLOR_HIGHLIGHTED + message + STATUS_MESSAGE_SUFFIX);
+                ActionListener al = new ActionListener(){
+                    public void actionPerformed(ActionEvent ae){
+                        getJLabelStatusBarMsg().setText(STATUS_MESSAGE_PREFIX + timestamp + STATUS_MESSAGE_HTML_COLOR_NORMAL + message + STATUS_MESSAGE_SUFFIX);
+                    }
+                };
+                Timer timer = new Timer(1000,al);
+                timer.setRepeats(false);
+                timer.start();
+            }
+        }).start();
+    }
 
     /**
      * This method initializes jContentPane
@@ -1252,8 +1315,35 @@ public class FrontEnd extends JFrame {
             jContentPane.setLayout(new BorderLayout());
             jContentPane.add(getJPanel(), BorderLayout.NORTH);
             jContentPane.add(getJPanel4(), BorderLayout.CENTER);
+            jContentPane.add(getJPanelStatusBar(), BorderLayout.SOUTH);
         }
         return jContentPane;
+    }
+
+    /**
+     * This method initializes jPanelStatusBar
+     * 
+     * @return javax.swing.JPanel
+     */
+    private JPanel getJPanelStatusBar() {
+        if (jPanelStatusBar == null) {
+            jPanelStatusBar = new JPanel();
+            jPanelStatusBar.setLayout(new BorderLayout());
+            jPanelStatusBar.add(getJLabelStatusBarMsg(), BorderLayout.CENTER);
+        }
+        return jPanelStatusBar;
+    }
+
+    /**
+     * This method initializes jLabelStatusBarMsg
+     * 
+     * @return javax.swing.JLabel
+     */
+    private JLabel getJLabelStatusBarMsg() {
+        if (jLabelStatusBarMsg == null) {
+            jLabelStatusBarMsg = new JLabel();
+        }
+        return jLabelStatusBarMsg;
     }
 
     /**
@@ -1314,8 +1404,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton() {
         if (jButton == null) {
             jButton = new JButton(addRootEntryAction);
-            jButton.setToolTipText("add root entry");
-            jButton.setIcon(controlIcons.getIconRootEntry());
+            jButton.setText(Constants.EMPTY_STR);
         }
         return jButton;
     }
@@ -1328,8 +1417,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton5() {
         if (jButton5 == null) {
             jButton5 = new JButton(addEntryAction);
-            jButton5.setToolTipText("add entry");
-            jButton5.setIcon(controlIcons.getIconEntry());
+            jButton5.setText(Constants.EMPTY_STR);
         }
         return jButton5;
     }
@@ -1342,8 +1430,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton11() {
         if (jButton11 == null) {
             jButton11 = new JButton(changePasswordAction);
-            jButton11.setToolTipText("change password");
-            jButton11.setIcon(controlIcons.getIconChangePassword());
+            jButton11.setText(Constants.EMPTY_STR);
         }
         return jButton11;
     }
@@ -1356,8 +1443,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton1() {
         if (jButton1 == null) {
             jButton1 = new JButton(deleteEntryOrCategoryAction);
-            jButton1.setToolTipText("delete active entry");
-            jButton1.setIcon(controlIcons.getIconDelete());
+            jButton1.setText(Constants.EMPTY_STR);
         }
         return jButton1;
     }
@@ -1370,8 +1456,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton2() {
         if (jButton2 == null) {
             jButton2 = new JButton(importAction);
-            jButton2.setToolTipText("import...");
-            jButton2.setIcon(controlIcons.getIconImport());
+            jButton2.setText(Constants.EMPTY_STR);
         }
         return jButton2;
     }
@@ -1384,8 +1469,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton12() {
         if (jButton12 == null) {
             jButton12 = new JButton(exportAction);
-            jButton12.setToolTipText("export...");
-            jButton12.setIcon(controlIcons.getIconExport());
+            jButton12.setText(Constants.EMPTY_STR);
         }
         return jButton12;
     }
@@ -1501,8 +1585,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton6() {
         if (jButton6 == null) {
             jButton6 = new JButton(displayAboutInfoAction);
-            jButton6.setToolTipText("about Bias");
-            jButton6.setIcon(controlIcons.getIconAbout());
+            jButton6.setText(Constants.EMPTY_STR);
         }
         return jButton6;
     }
@@ -1515,8 +1598,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton7() {
         if (jButton7 == null) {
             jButton7 = new JButton(saveAction);
-            jButton7.setToolTipText("save");
-            jButton7.setIcon(controlIcons.getIconSave());
+            jButton7.setText(Constants.EMPTY_STR);
         }
         return jButton7;
     }
@@ -1529,8 +1611,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton8() {
         if (jButton8 == null) {
             jButton8 = new JButton(manageAddOnsAction);
-            jButton8.setToolTipText("manage add-ons");
-            jButton8.setIcon(controlIcons.getIconAddOns());
+            jButton8.setText(Constants.EMPTY_STR);
         }
         return jButton8;
     }
@@ -1543,8 +1624,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton9() {
         if (jButton9 == null) {
             jButton9 = new JButton(preferencesAction);
-            jButton9.setToolTipText("preferences");
-            jButton9.setIcon(controlIcons.getIconPreferences());
+            jButton9.setText(Constants.EMPTY_STR);
         }
         return jButton9;
     }
@@ -1557,8 +1637,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton10() {
         if (jButton10 == null) {
             jButton10 = new JButton(exitAction);
-            jButton10.setToolTipText("exit");
-            jButton10.setIcon(controlIcons.getIconExit());
+            jButton10.setText(Constants.EMPTY_STR);
         }
         return jButton10;
     }
@@ -1571,8 +1650,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton3() {
         if (jButton3 == null) {
             jButton3 = new JButton(addRootCategoryAction);
-            jButton3.setToolTipText("add root category");
-            jButton3.setIcon(controlIcons.getIconRootCategory());
+            jButton3.setText(Constants.EMPTY_STR);
         }
         return jButton3;
     }
@@ -1580,8 +1658,7 @@ public class FrontEnd extends JFrame {
     private JButton getJButton4() {
         if (jButton4 == null) {
             jButton4 = new JButton(addCategoryAction);
-            jButton4.setIcon(controlIcons.getIconCategory());
-            jButton4.setToolTipText("add category");
+            jButton4.setText(Constants.EMPTY_STR);
         }
         return jButton4;
     }
@@ -1597,9 +1674,16 @@ public class FrontEnd extends JFrame {
         return result;
     }
 
-    private Action addRootCategoryAction = new AbstractAction() {
+    private AddRootCategoryAction addRootCategoryAction = new AddRootCategoryAction();
+    private class AddRootCategoryAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
-
+        
+        public AddRootCategoryAction() {
+            putValue(Action.NAME, "addRootCategory");
+            putValue(Action.SHORT_DESCRIPTION, "add root category");
+            putValue(Action.SMALL_ICON, controlIcons.getIconRootCategory());
+        }
+        
         public void actionPerformed(ActionEvent evt) {
             try {
                 if (getJTabbedPane().getTabCount() == 0) {
@@ -1641,11 +1725,19 @@ public class FrontEnd extends JFrame {
             if (icon != null) {
             	getJTabbedPane().setIconAt(getJTabbedPane().getSelectedIndex(), icon);
             }
+            statusMessage("root category '" + categoryCaption + "' added");
         }
     }
 
-    private Action addRootEntryAction = new AbstractAction() {
+    private AddRootEntryAction addRootEntryAction = new AddRootEntryAction();
+    private class AddRootEntryAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public AddRootEntryAction() {
+            putValue(Action.NAME, "addRootEntry");
+            putValue(Action.SHORT_DESCRIPTION, "add root entry");
+            putValue(Action.SMALL_ICON, controlIcons.getIconRootEntry());
+        }
 
         public void actionPerformed(ActionEvent evt) {
             try {
@@ -1710,12 +1802,20 @@ public class FrontEnd extends JFrame {
                 if (icon != null) {
                     getJTabbedPane().setIconAt(getJTabbedPane().getSelectedIndex(), icon);
                 }
+                statusMessage("root entry '" + caption + "' added");
             }
         }
     }
     
-    private Action changePasswordAction = new AbstractAction() {
+    private ChangePasswordAction changePasswordAction = new ChangePasswordAction();
+    private class ChangePasswordAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public ChangePasswordAction() {
+            putValue(Action.NAME, "changePassword");
+            putValue(Action.SHORT_DESCRIPTION, "change password");
+            putValue(Action.SMALL_ICON, controlIcons.getIconChangePassword());
+        }
         
         public void actionPerformed(ActionEvent evt) {
             JLabel currPassLabel = new JLabel("current password:");
@@ -1750,6 +1850,7 @@ public class FrontEnd extends JFrame {
                     try {
                         BackEnd.setPassword(currPass, newPass);
                         displayMessage("Password has been successfully changed!");
+                        statusMessage("password changed");
                     } catch (Exception ex) {
                         displayErrorMessage("Failed to change password!" + Constants.NEW_LINE + ex.getMessage(), ex);
                     }
@@ -1758,8 +1859,15 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    private Action addEntryAction = new AbstractAction() {
+    private AddEntryAction addEntryAction = new AddEntryAction();
+    private class AddEntryAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public AddEntryAction() {
+            putValue(Action.NAME, "addEntry");
+            putValue(Action.SHORT_DESCRIPTION, "add entry");
+            putValue(Action.SMALL_ICON, controlIcons.getIconEntry());
+        }
         
         public void actionPerformed(ActionEvent evt) {
             try {
@@ -1813,6 +1921,7 @@ public class FrontEnd extends JFrame {
                             if (icon != null) {
                                 currentTabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
                             }
+                            statusMessage("entry '" + caption + "' added");
                         }
                     }
                 }
@@ -1826,19 +1935,30 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    private Action deleteEntryOrCategoryAction = new AbstractAction() {
+    private DeleteAction deleteEntryOrCategoryAction = new DeleteAction();
+    private class DeleteAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public DeleteAction() {
+            putValue(Action.NAME, "delete");
+            putValue(Action.SHORT_DESCRIPTION, "delete active entry/category");
+            putValue(Action.SMALL_ICON, controlIcons.getIconDelete());
+        }
         
         public void actionPerformed(ActionEvent evt) {
             if (getJTabbedPane().getTabCount() > 0) {
                 try {
                     if (currentTabPane.getTabCount() > 0) {
+                        String caption = currentTabPane.getTitleAt(currentTabPane.getSelectedIndex());
                         currentTabPane.remove(currentTabPane.getSelectedIndex());
+                        statusMessage("entry '" + caption + "' deleted");
                         currentTabPane = getActiveTabPane(currentTabPane);
                     } else {
                         JTabbedPane parentTabPane = (JTabbedPane) currentTabPane.getParent();
                         if (parentTabPane != null) {
+                            String caption = parentTabPane.getTitleAt(parentTabPane.getSelectedIndex());
                             parentTabPane.remove(currentTabPane);
+                            statusMessage("category '" + caption + "' deleted");
                             currentTabPane = getActiveTabPane(parentTabPane);
                         }
                     }
@@ -1863,8 +1983,15 @@ public class FrontEnd extends JFrame {
         });
     }
 
-    private Action importAction = new AbstractAction() {
+    private ImportAction importAction = new ImportAction();
+    private class ImportAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public ImportAction() {
+            putValue(Action.NAME, "import");
+            putValue(Action.SHORT_DESCRIPTION, "import...");
+            putValue(Action.SMALL_ICON, controlIcons.getIconImport());
+        }
         
         public void actionPerformed(ActionEvent evt) {
             try {
@@ -1966,6 +2093,7 @@ public class FrontEnd extends JFrame {
                                                 }
                                                 label.setText("<html><font color=green>Data import - Completed</font></html>");
                                                 processLabel.setText("Data have been successfully imported.");
+                                                statusMessage("import done");
                                             } catch (GeneralSecurityException gse) {
                                                 processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
                                                 label.setText("<html><font color=red>Data import - Failed</font></html>");
@@ -2140,6 +2268,7 @@ public class FrontEnd extends JFrame {
                                                             configsCB.setEditable(true);
                                                             label.setText("<html><font color=green>Data import - Completed</font></html>");
                                                             processModel.addElement("Data have been successfully imported.");
+                                                            statusMessage("import done");
                                                             Component[] c = new Component[] {
                                                                     new JLabel("Data have been successfully imported."),
                                                                     new JLabel("If you want to save this import configuration,"),
@@ -2213,10 +2342,15 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    private File exportFile;
-    private int opt;
-    private Action exportAction = new AbstractAction() {
+    private ExportAction exportAction = new ExportAction();
+    private class ExportAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public ExportAction() {
+            putValue(Action.NAME, "export");
+            putValue(Action.SHORT_DESCRIPTION, "export...");
+            putValue(Action.SMALL_ICON, controlIcons.getIconExport());
+        }
 
         public void actionPerformed(ActionEvent e) {
             try {
@@ -2299,6 +2433,7 @@ public class FrontEnd extends JFrame {
                                         transferrer.doExport(exportedData, props);
                                         label.setText("<html><font color=green>Data export - Completed</font></html>");
                                         processLabel.setText("Data have been successfully exported.");
+                                        statusMessage("export done");
                                     } catch (Exception ex) {
                                         if (ex.getMessage() != null) {
                                             processLabel.setText("<html><font color=red>Failed to export data! Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage() + "</font></html>");
@@ -2420,6 +2555,7 @@ public class FrontEnd extends JFrame {
                                                         transferrer.doExport(exportedData, options);
                                                         label.setText("<html><font color=green>Data export - Completed</font></html>");
                                                         processModel.addElement("Data have been successfully transferred.");
+                                                        statusMessage("export done");
                                                         configsCB.setEditable(true);
                                                         Component[] c = new Component[] {
                                                                 new JLabel("Data have been successfully exported."),
@@ -2649,8 +2785,15 @@ public class FrontEnd extends JFrame {
         return options;
     }
 
-    private Action addCategoryAction = new AbstractAction() {
+    private AddCategoryAction addCategoryAction = new AddCategoryAction();
+    private class AddCategoryAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public AddCategoryAction() {
+            putValue(Action.NAME, "addCategory");
+            putValue(Action.SHORT_DESCRIPTION, "add category");
+            putValue(Action.SMALL_ICON, controlIcons.getIconCategory());
+        }
         
         public void actionPerformed(ActionEvent evt) {
             try {
@@ -2689,6 +2832,7 @@ public class FrontEnd extends JFrame {
                     if (icon != null) {
                         parentTabPane.setIconAt(parentTabPane.getSelectedIndex(), icon);
                     }
+                    statusMessage("category '" + categoryCaption + "' added");
                     currentTabPane = (JTabbedPane) categoryTabPane.getParent();
                 }
             } catch (Exception ex) {
@@ -2697,29 +2841,50 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    private Action saveAction = new AbstractAction() {
+    private Action saveAction = new SaveAction();
+    private class SaveAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public SaveAction() {
+            putValue(Action.NAME, "save");
+            putValue(Action.SHORT_DESCRIPTION, "save");
+            putValue(Action.SMALL_ICON, controlIcons.getIconSave());
+        }
 
         public void actionPerformed(ActionEvent evt) {
             try {
                 store();
+                statusMessage("data saved");
             } catch (Throwable t) {
                 displayErrorMessage("Failed to save!", t);
             }
         }
     };
     
-    private Action exitAction = new AbstractAction() {
+    private ExitAction exitAction = new ExitAction();
+    private class ExitAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public ExitAction() {
+            putValue(Action.NAME, "exit");
+            putValue(Action.SHORT_DESCRIPTION, "exit");
+            putValue(Action.SMALL_ICON, controlIcons.getIconExit());
+        }
 
         public void actionPerformed(ActionEvent evt) {
             exit();
         }
     };
     
-    private Action preferencesAction = new AbstractAction() {
-
+    private PreferencesAction preferencesAction = new PreferencesAction();
+    private class PreferencesAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public PreferencesAction() {
+            putValue(Action.NAME, "preferences");
+            putValue(Action.SHORT_DESCRIPTION, "preferences");
+            putValue(Action.SMALL_ICON, controlIcons.getIconPreferences());
+        }
 
         public void actionPerformed(ActionEvent e) {
             try {
@@ -2792,6 +2957,7 @@ public class FrontEnd extends JFrame {
                         if (!Arrays.equals(after, before)) {
                             BackEnd.getInstance().storePreferences();
                             applyPreferences();
+                            statusMessage("preferences applied");
                         }
                     } catch (Exception ex) {
                         displayErrorMessage("Failed to save preferences!", ex);
@@ -2849,8 +3015,15 @@ public class FrontEnd extends JFrame {
     }
     
     // TODO [P2] memory-usage optimization needed (instantiate extensions used in addons-management dialog only once)
-    private Action manageAddOnsAction = new AbstractAction() {
+    private ManageAddOnsAction manageAddOnsAction = new ManageAddOnsAction();
+    private class ManageAddOnsAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public ManageAddOnsAction() {
+            putValue(Action.NAME, "manageAddOns");
+            putValue(Action.SHORT_DESCRIPTION, "manage add-ons");
+            putValue(Action.SMALL_ICON, controlIcons.getIconAddOns());
+        }
 
         private boolean modified;
         
@@ -3384,6 +3557,7 @@ public class FrontEnd extends JFrame {
 
                 if (modified || brokenFixed) {
                     displayMessage(RESTART_MESSAGE);
+                    statusMessage("add-ons configuration changed");
                 }
                 
             } catch (Throwable t) {
@@ -3416,8 +3590,15 @@ public class FrontEnd extends JFrame {
         return detailsPane;
     }
     
-    private Action displayAboutInfoAction = new AbstractAction() {
+    private AboutAction displayAboutInfoAction = new AboutAction();
+    private class AboutAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
+        
+        public AboutAction() {
+            putValue(Action.NAME, "about");
+            putValue(Action.SHORT_DESCRIPTION, "about...");
+            putValue(Action.SMALL_ICON, controlIcons.getIconAbout());
+        }
 
         public void actionPerformed(ActionEvent evt) {
             JLabel title1Label = new JLabel("Bias Personal Information Manager, version 1.0.0");
