@@ -83,6 +83,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -92,10 +93,12 @@ import javax.swing.tree.TreePath;
 import bias.Constants;
 import bias.Preferences;
 import bias.Splash;
+import bias.Preferences.PreferenceValidator;
 import bias.annotation.AddOnAnnotation;
 import bias.annotation.PreferenceAnnotation;
 import bias.annotation.PreferenceEnableAnnotation;
 import bias.annotation.PreferenceProtectAnnotation;
+import bias.annotation.PreferenceValidationAnnotation;
 import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
@@ -149,6 +152,14 @@ public class FrontEnd extends JFrame {
             new Placement(JTabbedPane.BOTTOM)
         };
 
+    private static final String STATUS_MESSAGE_PREFIX = "<html>";
+    
+    private static final String STATUS_MESSAGE_HTML_COLOR_NORMAL = "<font color=\"#000000\">";
+    
+    private static final String STATUS_MESSAGE_HTML_COLOR_HIGHLIGHTED = "<font color=\"#00A000\">";
+    
+    private static final String STATUS_MESSAGE_SUFFIX = "</font></html>";
+
     private static AddOnFilesChooser extensionFileChooser = new AddOnFilesChooser();
 
     private static AddOnFilesChooser lafFileChooser = new AddOnFilesChooser();
@@ -156,6 +167,8 @@ public class FrontEnd extends JFrame {
     private static IconsFileChooser iconsFileChooser = new IconsFileChooser();
     
     private static final String ADDON_ANN_FIELD_VALUE_NA = "N/A";
+    
+    private static SimpleDateFormat dateFormat;
     
     private static FrontEnd instance;
     
@@ -256,7 +269,7 @@ public class FrontEnd extends JFrame {
 
     public static void display() {
         getInstance().setVisible(true);
-        getInstance().statusMessage("loaded & ready");
+        getInstance().displayStatusBarMessage("loaded & ready");
     }
     
     private static FrontEnd getInstance() {
@@ -275,6 +288,7 @@ public class FrontEnd extends JFrame {
         } else {
             hideSysTrayIcon();
         }
+        dateFormat = new SimpleDateFormat(Preferences.getInstance().preferredDateFormat);
         if (instance != null) {
             instance.bindHotKeys();
         }
@@ -1282,15 +1296,10 @@ public class FrontEnd extends JFrame {
     
     private TabMoveListener tabMoveListener = new TabMoveListener();
     
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy @ HH:mm:ss");
-    private static final String STATUS_MESSAGE_PREFIX = "<html>";
-    private static final String STATUS_MESSAGE_HTML_COLOR_NORMAL = "<font color=\"#000000\">";
-    private static final String STATUS_MESSAGE_HTML_COLOR_HIGHLIGHTED = "<font color=\"#00A000\">";
-    private static final String STATUS_MESSAGE_SUFFIX = "</font></html>";
-    private void statusMessage(final String message) {
+    public void displayStatusBarMessage(final String message) {
         new Thread(new Runnable(){
             public void run() {
-                final String timestamp = DATE_FORMAT.format(new Date()) + " # ";
+                final String timestamp = dateFormat.format(new Date()) + " # ";
                 getJLabelStatusBarMsg().setText(STATUS_MESSAGE_PREFIX + timestamp + STATUS_MESSAGE_HTML_COLOR_HIGHLIGHTED + message + STATUS_MESSAGE_SUFFIX);
                 ActionListener al = new ActionListener(){
                     public void actionPerformed(ActionEvent ae){
@@ -1725,7 +1734,7 @@ public class FrontEnd extends JFrame {
             if (icon != null) {
             	getJTabbedPane().setIconAt(getJTabbedPane().getSelectedIndex(), icon);
             }
-            statusMessage("root category '" + categoryCaption + "' added");
+            displayStatusBarMessage("root category '" + categoryCaption + "' added");
         }
     }
 
@@ -1802,7 +1811,7 @@ public class FrontEnd extends JFrame {
                 if (icon != null) {
                     getJTabbedPane().setIconAt(getJTabbedPane().getSelectedIndex(), icon);
                 }
-                statusMessage("root entry '" + caption + "' added");
+                displayStatusBarMessage("root entry '" + caption + "' added");
             }
         }
     }
@@ -1850,7 +1859,7 @@ public class FrontEnd extends JFrame {
                     try {
                         BackEnd.setPassword(currPass, newPass);
                         displayMessage("Password has been successfully changed!");
-                        statusMessage("password changed");
+                        displayStatusBarMessage("password changed");
                     } catch (Exception ex) {
                         displayErrorMessage("Failed to change password!" + Constants.NEW_LINE + ex.getMessage(), ex);
                     }
@@ -1921,7 +1930,7 @@ public class FrontEnd extends JFrame {
                             if (icon != null) {
                                 currentTabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
                             }
-                            statusMessage("entry '" + caption + "' added");
+                            displayStatusBarMessage("entry '" + caption + "' added");
                         }
                     }
                 }
@@ -1951,14 +1960,14 @@ public class FrontEnd extends JFrame {
                     if (currentTabPane.getTabCount() > 0) {
                         String caption = currentTabPane.getTitleAt(currentTabPane.getSelectedIndex());
                         currentTabPane.remove(currentTabPane.getSelectedIndex());
-                        statusMessage("entry '" + caption + "' deleted");
+                        displayStatusBarMessage("entry '" + caption + "' deleted");
                         currentTabPane = getActiveTabPane(currentTabPane);
                     } else {
                         JTabbedPane parentTabPane = (JTabbedPane) currentTabPane.getParent();
                         if (parentTabPane != null) {
                             String caption = parentTabPane.getTitleAt(parentTabPane.getSelectedIndex());
                             parentTabPane.remove(currentTabPane);
-                            statusMessage("category '" + caption + "' deleted");
+                            displayStatusBarMessage("category '" + caption + "' deleted");
                             currentTabPane = getActiveTabPane(parentTabPane);
                         }
                     }
@@ -2093,7 +2102,7 @@ public class FrontEnd extends JFrame {
                                                 }
                                                 label.setText("<html><font color=green>Data import - Completed</font></html>");
                                                 processLabel.setText("Data have been successfully imported.");
-                                                statusMessage("import done");
+                                                displayStatusBarMessage("import done");
                                             } catch (GeneralSecurityException gse) {
                                                 processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
                                                 label.setText("<html><font color=red>Data import - Failed</font></html>");
@@ -2268,7 +2277,7 @@ public class FrontEnd extends JFrame {
                                                             configsCB.setEditable(true);
                                                             label.setText("<html><font color=green>Data import - Completed</font></html>");
                                                             processModel.addElement("Data have been successfully imported.");
-                                                            statusMessage("import done");
+                                                            displayStatusBarMessage("import done");
                                                             Component[] c = new Component[] {
                                                                     new JLabel("Data have been successfully imported."),
                                                                     new JLabel("If you want to save this import configuration,"),
@@ -2433,7 +2442,7 @@ public class FrontEnd extends JFrame {
                                         transferrer.doExport(exportedData, props);
                                         label.setText("<html><font color=green>Data export - Completed</font></html>");
                                         processLabel.setText("Data have been successfully exported.");
-                                        statusMessage("export done");
+                                        displayStatusBarMessage("export done");
                                     } catch (Exception ex) {
                                         if (ex.getMessage() != null) {
                                             processLabel.setText("<html><font color=red>Failed to export data! Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage() + "</font></html>");
@@ -2555,7 +2564,7 @@ public class FrontEnd extends JFrame {
                                                         transferrer.doExport(exportedData, options);
                                                         label.setText("<html><font color=green>Data export - Completed</font></html>");
                                                         processModel.addElement("Data have been successfully transferred.");
-                                                        statusMessage("export done");
+                                                        displayStatusBarMessage("export done");
                                                         configsCB.setEditable(true);
                                                         Component[] c = new Component[] {
                                                                 new JLabel("Data have been successfully exported."),
@@ -2832,7 +2841,7 @@ public class FrontEnd extends JFrame {
                     if (icon != null) {
                         parentTabPane.setIconAt(parentTabPane.getSelectedIndex(), icon);
                     }
-                    statusMessage("category '" + categoryCaption + "' added");
+                    displayStatusBarMessage("category '" + categoryCaption + "' added");
                     currentTabPane = (JTabbedPane) categoryTabPane.getParent();
                 }
             } catch (Exception ex) {
@@ -2854,7 +2863,7 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             try {
                 store();
-                statusMessage("data saved");
+                displayStatusBarMessage("data saved");
             } catch (Throwable t) {
                 displayErrorMessage("Failed to save!", t);
             }
@@ -2886,8 +2895,12 @@ public class FrontEnd extends JFrame {
             putValue(Action.SMALL_ICON, controlIcons.getIconPreferences());
         }
 
+        boolean prefsErr;
+        
+        @SuppressWarnings("unchecked")
         public void actionPerformed(ActionEvent e) {
             try {
+                prefsErr = false;
                 byte[] before = Preferences.getInstance().serialize();
                 JPanel prefsPanel = null;
                 Map<Component, Field> prefEntries = new HashMap<Component, Field>();
@@ -2905,11 +2918,34 @@ public class FrontEnd extends JFrame {
                                 JLabel prefTitle = new JLabel(prefAnn.title() + Constants.BLANK_STR);
                                 prefTitle.setToolTipText(prefAnn.description());
                                 prefPanel.add(prefTitle);
-                                PreferenceProtectAnnotation prefProtectAnn = field.getAnnotation(PreferenceProtectAnnotation.class);
-                                if (prefProtectAnn != null) {
+                                if (field.isAnnotationPresent(PreferenceProtectAnnotation.class)) {
                                     prefControl = new JPasswordField();
                                 } else {
                                     prefControl = new JTextField();
+                                }
+                                prefControl.setPreferredSize(new Dimension(150, 20));
+                                PreferenceValidationAnnotation prefValAnn = field.getAnnotation(PreferenceValidationAnnotation.class);
+                                if (prefValAnn != null) {
+                                    final PreferenceValidator<String> validator = (PreferenceValidator<String>) prefValAnn.validationClass().newInstance();
+                                    final JTextComponent textControl = ((JTextComponent) prefControl);
+                                    final Color normal = textControl.getForeground();
+                                    textControl.addCaretListener(new CaretListener(){
+                                        public void caretUpdate(CaretEvent e) {
+                                            String value = textControl.getText();
+                                            try {
+                                                validator.validate(value);
+                                                textControl.setForeground(normal);
+                                                textControl.setToolTipText(null);
+                                                prefsErr = prefsErr | false;
+                                            } catch (Exception ex) {
+                                                String errorMsg = "Invalid field value: " + ex.getMessage();
+                                                textControl.setForeground(Color.RED);
+                                                textControl.setToolTipText(errorMsg);
+                                                prefsErr = prefsErr | true;
+                                            }
+                                        }
+                                    });
+                                    
                                 }
                                 String text = (String) field.get(Preferences.getInstance());
                                 if (text == null) {
@@ -2943,24 +2979,28 @@ public class FrontEnd extends JFrame {
                 }
                 int opt = JOptionPane.showConfirmDialog(FrontEnd.this, prefsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
-                    try {
-                        for (Entry<Component, Field> pref : prefEntries.entrySet()) {
-                            if (pref.getKey() instanceof JTextField) {
-                                pref.getValue().set(Preferences.getInstance(), ((JTextField) pref.getKey()).getText());
-                            } else if (pref.getKey() instanceof JCheckBox) {
-                                pref.getValue().setBoolean(Preferences.getInstance(), ((JCheckBox) pref.getKey()).isSelected());
-                            } else if (pref.getKey() instanceof JComboBox) {
-                                pref.getValue().set(Preferences.getInstance(), ((JComboBox) pref.getKey()).getSelectedItem());
+                    if (prefsErr) {
+                        displayErrorMessage("Preference configuration contains error(s)! Preferences won't be saved, until that is fixed.");
+                    } else {
+                        try {
+                            for (Entry<Component, Field> pref : prefEntries.entrySet()) {
+                                if (pref.getKey() instanceof JTextField) {
+                                    pref.getValue().set(Preferences.getInstance(), ((JTextField) pref.getKey()).getText());
+                                } else if (pref.getKey() instanceof JCheckBox) {
+                                    pref.getValue().setBoolean(Preferences.getInstance(), ((JCheckBox) pref.getKey()).isSelected());
+                                } else if (pref.getKey() instanceof JComboBox) {
+                                    pref.getValue().set(Preferences.getInstance(), ((JComboBox) pref.getKey()).getSelectedItem());
+                                }
                             }
+                            byte[] after = Preferences.getInstance().serialize();
+                            if (!Arrays.equals(after, before)) {
+                                BackEnd.getInstance().storePreferences();
+                                applyPreferences();
+                                displayStatusBarMessage("preferences applied");
+                            }
+                        } catch (Exception ex) {
+                            displayErrorMessage("Failed to save preferences!", ex);
                         }
-                        byte[] after = Preferences.getInstance().serialize();
-                        if (!Arrays.equals(after, before)) {
-                            BackEnd.getInstance().storePreferences();
-                            applyPreferences();
-                            statusMessage("preferences applied");
-                        }
-                    } catch (Exception ex) {
-                        displayErrorMessage("Failed to save preferences!", ex);
                     }
                 }
             } catch (Exception ex) {
@@ -3557,7 +3597,7 @@ public class FrontEnd extends JFrame {
 
                 if (modified || brokenFixed) {
                     displayMessage(RESTART_MESSAGE);
-                    statusMessage("add-ons configuration changed");
+                    displayStatusBarMessage("add-ons configuration changed");
                 }
                 
             } catch (Throwable t) {

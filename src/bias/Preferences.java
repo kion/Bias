@@ -5,6 +5,7 @@ package bias;
 
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -12,8 +13,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import bias.annotation.PreferenceAnnotation;
+import bias.annotation.PreferenceValidationAnnotation;
 import bias.core.BackEnd;
 import bias.gui.FrontEnd;
+import bias.utils.Validator;
 
 import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
@@ -82,7 +85,11 @@ public class Preferences {
                 prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_TYPE, type);
                 try {
                     if ("string".equals(type)) {
-                        prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, "" + (String) field.get(this));
+                        String s = (String) field.get(this);
+                        if (Validator.isNullOrBlank(s)) {
+                            s = Constants.EMPTY_STR;
+                        }
+                        prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, s);
                     } else if ("boolean".equals(type)) {
                         prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, "" + field.getBoolean(this));
                     }
@@ -100,6 +107,40 @@ public class Preferences {
         StringWriter sw = new StringWriter();
         new XMLSerializer(sw, of).serialize(prefs);
         return sw.getBuffer().toString().getBytes();
+    }
+    
+    /* VALIDATION CLASSES SECTION */
+    
+    // ********* interface *********
+
+    public static interface PreferenceValidator<T> {
+        public void validate(T value) throws Exception;
+    }
+    
+    // ********* implementors *********
+    
+    public static class PreferredDateFormatValidator implements PreferenceValidator<String> {
+        public void validate(String value) throws Exception {
+            if (Validator.isNullOrBlank(value)) {
+                throw new Exception("Pattern can not be empty!");
+            }
+            try {
+                new SimpleDateFormat(value);
+            } catch (IllegalArgumentException iae) {
+                String errMsg = "Pattern is invalid!";
+                String detMsg = iae.getMessage();
+                if (!Validator.isNullOrBlank(detMsg)) {
+                    errMsg += Constants.BLANK_STR + detMsg;
+                }
+                if (iae.getCause() != null) {
+                    detMsg = iae.getCause().getMessage();
+                    if (!Validator.isNullOrBlank(detMsg)) {
+                        errMsg += Constants.BLANK_STR + detMsg;
+                    }
+                }
+                throw new Exception(errMsg);
+            }
+        }
     }
     
     /* PREFERENCES DECLARATION SECTION */
@@ -128,5 +169,11 @@ public class Preferences {
             title = "Auto save on exit",
             description = "Defines if user data have to be automatically saved on exit")
     public boolean autoSaveOnExit;
+    
+    @PreferenceAnnotation(
+            title = "Preferred date format:",
+            description = "Defines preferred date format for dates rendering.")
+    @PreferenceValidationAnnotation(validationClass = PreferredDateFormatValidator.class)        
+    public String preferredDateFormat = "dd.MM.yyyy @ HH:mm:ss";
     
 }
