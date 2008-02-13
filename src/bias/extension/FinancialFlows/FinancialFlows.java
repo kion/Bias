@@ -188,7 +188,6 @@ public class FinancialFlows extends EntryExtension {
     private static Marshaller getMarshaller() throws JAXBException {
         if (marshaller == null) {
             marshaller = getContext().createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             marshaller.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, SCHEMA_LOCATION);
             marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
         }

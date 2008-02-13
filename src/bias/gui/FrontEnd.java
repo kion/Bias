@@ -33,7 +33,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.reflect.Field;
 import java.security.GeneralSecurityException;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,7 +86,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.JTextComponent;
-import javax.swing.text.NumberFormatter;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -324,7 +322,7 @@ public class FrontEnd extends JFrame {
                 while (Preferences.getInstance().showMemoryUsage) {
                     MemoryMXBean mmxb = ManagementFactory.getMemoryMXBean();
                     long bytes = mmxb.getHeapMemoryUsage().getUsed() + mmxb.getNonHeapMemoryUsage().getUsed();
-                    memUsageLabel.setText(new NumberFormatter(new DecimalFormat()).getFormat().format(bytes/1024) + " Kb of memory used");
+                    memUsageLabel.setText(bytes/1024 + " Kb of memory used");
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {
