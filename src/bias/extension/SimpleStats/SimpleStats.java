@@ -23,7 +23,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SortOrder;
 import javax.swing.RowSorter.SortKey;
@@ -137,9 +136,14 @@ public class SimpleStats extends ToolExtension {
             TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
             sorter.setSortsOnUpdates(true);
             sorter.setSortKeys(Collections.singletonList(new SortKey(0, SortOrder.DESCENDING)));
+            sorter.setSortable(1, false);
+            sorter.setSortable(2, false);
+            sorter.setSortable(3, false);
             table.setRowSorter(sorter);
-            JScrollPane sp = new JScrollPane(table);
-            sessionsStatsPanel.add(sp, BorderLayout.CENTER);
+            JPanel tablePanel = new JPanel(new BorderLayout());
+            tablePanel.add(table.getTableHeader(), BorderLayout.NORTH);
+            tablePanel.add(table, BorderLayout.CENTER);
+            sessionsStatsPanel.add(tablePanel, BorderLayout.CENTER);
         } else {
             sessionsStatsPanel.add(new JLabel("No sessions statistics gathered yet."), BorderLayout.CENTER);
         }
