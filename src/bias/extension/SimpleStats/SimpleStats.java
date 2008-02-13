@@ -23,7 +23,9 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SortOrder;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.border.BevelBorder;
@@ -46,7 +48,7 @@ import bias.gui.FrontEnd;
 
 @IgnoreDataOnExport
 @AddOnAnnotation(
-        version="0.2.4",
+        version="0.2.5",
         author="R. Kasianenko",
         description = "Simple statistics tool",
         details = "<i>SimpleStats</i> extension for Bias is a part<br>" +
@@ -122,6 +124,7 @@ public class SimpleStats extends ToolExtension {
                 }
             };
             JTable table = new JTable(model);
+            model.addColumn("");
             model.addColumn("Started at");
             model.addColumn("Stopped at");
             model.addColumn("Session length");
@@ -129,13 +132,17 @@ public class SimpleStats extends ToolExtension {
                 long startDate = Long.parseLong(dates[i]);
                 long endDate = Long.parseLong(dates[i+1]);
                 String sl = calculateSessionLength(startDate, endDate);
-                model.addRow(new Object[]{new Date(startDate).toString(), new Date(endDate).toString(), sl});
+                model.addRow(new Object[]{dates[i+1], new Date(startDate).toString(), new Date(endDate).toString(), sl});
             }
+            table.getColumnModel().removeColumn(table.getColumnModel().getColumn(0));
             TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
             sorter.setSortsOnUpdates(true);
-            sorter.setSortKeys(Collections.singletonList(new SortKey(1, SortOrder.DESCENDING)));
+            sorter.setSortKeys(Collections.singletonList(new SortKey(0, SortOrder.DESCENDING)));
             table.setRowSorter(sorter);
-            sessionsStatsPanel.add(table, BorderLayout.CENTER);
+            JScrollPane sp = new JScrollPane(table);
+            sp.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+            sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            sessionsStatsPanel.add(sp, BorderLayout.CENTER);
         } else {
             sessionsStatsPanel.add(new JLabel("No sessions statistics gathered yet."), BorderLayout.CENTER);
         }
