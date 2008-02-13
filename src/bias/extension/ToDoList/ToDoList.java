@@ -31,6 +31,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -76,7 +77,7 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  */
 
 @AddOnAnnotation(
-        version="0.5.7.2",
+        version="0.8.5.1",
         author="R. Kasianenko",
         description = "ToDo List",
         details = "<i>ToDoList</i> extension for Bias is a part<br>" +
@@ -104,6 +105,11 @@ public class ToDoList extends EntryExtension {
     private static final String PROPERTY_DATE_TIME_FORMAT = "DATE_FORMAT";
     private static final String PROPERTY_SORT_BY_COLUMN = "SORT_BY_COLUMN";
     private static final String PROPERTY_SORT_ORDER = "SORT_BY_ORDER";
+    private static final String PROPERTY_SELECTED_ROW = "SELECTED_ROW";
+    private static final String PROPERTY_DIVIDER_LOCATION = "DIVIDER_LOCATION";
+    private static final String PROPERTY_COLUMNS_WIDTHS = "COLUMNS_WIDTHS";
+    private static final String PROPERTY_SCROLLBAR_VERT = "SCROLLBAR_VERT";
+    private static final String PROPERTY_SCROLLBAR_HORIZ = "SCROLLBAR_HORIZ";
     
     private static final String SEPARATOR_PATTERN = "\\s*,\\s*";
     
@@ -146,6 +152,8 @@ public class ToDoList extends EntryExtension {
     
     private TableRowSorter<TableModel> sorter;
     
+    private Properties props;
+    
     public ToDoList(UUID id, byte[] data, byte[] settings) {
         super(id, data, settings);
         initialize();
@@ -156,10 +164,47 @@ public class ToDoList extends EntryExtension {
         applySettings(settings);
         initGUI();
         parseData();
+        String selRow = props.getProperty(PROPERTY_SELECTED_ROW);
+        if (!Validator.isNullOrBlank(selRow)) {
+            todoEntriesTable.setRowSelectionInterval(Integer.valueOf(selRow), Integer.valueOf(selRow));
+        }
+        String divLoc = props.getProperty(PROPERTY_DIVIDER_LOCATION);
+        if (!Validator.isNullOrBlank(divLoc)) {
+            splitPane.setDividerLocation(Integer.valueOf(divLoc));
+        }
+        String colW = props.getProperty(PROPERTY_COLUMNS_WIDTHS);
+        if (!Validator.isNullOrBlank(colW)) {
+            String[] colsWs = colW.split(":");
+            int cc = todoEntriesTable.getColumnModel().getColumnCount();
+            for (int i = 0; i < cc; i++) {
+                todoEntriesTable.getColumnModel().getColumn(i).setPreferredWidth(Integer.valueOf(colsWs[i]));
+            }
+        }
+        if (splitPane.getBottomComponent() != null) {
+            JScrollPane sc = ((JScrollPane) ((HTMLEditorPanel) splitPane.getBottomComponent()).getComponent(0));
+            JScrollBar sb = sc.getVerticalScrollBar();
+            if (sb != null) {
+                String val = props.getProperty(PROPERTY_SCROLLBAR_VERT);
+                if (val != null) {
+                    sb.setVisibleAmount(0);
+                    sb.setValue(sb.getMaximum());
+                    sb.setValue(Integer.valueOf(val));
+                }
+            }
+            sb = sc.getHorizontalScrollBar();
+            if (sb != null) {
+                String val = props.getProperty(PROPERTY_SCROLLBAR_HORIZ);
+                if (val != null) {
+                    sb.setVisibleAmount(0);
+                    sb.setValue(sb.getMaximum());
+                    sb.setValue(Integer.valueOf(val));
+                }
+            }
+        }
     }
     
     private void applySettings(byte[] settings) {
-        Properties props = PropertiesUtils.deserializeProperties(settings);
+        props = PropertiesUtils.deserializeProperties(settings);
         String priorities = props.getProperty(PROPERTY_PRIORITIES);
         String statuses = props.getProperty(PROPERTY_STATUSES);
         String dateTimeFormat = props.getProperty(PROPERTY_DATE_TIME_FORMAT);
@@ -376,17 +421,23 @@ public class ToDoList extends EntryExtension {
                         if (rn == -1) {
                             splitPane.setBottomComponent(null);
                         } else {
+                            int dl = -1;
+                            if (splitPane.getBottomComponent() != null) {
+                                dl = splitPane.getDividerLocation();
+                            }
                             rn = todoEntriesTable.convertRowIndexToModel(rn);
                             UUID id = UUID.fromString((String) model.getValueAt(rn, 0));
                             splitPane.setBottomComponent(editorPanels.get(id));
-                            splitPane.setDividerLocation(0.5);
+                            if (dl != -1) {
+                                splitPane.setDividerLocation(dl);
+                            } else {
+                                splitPane.setDividerLocation(0.5);
+                            }
                         }
                     }
                 }
             });
 
-            // TODO [P2] column widths and selected row should be restored on load
-            
             mainPanel.add(entriesPanel, BorderLayout.CENTER);
             final JTextField filterText = new JTextField();
             filterText.addCaretListener(new CaretListener(){
@@ -585,6 +636,45 @@ public class ToDoList extends EntryExtension {
                 props.remove(PROPERTY_SORT_BY_COLUMN + i);
                 props.remove(PROPERTY_SORT_ORDER + i);
             }
+        }
+        int idx = todoEntriesTable.getSelectedRow();
+        if (idx != -1) {
+            props.setProperty(PROPERTY_SELECTED_ROW, "" + todoEntriesTable.getSelectedRow());
+        } else {
+            props.remove(PROPERTY_SELECTED_ROW);
+        }
+        int dl = splitPane.getDividerLocation();
+        if (dl != -1) {
+            props.setProperty(PROPERTY_DIVIDER_LOCATION, "" + dl);
+        } else {
+            props.remove(PROPERTY_DIVIDER_LOCATION);
+        }
+        StringBuffer colW = new StringBuffer();
+        int cc = todoEntriesTable.getColumnModel().getColumnCount();
+        for (int i = 0; i < cc; i++) {
+            colW.append(todoEntriesTable.getColumnModel().getColumn(i).getWidth());
+            if (i < cc - 1) {
+                colW.append(":");
+            }
+        }
+        props.setProperty(PROPERTY_COLUMNS_WIDTHS, colW.toString());
+        if (splitPane.getBottomComponent() != null) {
+            JScrollPane sc = ((JScrollPane) ((HTMLEditorPanel) splitPane.getBottomComponent()).getComponent(0));
+            JScrollBar sb = sc.getVerticalScrollBar();
+            if (sb != null && sb.getValue() != 0) {
+                props.setProperty(PROPERTY_SCROLLBAR_VERT, "" + sb.getValue());
+            } else {
+                props.remove(PROPERTY_SCROLLBAR_VERT);
+            }
+            sb = sc.getHorizontalScrollBar();
+            if (sb != null && sb.getValue() != 0) {
+                props.setProperty(PROPERTY_SCROLLBAR_HORIZ, "" + sb.getValue());
+            } else {
+                props.remove(PROPERTY_SCROLLBAR_HORIZ);
+            }
+        } else {
+            props.remove(PROPERTY_SCROLLBAR_VERT);
+            props.remove(PROPERTY_SCROLLBAR_HORIZ);
         }
         return PropertiesUtils.serializeProperties(props);
     }
