@@ -9,6 +9,7 @@ import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -22,10 +23,13 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SortOrder;
+import javax.swing.RowSorter.SortKey;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import bias.annotation.AddOnAnnotation;
 import bias.annotation.IgnoreDataOnExport;
@@ -42,7 +46,7 @@ import bias.gui.FrontEnd;
 
 @IgnoreDataOnExport
 @AddOnAnnotation(
-        version="0.2.3",
+        version="0.2.4",
         author="R. Kasianenko",
         description = "Simple statistics tool",
         details = "<i>SimpleStats</i> extension for Bias is a part<br>" +
@@ -78,7 +82,9 @@ public class SimpleStats extends ToolExtension {
     public void action() throws Throwable {
         JPanel statsPanel = new JPanel(new BorderLayout());
         JPanel entriesStatsPanel = new JPanel(new BorderLayout());
-        entriesStatsPanel.add(new JLabel("<html><font color=\"#0000B5\">Entries statistics</font></html>"), BorderLayout.NORTH);
+        JLabel l1 = new JLabel("Entries");
+        l1.setForeground(new Color(0, 100, 0));
+        entriesStatsPanel.add(l1, BorderLayout.NORTH);
         catCnt = 0;
         getTypesCountsMap().clear();
         parseTypes(getTypesCountsMap(), BackEnd.getInstance().getData());
@@ -105,7 +111,9 @@ public class SimpleStats extends ToolExtension {
             entriesStatsPanel.add(new JLabel("No entries statistics gathered yet."), BorderLayout.CENTER);
         }
         JPanel sessionsStatsPanel = new JPanel(new BorderLayout());
-        sessionsStatsPanel.add(new JLabel("<html><font color=\"#0000B5\">Sessions statistics</font></html>"), BorderLayout.NORTH);
+        JLabel l2 = new JLabel("Sessions");
+        l2.setForeground(new Color(0, 100, 0));
+        sessionsStatsPanel.add(l2, BorderLayout.NORTH);
         if (dates != null && dates.length != 0) {
             final DefaultTableModel model = new DefaultTableModel() {
                 private static final long serialVersionUID = 1L;
@@ -123,7 +131,11 @@ public class SimpleStats extends ToolExtension {
                 String sl = calculateSessionLength(startDate, endDate);
                 model.addRow(new Object[]{new Date(startDate).toString(), new Date(endDate).toString(), sl});
             }
-            sessionsStatsPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+            TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+            sorter.setSortsOnUpdates(true);
+            sorter.setSortKeys(Collections.singletonList(new SortKey(1, SortOrder.DESCENDING)));
+            table.setRowSorter(sorter);
+            sessionsStatsPanel.add(table, BorderLayout.CENTER);
         } else {
             sessionsStatsPanel.add(new JLabel("No sessions statistics gathered yet."), BorderLayout.CENTER);
         }

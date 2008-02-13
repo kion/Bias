@@ -29,8 +29,11 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
 import java.lang.reflect.Field;
 import java.security.GeneralSecurityException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,6 +87,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.NumberFormatter;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -191,6 +195,8 @@ public class FrontEnd extends JFrame {
 
     private int opt;
     
+    private static boolean hotKeysBindingsChanged = true;
+
     private String lastAddedEntryType = null;
     
     private static String activeLAF = null;
@@ -199,6 +205,8 @@ public class FrontEnd extends JFrame {
     
     private static TrayIcon trayIcon = null;
 
+    private static JLabel memUsageLabel;
+    
     private Dialog dialog = null;
     
     private JScrollPane detailsPane = null;
@@ -281,7 +289,7 @@ public class FrontEnd extends JFrame {
         }
         return instance;
     }
-    
+
     private static void applyPreferences() {
         if (Preferences.getInstance().useSysTrayIcon) {
             showSysTrayIcon();
@@ -289,9 +297,41 @@ public class FrontEnd extends JFrame {
             hideSysTrayIcon();
         }
         dateFormat = new SimpleDateFormat(Preferences.getInstance().preferredDateFormat);
-        if (instance != null) {
+        if (hotKeysBindingsChanged) {
             instance.bindHotKeys();
+            hotKeysBindingsChanged = false;
         }
+        if (instance != null) {
+            if (Preferences.getInstance().showMemoryUsage) {
+                if (memUsageLabel == null) {
+                    memUsageLabel = new JLabel();
+                    instance.getJPanelStatusBar().add(memUsageLabel, BorderLayout.EAST);
+                }
+                startMemoryUsageMonitoring();
+                memUsageLabel.setVisible(true);
+            } else {
+                if (memUsageLabel != null) {
+                    memUsageLabel.setVisible(false);
+                }
+            }
+        }
+    }
+    
+    private static void startMemoryUsageMonitoring() {
+        new Thread(new Runnable() {
+            public void run() {
+                while (Preferences.getInstance().showMemoryUsage) {
+                    MemoryMXBean mmxb = ManagementFactory.getMemoryMXBean();
+                    long bytes = mmxb.getHeapMemoryUsage().getUsed() + mmxb.getNonHeapMemoryUsage().getUsed();
+                    memUsageLabel.setText(new NumberFormatter(new DecimalFormat()).getFormat().format(bytes/1024) + " Kb of memory used");
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
+                }
+            }
+        }).start();
     }
     
     // TODO [P3] hot-keys-bindings should be customizable
@@ -1151,8 +1191,8 @@ public class FrontEnd extends JFrame {
             instance.getJPanel3().setVisible(true);
             instance.getJPanel2().add(instance.getJPanel3(), BorderLayout.NORTH);
             instance.getJPanel2().add(new JScrollPane(content), BorderLayout.CENTER);
-            instance.getJSplitPane().setDividerLocation(dl);
             instance.getJPanel2().setVisible(true);
+            instance.getJSplitPane().setDividerLocation(dl);
         }
     }
     
@@ -1339,7 +1379,7 @@ public class FrontEnd extends JFrame {
         if (jPanelStatusBar == null) {
             jPanelStatusBar = new JPanel();
             jPanelStatusBar.setLayout(new BorderLayout());
-            jPanelStatusBar.add(getJLabelStatusBarMsg(), BorderLayout.CENTER);
+            jPanelStatusBar.add(getJLabelStatusBarMsg(), BorderLayout.WEST);
         }
         return jPanelStatusBar;
     }
@@ -3083,6 +3123,7 @@ public class FrontEnd extends JFrame {
                 };
                 final JTable extList = new JTable(extModel);
                 final TableRowSorter<TableModel> extSorter = new TableRowSorter<TableModel>(extModel);
+                extSorter.setSortsOnUpdates(true);
                 extList.setRowSorter(extSorter);
                 extModel.addColumn("Name");
                 extModel.addColumn("Version");
@@ -3265,6 +3306,7 @@ public class FrontEnd extends JFrame {
                     }
                 };
                 final TableRowSorter<TableModel> lafSorter = new TableRowSorter<TableModel>(lafModel);
+                lafSorter.setSortsOnUpdates(true);
                 lafList.setRowSorter(lafSorter);
                 lafModel.addColumn("Name");
                 lafModel.addColumn("Version");

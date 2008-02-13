@@ -146,34 +146,39 @@ public class Preferences {
     /* PREFERENCES DECLARATION SECTION */
     
     @PreferenceAnnotation(
-            title = "Show system tray icon",
-            description = "Defines if application can allocate space in system tray, allows to hide/restore application to/from system tray icon")
-    public boolean useSysTrayIcon;
-
-    @PreferenceAnnotation(
-            title = "Remain in system tray on window close",
-            description = "Defines if application should remain in system tray when application's window is closed")
-    public boolean remainInSysTrayOnWindowClose;
-    
-    @PreferenceAnnotation(
-            title = "Minimize to system tray",
-            description = "Defines if application should be minimized to system tray instead of task panel")
-    public boolean minimizeToSysTray;
-    
-    @PreferenceAnnotation(
-            title = "Exit without confirmation",
-            description = "Defines if exit-confirmation should be displayed on exit")
-    public boolean exitWithoutConfirmation;
-    
-    @PreferenceAnnotation(
-            title = "Auto save on exit",
-            description = "Defines if user data have to be automatically saved on exit")
-    public boolean autoSaveOnExit;
-    
-    @PreferenceAnnotation(
             title = "Preferred date format:",
             description = "Defines preferred date format for dates rendering.")
     @PreferenceValidationAnnotation(validationClass = PreferredDateFormatValidator.class)        
     public String preferredDateFormat = "dd.MM.yyyy @ HH:mm:ss";
+    
+    @PreferenceAnnotation(
+            title = "Show system tray icon",
+            description = "Defines if application can allocate space in system tray, allows to hide/restore application to/from system tray icon")
+    public boolean useSysTrayIcon = false;
+
+    @PreferenceAnnotation(
+            title = "Remain in system tray on window close",
+            description = "Defines if application should remain in system tray when application's window is closed")
+    public boolean remainInSysTrayOnWindowClose = false;
+    
+    @PreferenceAnnotation(
+            title = "Minimize to system tray",
+            description = "Defines if application should be minimized to system tray instead of task panel")
+    public boolean minimizeToSysTray = false;
+    
+    @PreferenceAnnotation(
+            title = "Exit without confirmation",
+            description = "Defines if exit-confirmation should be displayed on exit")
+    public boolean exitWithoutConfirmation = false;
+    
+    @PreferenceAnnotation(
+            title = "Auto save on exit",
+            description = "Defines if user data have to be automatically saved on exit")
+    public boolean autoSaveOnExit = false;
+    
+    @PreferenceAnnotation(
+            title = "Show memory usage information in status bar",
+            description = "Defines if memory usage information should be shown in the status bar.")
+    public boolean showMemoryUsage = false;
     
 }

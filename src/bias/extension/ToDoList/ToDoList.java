@@ -332,6 +332,7 @@ public class ToDoList extends EntryExtension {
             todoEntriesTable.getColumnModel().removeColumn(idCol);
             
             sorter = new TableRowSorter<TableModel>(model);
+            sorter.setSortsOnUpdates(true);
             sorter.setMaxSortKeys(MAX_SORT_KEYS_NUMBER);
             List<SortKey> sortKeys = new LinkedList<SortKey>();
             for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {

@@ -53,6 +53,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.datatype.DatatypeFactory;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -86,7 +87,6 @@ import bias.extension.FinancialFlows.xmlb.SingleFlows;
 import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
 
-import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import com.toedter.calendar.JDateChooser;
 import com.toedter.calendar.JDateChooserCellEditor;
 
@@ -274,13 +274,13 @@ public class FinancialFlows extends EntryExtension {
         return PropertiesUtils.serializeProperties(p);
     }
 
-    private SingleFlows serializeSingleFlows() {
+    private SingleFlows serializeSingleFlows() throws Exception {
         SingleFlows flows = objFactory.createSingleFlows();
         for (int i = 0; i < getJTableSingle().getModel().getRowCount(); i++) {
             SingleFlow flow = objFactory.createSingleFlow();
             GregorianCalendar cal = new GregorianCalendar();
             cal.setTime((Date) getJTableSingle().getModel().getValueAt(i, COLUMN_DATE_IDX));
-            flow.setDate(new XMLGregorianCalendarImpl(cal));
+            flow.setDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(cal));
             flow.setAmount((Float) getJTableSingle().getModel().getValueAt(i, COLUMN_AMOUNT_IDX));
             flow.setType((String) getJTableSingle().getModel().getValueAt(i, COLUMN_TYPE_IDX));
             DIRECTION direction = (DIRECTION) getJTableSingle().getModel().getValueAt(i, COLUMN_DIRECTION_IDX);
@@ -290,16 +290,16 @@ public class FinancialFlows extends EntryExtension {
         return flows;
     }
 
-    private RegularFlows serializeRegularFlows() {
+    private RegularFlows serializeRegularFlows() throws Exception {
         RegularFlows flows = objFactory.createRegularFlows();
         for (int i = 0; i < getJTableRegular().getModel().getRowCount(); i++) {
             RegularFlow flow = objFactory.createRegularFlow();
             GregorianCalendar cal1 = new GregorianCalendar();
             cal1.setTime((Date) getJTableRegular().getModel().getValueAt(i, COLUMN_DATE_IDX));
-            flow.setDate(new XMLGregorianCalendarImpl(cal1));
+            flow.setDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(cal1));
             GregorianCalendar cal2 = new GregorianCalendar();
             cal2.setTime((Date) getJTableRegular().getModel().getValueAt(i, COLUMN_END_DATE_IDX));
-            flow.setEndDate(new XMLGregorianCalendarImpl(cal2));
+            flow.setEndDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(cal2));
             flow.setAmount((Float) getJTableRegular().getModel().getValueAt(i, COLUMN_AMOUNT_IDX));
             flow.setType((String) getJTableRegular().getModel().getValueAt(i, COLUMN_TYPE_IDX));
             DIRECTION direction = (DIRECTION) getJTableRegular().getModel().getValueAt(i, COLUMN_DIRECTION_IDX);
@@ -582,6 +582,7 @@ public class FinancialFlows extends EntryExtension {
         getJTableSingle().getColumnModel().getColumn(COLUMN_TYPE_IDX).setCellEditor(new ComboBoxCellEditor());
         getJTableSingle().getColumnModel().removeColumn(getJTableSingle().getColumnModel().getColumn(COLUMN_DIRECTION_IDX));
         singleSorter = new TableRowSorter<TableModel>(model);
+        singleSorter.setSortsOnUpdates(true);
         // TODO [P1] table-sorting options should be restored from settings
         List<SortKey> sortKeys = new LinkedList<SortKey>();
         sortKeys.add(new SortKey(COLUMN_DATE_IDX, SortOrder.ASCENDING));
@@ -603,6 +604,7 @@ public class FinancialFlows extends EntryExtension {
         getJTableRegular().getColumnModel().getColumn(COLUMN_TYPE_IDX).setCellEditor(new ComboBoxCellEditor());
         getJTableRegular().getColumnModel().removeColumn(getJTableRegular().getColumnModel().getColumn(COLUMN_DIRECTION_IDX));
         regularSorter = new TableRowSorter<TableModel>(model);
+        regularSorter.setSortsOnUpdates(true);
         // TODO [P1] table-sorting options should be restored from settings
         List<SortKey> sortKeys = new LinkedList<SortKey>();
         sortKeys.add(new SortKey(COLUMN_DIRECTION_IDX, SortOrder.ASCENDING));
