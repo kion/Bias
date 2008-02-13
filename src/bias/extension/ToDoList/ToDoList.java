@@ -84,7 +84,6 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
                   "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
                   "an author of Bias application.")
 public class ToDoList extends EntryExtension {
-
     private static final long serialVersionUID = 1L;
     
     private static final ImageIcon ICON_CONFIG = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "config.png"));
@@ -385,6 +384,8 @@ public class ToDoList extends EntryExtension {
                     }
                 }
             });
+
+            // TODO [P2] column widths and selected row should be restored on load
             
             mainPanel.add(entriesPanel, BorderLayout.CENTER);
             final JTextField filterText = new JTextField();
