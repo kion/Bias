@@ -317,6 +317,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    // TODO [P2] memory usage optimization: show memory usage info only when main window is visible
     private static void startMemoryUsageMonitoring() {
         new Thread(new Runnable() {
             public void run() {
