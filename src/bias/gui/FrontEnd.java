@@ -2966,6 +2966,7 @@ public class FrontEnd extends JFrame {
                                 prefControl.setPreferredSize(new Dimension(150, 20));
                                 PreferenceValidationAnnotation prefValAnn = field.getAnnotation(PreferenceValidationAnnotation.class);
                                 if (prefValAnn != null) {
+                                    // TODO [P3] optimization: there should be only one instance of certain validation class
                                     final PreferenceValidator<String> validator = (PreferenceValidator<String>) prefValAnn.validationClass().newInstance();
                                     final JTextComponent textControl = ((JTextComponent) prefControl);
                                     final Color normal = textControl.getForeground();
