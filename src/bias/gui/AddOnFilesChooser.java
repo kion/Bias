@@ -23,7 +23,7 @@ public class AddOnFilesChooser extends JFileChooser {
         setFileFilter(new FileFilter() {
             @Override
             public boolean accept(File file) {
-                return file.isDirectory() || file.getName().matches(Constants.JAR_FILE_PATTERN);
+                return file.isDirectory() || (file.isFile() && file.getName().matches(Constants.JAR_FILE_PATTERN));
             }
             @Override
             public String getDescription() {

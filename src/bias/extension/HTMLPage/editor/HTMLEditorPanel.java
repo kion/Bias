@@ -56,7 +56,6 @@ import javax.swing.text.Element;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.AbstractDocument.BranchElement;
 import javax.swing.text.html.HTML;
@@ -241,7 +240,7 @@ public class HTMLEditorPanel extends JPanel {
         }
         return jScrollPane;
     }
-
+    
     /**
      * This method initializes jTextPane
      * 
@@ -259,8 +258,11 @@ public class HTMLEditorPanel extends JPanel {
             StyleConstants.setFontSize(attrs, DEFAULT_FONT.getSize());
             StyleConstants.setItalic(attrs, (DEFAULT_FONT.getStyle() & Font.ITALIC) != 0);
             StyleConstants.setBold(attrs, (DEFAULT_FONT.getStyle() & Font.BOLD) != 0);
-            StyledDocument doc = jTextPane.getStyledDocument();
+            HTMLDocument doc = (HTMLDocument) jTextPane.getStyledDocument();
             doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
+
+            doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
+            doc.setPreservesUnknownTags(false);
 
             jTextPane.addCaretListener(new CaretListener() {
                 public void caretUpdate(CaretEvent e) {
@@ -270,10 +272,10 @@ public class HTMLEditorPanel extends JPanel {
             });
             jTextPane.addKeyListener(new KeyAdapter() {
                 @Override
-                public void keyReleased(KeyEvent e) {
-                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                public void keyTyped(KeyEvent e) {
+                    if (e.getKeyChar() == KeyEvent.VK_TAB) {
                         try {
-                            HTMLEditor.insertLineBreakOnEnter(getJTextPane());
+                            HTMLEditor.insertKeyStrokeInputHTMLReplacement(getJTextPane(), "<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>", HTML.Tag.SPAN);
                         } catch (Exception exception) {
                             FrontEnd.displayErrorMessage(exception);
                         }
@@ -298,6 +300,14 @@ public class HTMLEditorPanel extends JPanel {
             });
         }
         return jTextPane;
+    }
+    
+    public int getCaretPosition() {
+        return getJTextPane().getCaretPosition();
+    }
+
+    public void setCaretPosition(int pos) {
+        getJTextPane().setCaretPosition(pos);
     }
 
     private void synchronizeEditNoteControlsStates(JTextPane textPane) {
@@ -654,7 +664,7 @@ public class HTMLEditorPanel extends JPanel {
                         jfc.setFileFilter(new FileFilter() {
                             @Override
                             public boolean accept(File f) {
-                                return f.isFile() && f.getName().matches(HTML_PAGE_FILE_NAME_PATTERN);
+                                return f.isDirectory() || (f.isFile() && f.getName().matches(HTML_PAGE_FILE_NAME_PATTERN));
                             }
 
                             @Override

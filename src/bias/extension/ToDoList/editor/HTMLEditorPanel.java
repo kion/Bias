@@ -56,7 +56,6 @@ import javax.swing.text.Element;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.AbstractDocument.BranchElement;
 import javax.swing.text.html.HTML;
@@ -67,7 +66,7 @@ import javax.swing.text.html.HTML.Tag;
 import bias.Constants;
 import bias.core.Attachment;
 import bias.core.BackEnd;
-import bias.extension.ToDoList.ToDoList;
+import bias.extension.HTMLPage.HTMLPage;
 import bias.gui.FrontEnd;
 import bias.gui.ImageFileChooser;
 import bias.gui.VisualEntryDescriptor;
@@ -82,23 +81,23 @@ public class HTMLEditorPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     
-    private static final ImageIcon ICON_ENTRY_LINK = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/entry_link.png"));
+    private static final ImageIcon ICON_ENTRY_LINK = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/entry_link.png"));
 
-    private static final ImageIcon ICON_URL_LINK = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/url_link.png"));
+    private static final ImageIcon ICON_URL_LINK = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/url_link.png"));
 
-    private static final ImageIcon ICON_IMAGE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/image.png"));
+    private static final ImageIcon ICON_IMAGE = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/image.png"));
 
-    private static final ImageIcon ICON_COLOR = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/color.png"));
+    private static final ImageIcon ICON_COLOR = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/color.png"));
 
-    private static final ImageIcon ICON_TEXT_UNDERLINE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/text_underlined.png"));
+    private static final ImageIcon ICON_TEXT_UNDERLINE = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/text_underlined.png"));
 
-    private static final ImageIcon ICON_TEXT_ITALIC = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/text_italic.png"));
+    private static final ImageIcon ICON_TEXT_ITALIC = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/text_italic.png"));
 
-    private static final ImageIcon ICON_TEXT_BOLD = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/text_bold.png"));
+    private static final ImageIcon ICON_TEXT_BOLD = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/text_bold.png"));
 
-    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/switch_mode.png"));
+    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/switch_mode.png"));
 
-    private static final ImageIcon ICON_SAVE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "editor/save.png"));
+    private static final ImageIcon ICON_SAVE = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/save.png"));
 
     private static final String HTML_PAGE_FILE_NAME_PATTERN = "(?i).+\\.(htm|html)$";
 
@@ -143,7 +142,7 @@ public class HTMLEditorPanel extends JPanel {
     private UUID entryID = null;
     
     private File lastOutputDir = null;
-
+    
     private JScrollPane jScrollPane = null;
 
     private JTextPane jTextPane = null;
@@ -241,7 +240,7 @@ public class HTMLEditorPanel extends JPanel {
         }
         return jScrollPane;
     }
-
+    
     /**
      * This method initializes jTextPane
      * 
@@ -259,8 +258,11 @@ public class HTMLEditorPanel extends JPanel {
             StyleConstants.setFontSize(attrs, DEFAULT_FONT.getSize());
             StyleConstants.setItalic(attrs, (DEFAULT_FONT.getStyle() & Font.ITALIC) != 0);
             StyleConstants.setBold(attrs, (DEFAULT_FONT.getStyle() & Font.BOLD) != 0);
-            StyledDocument doc = jTextPane.getStyledDocument();
+            HTMLDocument doc = (HTMLDocument) jTextPane.getStyledDocument();
             doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
+
+            doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
+            doc.setPreservesUnknownTags(false);
 
             jTextPane.addCaretListener(new CaretListener() {
                 public void caretUpdate(CaretEvent e) {
@@ -270,10 +272,10 @@ public class HTMLEditorPanel extends JPanel {
             });
             jTextPane.addKeyListener(new KeyAdapter() {
                 @Override
-                public void keyReleased(KeyEvent e) {
-                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                public void keyTyped(KeyEvent e) {
+                    if (e.getKeyChar() == KeyEvent.VK_TAB) {
                         try {
-                            HTMLEditor.insertLineBreakOnEnter(getJTextPane());
+                            HTMLEditor.insertKeyStrokeInputHTMLReplacement(getJTextPane(), "<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>", HTML.Tag.SPAN);
                         } catch (Exception exception) {
                             FrontEnd.displayErrorMessage(exception);
                         }
@@ -298,6 +300,14 @@ public class HTMLEditorPanel extends JPanel {
             });
         }
         return jTextPane;
+    }
+    
+    public int getCaretPosition() {
+        return getJTextPane().getCaretPosition();
+    }
+
+    public void setCaretPosition(int pos) {
+        getJTextPane().setCaretPosition(pos);
     }
 
     private void synchronizeEditNoteControlsStates(JTextPane textPane) {
@@ -654,7 +664,7 @@ public class HTMLEditorPanel extends JPanel {
                         jfc.setFileFilter(new FileFilter() {
                             @Override
                             public boolean accept(File f) {
-                                return f.isFile() && f.getName().matches(HTML_PAGE_FILE_NAME_PATTERN);
+                                return f.isDirectory() || (f.isFile() && f.getName().matches(HTML_PAGE_FILE_NAME_PATTERN));
                             }
 
                             @Override

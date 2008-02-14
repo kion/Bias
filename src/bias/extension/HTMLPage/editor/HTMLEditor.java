@@ -21,6 +21,14 @@ import bias.Constants;
 public class HTMLEditor {
 
     public static void insertHTML(JTextPane editor, String htmlText, Tag tag) throws BadLocationException, IOException {
+        insertHTML(editor, htmlText, tag, false);
+    }
+    
+    public static void insertKeyStrokeInputHTMLReplacement(JTextPane editor, String htmlText, Tag tag) throws BadLocationException, IOException {
+        insertHTML(editor, htmlText, tag, true);
+    }
+    
+    public static void insertHTML(JTextPane editor, String htmlText, Tag tag, boolean replaceKeyStrokeInput) throws BadLocationException, IOException {
         if (editor.getEditorKit() instanceof HTMLEditorKit && editor.getDocument() instanceof HTMLDocument) {
             
             // remove editor's selected text if any 
@@ -34,14 +42,13 @@ public class HTMLEditor {
             int caret = editor.getCaretPosition();
             Element pEl = document.getParagraphElement(caret);
             
-            // insert space after inserted html if needed
-            boolean insertSpace = true;
-            if (caret < document.getLength()) {
-                if (document.getText(caret, 1).matches("\\s+")) {
-                    insertSpace = false;
-                }
+            if (replaceKeyStrokeInput) {
+                document.remove(caret-1, 1);
+                caret--;
             }
-            if (insertSpace) {
+
+            if (HTML.Tag.A.equals(tag)) {
+                // insert space after inserted link
                 htmlText += "&nbsp;";
             }
             
@@ -73,32 +80,4 @@ public class HTMLEditor {
         }
     }
     
-    /**
-     * inserts HTML-line-break as response to user's Enter-key pressing;
-     * should be called immediately after Enter-key has been released
-     * 
-     * @param editor editor to insert line break to
-     * @throws BadLocationException
-     * @throws IOException
-     */
-    public static void insertLineBreakOnEnter(JTextPane editor) throws BadLocationException, IOException {
-        if (editor.getEditorKit() instanceof HTMLEditorKit && editor.getDocument() instanceof HTMLDocument) {
-            HTMLEditorKit editorKit = (HTMLEditorKit) editor.getEditorKit();
-            HTMLDocument document = (HTMLDocument) editor.getDocument();
-
-            int caret = editor.getCaretPosition();
-            Element pEl = document.getParagraphElement(caret-1);
-            boolean isParagraphBegining = caret-1 == pEl.getStartOffset();
-
-            // insert HTML-line-break
-            editorKit.insertHTML(document, caret-1, "<br>", 0, 0, HTML.Tag.BR);
-
-            if (!isParagraphBegining) {
-                // remove plain line break
-                document.remove(caret-1, 1);
-            }
-            
-        }
-    }
-
 }

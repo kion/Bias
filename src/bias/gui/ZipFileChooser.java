@@ -23,7 +23,7 @@ public class ZipFileChooser extends JFileChooser {
         setFileFilter(new FileFilter() {
             @Override
             public boolean accept(File file) {
-                return file.isDirectory() || file.getName().matches(Constants.ZIP_FILE_PATTERN);
+                return file.isDirectory() || (file.isFile() && file.getName().matches(Constants.ZIP_FILE_PATTERN));
             }
             @Override
             public String getDescription() {

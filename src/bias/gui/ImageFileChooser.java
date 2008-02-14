@@ -125,12 +125,11 @@ public class ImageFileChooser extends JFileChooser implements ActionListener, Pr
          * @see javax.swing.filechooser.FileFilter#accept(java.io.File)
          */
         public boolean accept(File f) {
-            String fileName = f.getName();
             return (f.isDirectory()
-                    || fileName.endsWith(".jpg")
-                    || fileName.endsWith(".jpeg")
-                    || fileName.endsWith(".gif")
-                    || fileName.endsWith(".png"));
+                    || (f.isFile() && f.getName().endsWith(".jpg"))
+                    || (f.isFile() && f.getName().endsWith(".jpeg"))
+                    || (f.isFile() && f.getName().endsWith(".gif"))
+                    || (f.isFile() && f.getName().endsWith(".png")));
         }
 
         /*

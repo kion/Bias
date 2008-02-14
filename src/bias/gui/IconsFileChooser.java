@@ -21,7 +21,7 @@ public class IconsFileChooser extends ImageFileChooser {
         setFileFilter(new FileFilter() {
             @Override
             public boolean accept(File f) {
-                return imgFF.accept(f) || f.getName().matches(Constants.JAR_FILE_PATTERN);
+                return imgFF.accept(f) || (f.isFile() && f.getName().matches(Constants.JAR_FILE_PATTERN));
             }
             @Override
             public String getDescription() {
