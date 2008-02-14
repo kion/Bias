@@ -45,7 +45,7 @@ import bias.utils.Validator;
  */
 
 @AddOnAnnotation(
-        version="0.9.7",
+        version="0.8.9",
         author="R. Kasianenko",
         description = "Simple plain text editor",
         details = "<i>PlainText</i> extension for Bias is a part<br>" +
