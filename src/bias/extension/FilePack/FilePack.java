@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -25,7 +27,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
+import javax.swing.SortOrder;
+import javax.swing.RowSorter.SortKey;
+import javax.swing.event.RowSorterEvent;
+import javax.swing.event.RowSorterListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import bias.Constants;
 import bias.annotation.AddOnAnnotation;
@@ -36,6 +44,7 @@ import bias.gui.FrontEnd;
 import bias.utils.AppManager;
 import bias.utils.FSUtils;
 import bias.utils.PropertiesUtils;
+import bias.utils.Validator;
 
 
 /**
@@ -44,7 +53,7 @@ import bias.utils.PropertiesUtils;
  */
 
 @AddOnAnnotation(
-        version="0.2.0",
+        version="0.3.2",
         author="R. Kasianenko",
         description = "Simple file pack",
         details = "<i>FilePack</i> extension for Bias is a part<br>" +
@@ -65,11 +74,25 @@ public class FilePack extends EntryExtension {
     
     private static final ImageIcon ICON_SAVE = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "save.png"));
     
-	private Map<Attachment, String> filePack;
+    private static final int MAX_SORT_KEYS_NUMBER = 3;
+    
+    private static final String PROPERTY_SORT_BY_COLUMN = "SORT_BY_COLUMN";
+    private static final String PROPERTY_SORT_ORDER = "SORT_BY_ORDER";
+    private static final String PROPERTY_SELECTED_ROW = "SELECTED_ROW";
+
+    private int[] sortByColumn = new int[MAX_SORT_KEYS_NUMBER];
+    
+    private SortOrder[] sortOrder = new SortOrder[MAX_SORT_KEYS_NUMBER];
+    
+    private Map<Attachment, String> filePack;
     
     private File lastInputDir = null;
 	
     private File lastOutputDir = null;
+    
+    private byte[] settings = null;
+    
+    private TableRowSorter<TableModel> sorter;
     
 	private JToolBar jToolBar1;
 	private JButton jButton2;
@@ -83,7 +106,10 @@ public class FilePack extends EntryExtension {
 
 	public FilePack(UUID id, byte[] data, byte[] settings) {
 		super(id, data, settings);
+        this.settings = getSettings();
+
         Properties p = PropertiesUtils.deserializeProperties(data);
+        
         filePack = new LinkedHashMap<Attachment, String>();
 		try {
             for (Attachment att : BackEnd.getInstance().getAttachments(getId())) {
@@ -93,7 +119,30 @@ public class FilePack extends EntryExtension {
         } catch (Exception e) {
             FrontEnd.displayErrorMessage("Failed to get attachments!", e);
         }
+        
+        Properties s = PropertiesUtils.deserializeProperties(this.settings);
+
+        for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+            int sortByColumn = -1;
+            String sortByColumnStr = s.getProperty(PROPERTY_SORT_BY_COLUMN + i);
+            if (!Validator.isNullOrBlank(sortByColumnStr)) {
+                sortByColumn = Integer.valueOf(sortByColumnStr);
+            }
+            this.sortByColumn[i] = sortByColumn;
+            SortOrder sortOrder = null;
+            String sortOrderStr = s.getProperty(PROPERTY_SORT_ORDER + i);
+            if (!Validator.isNullOrBlank(sortOrderStr)) {
+                sortOrder = SortOrder.valueOf(sortOrderStr);
+            }
+            this.sortOrder[i] = sortOrder;
+        }
+        
 		initGUI();
+		
+        String selRow = s.getProperty(PROPERTY_SELECTED_ROW);
+        if (!Validator.isNullOrBlank(selRow)) {
+            jTable1.setRowSelectionInterval(Integer.valueOf(selRow), Integer.valueOf(selRow));
+        }
 	}
 
 	/* (non-Javadoc)
@@ -108,6 +157,30 @@ public class FilePack extends EntryExtension {
 		return PropertiesUtils.serializeProperties(p);
 	}
 	
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#serializeSettings()
+     */
+    @Override
+    public byte[] serializeSettings() throws Throwable {
+        Properties props = PropertiesUtils.deserializeProperties(settings);
+        int idx = jTable1.getSelectedRow();
+        if (idx != -1) {
+            props.setProperty(PROPERTY_SELECTED_ROW, "" + jTable1.getSelectedRow());
+        } else {
+            props.remove(PROPERTY_SELECTED_ROW);
+        }
+        for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+            if (sortByColumn[i] != -1 && sortOrder[i] != null) {
+                props.setProperty(PROPERTY_SORT_BY_COLUMN + i, "" + sortByColumn[i]);
+                props.setProperty(PROPERTY_SORT_ORDER + i, sortOrder[i].name());
+            } else {
+                props.remove(PROPERTY_SORT_BY_COLUMN + i);
+                props.remove(PROPERTY_SORT_ORDER + i);
+            }
+        }
+        return PropertiesUtils.serializeProperties(props);
+    }
+
     /* (non-Javadoc)
      * @see bias.extension.Extension#getSearchData()
      */
@@ -208,6 +281,42 @@ public class FilePack extends EntryExtension {
 							jTable1 = new JTable();
 							jScrollPane1.setViewportView(jTable1);
 							jTable1.setModel(jTable1Model);
+
+					        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+                            model.addColumn("File");
+                            model.addColumn("Size");
+                            model.addColumn("Date");
+
+					        sorter = new TableRowSorter<TableModel>(jTable1Model);
+				            sorter.setSortsOnUpdates(true);
+				            sorter.setMaxSortKeys(MAX_SORT_KEYS_NUMBER);
+				            List<SortKey> sortKeys = new LinkedList<SortKey>();
+				            for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+				                if (sortByColumn[i] != -1 && sortOrder[i] != null) {
+				                    SortKey sortKey = new SortKey(sortByColumn[i], sortOrder[i]);
+				                    sortKeys.add(sortKey);
+				                }
+				            }
+				            sorter.setSortKeys(sortKeys);
+				            sorter.addRowSorterListener(new RowSorterListener(){
+				                public void sorterChanged(RowSorterEvent e) {
+				                    if (e.getType().equals(RowSorterEvent.Type.SORT_ORDER_CHANGED)) {
+				                        List<? extends SortKey> sortKeys = sorter.getSortKeys();
+				                        for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+				                            if (i < sortKeys.size()) {
+				                                SortKey sortKey = sortKeys.get(i);
+				                                sortByColumn[i] = sortKey.getColumn();
+				                                sortOrder[i] = sortKey.getSortOrder();
+				                            } else {
+				                                sortByColumn[i] = -1;
+				                                sortOrder[i] = null;
+				                            }
+				                        }
+				                    }
+				                }
+				            });
+				            jTable1.setRowSorter(sorter);
+
 						}
 					}
 				}
@@ -355,12 +464,6 @@ public class FilePack extends EntryExtension {
 	}
 	
 	private void addRow(Attachment attachment, String date) {
-		DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-		if (model.getColumnCount() == 0) {
-			model.addColumn("File");
-			model.addColumn("Size");
-            model.addColumn("Date");
-		}
 		String metrics = " B";
 		float size = attachment.getData().length;
 		if (size >= 1024) {
@@ -381,7 +484,7 @@ public class FilePack extends EntryExtension {
             }
         }
         sizeStr += metrics;
-		model.addRow(new Object[]{attachment.getName(), sizeStr, date});
+		((DefaultTableModel) jTable1.getModel()).addRow(new Object[]{attachment.getName(), sizeStr, date});
 	}
 
 	private void removeFile(String fileName, int rowIdx) throws Exception {

@@ -11,8 +11,6 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -268,18 +266,6 @@ public class HTMLEditorPanel extends JPanel {
                 public void caretUpdate(CaretEvent e) {
                     JTextPane textPane = (JTextPane) e.getSource();
                     synchronizeEditNoteControlsStates(textPane);
-                }
-            });
-            jTextPane.addKeyListener(new KeyAdapter() {
-                @Override
-                public void keyTyped(KeyEvent e) {
-                    if (e.getKeyChar() == KeyEvent.VK_TAB) {
-                        try {
-                            HTMLEditor.insertKeyStrokeInputHTMLReplacement(getJTextPane(), "<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>", HTML.Tag.SPAN);
-                        } catch (Exception exception) {
-                            FrontEnd.displayErrorMessage(exception);
-                        }
-                    }
                 }
             });
             jTextPane.addHyperlinkListener(new HyperlinkListener() {

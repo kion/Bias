@@ -21,14 +21,6 @@ import bias.Constants;
 public class HTMLEditor {
 
     public static void insertHTML(JTextPane editor, String htmlText, Tag tag) throws BadLocationException, IOException {
-        insertHTML(editor, htmlText, tag, false);
-    }
-    
-    public static void insertKeyStrokeInputHTMLReplacement(JTextPane editor, String htmlText, Tag tag) throws BadLocationException, IOException {
-        insertHTML(editor, htmlText, tag, true);
-    }
-    
-    public static void insertHTML(JTextPane editor, String htmlText, Tag tag, boolean replaceKeyStrokeInput) throws BadLocationException, IOException {
         if (editor.getEditorKit() instanceof HTMLEditorKit && editor.getDocument() instanceof HTMLDocument) {
             
             // remove editor's selected text if any 
@@ -42,11 +34,6 @@ public class HTMLEditor {
             int caret = editor.getCaretPosition();
             Element pEl = document.getParagraphElement(caret);
             
-            if (replaceKeyStrokeInput) {
-                document.remove(caret-1, 1);
-                caret--;
-            }
-
             if (HTML.Tag.A.equals(tag)) {
                 // insert space after inserted link
                 htmlText += "&nbsp;";
