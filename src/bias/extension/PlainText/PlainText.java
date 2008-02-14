@@ -17,6 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.JToggleButton;
@@ -37,13 +38,14 @@ import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
+import bias.utils.Validator;
 
 /**
  * @author kion
  */
 
 @AddOnAnnotation(
-        version="0.9.5",
+        version="0.9.7",
         author="R. Kasianenko",
         description = "Simple plain text editor",
         details = "<i>PlainText</i> extension for Bias is a part<br>" +
@@ -64,6 +66,12 @@ public class PlainText extends EntryExtension {
     
     private static final String DEFAULT_FONT_FAMILY = "Monospaced";
     
+    private static final String PROPERTY_SCROLLBAR_VERT = "SCROLLBAR_VERT";
+    
+    private static final String PROPERTY_SCROLLBAR_HORIZ = "SCROLLBAR_HORIZ";
+    
+    private static final String PROPERTY_CARET_POSITION = "CARET_POSITION";
+
     private int currentFontSize = DEFAULT_FONT_SIZE;
 
     private boolean dataChanged = false;
@@ -115,6 +123,20 @@ public class PlainText extends EntryExtension {
     public byte[] serializeSettings() throws Throwable {
         Properties settings = new Properties();
         settings.setProperty(PROPERTY_FONT_SIZE, "" + currentFontSize);
+        JScrollBar sb = getJScrollPane().getVerticalScrollBar();
+        if (sb != null && sb.getValue() != 0) {
+            settings.setProperty(PROPERTY_SCROLLBAR_VERT, "" + sb.getValue());
+        } else {
+            settings.remove(PROPERTY_SCROLLBAR_VERT);
+        }
+        sb = getJScrollPane().getHorizontalScrollBar();
+        if (sb != null && sb.getValue() != 0) {
+            settings.setProperty(PROPERTY_SCROLLBAR_HORIZ, "" + sb.getValue());
+        } else {
+            settings.remove(PROPERTY_SCROLLBAR_HORIZ);
+        }
+        int cp = getJTextPane().getCaretPosition();
+        settings.setProperty(PROPERTY_CARET_POSITION, "" + cp);
         return PropertiesUtils.serializeProperties(settings);
     }
     
@@ -170,6 +192,28 @@ public class PlainText extends EntryExtension {
             getJButton1().setEnabled(false);
         } else if (currentFontSize == FONT_SIZES[0]) {
             getJButton2().setEnabled(false);
+        }
+        JScrollBar sb = getJScrollPane().getVerticalScrollBar();
+        if (sb != null) {
+            String val = settings.getProperty(PROPERTY_SCROLLBAR_VERT);
+            if (val != null) {
+                sb.setVisibleAmount(0);
+                sb.setValue(sb.getMaximum());
+                sb.setValue(Integer.valueOf(val));
+            }
+        }
+        sb = getJScrollPane().getHorizontalScrollBar();
+        if (sb != null) {
+            String val = settings.getProperty(PROPERTY_SCROLLBAR_HORIZ);
+            if (val != null) {
+                sb.setVisibleAmount(0);
+                sb.setValue(sb.getMaximum());
+                sb.setValue(Integer.valueOf(val));
+            }
+        }
+        String caretPos = settings.getProperty(PROPERTY_CARET_POSITION);
+        if (!Validator.isNullOrBlank(caretPos)) {
+            getJTextPane().setCaretPosition(Integer.valueOf(caretPos));
         }
         getJTextPane().getDocument().addUndoableEditListener(new UndoRedoManager(jTextPane));
         getJTextPane().getDocument().addDocumentListener(new DocumentListener(){
