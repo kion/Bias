@@ -59,7 +59,7 @@ import bias.utils.Validator;
  */
 
 @AddOnAnnotation(
-        version="0.3.1",
+        version="0.3.3",
         author="R. Kasianenko",
         description = "Simple search tool",
         details = "<i>SimpleSearch</i> extension for Bias is a part<br>" +
