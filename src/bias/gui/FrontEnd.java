@@ -50,6 +50,7 @@ import java.util.Map.Entry;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -64,6 +65,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -202,9 +204,9 @@ public class FrontEnd extends JFrame {
     private static boolean sysTrayIconVisible = false;
     
     private static TrayIcon trayIcon = null;
-
-    private static JLabel memUsageLabel;
     
+    private static JProgressBar memUsageProgressBar = null;
+
     private Dialog dialog = null;
     
     private JScrollPane detailsPane = null;
@@ -301,15 +303,10 @@ public class FrontEnd extends JFrame {
         }
         if (instance != null) {
             if (Preferences.getInstance().showMemoryUsage) {
-                if (memUsageLabel == null) {
-                    memUsageLabel = new JLabel();
-                    instance.getJPanelStatusBar().add(memUsageLabel, BorderLayout.EAST);
-                }
                 startMemoryUsageMonitoring();
-                memUsageLabel.setVisible(true);
             } else {
-                if (memUsageLabel != null) {
-                    memUsageLabel.setVisible(false);
+                if (memUsageProgressBar != null) {
+                    memUsageProgressBar.setVisible(false);
                 }
             }
         }
@@ -320,9 +317,19 @@ public class FrontEnd extends JFrame {
         new Thread(new Runnable() {
             public void run() {
                 while (Preferences.getInstance().showMemoryUsage) {
+                    if (memUsageProgressBar == null) {
+                        memUsageProgressBar = new JProgressBar(new DefaultBoundedRangeModel());
+                        memUsageProgressBar.setMinimum(0);
+                        memUsageProgressBar.setStringPainted(true);
+                        instance.getJPanelStatusBar().add(memUsageProgressBar, BorderLayout.EAST);
+                    }
+                    memUsageProgressBar.setVisible(true);
                     MemoryMXBean mmxb = ManagementFactory.getMemoryMXBean();
                     long bytes = mmxb.getHeapMemoryUsage().getUsed() + mmxb.getNonHeapMemoryUsage().getUsed();
-                    memUsageLabel.setText(bytes/1024 + " Kb of memory used");
+                    long bytes2 = mmxb.getHeapMemoryUsage().getCommitted() + mmxb.getNonHeapMemoryUsage().getCommitted();
+                    memUsageProgressBar.setMaximum((int) bytes2/1024);
+                    memUsageProgressBar.setValue((int) bytes/1024);
+                    memUsageProgressBar.setString(" Memory Usage: " + bytes/1024 + " / " + bytes2/1024 + " Kb" + Constants.BLANK_STR);
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {
