@@ -43,6 +43,7 @@ import bias.extension.EntryExtension;
 import bias.gui.FrontEnd;
 import bias.utils.AppManager;
 import bias.utils.FSUtils;
+import bias.utils.FormatUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 
@@ -464,26 +465,8 @@ public class FilePack extends EntryExtension {
 	}
 	
 	private void addRow(Attachment attachment, String date) {
-		String metrics = " B";
-		float size = attachment.getData().length;
-		if (size >= 1024) {
-			size = size/1024;
-			metrics = " KB";
-		}
-		if (size >= 1024) {
-			size = size/1024;
-			metrics = " MB";
-		}
-        String sizeStr = "" + size;
-        int idx = sizeStr.indexOf(".");
-        if (idx != -1) {
-            if (sizeStr.charAt(idx + 1) != '0') {
-                sizeStr = sizeStr.substring(0, idx + 2);
-            } else {
-                sizeStr = sizeStr.substring(0, idx);
-            }
-        }
-        sizeStr += metrics;
+		long size = attachment.getData().length;
+        String sizeStr = FormatUtils.formatByteSize(size);
 		((DefaultTableModel) jTable1.getModel()).addRow(new Object[]{attachment.getName(), sizeStr, date});
 	}
 
