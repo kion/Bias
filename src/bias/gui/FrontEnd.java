@@ -77,6 +77,7 @@ import javax.swing.JToolBar;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.RowFilter;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -1400,12 +1401,23 @@ public class FrontEnd extends JFrame {
         return statusBarMessagesList;
     }
     
+    private void autoscrollStatusBarMessageList() {
+        SwingUtilities.invokeLater(new Runnable(){
+            public void run() {
+                getStatusBarMessagesList().ensureIndexIsVisible(getStatusBarMessagesList().getModel().getSize() - 1);
+            }
+        });
+    }
+    
     public void displayStatusBarMessage(final String message) {
         new Thread(new Runnable(){
             public void run() {
                 final String timestamp = dateFormat.format(new Date()) + " # ";
                 getJLabelStatusBarMsg().setText(STATUS_MESSAGE_PREFIX + timestamp + STATUS_MESSAGE_HTML_COLOR_HIGHLIGHTED + message + STATUS_MESSAGE_SUFFIX);
                 ((DefaultListModel) getStatusBarMessagesList().getModel()).addElement(timestamp + message);
+                if (getJPanel2().isVisible()) {
+                    autoscrollStatusBarMessageList();
+                }
                 ActionListener al = new ActionListener(){
                     public void actionPerformed(ActionEvent ae){
                         getJLabelStatusBarMsg().setText(STATUS_MESSAGE_PREFIX + timestamp + STATUS_MESSAGE_HTML_COLOR_NORMAL + message + STATUS_MESSAGE_SUFFIX);
@@ -1477,6 +1489,7 @@ public class FrontEnd extends JFrame {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     displayBottomPanel(title, panel);
+                    autoscrollStatusBarMessageList();
                 }
             });
         }
