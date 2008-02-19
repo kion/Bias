@@ -3,7 +3,6 @@
  */
 package bias.extension;
 
-import javax.swing.Icon;
 
 
 
@@ -70,15 +69,8 @@ public abstract class ToolExtension implements Extension {
     }
     
     /**
-     * Performs main tool's action, invoked by user.
-     * Should be implemented by extending class to perform certain tool's action.
-     * 
+     * @return tool representation
      */
-    public abstract void action() throws Throwable;
-    
-    /**
-     * @return icon representing tool
-     */
-    public abstract Icon getIcon();
+    public abstract ToolRepresentation getRepresentation();
 
 }

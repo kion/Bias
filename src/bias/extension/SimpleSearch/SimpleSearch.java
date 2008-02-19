@@ -13,6 +13,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -28,8 +30,8 @@ import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -47,6 +49,7 @@ import bias.core.Recognizable;
 import bias.extension.EntryExtension;
 import bias.extension.ExtensionFactory;
 import bias.extension.ToolExtension;
+import bias.extension.ToolRepresentation;
 import bias.extension.SimpleSearch.SearchEngine.HighLightMarker;
 import bias.gui.FrontEnd;
 import bias.gui.VisualEntryDescriptor;
@@ -59,7 +62,7 @@ import bias.utils.Validator;
  */
 
 @AddOnAnnotation(
-        version="0.3.3",
+        version="0.7.7",
         author="R. Kasianenko",
         description = "Simple search tool",
         details = "<i>SimpleSearch</i> extension for Bias is a part<br>" +
@@ -159,203 +162,221 @@ public class SimpleSearch extends ToolExtension {
         }
         return PropertiesUtils.serializeProperties(props);
     }
-
+    
     /* (non-Javadoc)
-     * @see bias.extension.ToolExtension#action()
+     * @see bias.extension.ToolExtension#getRepresentation()
      */
     @Override
-    public void action() throws Throwable {
-        final JLabel searchExpressionL = new JLabel("search expression:");
-        final JTextField searchExpressionTF = new JTextField();
-        final Color normal = searchExpressionTF.getForeground();
-        final JLabel isCaseSensitiveL = new JLabel("case sensitive:");
-        final JCheckBox isCaseSensitiveCB = new JCheckBox();
-        final JPanel caseSensitivePanel = new JPanel(new BorderLayout());
-        caseSensitivePanel.add(isCaseSensitiveL, BorderLayout.CENTER);
-        caseSensitivePanel.add(isCaseSensitiveCB, BorderLayout.EAST);
-        final JLabel isRegularExpressionL = new JLabel("regular expression:");
-        final JCheckBox isRegularExpressionCB = new JCheckBox();
-        isRegularExpressionCB.addChangeListener(new ChangeListener(){
-            public void stateChanged(ChangeEvent e) {
-                if (isRegularExpressionCB.isSelected()) {
-                    isCaseSensitiveL.setEnabled(false);
-                    isCaseSensitiveCB.setEnabled(false);
-                } else {
-                    isCaseSensitiveL.setEnabled(true);
-                    isCaseSensitiveCB.setEnabled(true);
-                }
-            }
-        });
-        final JPanel regularExpressionPanel = new JPanel(new BorderLayout());
-        regularExpressionPanel.add(isRegularExpressionL, BorderLayout.CENTER);
-        regularExpressionPanel.add(isRegularExpressionCB, BorderLayout.EAST);
-        
-        final Map<String, Class<? extends EntryExtension>> types = ExtensionFactory.getInstance().getAnnotatedEntryExtensions();
-        
-        final JLabel filterClassL = new JLabel("search for entries of this type only:");
-        final JComboBox filterClassCB = new JComboBox();
-        filterClassCB.addItem("Any type");
-        final JPanel filterClassPanel = new JPanel(new BorderLayout());
-        filterClassPanel.add(filterClassL, BorderLayout.NORTH);
-        filterClassPanel.add(filterClassCB, BorderLayout.CENTER);
-        String selectItem = null;
-        for (Entry<String, Class<? extends EntryExtension>> entry : types.entrySet()) {
-            filterClassCB.addItem(entry.getKey());
-            if (filterClass != null 
-                    && entry.getValue().getName().equals(filterClass.getName())) {
-                selectItem = entry.getKey();
-            }
-        }
-        if (selectItem != null) {
-            filterClassCB.setSelectedItem(selectItem);
-        }
-
-        if (lastSearchCriteria != null) {
-            searchExpressionTF.setText(lastSearchCriteria.getSearchExpression());
-            isCaseSensitiveCB.setSelected(lastSearchCriteria.isCaseSensitive());
-            isRegularExpressionCB.setSelected(lastSearchCriteria.isRegularExpression());
-        }
-        
-        searchExpressionTF.addCaretListener(new CaretListener(){
-            public void caretUpdate(CaretEvent e) {
-                String searchExpression = searchExpressionTF.getText();
-                if (isRegularExpressionCB.isSelected() && !Validator.isNullOrBlank(searchExpression)) {
-                    try {
-                        Pattern.compile(searchExpression);
-                        searchExpressionTF.setForeground(normal);
-                        searchExpressionTF.setToolTipText(null);
-                    } catch (PatternSyntaxException pse) {
-                        String errorMsg = "Pattern syntax error";
-                        int idx = pse.getIndex();
-                        if (idx != -1) {
-                            if (idx > 0) {
-                                idx--;
-                            }
-                            errorMsg +=  " at the position " + (idx + 1) + " - char '" + searchExpression.charAt(idx) + "'";
-                        } else {
-                            errorMsg += "!";
-                        }
-                        searchExpressionTF.setForeground(Color.RED);
-                        searchExpressionTF.setToolTipText(errorMsg);
-                    }
-                } else {
-                    searchExpressionTF.setForeground(normal);
-                    searchExpressionTF.setToolTipText(null);
-                }
-            }
-        });
-        Thread searchThread = new Thread(new Runnable(){
-            public void run() {
-                JLabel processLabel = new JLabel();
-                try {
-                    int option = JOptionPane.showConfirmDialog(
-                            FrontEnd.getActiveWindow(), 
-                            new Component[]{
-                                searchExpressionL,
-                                searchExpressionTF,
-                                caseSensitivePanel,
-                                regularExpressionPanel,
-                                filterClassPanel
-                            }, 
-                            "Search", 
-                            JOptionPane.OK_CANCEL_OPTION);
-                    if (option == JOptionPane.OK_OPTION && !Validator.isNullOrBlank(searchExpressionTF.getText())) {
-                        JPanel entryPathItemsPanel = new JPanel();
-                        entryPathItemsPanel.setLayout(new BorderLayout());
-                        processLabel.setText("searching...");
-                        entryPathItemsPanel.add(processLabel, BorderLayout.CENTER);
-                        JLabel title = new JLabel("Search results");
-                        FrontEnd.displayBottomPanel(title, entryPathItemsPanel);
-
-                        filterClass = types.get(filterClassCB.getSelectedItem());
-                        
-                        if (lastSearchCriteria == null) {
-                            lastSearchCriteria = new SearchCriteria();
-                        }
-                        lastSearchCriteria.setSearchExpression(searchExpressionTF.getText()); 
-                        lastSearchCriteria.setCaseSensitive(isCaseSensitiveCB.isSelected()); 
-                        lastSearchCriteria.setRegularExpression(isRegularExpressionCB.isSelected());                    
-                        SearchCriteria sc = new SearchCriteria(
-                                searchExpressionTF.getText(),
-                                isCaseSensitiveCB.isSelected(),
-                                isRegularExpressionCB.isSelected());
-                        Map<VisualEntryDescriptor, Map<String, HighLightMarker>> result = search(sc, filterClass);
-                        if (result.isEmpty()) {
-                            title.setText("Search results :: 0 entries found");
-                            processLabel.setText("No items matching search criteria.");
-                        } else {
-                            title.setText("Search results :: " + result.size() + " entries found");
-                            entryPathItemsPanel.setVisible(false);
-                            entryPathItemsPanel.removeAll();
-                            entryPathItemsPanel.setLayout(new GridLayout(result.size(), 1));
-                            for (Entry<VisualEntryDescriptor, Map<String, HighLightMarker>> resultEntry : result.entrySet()) {
-                                final VisualEntryDescriptor ved = resultEntry.getKey();
-                                Collection<Recognizable> entryPath = ved.getEntryPath();
-                                JPanel entryPathItemPanel = new JPanel(new FlowLayout());
-                                Iterator<Recognizable> it = entryPath.iterator();
-                                while (it.hasNext()) {
-                                    final Recognizable r = it.next();
-                                    MouseListener ml = new MouseAdapter(){
-                                        @Override
-                                        public void mouseClicked(MouseEvent e) {
-                                            FrontEnd.switchToVisualEntry(r.getId());                                        
-                                        }
-                                    };
-                                    JPanel entryPathItemIcon = new IconViewPanel(((ImageIcon) r.getIcon()).getImage());
-                                    entryPathItemIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                                    entryPathItemIcon.addMouseListener(ml);
-                                    entryPathItemPanel.add(entryPathItemIcon);
-                                    JLabel entryPathItemLabel = new JLabel("<html><u><font color=blue>" + r.getCaption() + "</font></u></html>");
-                                    entryPathItemLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                                    entryPathItemLabel.addMouseListener(ml);
-                                    entryPathItemPanel.add(entryPathItemLabel);
-                                    if (it.hasNext()) {
-                                        entryPathItemPanel.add(new JLabel(">"));
-                                    }
-                                }
-                                StringBuffer matchedSnippets = new StringBuffer();
-                                Iterator<Entry<String, HighLightMarker>> it2 = resultEntry.getValue().entrySet().iterator();
-                                while (it2.hasNext()) {
-                                    Entry<String, HighLightMarker> entry = it2.next();
-                                    String str = entry.getKey();
-                                    String hlStr = null;
-                                    HighLightMarker hlMarker = entry.getValue();
-                                    if (hlMarker != null) {
-                                        Integer beginIndex = entry.getValue().getBeginIndex();
-                                        Integer endIndex = entry.getValue().getEndIndex();
-                                        if (beginIndex != null && endIndex != null) {
-                                            hlStr = str.substring(0, beginIndex);
-                                            hlStr += "<font bgcolor=yellow>";
-                                            hlStr += str.substring(beginIndex, endIndex);
-                                            hlStr += "</font>";
-                                            hlStr += str.substring(endIndex, str.length());
-                                        }
-                                    }
-                                    if (hlStr != null) {
-                                        matchedSnippets.append(hlStr);
-                                    } else {
-                                        matchedSnippets.append(str);
-                                    }
-                                    if (it2.hasNext()) {
-                                        matchedSnippets.append(" :: ");
-                                    }
-                                }
-                                entryPathItemPanel.add(new JLabel("<html> &gt;&gt; <i>" + matchedSnippets.toString() + "</i></html>"));
-                                JPanel p = new JPanel(new BorderLayout());
-                                p.add(entryPathItemPanel, BorderLayout.WEST);
-                                entryPathItemsPanel.add(p);
-                            }
-                            entryPathItemsPanel.setVisible(true);
-                        }
-                    }
-                } catch (Throwable t) {
-                    processLabel.setText("<html><font color=red>Error while processing search!</font></html>");
-                    t.printStackTrace(System.err);
-                }
-            }
-        });
-        searchThread.start();
+    public ToolRepresentation getRepresentation() {
+        JButton butt = new JButton(ICON);
+        butt.addActionListener(al);
+        return new ToolRepresentation(getButton(), null);
     }
+    
+    private JButton getButton() {
+        JButton button = new JButton(ICON);
+        button.addActionListener(al);
+        return button;
+    }
+    
+    private ActionListener al = new ActionListener(){
+        public void actionPerformed(ActionEvent e) {
+            try {
+                final JLabel searchExpressionL = new JLabel("search expression:");
+                final JTextField searchExpressionTF = new JTextField();
+                final Color normal = searchExpressionTF.getForeground();
+                final JLabel isCaseSensitiveL = new JLabel("case sensitive:");
+                final JCheckBox isCaseSensitiveCB = new JCheckBox();
+                final JPanel caseSensitivePanel = new JPanel(new BorderLayout());
+                caseSensitivePanel.add(isCaseSensitiveL, BorderLayout.CENTER);
+                caseSensitivePanel.add(isCaseSensitiveCB, BorderLayout.EAST);
+                final JLabel isRegularExpressionL = new JLabel("regular expression:");
+                final JCheckBox isRegularExpressionCB = new JCheckBox();
+                isRegularExpressionCB.addChangeListener(new ChangeListener(){
+                    public void stateChanged(ChangeEvent e) {
+                        if (isRegularExpressionCB.isSelected()) {
+                            isCaseSensitiveL.setEnabled(false);
+                            isCaseSensitiveCB.setEnabled(false);
+                        } else {
+                            isCaseSensitiveL.setEnabled(true);
+                            isCaseSensitiveCB.setEnabled(true);
+                        }
+                    }
+                });
+                final JPanel regularExpressionPanel = new JPanel(new BorderLayout());
+                regularExpressionPanel.add(isRegularExpressionL, BorderLayout.CENTER);
+                regularExpressionPanel.add(isRegularExpressionCB, BorderLayout.EAST);
+                
+                final Map<String, Class<? extends EntryExtension>> types = ExtensionFactory.getInstance().getAnnotatedEntryExtensions();
+                
+                final JLabel filterClassL = new JLabel("search for entries of this type only:");
+                final JComboBox filterClassCB = new JComboBox();
+                filterClassCB.addItem("Any type");
+                final JPanel filterClassPanel = new JPanel(new BorderLayout());
+                filterClassPanel.add(filterClassL, BorderLayout.NORTH);
+                filterClassPanel.add(filterClassCB, BorderLayout.CENTER);
+                String selectItem = null;
+                for (Entry<String, Class<? extends EntryExtension>> entry : types.entrySet()) {
+                    filterClassCB.addItem(entry.getKey());
+                    if (filterClass != null 
+                            && entry.getValue().getName().equals(filterClass.getName())) {
+                        selectItem = entry.getKey();
+                    }
+                }
+                if (selectItem != null) {
+                    filterClassCB.setSelectedItem(selectItem);
+                }
+
+                if (lastSearchCriteria != null) {
+                    searchExpressionTF.setText(lastSearchCriteria.getSearchExpression());
+                    isCaseSensitiveCB.setSelected(lastSearchCriteria.isCaseSensitive());
+                    isRegularExpressionCB.setSelected(lastSearchCriteria.isRegularExpression());
+                }
+                
+                searchExpressionTF.addCaretListener(new CaretListener(){
+                    public void caretUpdate(CaretEvent e) {
+                        String searchExpression = searchExpressionTF.getText();
+                        if (isRegularExpressionCB.isSelected() && !Validator.isNullOrBlank(searchExpression)) {
+                            try {
+                                Pattern.compile(searchExpression);
+                                searchExpressionTF.setForeground(normal);
+                                searchExpressionTF.setToolTipText(null);
+                            } catch (PatternSyntaxException pse) {
+                                String errorMsg = "Pattern syntax error";
+                                int idx = pse.getIndex();
+                                if (idx != -1) {
+                                    if (idx > 0) {
+                                        idx--;
+                                    }
+                                    errorMsg +=  " at the position " + (idx + 1) + " - char '" + searchExpression.charAt(idx) + "'";
+                                } else {
+                                    errorMsg += "!";
+                                }
+                                searchExpressionTF.setForeground(Color.RED);
+                                searchExpressionTF.setToolTipText(errorMsg);
+                            }
+                        } else {
+                            searchExpressionTF.setForeground(normal);
+                            searchExpressionTF.setToolTipText(null);
+                        }
+                    }
+                });
+                Thread searchThread = new Thread(new Runnable(){
+                    public void run() {
+                        JLabel processLabel = new JLabel();
+                        try {
+                            int option = JOptionPane.showConfirmDialog(
+                                    FrontEnd.getActiveWindow(), 
+                                    new Component[]{
+                                        searchExpressionL,
+                                        searchExpressionTF,
+                                        caseSensitivePanel,
+                                        regularExpressionPanel,
+                                        filterClassPanel
+                                    }, 
+                                    "Search", 
+                                    JOptionPane.OK_CANCEL_OPTION);
+                            if (option == JOptionPane.OK_OPTION && !Validator.isNullOrBlank(searchExpressionTF.getText())) {
+                                JPanel entryPathItemsPanel = new JPanel();
+                                entryPathItemsPanel.setLayout(new BorderLayout());
+                                processLabel.setText("searching...");
+                                entryPathItemsPanel.add(processLabel, BorderLayout.CENTER);
+                                JLabel title = new JLabel("Search results");
+                                FrontEnd.displayBottomPanel(title, entryPathItemsPanel);
+
+                                filterClass = types.get(filterClassCB.getSelectedItem());
+                                
+                                if (lastSearchCriteria == null) {
+                                    lastSearchCriteria = new SearchCriteria();
+                                }
+                                lastSearchCriteria.setSearchExpression(searchExpressionTF.getText()); 
+                                lastSearchCriteria.setCaseSensitive(isCaseSensitiveCB.isSelected()); 
+                                lastSearchCriteria.setRegularExpression(isRegularExpressionCB.isSelected());                    
+                                SearchCriteria sc = new SearchCriteria(
+                                        searchExpressionTF.getText(),
+                                        isCaseSensitiveCB.isSelected(),
+                                        isRegularExpressionCB.isSelected());
+                                Map<VisualEntryDescriptor, Map<String, HighLightMarker>> result = search(sc, filterClass);
+                                if (result.isEmpty()) {
+                                    title.setText("Search results :: 0 entries found");
+                                    processLabel.setText("No items matching search criteria.");
+                                } else {
+                                    title.setText("Search results :: " + result.size() + " entries found");
+                                    entryPathItemsPanel.setVisible(false);
+                                    entryPathItemsPanel.removeAll();
+                                    entryPathItemsPanel.setLayout(new GridLayout(result.size(), 1));
+                                    for (Entry<VisualEntryDescriptor, Map<String, HighLightMarker>> resultEntry : result.entrySet()) {
+                                        final VisualEntryDescriptor ved = resultEntry.getKey();
+                                        Collection<Recognizable> entryPath = ved.getEntryPath();
+                                        JPanel entryPathItemPanel = new JPanel(new FlowLayout());
+                                        Iterator<Recognizable> it = entryPath.iterator();
+                                        while (it.hasNext()) {
+                                            final Recognizable r = it.next();
+                                            MouseListener ml = new MouseAdapter(){
+                                                @Override
+                                                public void mouseClicked(MouseEvent e) {
+                                                    FrontEnd.switchToVisualEntry(r.getId());                                        
+                                                }
+                                            };
+                                            JPanel entryPathItemIcon = new IconViewPanel(((ImageIcon) r.getIcon()).getImage());
+                                            entryPathItemIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                                            entryPathItemIcon.addMouseListener(ml);
+                                            entryPathItemPanel.add(entryPathItemIcon);
+                                            JLabel entryPathItemLabel = new JLabel("<html><u><font color=blue>" + r.getCaption() + "</font></u></html>");
+                                            entryPathItemLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                                            entryPathItemLabel.addMouseListener(ml);
+                                            entryPathItemPanel.add(entryPathItemLabel);
+                                            if (it.hasNext()) {
+                                                entryPathItemPanel.add(new JLabel(">"));
+                                            }
+                                        }
+                                        StringBuffer matchedSnippets = new StringBuffer();
+                                        Iterator<Entry<String, HighLightMarker>> it2 = resultEntry.getValue().entrySet().iterator();
+                                        while (it2.hasNext()) {
+                                            Entry<String, HighLightMarker> entry = it2.next();
+                                            String str = entry.getKey();
+                                            String hlStr = null;
+                                            HighLightMarker hlMarker = entry.getValue();
+                                            if (hlMarker != null) {
+                                                Integer beginIndex = entry.getValue().getBeginIndex();
+                                                Integer endIndex = entry.getValue().getEndIndex();
+                                                if (beginIndex != null && endIndex != null) {
+                                                    hlStr = str.substring(0, beginIndex);
+                                                    hlStr += "<font bgcolor=yellow>";
+                                                    hlStr += str.substring(beginIndex, endIndex);
+                                                    hlStr += "</font>";
+                                                    hlStr += str.substring(endIndex, str.length());
+                                                }
+                                            }
+                                            if (hlStr != null) {
+                                                matchedSnippets.append(hlStr);
+                                            } else {
+                                                matchedSnippets.append(str);
+                                            }
+                                            if (it2.hasNext()) {
+                                                matchedSnippets.append(" :: ");
+                                            }
+                                        }
+                                        entryPathItemPanel.add(new JLabel("<html> &gt;&gt; <i>" + matchedSnippets.toString() + "</i></html>"));
+                                        JPanel p = new JPanel(new BorderLayout());
+                                        p.add(entryPathItemPanel, BorderLayout.WEST);
+                                        entryPathItemsPanel.add(p);
+                                    }
+                                    entryPathItemsPanel.setVisible(true);
+                                }
+                            }
+                        } catch (Throwable t) {
+                            processLabel.setText("<html><font color=red>Error while processing search!</font></html>");
+                            t.printStackTrace(System.err);
+                        }
+                    }
+                });
+                searchThread.start();
+            } catch (Throwable t) {
+                FrontEnd.displayErrorMessage("Failed to perform search!", t);
+            }
+        }
+    };
 
     private Map<VisualEntryDescriptor, Map<String, HighLightMarker>> search(SearchCriteria sc, Class<? extends EntryExtension> filterClass) throws Throwable {
         Map<VisualEntryDescriptor, Map<String, HighLightMarker>> result = new LinkedHashMap<VisualEntryDescriptor, Map<String, HighLightMarker>>();
@@ -419,12 +440,4 @@ public class SimpleSearch extends ToolExtension {
         return entries;
     }
     
-    /* (non-Javadoc)
-     * @see bias.extension.ToolExtension#getIcon()
-     */
-    @Override
-    public Icon getIcon() {
-        return ICON;
-    }
-
 }

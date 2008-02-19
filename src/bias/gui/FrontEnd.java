@@ -10,6 +10,7 @@ import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.SystemTray;
@@ -50,7 +51,6 @@ import java.util.Map.Entry;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -67,6 +67,7 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -112,6 +113,7 @@ import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.MissingExtensionInformer;
 import bias.extension.ToolExtension;
+import bias.extension.ToolRepresentation;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
 import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
@@ -156,7 +158,7 @@ public class FrontEnd extends JFrame {
             new Placement(JTabbedPane.BOTTOM)
         };
 
-    private static final String STATUS_MESSAGE_PREFIX = "<html>";
+    private static final String STATUS_MESSAGE_PREFIX = "<html>&nbsp;";
     
     private static final String STATUS_MESSAGE_HTML_COLOR_NORMAL = "<font color=\"#000000\">";
     
@@ -179,6 +181,8 @@ public class FrontEnd extends JFrame {
     private Map<DefaultMutableTreeNode, Recognizable> nodeEntries;
 
     private static Map<Class<? extends ToolExtension>, ToolExtension> tools;
+
+    private static Map<Class<? extends ToolExtension>, JPanel> indicatorAreas = new HashMap<Class<? extends ToolExtension>, JPanel>();
 
     // use default control icons initially
     private static ControlIcons controlIcons = new ControlIcons();
@@ -243,6 +247,8 @@ public class FrontEnd extends JFrame {
 
     private JPanel jPanelStatusBar = null;
 
+    private JPanel jPanelIndicators = null;
+
     private JLabel jLabelStatusBarMsg = null;
 
     private JPanel jPanel5 = null;
@@ -286,6 +292,7 @@ public class FrontEnd extends JFrame {
             activateLAF();
             instance = new FrontEnd();
             applyPreferences();
+            representTools();
         }
         return instance;
     }
@@ -302,34 +309,38 @@ public class FrontEnd extends JFrame {
             hotKeysBindingsChanged = false;
         }
         if (instance != null) {
+            if (memUsageIndicatorPanel == null) {
+                memUsageIndicatorPanel = instance.createStatusBarIndicatorArea(null);
+                instance.getJPanelIndicators().add(memUsageIndicatorPanel, BorderLayout.EAST);
+            }
             if (Preferences.getInstance().showMemoryUsage) {
+                memUsageProgressBar = new JProgressBar();
+                memUsageProgressBar.setMinimum(0);
+                memUsageProgressBar.setStringPainted(true);
+                memUsageIndicatorPanel.add(memUsageProgressBar, BorderLayout.CENTER);
+                memUsageIndicatorPanel.setVisible(true);
                 startMemoryUsageMonitoring();
             } else {
-                if (memUsageProgressBar != null) {
-                    memUsageProgressBar.setVisible(false);
+                if (memUsageIndicatorPanel != null) {
+                    memUsageIndicatorPanel.setVisible(false);
                 }
             }
         }
     }
+    
+    private static JPanel memUsageIndicatorPanel = null;
     
     // TODO [P2] memory usage optimization: show memory usage info only when main window is visible
     private static void startMemoryUsageMonitoring() {
         new Thread(new Runnable() {
             public void run() {
                 while (Preferences.getInstance().showMemoryUsage) {
-                    if (memUsageProgressBar == null) {
-                        memUsageProgressBar = new JProgressBar(new DefaultBoundedRangeModel());
-                        memUsageProgressBar.setMinimum(0);
-                        memUsageProgressBar.setStringPainted(true);
-                        instance.getJPanelStatusBar().add(memUsageProgressBar, BorderLayout.EAST);
-                    }
-                    memUsageProgressBar.setVisible(true);
                     MemoryMXBean mmxb = ManagementFactory.getMemoryMXBean();
                     long bytes = mmxb.getHeapMemoryUsage().getUsed() + mmxb.getNonHeapMemoryUsage().getUsed();
                     long bytes2 = mmxb.getHeapMemoryUsage().getCommitted() + mmxb.getNonHeapMemoryUsage().getCommitted();
                     memUsageProgressBar.setMaximum((int) bytes2/1024);
                     memUsageProgressBar.setValue((int) bytes/1024);
-                    memUsageProgressBar.setString(" Memory Usage: " + bytes/1024 + " / " + bytes2/1024 + " Kb" + Constants.BLANK_STR);
+                    memUsageProgressBar.setString(" Memory Usage: " + bytes/1024/1024 + " of " + bytes2/1024/1024 + " Mb" + Constants.BLANK_STR);
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {
@@ -530,7 +541,6 @@ public class FrontEnd extends JFrame {
             this.setIconImage(ICON_APP.getImage());
             this.setContentPane(getJContentPane());
 
-            representTools();
             representData(BackEnd.getInstance().getData());
             
             applyGlobalSettings();
@@ -621,11 +631,34 @@ public class FrontEnd extends JFrame {
                     extensionInstance = ExtensionFactory.getInstance().newExtension(extensionClass);
                 }
                 byte[] extSettings = BackEnd.getInstance().getExtensionSettings(extension);
+                if (extSettings == null) {
+                    extSettings = new byte[]{};
+                }
                 byte[] settings = extensionInstance.configure(extSettings);
                 if (settings == null) {
                     settings = new byte[]{};
                 }
-                BackEnd.getInstance().storeExtensionSettings(extension, settings);
+                if (!Arrays.equals(extSettings, settings)) {
+                    BackEnd.getInstance().storeExtensionSettings(extension, settings);
+                    if (extensionInstance instanceof ToolExtension) {
+                        getJPanelIndicators().setVisible(false);
+                        JPanel panel = indicatorAreas.get(extensionClass);
+                        JComponent indicator = ((ToolExtension) extensionInstance).getRepresentation().getIndicator();
+                        if (indicator != null) {
+                            if (panel == null) {
+                                panel = createStatusBarIndicatorArea((Class<? extends ToolExtension>) extensionInstance.getClass());
+                            }
+                            panel.add(indicator);
+                            getJPanelIndicators().add(panel);
+                        } else {
+                            if (panel != null) {
+                                panel.remove(1);
+                                getJPanelIndicators().remove(panel);
+                            }
+                        }
+                        getJPanelIndicators().setVisible(true);
+                    }
+                }
             } catch (Throwable t) {
                 displayErrorMessage(
                         "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize just configured settings!" + Constants.NEW_LINE +
@@ -647,7 +680,7 @@ public class FrontEnd extends JFrame {
     
     // FIXME [P1] tools fail to initialize if some of the extensions are broken - this should be separated somehow... 
     // TODO [P2] some memory-usage optimization would be nice (rea tools initialization after tools data import in overwrite mode)
-    private void representTools() {
+    private static void representTools() {
         Map<String, Class<? extends ToolExtension>> extensions = null;
         try {
             extensions = ExtensionFactory.getInstance().getAnnotatedToolExtensions();
@@ -655,7 +688,7 @@ public class FrontEnd extends JFrame {
             displayErrorMessage("Failed to initialize tools!", t);
         }
         if (extensions != null) {
-            getJToolBar3().removeAll();
+            instance.getJToolBar3().removeAll();
             tools = new LinkedHashMap<Class<? extends ToolExtension>, ToolExtension>();
             Map<String, byte[]> toolsData = BackEnd.getInstance().getToolsData();
             int toolCnt = 0;
@@ -663,30 +696,41 @@ public class FrontEnd extends JFrame {
                 try {
                     byte[] toolData = toolsData.get(ext.getValue().getName());
                     final ToolExtension tool = ExtensionFactory.getInstance().newToolExtension(ext.getValue(), toolData);
-                    if (tool.getIcon() != null) {
-                        JButton toolButt = new JButton(tool.getIcon());
-                        toolButt.setToolTipText(ext.getKey());
-                        toolButt.addActionListener(new ActionListener(){
-                            public void actionPerformed(ActionEvent e) {
-                                try {
-                                    tool.action();
-                                } catch (Throwable te) {
-                                    displayErrorMessage("Failed to execute tool's action!", te);
-                                }
-                            }
-                        });
-                        getJToolBar3().add(toolButt);
-                        tools.put(ext.getValue(), tool);
-                        toolCnt++;
+                    ToolRepresentation representation = tool.getRepresentation();
+                    JButton toolButt = representation.getButton();
+                    if (toolButt != null) {
+                        if (Validator.isNullOrBlank(toolButt.getToolTipText())) {
+                            toolButt.setToolTipText(ext.getKey());
+                        }
+                        instance.getJToolBar3().add(toolButt);
                     }
+                    JComponent indicator = representation.getIndicator();
+                    if (indicator != null) {
+                        JPanel panel = instance.createStatusBarIndicatorArea(ext.getValue());
+                        panel.add(indicator, BorderLayout.CENTER);
+                    }
+                    tools.put(ext.getValue(), tool);
+                    toolCnt++;
                 } catch (Throwable t) {
                     displayErrorMessage("Failed to initialize tool '" + ext.getValue().getCanonicalName() + "'", t);
                 }
             }
             if (toolCnt != 0) {
-                getJPanel5().setVisible(true);
+                instance.getJPanel5().setVisible(true);
             }
         }
+    }
+    
+    private JPanel createStatusBarIndicatorArea(Class<? extends ToolExtension> ext) {
+        JPanel panel = new JPanel(new BorderLayout(5, 0));
+        JSeparator separator = new JSeparator(JSeparator.VERTICAL);
+        separator.setPreferredSize(new Dimension(2, 18));
+        panel.add(separator, BorderLayout.WEST);
+        getJPanelIndicators().add(panel);
+        if (ext != null) {
+            indicatorAreas.put(ext, panel);
+        }
+        return panel;
     }
     
     private boolean tabsInitialized;
@@ -1375,7 +1419,7 @@ public class FrontEnd extends JFrame {
         }
         return jContentPane;
     }
-
+    
     /**
      * This method initializes jPanelStatusBar
      * 
@@ -1386,8 +1430,22 @@ public class FrontEnd extends JFrame {
             jPanelStatusBar = new JPanel();
             jPanelStatusBar.setLayout(new BorderLayout());
             jPanelStatusBar.add(getJLabelStatusBarMsg(), BorderLayout.WEST);
+            jPanelStatusBar.add(getJPanelIndicators(), BorderLayout.EAST);
         }
         return jPanelStatusBar;
+    }
+
+    /**
+     * This method initializes jPanelIndicators
+     * 
+     * @return javax.swing.JPanel
+     */
+    private JPanel getJPanelIndicators() {
+        if (jPanelIndicators == null) {
+            jPanelIndicators = new JPanel(new FlowLayout());
+            jPanelIndicators.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+        }
+        return jPanelIndicators;
     }
 
     /**
