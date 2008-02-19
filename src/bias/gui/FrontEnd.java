@@ -282,8 +282,12 @@ public class FrontEnd extends JFrame {
     }
 
     public static void display() {
-        getInstance().setVisible(true);
         getInstance().displayStatusBarMessage("loaded & ready");
+        if (Preferences.getInstance().startHidden) {
+            showSysTrayIcon();
+        } else {
+            getInstance().setVisible(true);
+        }
     }
     
     private static FrontEnd getInstance() {
@@ -3120,38 +3124,65 @@ public class FrontEnd extends JFrame {
             if (ann.enabledByField().equals(pref.getValue().getName())) {
                 if (pref.getKey() instanceof JTextField) {
                     c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals(((JTextField) pref.getKey()).getText()));
+                    if (!c.isEnabled() && c instanceof JCheckBox) {
+                        ((JCheckBox) c).setSelected(false);
+                    }
                     ((JTextField) pref.getKey()).addPropertyChangeListener("text", new PropertyChangeListener(){
                         public void propertyChange(PropertyChangeEvent evt) {
                             c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals(((JTextField) pref.getKey()).getText()));
+                            if (!c.isEnabled() && c instanceof JCheckBox) {
+                                ((JCheckBox) c).setSelected(false);
+                            }
                         }
                     });
                     ((JTextField) pref.getKey()).addPropertyChangeListener("enabled", new PropertyChangeListener(){
                         public void propertyChange(PropertyChangeEvent evt) {
                             c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals(((JTextField) pref.getKey()).getText()));
+                            if (!c.isEnabled() && c instanceof JCheckBox) {
+                                ((JCheckBox) c).setSelected(false);
+                            }
                         }
                     });
                 } else if (pref.getKey() instanceof JCheckBox) {
                     c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals("" + ((JCheckBox) pref.getKey()).isSelected()));
+                    if (!c.isEnabled() && c instanceof JCheckBox) {
+                        ((JCheckBox) c).setSelected(false);
+                    }
                     ((JCheckBox) pref.getKey()).addChangeListener(new ChangeListener(){
                         public void stateChanged(ChangeEvent e) {
                             c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals("" + ((JCheckBox) pref.getKey()).isSelected()));
+                            if (!c.isEnabled() && c instanceof JCheckBox) {
+                                ((JCheckBox) c).setSelected(false);
+                            }
                         }
                     });
                     ((JCheckBox) pref.getKey()).addPropertyChangeListener("enabled", new PropertyChangeListener(){
                         public void propertyChange(PropertyChangeEvent evt) {
                             c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals("" + ((JCheckBox) pref.getKey()).isSelected()));
+                            if (!c.isEnabled() && c instanceof JCheckBox) {
+                                ((JCheckBox) c).setSelected(false);
+                            }
                         }
                     });
                 } else if (pref.getKey() instanceof JComboBox) {
                     c.setEnabled(pref.getKey().isEnabled() && ((JComboBox) pref.getKey()).getSelectedItem() != null && ann.enabledByValue().equals(((JComboBox) pref.getKey()).getSelectedItem().toString()));
+                    if (!c.isEnabled() && c instanceof JCheckBox) {
+                        ((JCheckBox) c).setSelected(false);
+                    }
                     ((JComboBox) pref.getKey()).addItemListener(new ItemListener(){
                         public void itemStateChanged(ItemEvent e) {
                             c.setEnabled(pref.getKey().isEnabled() && ann.enabledByValue().equals(((JComboBox) pref.getKey()).getSelectedItem().toString()));
+                            if (!c.isEnabled() && c instanceof JCheckBox) {
+                                ((JCheckBox) c).setSelected(false);
+                            }
                         }
                     });
                     ((JComboBox) pref.getKey()).addPropertyChangeListener("enabled", new PropertyChangeListener(){
                         public void propertyChange(PropertyChangeEvent evt) {
                             c.setEnabled(pref.getKey().isEnabled() && ((JComboBox) pref.getKey()).getSelectedItem() != null && ann.enabledByValue().equals(((JComboBox) pref.getKey()).getSelectedItem().toString()));
+                            if (!c.isEnabled() && c instanceof JCheckBox) {
+                                ((JCheckBox) c).setSelected(false);
+                            }
                         }
                     });
                 }

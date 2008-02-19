@@ -13,6 +13,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import bias.annotation.PreferenceAnnotation;
+import bias.annotation.PreferenceEnableAnnotation;
 import bias.annotation.PreferenceValidationAnnotation;
 import bias.core.BackEnd;
 import bias.gui.FrontEnd;
@@ -160,6 +161,12 @@ public class Preferences {
             title = "Remain in system tray on window close",
             description = "Defines if application should remain in system tray when application's window is closed")
     public boolean remainInSysTrayOnWindowClose = false;
+    
+    @PreferenceAnnotation(
+            title = "Hide main window on start",
+            description = "Defines if application should start with hidden main window (system tray icon will be shown in this case)")
+    @PreferenceEnableAnnotation(enabledByField = "remainInSysTrayOnWindowClose", enabledByValue = "true")        
+    public boolean startHidden = false;
     
     @PreferenceAnnotation(
             title = "Minimize to system tray",
