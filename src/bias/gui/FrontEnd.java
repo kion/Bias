@@ -195,6 +195,8 @@ public class FrontEnd extends JFrame {
 
     private Map<UUID, EntryExtension> entryExtensions = new LinkedHashMap<UUID, EntryExtension>();
 
+    private TabMoveListener tabMoveListener = new TabMoveListener();
+    
     private File exportFile;
 
     private int opt;
@@ -210,6 +212,8 @@ public class FrontEnd extends JFrame {
     private static TrayIcon trayIcon = null;
     
     private static JProgressBar memUsageProgressBar = null;
+    
+    private JList statusBarMessagesList = null;
 
     private Dialog dialog = null;
     
@@ -1389,13 +1393,19 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private TabMoveListener tabMoveListener = new TabMoveListener();
+    private JList getStatusBarMessagesList() {
+        if (statusBarMessagesList == null) {
+            statusBarMessagesList = new JList(new DefaultListModel());
+        }
+        return statusBarMessagesList;
+    }
     
     public void displayStatusBarMessage(final String message) {
         new Thread(new Runnable(){
             public void run() {
                 final String timestamp = dateFormat.format(new Date()) + " # ";
                 getJLabelStatusBarMsg().setText(STATUS_MESSAGE_PREFIX + timestamp + STATUS_MESSAGE_HTML_COLOR_HIGHLIGHTED + message + STATUS_MESSAGE_SUFFIX);
+                ((DefaultListModel) getStatusBarMessagesList().getModel()).addElement(timestamp + message);
                 ActionListener al = new ActionListener(){
                     public void actionPerformed(ActionEvent ae){
                         getJLabelStatusBarMsg().setText(STATUS_MESSAGE_PREFIX + timestamp + STATUS_MESSAGE_HTML_COLOR_NORMAL + message + STATUS_MESSAGE_SUFFIX);
@@ -1460,6 +1470,15 @@ public class FrontEnd extends JFrame {
     private JLabel getJLabelStatusBarMsg() {
         if (jLabelStatusBarMsg == null) {
             jLabelStatusBarMsg = new JLabel();
+            final JLabel title = new JLabel("Messages History");
+            final JPanel panel = new JPanel(new BorderLayout());
+            panel.add(getStatusBarMessagesList(), BorderLayout.CENTER);
+            jLabelStatusBarMsg.addMouseListener(new MouseAdapter(){
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    displayBottomPanel(title, panel);
+                }
+            });
         }
         return jLabelStatusBarMsg;
     }
