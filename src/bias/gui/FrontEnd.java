@@ -1394,19 +1394,19 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private void autoscrollList(final JList list) {
+        SwingUtilities.invokeLater(new Runnable(){
+            public void run() {
+                list.ensureIndexIsVisible(list.getModel().getSize() - 1);
+            }
+        });
+    }
+    
     private JList getStatusBarMessagesList() {
         if (statusBarMessagesList == null) {
             statusBarMessagesList = new JList(new DefaultListModel());
         }
         return statusBarMessagesList;
-    }
-    
-    private void autoscrollStatusBarMessageList() {
-        SwingUtilities.invokeLater(new Runnable(){
-            public void run() {
-                getStatusBarMessagesList().ensureIndexIsVisible(getStatusBarMessagesList().getModel().getSize() - 1);
-            }
-        });
     }
     
     public void displayStatusBarMessage(final String message) {
@@ -1416,7 +1416,7 @@ public class FrontEnd extends JFrame {
                 getJLabelStatusBarMsg().setText(STATUS_MESSAGE_PREFIX + timestamp + STATUS_MESSAGE_HTML_COLOR_HIGHLIGHTED + message + STATUS_MESSAGE_SUFFIX);
                 ((DefaultListModel) getStatusBarMessagesList().getModel()).addElement(timestamp + message);
                 if (getJPanel2().isVisible()) {
-                    autoscrollStatusBarMessageList();
+                    autoscrollList(getStatusBarMessagesList());
                 }
                 ActionListener al = new ActionListener(){
                     public void actionPerformed(ActionEvent ae){
@@ -1489,7 +1489,7 @@ public class FrontEnd extends JFrame {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     displayBottomPanel(title, panel);
-                    autoscrollStatusBarMessageList();
+                    autoscrollList(getStatusBarMessagesList());
                 }
             });
         }
@@ -2163,18 +2163,41 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
+                final JButton renButt = new JButton("Rename");
+                renButt.setEnabled(false);
+                renButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            String oldName = (String) configsCB.getSelectedItem();
+                            String newName = JOptionPane.showInputDialog(FrontEnd.this, "New name:", oldName);
+                            if (!Validator.isNullOrBlank(newName)) {
+                                BackEnd.getInstance().renameImportConfiguration(oldName, newName);
+                                configsCB.removeItem(oldName);
+                                configsCB.addItem(newName);
+                                configsCB.setSelectedItem(newName);
+                            }
+                        } catch (Exception ex) {
+                            displayErrorMessage("Failed to rename selected import-configuration!", ex);
+                        }
+                    }
+                });
                 configsCB.addItemListener(new ItemListener(){
                     public void itemStateChanged(ItemEvent e) {
                         if (!Constants.EMPTY_STR.equals(configsCB.getSelectedItem())) {
                             delButt.setEnabled(true);
+                            renButt.setEnabled(true);
                         } else {
                             delButt.setEnabled(false);
+                            renButt.setEnabled(false);
                         }
                     }
                 });
                 JPanel p = new JPanel(new BorderLayout());
                 p.add(configsCB, BorderLayout.CENTER);
-                p.add(delButt, BorderLayout.EAST);
+                JPanel pb = new JPanel(new GridLayout(1, 2));
+                pb.add(renButt);
+                pb.add(delButt);
+                p.add(pb, BorderLayout.SOUTH);
                 Component[] c = new Component[] {
                         new JLabel("Choose existing import configuration to use,"),
                         new JLabel("or leave just press enter for custom import."),
@@ -2288,11 +2311,12 @@ public class FrontEnd extends JFrame {
                                 } else {
                                     final JPanel panel = new JPanel(new BorderLayout());
                                     final DefaultListModel processModel = new DefaultListModel();
-                                    JList processList = new JList(processModel);
+                                    final JList processList = new JList(processModel);
                                     panel.add(processList, BorderLayout.CENTER);
                                     final JLabel label = new JLabel("Data import");
                                     processModel.addElement("Transferring data to be imported...");
                                     displayBottomPanel(label, panel);
+                                    autoscrollList(processList);
                                     Thread importThread = new Thread(new Runnable(){
                                         public void run() {
                                             try {
@@ -2300,9 +2324,11 @@ public class FrontEnd extends JFrame {
                                                 byte[] importedData = transferrer.doImport(options);
                                                 if (importedData == null) {
                                                     processModel.addElement("Import source initialization failure: no data have been retrieved!");
+                                                    autoscrollList(processList);
                                                     label.setText("<html><font color=red>Data import - Failed</font></html>");
                                                 } else {
                                                     processModel.addElement("Data to be imported successfully transferred.");
+                                                    autoscrollList(processList);
                                                     String oe = "Overwrite existing";
                                                     
                                                     JPanel p1 = new JPanel(new GridLayout(6, 2));
@@ -2375,10 +2401,12 @@ public class FrontEnd extends JFrame {
                                                         hideBottomPanel();
                                                     } else {    
                                                         processModel.addElement("Extracting data to be imported...");
+                                                        autoscrollList(processList);
                                                         File importDir = new File(Constants.TMP_DIR, "importDir");
                                                         FSUtils.delete(importDir);
                                                         ArchUtils.extract(importedData, importDir);
                                                         processModel.addElement("Data to be imported have been successfully extracted.");
+                                                        autoscrollList(processList);
                                                         String password = new String(passwordTF.getPassword());            
                                                         try {
                                                             DataCategory data = BackEnd.getInstance().importData(
@@ -2418,6 +2446,7 @@ public class FrontEnd extends JFrame {
                                                             configsCB.setEditable(true);
                                                             label.setText("<html><font color=green>Data import - Completed</font></html>");
                                                             processModel.addElement("Data have been successfully imported.");
+                                                            autoscrollList(processList);
                                                             displayStatusBarMessage("import done");
                                                             Component[] c = new Component[] {
                                                                     new JLabel("Data have been successfully imported."),
@@ -2454,10 +2483,12 @@ public class FrontEnd extends JFrame {
                                                                 }
                                                                 BackEnd.getInstance().storeImportConfiguration(configName, options);
                                                                 processModel.addElement("Import configuration stored as '" + configName + "'");
+                                                                autoscrollList(processList);
                                                             }
                                                         } catch (GeneralSecurityException gse) {
                                                             processModel.addElement("Failed to import data!");
                                                             processModel.addElement("Error details: It seems that you have typed wrong password...");
+                                                            autoscrollList(processList);
                                                             label.setText("<html><font color=red>Data import - Failed</font></html>");
                                                             gse.printStackTrace(System.err);
                                                         } catch (Exception ex) {
@@ -2465,6 +2496,7 @@ public class FrontEnd extends JFrame {
                                                             if (ex.getMessage() != null) {
                                                                 processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
                                                             }
+                                                            autoscrollList(processList);
                                                             label.setText("<html><font color=red>Data import - Failed</font></html>");
                                                             ex.printStackTrace(System.err);
                                                         }
@@ -2475,6 +2507,7 @@ public class FrontEnd extends JFrame {
                                                 if (ex.getMessage() != null) {
                                                     processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
                                                 }
+                                                autoscrollList(processList);
                                                 label.setText("<html><font color=red>Data import - Failed</font></html>");
                                                 ex.printStackTrace(System.err);
                                             }
@@ -2522,18 +2555,41 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
+                final JButton renButt = new JButton("Rename");
+                renButt.setEnabled(false);
+                renButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            String oldName = (String) configsCB.getSelectedItem();
+                            String newName = JOptionPane.showInputDialog(FrontEnd.this, "New name:", oldName);
+                            if (!Validator.isNullOrBlank(newName)) {
+                                BackEnd.getInstance().renameExportConfiguration(oldName, newName);
+                                configsCB.removeItem(oldName);
+                                configsCB.addItem(newName);
+                                configsCB.setSelectedItem(newName);
+                            }
+                        } catch (Exception ex) {
+                            displayErrorMessage("Failed to rename selected export-configuration!", ex);
+                        }
+                    }
+                });
                 configsCB.addItemListener(new ItemListener(){
                     public void itemStateChanged(ItemEvent e) {
                         if (!Constants.EMPTY_STR.equals(configsCB.getSelectedItem())) {
                             delButt.setEnabled(true);
+                            renButt.setEnabled(true);
                         } else {
                             delButt.setEnabled(false);
+                            renButt.setEnabled(false);
                         }
                     }
                 });
                 JPanel p = new JPanel(new BorderLayout());
                 p.add(configsCB, BorderLayout.CENTER);
-                p.add(delButt, BorderLayout.EAST);
+                JPanel pb = new JPanel(new GridLayout(1, 2));
+                pb.add(renButt);
+                pb.add(delButt);
+                p.add(pb, BorderLayout.SOUTH);
                 Component[] c = new Component[] {
                         new JLabel("Choose existing export configuration to use,"),
                         new JLabel("or leave just press enter for custom export."),
@@ -2642,11 +2698,12 @@ public class FrontEnd extends JFrame {
                         if (opt == JOptionPane.OK_OPTION) {
                             final JPanel panel = new JPanel(new BorderLayout());
                             final DefaultListModel processModel = new DefaultListModel();
-                            JList processList = new JList(processModel);
+                            final JList processList = new JList(processModel);
                             panel.add(processList, BorderLayout.CENTER);
                             final JLabel label = new JLabel("Data export");
                             processModel.addElement("Compressing data to be exported...");
                             displayBottomPanel(label, panel);
+                            autoscrollList(processList);
                             Thread exportThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
@@ -2683,6 +2740,7 @@ public class FrontEnd extends JFrame {
                                                 exportImportExportConfigsCB.isSelected(),
                                                 new String(passwordTF.getPassword()));
                                         processModel.addElement("Data to be exported have been successfully compressed.");
+                                        autoscrollList(processList);
                                         JComboBox cb = new JComboBox();
                                         for (TRANSFER_TYPE type : Transferrer.TRANSFER_TYPE.values()) {
                                             cb.addItem(type);
@@ -2702,9 +2760,11 @@ public class FrontEnd extends JFrame {
                                                         final Transferrer transferrer = Transferrer.getInstance(type);
                                                         final byte[] exportedData = FSUtils.readFile(exportFile);
                                                         processModel.addElement("Data is being transferred...");
+                                                        autoscrollList(processList);
                                                         transferrer.doExport(exportedData, options);
                                                         label.setText("<html><font color=green>Data export - Completed</font></html>");
                                                         processModel.addElement("Data have been successfully transferred.");
+                                                        autoscrollList(processList);
                                                         displayStatusBarMessage("export done");
                                                         configsCB.setEditable(true);
                                                         Component[] c = new Component[] {
@@ -2745,12 +2805,14 @@ public class FrontEnd extends JFrame {
                                                             }
                                                             BackEnd.getInstance().storeExportConfiguration(configName, options);
                                                             processModel.addElement("Export configuration stored as '" + configName + "'");
+                                                            autoscrollList(processList);
                                                         }
                                                     } catch (Exception ex) {
                                                         processModel.addElement("Failed to export data!");
                                                         if (ex.getMessage() != null) {
                                                             processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
                                                         }
+                                                        autoscrollList(processList);
                                                         label.setText("<html><font color=red>Data export - Failed</font></html>");
                                                         ex.printStackTrace(System.err);
                                                     }
@@ -2762,6 +2824,7 @@ public class FrontEnd extends JFrame {
                                         if (ex.getMessage() != null) {
                                             processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
                                         }
+                                        autoscrollList(processList);
                                         label.setText("<html><font color=red>Data export - Failed</font></html>");
                                         ex.printStackTrace(System.err);
                                     }

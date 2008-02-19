@@ -937,6 +937,13 @@ public class BackEnd {
         importConfigIDs.remove(name);
     }
     
+    public void renameImportConfiguration(String oldName, String newName) throws Exception {
+        Properties config = importConfigs.get(oldName);
+        config.setProperty(Constants.OPTION_CONFIG_NAME, newName);
+        removeImportConfiguration(oldName);
+        storeImportConfiguration(newName, config);
+    }
+    
     public void storeExportConfiguration(String name, Properties config) throws Exception {
         String fileName = exportConfigIDs.get(name);
         if (fileName == null) {
@@ -960,6 +967,13 @@ public class BackEnd {
         configFile.delete();
         exportConfigs.remove(name);
         exportConfigIDs.remove(name);
+    }
+    
+    public void renameExportConfiguration(String oldName, String newName) throws Exception {
+        Properties config = exportConfigs.get(oldName);
+        config.setProperty(Constants.OPTION_CONFIG_NAME, newName);
+        removeExportConfiguration(oldName);
+        storeExportConfiguration(newName, config);
     }
     
     private void storeMetadata(Document metadata, File file, Cipher cipher) throws Exception {
