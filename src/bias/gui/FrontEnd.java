@@ -2673,8 +2673,23 @@ public class FrontEnd extends JFrame {
                         final JCheckBox exportAddOnsCB = new JCheckBox("Export addons"); 
                         final JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
                         final JCheckBox exportImportExportConfigsCB = new JCheckBox("Export import/export configs");
-                        final JLabel passwordL = new JLabel("Encrypt exported data using password:");
-                        final JPasswordField passwordTF = new JPasswordField();
+                        final JLabel passwordL1 = new JLabel("Encrypt exported data using password:");
+                        final JPasswordField passwordTF1 = new JPasswordField();
+                        final String cpText = "Confirm password:";
+                        final JLabel passwordL2 = new JLabel(cpText);
+                        passwordL2.setForeground(Color.RED);
+                        final JPasswordField passwordTF2 = new JPasswordField();
+                        passwordTF2.addCaretListener(new CaretListener(){
+                            public void caretUpdate(CaretEvent e) {
+                                if (!Arrays.equals(passwordTF1.getPassword(), passwordTF2.getPassword())) {
+                                    passwordL2.setText(cpText + " [INVALID]");
+                                    passwordL2.setForeground(Color.RED);
+                                } else {
+                                    passwordL2.setText(cpText + " [DONE]");
+                                    passwordL2.setForeground(Color.BLUE);
+                                }
+                            }
+                        });
                         Component[] comps = new Component[]{
                                 exportPreferencesCB, 
                                 exportGlobalConfigCB, 
@@ -2687,8 +2702,10 @@ public class FrontEnd extends JFrame {
                                 exportAddOnConfigsCB,
                                 exportImportExportConfigsCB,
                                 dataTree != null ? new JScrollPane(dataTree) : null,
-                                passwordL,
-                                passwordTF
+                                passwordL1,
+                                passwordTF1,
+                                passwordL2,
+                                passwordTF2
                         };
                         opt = JOptionPane.showConfirmDialog(
                                 FrontEnd.this, 
@@ -2696,6 +2713,9 @@ public class FrontEnd extends JFrame {
                                 "Export data",
                                 JOptionPane.OK_CANCEL_OPTION);
                         if (opt == JOptionPane.OK_OPTION) {
+                            if (!Arrays.equals(passwordTF1.getPassword(), passwordTF2.getPassword())) {
+                                throw new Exception("Password confirmation failure!");
+                            }
                             final JPanel panel = new JPanel(new BorderLayout());
                             final DefaultListModel processModel = new DefaultListModel();
                             final JList processList = new JList(processModel);
@@ -2738,7 +2758,7 @@ public class FrontEnd extends JFrame {
                                                 exportAddOnsCB.isSelected(), 
                                                 exportAddOnConfigsCB.isSelected(),
                                                 exportImportExportConfigsCB.isSelected(),
-                                                new String(passwordTF.getPassword()));
+                                                new String(passwordTF1.getPassword()));
                                         processModel.addElement("Data to be exported have been successfully compressed.");
                                         autoscrollList(processList);
                                         JComboBox cb = new JComboBox();
@@ -2788,7 +2808,7 @@ public class FrontEnd extends JFrame {
                                                             options.setProperty(Constants.OPTION_PROCESS_ADDONS, "" + exportAddOnsCB.isSelected());
                                                             options.setProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS, "" + exportAddOnConfigsCB.isSelected());
                                                             options.setProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS, "" + exportImportExportConfigsCB.isSelected());
-                                                            String password = new String(passwordTF.getPassword());
+                                                            String password = new String(passwordTF1.getPassword());
                                                             if (!Validator.isNullOrBlank(password)) {
                                                                 options.setProperty(Constants.OPTION_DATA_PASSWORD, password);
                                                             }
