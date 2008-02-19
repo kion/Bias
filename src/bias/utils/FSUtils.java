@@ -97,4 +97,20 @@ public class FSUtils {
         }
     }
     
+    public static long getFileSize(File file) {
+        long size = 0;
+        size += file.length();
+        File[] files = file.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    size += getFileSize(f);
+                } else {
+                    size += f.length();
+                }
+            }
+        }
+        return size;
+    }
+
 }

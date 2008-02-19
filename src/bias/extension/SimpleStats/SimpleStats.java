@@ -34,6 +34,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import bias.Bias;
 import bias.annotation.AddOnAnnotation;
 import bias.annotation.IgnoreDataOnExport;
 import bias.core.BackEnd;
@@ -43,6 +44,8 @@ import bias.core.Recognizable;
 import bias.extension.ToolExtension;
 import bias.extension.ToolRepresentation;
 import bias.gui.FrontEnd;
+import bias.utils.FSUtils;
+import bias.utils.FormatUtils;
 import bias.utils.PropertiesUtils;
 
 /**
@@ -138,6 +141,16 @@ public class SimpleStats extends ToolExtension {
         public void actionPerformed(ActionEvent e) {
             try {
                 JPanel statsPanel = new JPanel(new BorderLayout());
+
+                JPanel diskStatsPanel = new JPanel(new BorderLayout());
+                JLabel l = new JLabel("Disk Usage");
+                l.setForeground(new Color(0, 100, 0));
+                diskStatsPanel.add(l, BorderLayout.NORTH);
+                long size = FSUtils.getFileSize(Bias.getJarFile().getParentFile());
+                String sizeStr = FormatUtils.formatByteSize(size);
+                JLabel ls = new JLabel(sizeStr);
+                diskStatsPanel.add(ls, BorderLayout.CENTER);
+                
                 JPanel entriesStatsPanel = new JPanel(new BorderLayout());
                 JLabel l1 = new JLabel("Entries");
                 l1.setForeground(new Color(0, 100, 0));
@@ -167,6 +180,7 @@ public class SimpleStats extends ToolExtension {
                 } else {
                     entriesStatsPanel.add(new JLabel("No entries statistics gathered yet."), BorderLayout.CENTER);
                 }
+                
                 JPanel sessionsStatsPanel = new JPanel(new BorderLayout());
                 JLabel l2 = new JLabel("Sessions");
                 l2.setForeground(new Color(0, 100, 0));
@@ -204,8 +218,11 @@ public class SimpleStats extends ToolExtension {
                 } else {
                     sessionsStatsPanel.add(new JLabel("No sessions statistics gathered yet."), BorderLayout.CENTER);
                 }
-                statsPanel.add(entriesStatsPanel, BorderLayout.NORTH);
-                statsPanel.add(sessionsStatsPanel, BorderLayout.CENTER);
+                
+                statsPanel.add(diskStatsPanel, BorderLayout.NORTH);
+                statsPanel.add(entriesStatsPanel, BorderLayout.CENTER);
+                statsPanel.add(sessionsStatsPanel, BorderLayout.SOUTH);
+                
                 FrontEnd.displayBottomPanel(new JLabel("Statistics"), statsPanel);
             } catch (Throwable t) {
                 FrontEnd.displayErrorMessage("Failed to perform search!", t);
