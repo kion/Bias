@@ -293,7 +293,11 @@ public class HTMLEditorPanel extends JPanel {
     }
 
     public void setCaretPosition(int pos) {
-        getJTextPane().setCaretPosition(pos);
+        try {
+            getJTextPane().setCaretPosition(pos);
+        } catch (IllegalArgumentException iae) {
+            // ignore incorrect caret positioning
+        }
     }
 
     private void synchronizeEditNoteControlsStates(JTextPane textPane) {
