@@ -111,23 +111,28 @@ public class ExtensionFactory {
     public Map<String, Class<? extends ToolExtension>> getAnnotatedToolExtensions() throws Throwable {
         Map<String, Class<? extends ToolExtension>> types = new LinkedHashMap<String, Class<? extends ToolExtension>>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
-            Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
-            // extension instantiation test
-            Extension ext = newExtension(extClass);
-            if (ext instanceof ToolExtension) {
-                AddOnAnnotation extAnn = 
-                    (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
-                String annotationStr;
-                if (extAnn != null) {
-                    annotationStr = extClass.getSimpleName() 
-                                    + " [ " + extAnn.description() + " ]";
-                } else {
-                    annotationStr = extension.substring(
-                            extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR) + 1, extension.length()) 
-                                    + " [ Extension Info Is Missing ]";
+            try {
+                Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
+                // extension instantiation test
+                Extension ext = newExtension(extClass);
+                if (ext instanceof ToolExtension) {
+                    AddOnAnnotation extAnn = 
+                        (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
+                    String annotationStr;
+                    if (extAnn != null) {
+                        annotationStr = extClass.getSimpleName() 
+                                        + " [ " + extAnn.description() + " ]";
+                    } else {
+                        annotationStr = extension.substring(
+                                extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR) + 1, extension.length()) 
+                                        + " [ Extension Info Is Missing ]";
+                    }
+                    // extension is ok, add it to the list
+                    types.put(annotationStr, (Class<? extends ToolExtension>) extClass);
                 }
-                // extension is ok, add it to the list
-                types.put(annotationStr, (Class<? extends ToolExtension>) extClass);
+            } catch (Throwable t) {
+                // ignore, broken tools just won't be accessible
+                t.printStackTrace(System.err);
             }
         }
         return types;

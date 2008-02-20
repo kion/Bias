@@ -398,7 +398,6 @@ public class HTMLEditorPanel extends JPanel {
             if (fontFamily == null) {
                 fontFamily = FONT_FAMILY_NAMES.iterator().next();
             }
-            System.out.println(fontFamily);
             if (!FONT_FAMILY_NAMES.contains(fontFamily)) {
                 FONT_FAMILY_NAMES.add(fontFamily);
                 getJComboBox1().addItem(fontFamily);
