@@ -184,6 +184,11 @@ public class Preferences {
     public boolean autoSaveOnExit = false;
     
     @PreferenceAnnotation(
+            title = "Display confirmation dialogs",
+            description = "Defines if confirmation dialogs should appear whenever user tries to delete entry, uninstall add-on and so on.")
+    public boolean displayConfirmationDialogs = true;
+    
+    @PreferenceAnnotation(
             title = "Show memory usage information in status bar",
             description = "Defines if memory usage information should be shown in the status bar.")
     public boolean showMemoryUsage = false;

@@ -360,6 +360,7 @@ public class FrontEnd extends JFrame {
         }).start();
     }
     
+    // TODO [P2] GUI should contain information about hot-key-bindings (for example, in tooltip-text for button with appropriate action set)
     // TODO [P3] hot-keys-bindings should be customizable
     private void bindHotKeys() {
         
@@ -1807,6 +1808,22 @@ public class FrontEnd extends JFrame {
         return jButton4;
     }
 
+    private boolean confirmDelete() {
+        return confirm("Delete confirmation", "Are you sure you want to delete active entry?");
+    }
+    
+    private boolean confirmUninstall() {
+        return confirm("Uninstall confirmation", "Are you sure you want to uninstall selected add-on(s)?");
+    }
+    
+    private boolean confirm(String title, String message) {
+        if (Preferences.getInstance().displayConfirmationDialogs) {
+            int opt = JOptionPane.showConfirmDialog(getActiveWindow(), message, title, JOptionPane.YES_NO_OPTION);
+            return opt == JOptionPane.YES_OPTION;
+        }
+        return true;
+    }
+    
     private boolean defineRootPlacement() {
         boolean result = false;
         Placement placement = (Placement) JOptionPane.showInputDialog(FrontEnd.this, "Choose placement:",
@@ -2093,17 +2110,21 @@ public class FrontEnd extends JFrame {
             if (getJTabbedPane().getTabCount() > 0) {
                 try {
                     if (currentTabPane.getTabCount() > 0) {
-                        String caption = currentTabPane.getTitleAt(currentTabPane.getSelectedIndex());
-                        currentTabPane.remove(currentTabPane.getSelectedIndex());
-                        displayStatusBarMessage("entry '" + caption + "' deleted");
-                        currentTabPane = getActiveTabPane(currentTabPane);
+                        if (confirmDelete()) {
+                            String caption = currentTabPane.getTitleAt(currentTabPane.getSelectedIndex());
+                            currentTabPane.remove(currentTabPane.getSelectedIndex());
+                            displayStatusBarMessage("entry '" + caption + "' deleted");
+                            currentTabPane = getActiveTabPane(currentTabPane);
+                        }
                     } else {
                         JTabbedPane parentTabPane = (JTabbedPane) currentTabPane.getParent();
                         if (parentTabPane != null) {
-                            String caption = parentTabPane.getTitleAt(parentTabPane.getSelectedIndex());
-                            parentTabPane.remove(currentTabPane);
-                            displayStatusBarMessage("category '" + caption + "' deleted");
-                            currentTabPane = getActiveTabPane(parentTabPane);
+                            if (confirmDelete()) {
+                                String caption = parentTabPane.getTitleAt(parentTabPane.getSelectedIndex());
+                                parentTabPane.remove(currentTabPane);
+                                displayStatusBarMessage("category '" + caption + "' deleted");
+                                currentTabPane = getActiveTabPane(parentTabPane);
+                            }
                         }
                     }
                 } catch (Exception ex) {
@@ -3467,16 +3488,18 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             if (extList.getSelectedRowCount() != 0) {
-                                int idx;
-                                while ((idx = extList.getSelectedRow()) != -1) {
-                                    String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
-                                    String extFullClassName = 
-                                        Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
-                                                                + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-                                    BackEnd.getInstance().uninstallExtension(extFullClassName);
-                                    idx = extSorter.convertRowIndexToModel(idx);
-                                    extModel.removeRow(idx);
-                                    modified = true;
+                                if (confirmUninstall()) {
+                                    int idx;
+                                    while ((idx = extList.getSelectedRow()) != -1) {
+                                        String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
+                                        String extFullClassName = 
+                                            Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                                    + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
+                                        BackEnd.getInstance().uninstallExtension(extFullClassName);
+                                        idx = extSorter.convertRowIndexToModel(idx);
+                                        extModel.removeRow(idx);
+                                        modified = true;
+                                    }
                                 }
                             }
                         } catch (Exception ex) {
@@ -3671,26 +3694,28 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             if (lafList.getSelectedRowCount() > 0) {
-                                String currentLAF = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
-                                int idx;
-                                while ((idx = lafList.getSelectedRow()) != -1) {
-                                    String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
-                                    if (!DEFAULT_LOOK_AND_FEEL.equals(laf)) {
-                                        String fullLAFClassName = 
-                                            Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
-                                                                    + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                                        BackEnd.getInstance().uninstallLAF(fullLAFClassName);
-                                        idx = lafSorter.convertRowIndexToModel(idx);
-                                        lafModel.removeRow(idx);
-                                        // if look-&-feel that has been uninstalled was active one...
-                                        if (laf.equals(currentLAF)) {
-                                            //... unset it (default one will be used)
-                                            config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+                                if (confirmUninstall()) {
+                                    String currentLAF = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+                                    int idx;
+                                    while ((idx = lafList.getSelectedRow()) != -1) {
+                                        String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
+                                        if (!DEFAULT_LOOK_AND_FEEL.equals(laf)) {
+                                            String fullLAFClassName = 
+                                                Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                                        + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                                            BackEnd.getInstance().uninstallLAF(fullLAFClassName);
+                                            idx = lafSorter.convertRowIndexToModel(idx);
+                                            lafModel.removeRow(idx);
+                                            // if look-&-feel that has been uninstalled was active one...
+                                            if (laf.equals(currentLAF)) {
+                                                //... unset it (default one will be used)
+                                                config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+                                            }
+                                            modified = true;
+                                        } else {
+                                            displayAddOnsScreenErrorMessage("Default Look-&-Feel can not be uninstalled!");
+                                            break;
                                         }
-                                        modified = true;
-                                    } else {
-                                        displayAddOnsScreenErrorMessage("Default Look-&-Feel can not be uninstalled!");
-                                        break;
                                     }
                                 }
                             }
