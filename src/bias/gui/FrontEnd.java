@@ -689,12 +689,7 @@ public class FrontEnd extends JFrame {
     
     // TODO [P2] some memory-usage optimization would be nice (rea tools initialization after tools data import in overwrite mode)
     private static void representTools() {
-        Map<String, Class<? extends ToolExtension>> extensions = null;
-        try {
-            extensions = ExtensionFactory.getInstance().getAnnotatedToolExtensions();
-        } catch (Throwable t) {
-            displayErrorMessage("Failed to initialize tools!", t);
-        }
+        Map<String, Class<? extends ToolExtension>> extensions = ExtensionFactory.getInstance().getAnnotatedToolExtensions();
         if (extensions != null) {
             instance.getJToolBar3().removeAll();
             tools = new LinkedHashMap<Class<? extends ToolExtension>, ToolExtension>();

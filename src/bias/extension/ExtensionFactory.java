@@ -108,7 +108,7 @@ public class ExtensionFactory {
     }
     
     @SuppressWarnings("unchecked")
-    public Map<String, Class<? extends ToolExtension>> getAnnotatedToolExtensions() throws Throwable {
+    public Map<String, Class<? extends ToolExtension>> getAnnotatedToolExtensions() {
         Map<String, Class<? extends ToolExtension>> types = new LinkedHashMap<String, Class<? extends ToolExtension>>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
             try {
