@@ -13,7 +13,7 @@ import bias.laf.LookAndFeel;
  * @author kion
  */
 @AddOnAnnotation(
-        version="0.1",
+        version="0.1.1",
         author="R. Kasianenko",
         description = "Bias Squareness Look-&-Feel",
         details = "<i>BiasSquarenessLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +

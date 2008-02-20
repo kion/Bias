@@ -15,7 +15,7 @@ import com.shfarr.ui.plaf.fh.FhLookAndFeel;
  */
 
 @AddOnAnnotation(
-        version="0.1",
+        version="0.1.1",
         author="R. Kasianenko",
         description="Bias FH Look-&-Feel",
         details = "<i>BiasFHLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +

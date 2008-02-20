@@ -27,7 +27,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLDocument;
@@ -45,7 +44,7 @@ import bias.utils.Validator;
  */
 
 @AddOnAnnotation(
-        version="0.8.9",
+        version="0.9.1",
         author="R. Kasianenko",
         description = "Simple plain text editor",
         details = "<i>PlainText</i> extension for Bias is a part<br>" +
@@ -63,8 +62,6 @@ public class PlainText extends EntryExtension {
     private static final int[] FONT_SIZES = new int[]{ 8, 10, 12, 14, 18, 24, 36 };
 
     private static final int DEFAULT_FONT_SIZE = FONT_SIZES[2];
-    
-    private static final String DEFAULT_FONT_FAMILY = "Monospaced";
     
     private static final String PROPERTY_SCROLLBAR_VERT = "SCROLLBAR_VERT";
     
@@ -256,19 +253,21 @@ public class PlainText extends EntryExtension {
         if (jTextPane == null) {
             jTextPane = new JTextPane();
             jTextPane.setEditorKit(new HTMLEditorKit());
-            jTextPane.setStyledDocument(new HTMLDocument(){
+            HTMLDocument doc = new HTMLDocument() {
                 private static final long serialVersionUID = 1L;
                 @Override
                 public Font getFont(AttributeSet attr) {
-                    String family = (String) attr.getAttribute(StyleConstants.FontFamily);
-                    if (family == null) {
-                        SimpleAttributeSet newAttr = new SimpleAttributeSet (attr);
-                        StyleConstants.setFontFamily(newAttr, DEFAULT_FONT_FAMILY);
-                        return super.getFont(newAttr);
+                    Object family = attr.getAttribute(StyleConstants.FontFamily);
+                    Object size = attr.getAttribute(StyleConstants.FontSize);
+                    if (family == null && size == null) {
+                        return new Font("SansSerif", Font.PLAIN, currentFontSize);
                     }
                     return super.getFont(attr);
                 }
-            });
+            };
+            doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
+            doc.setPreservesUnknownTags(false);
+            jTextPane.setStyledDocument(doc);
             jTextPane.setEditable(false);
         }
         return jTextPane;

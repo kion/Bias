@@ -15,7 +15,7 @@ import bias.laf.LookAndFeel;
  */
 
 @AddOnAnnotation(
-        version="0.1",
+        version="0.1.1",
         author="R. Kasianenko",
         description = "Bias Substance Look-&-Feel",
         details = "<i>BiasSubstanceLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +

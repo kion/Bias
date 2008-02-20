@@ -85,13 +85,13 @@ public class ExtensionFactory {
     public Map<String, Class<? extends EntryExtension>> getAnnotatedEntryExtensions() throws Throwable {
         Map<String, Class<? extends EntryExtension>> types = new LinkedHashMap<String, Class<? extends EntryExtension>>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
-            String annotationStr;
             Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
             // extension instantiation test
             Extension ext = newExtension(extClass);
             if (ext instanceof EntryExtension) {
                 AddOnAnnotation extAnn = 
                     (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
+                String annotationStr;
                 if (extAnn != null) {
                     annotationStr = extClass.getSimpleName() 
                                     + " [ " + extAnn.description() + " ]";
@@ -111,13 +111,13 @@ public class ExtensionFactory {
     public Map<String, Class<? extends ToolExtension>> getAnnotatedToolExtensions() throws Throwable {
         Map<String, Class<? extends ToolExtension>> types = new LinkedHashMap<String, Class<? extends ToolExtension>>();
         for (String extension : BackEnd.getInstance().getExtensions()) {
-            String annotationStr;
             Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
             // extension instantiation test
             Extension ext = newExtension(extClass);
             if (ext instanceof ToolExtension) {
                 AddOnAnnotation extAnn = 
                     (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
+                String annotationStr;
                 if (extAnn != null) {
                     annotationStr = extClass.getSimpleName() 
                                     + " [ " + extAnn.description() + " ]";

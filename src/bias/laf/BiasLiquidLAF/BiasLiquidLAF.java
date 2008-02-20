@@ -15,7 +15,7 @@ import com.birosoft.liquid.LiquidLookAndFeel;
  */
 
 @AddOnAnnotation(
-        version="0.1",
+        version="0.1.1",
         author="R. Kasianenko",
         description = "Bias Liquid Look-&-Feel",
         details = "<i>BiasLiquidLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +

@@ -77,7 +77,7 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  */
 
 @AddOnAnnotation(
-        version="0.8.5",
+        version="0.8.7",
         author="R. Kasianenko",
         description = "ToDo List",
         details = "<i>ToDoList</i> extension for Bias is a part<br>" +

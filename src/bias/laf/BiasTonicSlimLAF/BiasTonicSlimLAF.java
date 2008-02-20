@@ -23,7 +23,7 @@ import com.digitprop.tonic.TonicLookAndFeel;
  */
 
 @AddOnAnnotation(
-        version="0.1.1",
+        version="0.1.3",
         author="R. Kasianenko",
         description = "Bias Tonic Slim Look-&-Feel",
         details = "<i>BiasTonicSlimLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +

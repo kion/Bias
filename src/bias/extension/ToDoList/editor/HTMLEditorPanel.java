@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Map.Entry;
@@ -101,7 +102,15 @@ public class HTMLEditorPanel extends JPanel {
 
     private static final Font DEFAULT_FONT = new Font("SansSerif", Font.PLAIN, 12);
 
-    private static final String[] FONT_FAMILY_NAMES = new String[] { "SansSerif", "Serif", "Monospaced" };
+    private static final Collection<String> FONT_FAMILY_NAMES = fontFamilies();
+    
+    private static final Collection<String> fontFamilies() {
+        Collection<String> fontFamilies = new LinkedList<String>();
+        fontFamilies.add("SansSerif");
+        fontFamilies.add("Serif");
+        fontFamilies.add("Monospaced");
+        return fontFamilies;
+    }
 
     private static final int FONT_SIZE_XX_LARGE = 36;
 
@@ -247,25 +256,27 @@ public class HTMLEditorPanel extends JPanel {
     private JTextPane getJTextPane() {
         if (jTextPane == null) {
             jTextPane = new JTextPane();
-            jTextPane.setEditable(false);
             jTextPane.setEditorKit(new HTMLEditorKit());
-
-            // set default font for JTextPane instance
-            MutableAttributeSet attrs = jTextPane.getInputAttributes();
-            StyleConstants.setFontFamily(attrs, DEFAULT_FONT.getFamily());
-            StyleConstants.setFontSize(attrs, DEFAULT_FONT.getSize());
-            StyleConstants.setItalic(attrs, (DEFAULT_FONT.getStyle() & Font.ITALIC) != 0);
-            StyleConstants.setBold(attrs, (DEFAULT_FONT.getStyle() & Font.BOLD) != 0);
-            HTMLDocument doc = (HTMLDocument) jTextPane.getStyledDocument();
-            doc.setCharacterAttributes(0, doc.getLength() + 1, attrs, false);
-
+            HTMLDocument doc = new HTMLDocument() {
+                private static final long serialVersionUID = 1L;
+                @Override
+                public Font getFont(AttributeSet attr) {
+                    Object family = attr.getAttribute(StyleConstants.FontFamily);
+                    Object size = attr.getAttribute(StyleConstants.FontSize);
+                    if (family == null && size == null) {
+                        return DEFAULT_FONT;
+                    }
+                    return super.getFont(attr);
+                }
+            };
             doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
             doc.setPreservesUnknownTags(false);
+            jTextPane.setStyledDocument(doc);
+            jTextPane.setEditable(false);
 
             jTextPane.addCaretListener(new CaretListener() {
                 public void caretUpdate(CaretEvent e) {
-                    JTextPane textPane = (JTextPane) e.getSource();
-                    synchronizeEditNoteControlsStates(textPane);
+                    synchronizeEditNoteControlsStates(jTextPane);
                 }
             });
             jTextPane.addHyperlinkListener(new HyperlinkListener() {
@@ -365,7 +376,7 @@ public class HTMLEditorPanel extends JPanel {
                 getJComboBox().removeItemListener(ils[i]);
             }
             if (fontSize == null) {
-                fontSize = DEFAULT_FONT.getSize();
+                fontSize = 12;
             }
             Iterator<Entry<String, Integer>> it = FONT_SIZES.entrySet().iterator();
             while (it.hasNext()) {
@@ -385,7 +396,12 @@ public class HTMLEditorPanel extends JPanel {
                 getJComboBox1().removeItemListener(ils[i]);
             }
             if (fontFamily == null) {
-                fontFamily = DEFAULT_FONT.getFamily();
+                fontFamily = FONT_FAMILY_NAMES.iterator().next();
+            }
+            System.out.println(fontFamily);
+            if (!FONT_FAMILY_NAMES.contains(fontFamily)) {
+                FONT_FAMILY_NAMES.add(fontFamily);
+                getJComboBox1().addItem(fontFamily);
             }
             getJComboBox1().setSelectedItem(fontFamily);
             for (int i = 0; i < ils.length; i++) {
@@ -1118,8 +1134,8 @@ public class HTMLEditorPanel extends JPanel {
             jComboBox1.setPreferredSize(new Dimension(150, 20)); 
             jComboBox1.setToolTipText("font family"); 
             jComboBox1.setMinimumSize(new Dimension(150, 20)); 
-            for (int i = 0; i < FONT_FAMILY_NAMES.length; i++) {
-                jComboBox1.addItem(FONT_FAMILY_NAMES[i]);
+            for (String ff : FONT_FAMILY_NAMES) {
+                jComboBox1.addItem(ff);
             }
             jComboBox1.addItemListener(new java.awt.event.ItemListener() {
                 public void itemStateChanged(java.awt.event.ItemEvent e) {
