@@ -687,7 +687,6 @@ public class FrontEnd extends JFrame {
         return instance.dialog.isVisible() ? instance.dialog : instance;
     }
     
-    // FIXME [P1] tools fail to initialize if some of the extensions are broken - this should be separated somehow... 
     // TODO [P2] some memory-usage optimization would be nice (rea tools initialization after tools data import in overwrite mode)
     private static void representTools() {
         Map<String, Class<? extends ToolExtension>> extensions = null;
