@@ -1068,9 +1068,21 @@ public class BackEnd {
         for (String name : classPathEntries) {
             if (name.startsWith(Constants.LIBS_DIR.getName())) {
                 name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                File libFile = new File(Constants.LIBS_DIR, name);
+                File updateFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + name);
+                if (updateFile.exists()) {
+                    FSUtils.duplicateFile(updateFile, libFile);
+                    FSUtils.delete(updateFile);
+                }
                 addClassPathURL(Constants.FILE_PROTOCOL_PREFIX + Constants.LIBS_DIR.getAbsolutePath() + File.separator + name);
             } else {    
                 name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+                File addonFile = new File(Constants.ADDONS_DIR, name);
+                File updateFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + name);
+                if (updateFile.exists()) {
+                    FSUtils.duplicateFile(updateFile, addonFile);
+                    FSUtils.delete(updateFile);
+                }
                 addClassPathURL(Constants.FILE_PROTOCOL_PREFIX + Constants.ADDONS_DIR.getAbsolutePath() + File.separator + name);
             }
         }
@@ -1203,29 +1215,39 @@ public class BackEnd {
                         + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute" + Constants.NEW_LINE +
                         "in MANIFEST.MF file and \"jar\" file extension!");
             } else {
+                boolean update = false;
+                String comment = Constants.COMMENT_ADDON_INSTALLED;
                 String fullExtName = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                             + extName + Constants.PACKAGE_PATH_SEPARATOR + extName;
-                if (getExtensions().contains(fullExtName)) {
-                    throw new Exception("Can not install Extension add-on pack: duplicate extension name!");
-                } else if (loadedExtensions.contains(fullExtName)) {
-                    throw new Exception("Can not install Extension add-on pack: Bias restart needed!");
+                if (getExtensions().contains(fullExtName) || loadedExtensions.contains(fullExtName)) {
+                    update = true;
+                    comment = Constants.COMMENT_ADDON_UPDATED;
+                }
+                File installedExtensionFile = new File(Constants.ADDONS_DIR, installedExtensionName + Constants.EXTENSION_JAR_FILE_SUFFIX);
+                if (update) {
+                    File installedUpdateExtensionFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + installedExtensionName + Constants.EXTENSION_JAR_FILE_SUFFIX);
+                    FSUtils.writeFile(installedUpdateExtensionFile, installedExtensionJAR);
                 } else {
-                    File installedExtensionFile = new File(Constants.ADDONS_DIR, installedExtensionName + Constants.EXTENSION_JAR_FILE_SUFFIX);
                     FSUtils.writeFile(installedExtensionFile, installedExtensionJAR);
-                    addClassPathEntry(installedExtensionFile);
-                    if (!libsMap.isEmpty()) {
-                        for (Entry<String, byte[]> entry : libsMap.entrySet()) {
-                            if (entry.getValue() != null) {
-                                File libFile = new File(Constants.LIBS_DIR, entry.getKey());
+                }
+                addClassPathEntry(installedExtensionFile);
+                if (!libsMap.isEmpty()) {
+                    for (Entry<String, byte[]> entry : libsMap.entrySet()) {
+                        if (entry.getValue() != null) {
+                            File libFile = new File(Constants.LIBS_DIR, entry.getKey());
+                            if (update) {
+                                File libUpdateFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + entry.getKey());
+                                FSUtils.writeFile(libUpdateFile, entry.getValue());
+                            } else {
                                 FSUtils.writeFile(libFile, entry.getValue());
-                                addClassPathEntry(libFile);
                             }
+                            addClassPathEntry(libFile);
                         }
                     }
-                    storeClassPathConfiguration();
                 }
+                storeClassPathConfiguration();
                 installedExtensionName = fullExtName;
-                newExtensions.put(installedExtensionName, Constants.COMMENT_ADDON_INSTALLED);
+                newExtensions.put(installedExtensionName, comment);
             }
         } else {
             throw new Exception("Invalid extension pack!");
@@ -1367,29 +1389,39 @@ public class BackEnd {
                         + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute" + Constants.NEW_LINE +
                         "in MANIFEST.MF file and \"jar\" file extension!");
             } else {
+                boolean update = false;
+                String comment = Constants.COMMENT_ADDON_INSTALLED;
                 String fullLAFName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                             + lafName + Constants.PACKAGE_PATH_SEPARATOR + lafName;
-                if (getLAFs().contains(fullLAFName)) {
-                    throw new Exception("Can not install LAF add-on pack: duplicate look-&-feel name!");
-                } else if (loadedLAFs.contains(fullLAFName)) {
-                    throw new Exception("Can not install LAF add-on pack: Bias restart needed!");
+                if (getLAFs().contains(fullLAFName) || loadedLAFs.contains(fullLAFName)) {
+                    update = true;
+                    comment = Constants.COMMENT_ADDON_UPDATED;
+                }
+                File installedLAFFile = new File(Constants.ADDONS_DIR, installedLAFName + Constants.LAF_JAR_FILE_SUFFIX);
+                if (update) {
+                    File installedUpdateLAFFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + installedLAFName + Constants.LAF_JAR_FILE_SUFFIX);
+                    FSUtils.writeFile(installedUpdateLAFFile, installedLAFJAR);
                 } else {
-                    File installedLAFFile = new File(Constants.ADDONS_DIR, installedLAFName + Constants.LAF_JAR_FILE_SUFFIX);
                     FSUtils.writeFile(installedLAFFile, installedLAFJAR);
-                    addClassPathEntry(installedLAFFile);
-                    if (!libsMap.isEmpty()) {
-                        for (Entry<String, byte[]> entry : libsMap.entrySet()) {
-                            if (entry.getValue() != null) {
-                                File libFile = new File(Constants.LIBS_DIR, entry.getKey());
+                }
+                addClassPathEntry(installedLAFFile);
+                if (!libsMap.isEmpty()) {
+                    for (Entry<String, byte[]> entry : libsMap.entrySet()) {
+                        if (entry.getValue() != null) {
+                            File libFile = new File(Constants.LIBS_DIR, entry.getKey());
+                            if (update) {
+                                File libUpdateFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + entry.getKey());
+                                FSUtils.writeFile(libUpdateFile, entry.getValue());
+                            } else {
                                 FSUtils.writeFile(libFile, entry.getValue());
-                                addClassPathEntry(libFile);
                             }
+                            addClassPathEntry(libFile);
                         }
                     }
-                    storeClassPathConfiguration();
                 }
+                storeClassPathConfiguration();
                 installedLAFName = fullLAFName;
-                newLAFs.put(installedLAFName, Constants.COMMENT_ADDON_INSTALLED);
+                newLAFs.put(installedLAFName, comment);
             }
         } else {
             throw new Exception("Invalid LAF pack!");
@@ -1439,7 +1471,9 @@ public class BackEnd {
         URI rootURI = Constants.ROOT_DIR.toURI();
         URI jarFileURI = jarFile.toURI();
         URI relativeURI = rootURI.relativize(jarFileURI);
-        classPathEntries.add(relativeURI.toString());
+        if (!classPathEntries.contains(relativeURI.toString())) {
+            classPathEntries.add(relativeURI.toString());
+        }
     }
     
     private void storeClassPathConfiguration() throws Exception {

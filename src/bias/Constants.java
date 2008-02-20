@@ -50,6 +50,7 @@ public class Constants {
     
     public static final String COMMENT_ADDON_IMPORTED = "Imported  [restart needed]";
     public static final String COMMENT_ADDON_INSTALLED = "Installed [restart needed]";
+    public static final String COMMENT_ADDON_UPDATED = "Updated [restart needed]";
     
     public static final String UNICODE_ENCODING = "UTF-8";
     
@@ -111,6 +112,7 @@ public class Constants {
     public static final String LAF_CONFIG_FILE_SUFFIX = ".laf.conf";
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
     public static final String CLASS_FILE_SUFFIX = ".class";
+    public static final String UPDATE_FILE_PREFIX = "update_";
     
     public static final String OPTION_TRANSFER_TYPE = "TRANSFER_TYPE";
     public static final String OPTION_CONFIG_NAME = "CONFIG_NAME";

@@ -3448,7 +3448,13 @@ public class FrontEnd extends JFrame {
                                         for (File file : extensionFileChooser.getSelectedFiles()) {
                                             String installedExt = BackEnd.getInstance().installExtension(file);
                                             installedExt = installedExt.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                            extModel.addRow(new Object[]{installedExt, null, null, Constants.COMMENT_ADDON_INSTALLED});
+                                            int idx = findDataRowIndex(extModel, 0, installedExt);
+                                            if (idx != -1) {
+                                                extModel.removeRow(idx);
+                                                extModel.insertRow(idx, new Object[]{installedExt, null, null, Constants.COMMENT_ADDON_UPDATED});
+                                            } else {
+                                                extModel.addRow(new Object[]{installedExt, null, null, Constants.COMMENT_ADDON_INSTALLED});
+                                            }
                                             modified = true;
                                         }
                                     } catch (Throwable t) {
@@ -3646,7 +3652,13 @@ public class FrontEnd extends JFrame {
                                         for (File file : lafFileChooser.getSelectedFiles()) {
                                             String installedLAF = BackEnd.getInstance().installLAF(file);
                                             installedLAF = installedLAF.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                            lafModel.addRow(new Object[]{installedLAF, null, null, Constants.COMMENT_ADDON_INSTALLED});
+                                            int idx = findDataRowIndex(lafModel, 0, installedLAF);
+                                            if (idx != -1) {
+                                                lafModel.removeRow(idx);
+                                                lafModel.addRow(new Object[]{installedLAF, null, null, Constants.COMMENT_ADDON_UPDATED});
+                                            } else {
+                                                lafModel.addRow(new Object[]{installedLAF, null, null, Constants.COMMENT_ADDON_INSTALLED});
+                                            }
                                             modified = true;
                                         }
                                     } catch (Exception ex) {
@@ -3813,8 +3825,8 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Icons", controlIcons.getIconIcons(), icPanel);
                 
-                JPanel advPanel = new JPanel(new BorderLayout());
                 if (BackEnd.getInstance().unusedAddOnsFound()) {
+                    JPanel advPanel = new JPanel(new BorderLayout());
                     JPanel cleanPanel = new JPanel(new GridLayout(2,1));
                     final JButton cleanButt = new JButton("Clean unused data and config files!");
                     JLabel cleanLabel = new JLabel(
@@ -3838,9 +3850,8 @@ public class FrontEnd extends JFrame {
                     cleanPanel.add(cleanButt);
                     cleanPanel.add(cleanLabel);
                     advPanel.add(cleanPanel, BorderLayout.NORTH);
+                    addOnsPane.addTab("Advanced", controlIcons.getIconPreferences(), advPanel);
                 }
-                
-                addOnsPane.addTab("Advanced", controlIcons.getIconPreferences(), advPanel);
                 
                 modified = false;
                 JOptionPane op = new JOptionPane();
@@ -3861,6 +3872,15 @@ public class FrontEnd extends JFrame {
         }
         
     };
+    
+    private int findDataRowIndex(DefaultTableModel model, int colIdx, String data) {
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (data.equals(model.getValueAt(i, colIdx))) {
+                return i;
+            }
+        }
+        return -1;
+    }
     
     private JScrollPane getDetailsPane(String detailsInfo) {
         if (detailsPane == null) {
