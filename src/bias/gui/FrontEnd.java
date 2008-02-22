@@ -2692,7 +2692,6 @@ public class FrontEnd extends JFrame {
                         final JPasswordField passwordTF1 = new JPasswordField();
                         final String cpText = "Confirm password:";
                         final JLabel passwordL2 = new JLabel(cpText);
-                        passwordL2.setForeground(Color.RED);
                         final JPasswordField passwordTF2 = new JPasswordField();
                         passwordTF2.addCaretListener(new CaretListener(){
                             public void caretUpdate(CaretEvent e) {
