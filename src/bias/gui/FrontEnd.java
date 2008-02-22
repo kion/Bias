@@ -750,7 +750,7 @@ public class FrontEnd extends JFrame {
             try {
                 getJTabbedPane().setSelectedIndex(data.getActiveIndex());
             } catch (IndexOutOfBoundsException ioobe) {
-                // simply ignore incorrect index settings (this may happen on import and is acceptably)
+                // simply ignore incorrect index settings (this may happen on import and is allowable)
             }
             currentTabPane = getJTabbedPane();
         }
