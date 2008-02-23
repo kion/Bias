@@ -987,6 +987,12 @@ public class BackEnd {
     private Collection<UUID> buildNode(Document metadata, Node node, DataCategory data, boolean writeDataMode) throws Exception {
         Collection<UUID> ids = new ArrayList<UUID>();
         for (Recognizable item : data.getData()) {
+            if (item.getIcon() != null) {
+                String idStr = ((ImageIcon) item.getIcon()).getDescription();
+                if (!Validator.isNullOrBlank(idStr)) {
+                    ids.add(UUID.fromString(idStr));
+                }
+            }
             if (item instanceof DataEntry) {
                 DataEntry de = (DataEntry) item;
                 storeDataEntrySettings(de);

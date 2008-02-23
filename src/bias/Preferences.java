@@ -154,39 +154,44 @@ public class Preferences {
     
     @PreferenceAnnotation(
             title = "Show system tray icon",
-            description = "Defines if application can allocate space in system tray, allows to hide/restore application to/from system tray icon")
+            description = "Defines whether application can allocate space in system tray; allows to hide/restore application to/from system tray icon")
     public boolean useSysTrayIcon = false;
 
     @PreferenceAnnotation(
             title = "Remain in system tray on window close",
-            description = "Defines if application should remain in system tray when application's window is closed")
+            description = "Defines whether application should remain in system tray when application's window is closed")
     public boolean remainInSysTrayOnWindowClose = false;
     
     @PreferenceAnnotation(
             title = "Hide main window on start",
-            description = "Defines if application should start with hidden main window (system tray icon will be shown in this case)")
+            description = "Defines whether application should start with hidden main window (system tray icon will be shown in this case)")
     @PreferenceEnableAnnotation(enabledByField = "remainInSysTrayOnWindowClose", enabledByValue = "true")        
     public boolean startHidden = false;
     
     @PreferenceAnnotation(
             title = "Minimize to system tray",
-            description = "Defines if application should be minimized to system tray instead of task panel")
+            description = "Defines whether application should be minimized to system tray instead of task panel")
     public boolean minimizeToSysTray = false;
     
     @PreferenceAnnotation(
             title = "Exit without confirmation",
-            description = "Defines if exit-confirmation should be displayed on exit")
+            description = "Defines whether exit-confirmation should be displayed on exit")
     public boolean exitWithoutConfirmation = false;
     
     @PreferenceAnnotation(
             title = "Auto save on exit",
-            description = "Defines if user data have to be automatically saved on exit")
+            description = "Defines whether user data have to be automatically saved on exit")
     public boolean autoSaveOnExit = false;
     
     @PreferenceAnnotation(
             title = "Display confirmation dialogs",
-            description = "Defines if confirmation dialogs should appear whenever user tries to delete entry, uninstall add-on and so on.")
+            description = "Defines whether confirmation dialogs should appear whenever user tries to delete entry, uninstall add-on and so on.")
     public boolean displayConfirmationDialogs = true;
+    
+    @PreferenceAnnotation(
+            title = "Auto-mode",
+            description = "Defines whether some common operations (like data saving before export) should be performed automatically (without users confirmation).")
+    public boolean autoMode = false;
     
     @PreferenceAnnotation(
             title = "Show memory usage information in status bar",

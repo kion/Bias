@@ -113,9 +113,12 @@ public class Constants {
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
     public static final String CLASS_FILE_SUFFIX = ".class";
     public static final String UPDATE_FILE_PREFIX = "update_";
-    
+
+    public static final String DATA_TREE_ROOT_NODE_CAPTION = "ALL DATA";
     public static final String OPTION_TRANSFER_TYPE = "TRANSFER_TYPE";
     public static final String OPTION_CONFIG_NAME = "CONFIG_NAME";
+    public static final String OPTION_EXPORT_ALL = "EXPORT_ALL";
+    public static final String OPTION_SELECTED_RECURSIVE_IDS = "SELECTED_RECURSIVE_IDS";
     public static final String OPTION_SELECTED_IDS = "SELECTED_IDS";
     public static final String OPTION_DATA_PASSWORD = "DATA_PASSWORD";
     public static final String OPTION_PROCESS_PREFERENCES = "PROCESS_PREFERENCES";

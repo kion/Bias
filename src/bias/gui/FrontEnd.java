@@ -85,6 +85,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
@@ -167,20 +169,31 @@ public class FrontEnd extends JFrame {
     
     private static final String STATUS_MESSAGE_SUFFIX = "</font></html>";
 
+    private static final String ADDON_ANN_FIELD_VALUE_NA = "N/A";
+    
+    private static final JLabel recursiveExportInfoLabel = new JLabel(
+            "<html><b><i><font color=\"blue\">" +
+            "Note: there're two export modes available:<br/>" +
+            "<ul>" + 
+            "<li>" +
+            "static - only selected nodes will be exported" +
+            "</li>" + 
+            "<li>" +
+            "dynamic - in addition to nodes selected for static export, collapsed nodes can be selected<br/>" +
+            "to enable recursive export; in this case all nested nodes will be exported as well<br/>" +
+            "(this is especially handy when stored configurations are used)" + 
+            "</li>" + 
+            "</ul>" + 
+            "</font></i></b></html>");
+    
     private static AddOnFilesChooser extensionFileChooser = new AddOnFilesChooser();
 
     private static AddOnFilesChooser lafFileChooser = new AddOnFilesChooser();
 
     private static IconsFileChooser iconsFileChooser = new IconsFileChooser();
     
-    private static final String ADDON_ANN_FIELD_VALUE_NA = "N/A";
-    
-    private static SimpleDateFormat dateFormat;
-    
     private static FrontEnd instance;
     
-    private Map<DefaultMutableTreeNode, Recognizable> nodeEntries;
-
     private static Map<Class<? extends ToolExtension>, ToolExtension> tools;
 
     private static Map<Class<? extends ToolExtension>, JPanel> indicatorAreas = new HashMap<Class<? extends ToolExtension>, JPanel>();
@@ -190,29 +203,35 @@ public class FrontEnd extends JFrame {
 
     private static Properties config;
     
+    private static String activeLAF = null;
+    
     private static Map<String, byte[]> initialLAFSettings = new HashMap<String, byte[]>();
     
     private static Map<String, DataEntry> dataEntries = new HashMap<String, DataEntry>();
 
-    private Map<UUID, EntryExtension> entryExtensions = new LinkedHashMap<UUID, EntryExtension>();
+    private static Map<UUID, EntryExtension> entryExtensions = new LinkedHashMap<UUID, EntryExtension>();
 
+    private static Map<DefaultMutableTreeNode, Recognizable> nodeEntries;
+
+    private static Map<DefaultMutableTreeNode, Collection<DefaultMutableTreeNode>> categoriesToExportRecursively;
+
+    private static boolean sysTrayIconVisible = false;
+    
+    private static TrayIcon trayIcon = null;
+    
+    private SimpleDateFormat dateFormat;
+    
     private TabMoveListener tabMoveListener = new TabMoveListener();
     
     private File exportFile;
 
     private int opt;
     
-    private static boolean hotKeysBindingsChanged = true;
+    private boolean hotKeysBindingsChanged = true;
 
     private String lastAddedEntryType = null;
     
-    private static String activeLAF = null;
-    
-    private static boolean sysTrayIconVisible = false;
-    
-    private static TrayIcon trayIcon = null;
-    
-    private static JProgressBar memUsageProgressBar = null;
+    private JProgressBar memUsageProgressBar = null;
     
     private JList statusBarMessagesList = null;
 
@@ -300,47 +319,46 @@ public class FrontEnd extends JFrame {
             preInit();
             activateLAF();
             instance = new FrontEnd();
-            applyPreferences();
+            instance.applyPreferences();
             representTools();
         }
         return instance;
     }
 
-    private static void applyPreferences() {
+    private void applyPreferences() {
         if (Preferences.getInstance().useSysTrayIcon) {
             showSysTrayIcon();
         } else {
             hideSysTrayIcon();
         }
         dateFormat = new SimpleDateFormat(Preferences.getInstance().preferredDateFormat);
-        if (hotKeysBindingsChanged) {
+        if (instance.hotKeysBindingsChanged) {
             instance.bindHotKeys();
-            hotKeysBindingsChanged = false;
+            instance.hotKeysBindingsChanged = false;
         }
-        if (instance != null) {
-            if (memUsageIndicatorPanel == null) {
-                memUsageIndicatorPanel = instance.createStatusBarIndicatorArea(null);
-                instance.getJPanelIndicators().add(memUsageIndicatorPanel, BorderLayout.EAST);
-            }
-            if (Preferences.getInstance().showMemoryUsage) {
-                memUsageProgressBar = new JProgressBar();
-                memUsageProgressBar.setMinimum(0);
-                memUsageProgressBar.setStringPainted(true);
-                memUsageIndicatorPanel.add(memUsageProgressBar, BorderLayout.CENTER);
-                memUsageIndicatorPanel.setVisible(true);
-                startMemoryUsageMonitoring();
-            } else {
-                if (memUsageIndicatorPanel != null) {
-                    memUsageIndicatorPanel.setVisible(false);
-                }
+        if (memUsageIndicatorPanel == null) {
+            memUsageIndicatorPanel = instance.createStatusBarIndicatorArea(null);
+            instance.getJPanelIndicators().add(memUsageIndicatorPanel, BorderLayout.EAST);
+        }
+        if (Preferences.getInstance().showMemoryUsage) {
+            memUsageProgressBar = new JProgressBar();
+            memUsageProgressBar.setMinimum(0);
+            memUsageProgressBar.setStringPainted(true);
+            memUsageIndicatorPanel.add(memUsageProgressBar, BorderLayout.CENTER);
+            memUsageIndicatorPanel.setVisible(true);
+            startMemoryUsageMonitoring();
+        } else {
+            if (memUsageIndicatorPanel != null) {
+                memUsageIndicatorPanel.setVisible(false);
             }
         }
+        instance.displayStatusBarMessage("preferences applied");
     }
     
     private static JPanel memUsageIndicatorPanel = null;
     
     // TODO [P2] memory usage optimization: show memory usage info only when main window is visible
-    private static void startMemoryUsageMonitoring() {
+    private void startMemoryUsageMonitoring() {
         new Thread(new Runnable() {
             public void run() {
                 while (Preferences.getInstance().showMemoryUsage) {
@@ -854,6 +872,7 @@ public class FrontEnd extends JFrame {
         BackEnd.getInstance().setData(collectData());
         BackEnd.getInstance().setToolsData(collectToolsData());
         BackEnd.getInstance().store();
+        displayStatusBarMessage("data saved");
     }
     
     private Map<String, byte[]> collectToolsData() throws Throwable {
@@ -1084,7 +1103,7 @@ public class FrontEnd extends JFrame {
     
     public static Map<UUID, EntryExtension> getEntryExtensions() throws Throwable {
         if (instance != null) {
-            instance.entryExtensions.clear();
+            entryExtensions.clear();
             return instance.getEntryExtensions(instance.getJTabbedPane(), null);
         }
         return null;
@@ -1092,7 +1111,7 @@ public class FrontEnd extends JFrame {
 
     public static Map<UUID, EntryExtension> getEntryExtensions(Class<? extends EntryExtension> filterClass) throws Throwable {
         if (instance != null) {
-            instance.entryExtensions.clear();
+            entryExtensions.clear();
             return instance.getEntryExtensions(instance.getJTabbedPane(), filterClass);
         }
         return null;
@@ -1377,11 +1396,11 @@ public class FrontEnd extends JFrame {
             Component c = currentTabPane.getSelectedComponent();
             if (c instanceof JPanel) {
                 try {
-                    JPanel p = ((JPanel) c);
-                    String id = p.getName();
+                    final JPanel p = ((JPanel) c);
+                    final String id = p.getName();
                     if (p.getComponentCount() == 0) {
                         EntryExtension ee = initEntryExtension(id);
-                        ((JPanel) c).add(ee, BorderLayout.CENTER);
+                        p.add(ee, BorderLayout.CENTER);
                     }
                 } catch (Throwable t) {
                     displayErrorMessage("Failed to initialize extension!", t);
@@ -1812,18 +1831,36 @@ public class FrontEnd extends JFrame {
         return jButton4;
     }
 
-    private boolean confirmDelete() {
-        return confirm("Delete confirmation", "Are you sure you want to delete active entry?");
+    private boolean confirmedDelete() {
+        return confirmed("Delete confirmation", "Are you sure you want to delete active entry?");
     }
     
-    private boolean confirmUninstall() {
-        return confirm("Uninstall confirmation", "Are you sure you want to uninstall selected add-on(s)?");
+    private boolean confirmedUninstall() {
+        return confirmed("Uninstall confirmation", "Are you sure you want to uninstall selected add-on(s)?");
     }
     
-    private boolean confirm(String title, String message) {
+    private boolean confirmed(String title, String message) {
         if (Preferences.getInstance().displayConfirmationDialogs) {
-            int opt = JOptionPane.showConfirmDialog(getActiveWindow(), message, title, JOptionPane.YES_NO_OPTION);
+            int opt = JOptionPane.showConfirmDialog(
+                    getActiveWindow(), 
+                    "<html>" + message + "<br/><br/>" +
+                    		"<i>(Note: this dialog can be disabled via preferences option 'Display confirmation dialogs')</i><html>", 
+                    title, 
+                    JOptionPane.YES_NO_OPTION);
             return opt == JOptionPane.YES_OPTION;
+        }
+        return true;
+    }
+    
+    private boolean autoconfirmed(String title, String message) {
+        if (!Preferences.getInstance().autoMode) {
+            int opt = JOptionPane.showConfirmDialog(
+                    getActiveWindow(), 
+                    "<html>" + message + "<br/><br/>" +
+                            "<i>(Note: this dialog can be disabled via preferences option 'Auto-mode')</i><html>", 
+                    title, 
+                    JOptionPane.OK_CANCEL_OPTION);
+            return opt == JOptionPane.OK_OPTION;
         }
         return true;
     }
@@ -2114,7 +2151,7 @@ public class FrontEnd extends JFrame {
             if (getJTabbedPane().getTabCount() > 0) {
                 try {
                     if (currentTabPane.getTabCount() > 0) {
-                        if (confirmDelete()) {
+                        if (confirmedDelete()) {
                             String caption = currentTabPane.getTitleAt(currentTabPane.getSelectedIndex());
                             currentTabPane.remove(currentTabPane.getSelectedIndex());
                             displayStatusBarMessage("entry '" + caption + "' deleted");
@@ -2123,7 +2160,7 @@ public class FrontEnd extends JFrame {
                     } else {
                         JTabbedPane parentTabPane = (JTabbedPane) currentTabPane.getParent();
                         if (parentTabPane != null) {
-                            if (confirmDelete()) {
+                            if (confirmedDelete()) {
                                 String caption = parentTabPane.getTitleAt(parentTabPane.getSelectedIndex());
                                 parentTabPane.remove(currentTabPane);
                                 displayStatusBarMessage("category '" + caption + "' deleted");
@@ -2290,14 +2327,14 @@ public class FrontEnd extends JFrame {
                                                 processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
                                                 label.setText("<html><font color=red>Data import - Failed</font></html>");
                                                 gse.printStackTrace(System.err);
-                                            } catch (Exception ex) {
+                                            } catch (Throwable t) {
                                                 String errMsg = "Failed to import data!";
-                                                if (ex.getMessage() != null) {
-                                                    errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                                                if (t.getMessage() != null) {
+                                                    errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
                                                 }
                                                 processLabel.setText(errMsg);
                                                 label.setText("<html><font color=red>Data import - Failed</font></html>");
-                                                ex.printStackTrace(System.err);
+                                                t.printStackTrace(System.err);
                                             }
                                         }
                                     } catch (Exception ex) {
@@ -2556,6 +2593,13 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent e) {
             try {
+                if (!autoconfirmed("Save data before export", 
+                        "Data need to be saved before export can be performed. Save now and proceed with export?")) {
+                    return;
+                }
+                // store first
+                store();
+                // now proceed with export
                 final JComboBox configsCB = new JComboBox();
                 configsCB.addItem(Constants.EMPTY_STR);
                 for (String configName : BackEnd.getInstance().getExportConfigurations().keySet()) {
@@ -2618,6 +2662,7 @@ public class FrontEnd extends JFrame {
                 if (opt == JOptionPane.OK_OPTION) {
                     final DataCategory data = collectData();
                     final Collection<UUID> selectedEntries = new LinkedList<UUID>();
+                    final Collection<UUID> selectedRecursiveEntries = new LinkedList<UUID>();
 
                     if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
                         try {
@@ -2630,14 +2675,24 @@ public class FrontEnd extends JFrame {
                                 public void run() {
                                     try {
                                         final Properties props = BackEnd.getInstance().getExportConfigurations().get(configsCB.getSelectedItem().toString());
-                                        String idsStr = props.getProperty(Constants.OPTION_SELECTED_IDS);
-                                        if (!Validator.isNullOrBlank(idsStr)) {
-                                            String[] ids = idsStr.split(Constants.PROPERTY_VALUES_SEPARATOR);
-                                            for (String id : ids) {
-                                                selectedEntries.add(UUID.fromString(id));
+                                        String exportAllStr = props.getProperty(Constants.OPTION_EXPORT_ALL);
+                                        if (Validator.isNullOrBlank(exportAllStr) || !Boolean.valueOf(exportAllStr)) {
+                                            String idsStr = props.getProperty(Constants.OPTION_SELECTED_IDS);
+                                            if (!Validator.isNullOrBlank(idsStr)) {
+                                                String[] ids = idsStr.split(Constants.PROPERTY_VALUES_SEPARATOR);
+                                                for (String id : ids) {
+                                                    selectedEntries.add(UUID.fromString(id));
+                                                }
                                             }
+                                            idsStr = props.getProperty(Constants.OPTION_SELECTED_RECURSIVE_IDS);
+                                            if (!Validator.isNullOrBlank(idsStr)) {
+                                                String[] ids = idsStr.split(Constants.PROPERTY_VALUES_SEPARATOR);
+                                                for (String id : ids) {
+                                                    selectedRecursiveEntries.add(UUID.fromString(id));
+                                                }
+                                            }
+                                            filterData(data, selectedEntries, selectedRecursiveEntries);
                                         }
-                                        filterData(data, selectedEntries);
                                         final String password = props.getProperty(Constants.OPTION_DATA_PASSWORD) != null ? props.getProperty(Constants.OPTION_DATA_PASSWORD) : Constants.EMPTY_STR;
                                         File file = BackEnd.getInstance().exportData(
                                                 data, 
@@ -2672,12 +2727,48 @@ public class FrontEnd extends JFrame {
                             displayErrorMessage("Failed to export data!", ex);
                         }
                     } else {
-                        JTree dataTree = null;
+                        final JTree dataTree;
                         final CheckTreeManager checkTreeManager;
                         if (!data.getData().isEmpty()) {
                             dataTree = buildDataTree(data);
                             checkTreeManager = new CheckTreeManager(dataTree);
+                            checkTreeManager.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
+                                public void valueChanged(TreeSelectionEvent e) {
+                                    TreePath selectedPath = e.getNewLeadSelectionPath();
+                                    TreePath treeSelPath = dataTree.getSelectionPath();
+                                    if (selectedPath != null && selectedPath.equals(treeSelPath)) {
+                                        DefaultMutableTreeNode node = ((DefaultMutableTreeNode) selectedPath.getLastPathComponent());
+                                        if (dataTree.isCollapsed(selectedPath) && !node.isLeaf()) {
+                                            boolean isSelected = checkTreeManager.getSelectionModel().isPathSelected(selectedPath, true);
+                                            if (isSelected) {
+                                                Collection<DefaultMutableTreeNode> childs = new LinkedList<DefaultMutableTreeNode>();
+                                                for (int i = 0; i < node.getChildCount(); i++) {
+                                                    childs.add((DefaultMutableTreeNode) node.getChildAt(i));
+                                                }
+                                                categoriesToExportRecursively.put(node, childs);
+                                                node.removeAllChildren();
+                                            }
+                                        }
+                                    }
+                                    if (treeSelPath != null) {
+                                        boolean isSelected = checkTreeManager.getSelectionModel().isPathSelected(treeSelPath, true);
+                                        if (!isSelected) {
+                                            DefaultMutableTreeNode node = ((DefaultMutableTreeNode) treeSelPath.getLastPathComponent());
+                                            if (dataTree.isCollapsed(treeSelPath) && node.isLeaf()) {
+                                                Collection<DefaultMutableTreeNode> childs = categoriesToExportRecursively.get(node);
+                                                if (childs != null) {
+                                                    for (DefaultMutableTreeNode child : childs) {
+                                                        node.add(child);
+                                                    }
+                                                    categoriesToExportRecursively.remove(node);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
                         } else {
+                            dataTree = null;
                             checkTreeManager = null;
                         }
                         final JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
@@ -2719,6 +2810,7 @@ public class FrontEnd extends JFrame {
                                 exportAddOnsCB, 
                                 exportAddOnConfigsCB,
                                 exportImportExportConfigsCB,
+                                dataTree != null ? recursiveExportInfoLabel : null,
                                 dataTree != null ? new JScrollPane(dataTree) : null,
                                 passwordL1,
                                 passwordTF1,
@@ -2745,25 +2837,38 @@ public class FrontEnd extends JFrame {
                             Thread exportThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
+                                        boolean exportAll = false;
                                         if (checkTreeManager != null) {
                                             TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
                                             if (checkedPaths != null) {
-                                                for (TreePath tp : checkedPaths) {
-                                                    DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
-                                                    for (Object o : tp.getPath()) {
-                                                        DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
-                                                        Recognizable entry = nodeEntries.get(node);
-                                                        if (entry != null) {
-                                                            selectedEntries.add(entry.getId());
-                                                        }
-                                                        if (node.equals(lastNodeInPath)) {
-                                                            selectDescenantEntries(node, selectedEntries);
+                                                Iterator<DefaultMutableTreeNode> it = categoriesToExportRecursively.keySet().iterator();
+                                                while (it.hasNext()) {
+                                                    DefaultMutableTreeNode node = it.next();
+                                                    if (node.isRoot()) {
+                                                        exportAll = true;
+                                                        break;
+                                                    } else {
+                                                        selectedRecursiveEntries.add(nodeEntries.get(node).getId());
+                                                    }
+                                                }
+                                                if (!exportAll) {
+                                                    for (TreePath tp : checkedPaths) {
+                                                        DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
+                                                        for (Object o : tp.getPath()) {
+                                                            DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
+                                                            Recognizable entry = nodeEntries.get(node);
+                                                            if (entry != null) {
+                                                                selectedEntries.add(entry.getId());
+                                                            }
+                                                            if (node.equals(lastNodeInPath)) {
+                                                                selectDescenantEntries(node, selectedEntries);
+                                                            }
                                                         }
                                                     }
+                                                    filterData(data, selectedEntries, selectedRecursiveEntries);
                                                 }
                                             }
                                         }
-                                        filterData(data, selectedEntries);
                                         exportFile = BackEnd.getInstance().exportData(
                                                 data, 
                                                 exportPreferencesCB.isSelected(), 
@@ -2830,16 +2935,31 @@ public class FrontEnd extends JFrame {
                                                             if (!Validator.isNullOrBlank(password)) {
                                                                 options.setProperty(Constants.OPTION_DATA_PASSWORD, password);
                                                             }
-                                                            if (!selectedEntries.isEmpty()) {
-                                                                StringBuffer ids = new StringBuffer();
-                                                                Iterator<UUID> it = selectedEntries.iterator();
-                                                                while (it.hasNext()) {
-                                                                    ids.append(it.next());
-                                                                    if (it.hasNext()) {
-                                                                        ids.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                                                            if (exportAll) {
+                                                                options.setProperty(Constants.OPTION_EXPORT_ALL, "" + true);
+                                                            } else {
+                                                                if (!selectedEntries.isEmpty()) {
+                                                                    StringBuffer ids = new StringBuffer();
+                                                                    Iterator<UUID> it = selectedEntries.iterator();
+                                                                    while (it.hasNext()) {
+                                                                        ids.append(it.next());
+                                                                        if (it.hasNext()) {
+                                                                            ids.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                                                                        }
                                                                     }
+                                                                    options.setProperty(Constants.OPTION_SELECTED_IDS, ids.toString());
                                                                 }
-                                                                options.setProperty(Constants.OPTION_SELECTED_IDS, ids.toString());
+                                                                if (!selectedRecursiveEntries.isEmpty()) {
+                                                                    StringBuffer ids = new StringBuffer();
+                                                                    Iterator<UUID> it = selectedRecursiveEntries.iterator();
+                                                                    while (it.hasNext()) {
+                                                                        ids.append(it.next());
+                                                                        if (it.hasNext()) {
+                                                                            ids.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                                                                        }
+                                                                    }
+                                                                    options.setProperty(Constants.OPTION_SELECTED_RECURSIVE_IDS, ids.toString());
+                                                                }
                                                             }
                                                             BackEnd.getInstance().storeExportConfiguration(configName, options);
                                                             processModel.addElement("Export configuration stored as '" + configName + "'");
@@ -2893,13 +3013,15 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private void filterData(DataCategory data, Collection<UUID> filterEntries) {
+    private void filterData(DataCategory data, Collection<UUID> filterEntries, Collection<UUID> selectedRecursiveEntries) {
         Collection<Recognizable> initialData = new ArrayList<Recognizable>(data.getData());
         for (Recognizable r : initialData) {
             if (!filterEntries.contains(r.getId())) {
                 data.removeDataItem(r);
             } else if (r instanceof DataCategory) {
-                filterData((DataCategory) r, filterEntries);
+                if (!selectedRecursiveEntries.contains(r.getId())) {
+                    filterData((DataCategory) r, filterEntries, selectedRecursiveEntries);
+                }
             }
         }
     }
@@ -2926,7 +3048,8 @@ public class FrontEnd extends JFrame {
     
     private JTree buildDataTree(DataCategory data) throws Throwable {
         nodeEntries = new HashMap<DefaultMutableTreeNode, Recognizable>();
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("ALL DATA");
+        categoriesToExportRecursively = new HashMap<DefaultMutableTreeNode, Collection<DefaultMutableTreeNode>>();
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode(Constants.DATA_TREE_ROOT_NODE_CAPTION);
         DefaultTreeModel model = new DefaultTreeModel(root);
         final JTree dataTree = new JTree(model);
         buildDataTree(root, data);
@@ -3105,7 +3228,6 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             try {
                 store();
-                displayStatusBarMessage("data saved");
             } catch (Throwable t) {
                 displayErrorMessage("Failed to save!", t);
             }
@@ -3239,7 +3361,6 @@ public class FrontEnd extends JFrame {
                             if (!Arrays.equals(after, before)) {
                                 BackEnd.getInstance().storePreferences();
                                 applyPreferences();
-                                displayStatusBarMessage("preferences applied");
                             }
                         } catch (Exception ex) {
                             displayErrorMessage("Failed to save preferences!", ex);
@@ -3491,7 +3612,7 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             if (extList.getSelectedRowCount() != 0) {
-                                if (confirmUninstall()) {
+                                if (confirmedUninstall()) {
                                     int idx;
                                     while ((idx = extList.getSelectedRow()) != -1) {
                                         String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
@@ -3697,7 +3818,7 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             if (lafList.getSelectedRowCount() > 0) {
-                                if (confirmUninstall()) {
+                                if (confirmedUninstall()) {
                                     String currentLAF = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
                                     int idx;
                                     while ((idx = lafList.getSelectedRow()) != -1) {
