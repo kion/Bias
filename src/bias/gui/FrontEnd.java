@@ -791,6 +791,7 @@ public class FrontEnd extends JFrame {
             switchToVisualEntry(id);
         }
         initTabContent();
+        handleNavigationHistory();
     }
 
     private void representData(JTabbedPane tabbedPane, DataCategory data) {
@@ -1200,11 +1201,17 @@ public class FrontEnd extends JFrame {
     }
 
     public static boolean switchToVisualEntry(UUID id) {
+        return switchToVisualEntry(id, true);
+    }
+
+    private static boolean switchToVisualEntry(UUID id, boolean addToNavigationHistory) {
         if (instance != null) {
             navigating = true;
             boolean switched = instance.switchToVisualEntry(instance.getJTabbedPane(), id, new LinkedList<Component>());
             navigating = false;
-            instance.handleNavigationHistory();
+            if (addToNavigationHistory) {
+                instance.handleNavigationHistory();
+            }
             return switched;
         }
         return false;
@@ -1420,13 +1427,36 @@ public class FrontEnd extends JFrame {
             if (c.getName() != null) {
                 UUID id = UUID.fromString(c.getName());
                 if (navigationHistory.isEmpty() || (!navigating && !navigationHistory.get(navigationHistoryIndex).equals(id))) {
-                    while (!navigationHistory.isEmpty() && navigationHistory.size() > navigationHistoryIndex + 1) {
+                    while (!navigationHistory.isEmpty() && (navigationHistory.size() > navigationHistoryIndex + 1)) {
                         navigationHistory.pop();
                     }
                     navigationHistory.push(id);
                     navigationHistoryIndex++;
                 }
             }
+//            if (!navigationHistory.isEmpty()) {
+//                if (navigationHistory.size() == 1) {
+//                    firstAction.setEnabled(false);
+//                    previousAction.setEnabled(false);
+//                    nextAction.setEnabled(false);
+//                    lastAction.setEnabled(false);
+//                } else {
+//                    if (navigationHistoryIndex == 0) {
+//                        firstAction.setEnabled(false);
+//                        previousAction.setEnabled(false);
+//                    } else {
+//                        firstAction.setEnabled(true);
+//                        previousAction.setEnabled(true);
+//                    }
+//                    if (navigationHistoryIndex == navigationHistory.size() - 1) {
+//                        nextAction.setEnabled(false);
+//                        lastAction.setEnabled(false);
+//                    } else {
+//                        nextAction.setEnabled(true);
+//                        lastAction.setEnabled(true);
+//                    }
+//                }
+//            }
         }
     }
     
@@ -3358,7 +3388,7 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             navigationHistoryIndex = 0;
             UUID id = navigationHistory.get(navigationHistoryIndex);
-            switchToVisualEntry(id);
+            switchToVisualEntry(id, false);
         }
     };
     
@@ -3376,7 +3406,7 @@ public class FrontEnd extends JFrame {
             if (navigationHistoryIndex > 0) {
                 navigationHistoryIndex--;
                 UUID id = navigationHistory.get(navigationHistoryIndex);
-                switchToVisualEntry(id);
+                switchToVisualEntry(id, false);
             }
         }
     };
@@ -3395,7 +3425,7 @@ public class FrontEnd extends JFrame {
             if (!navigationHistory.isEmpty() && navigationHistory.size() > navigationHistoryIndex + 1) {
                 navigationHistoryIndex++;
                 UUID id = navigationHistory.get(navigationHistoryIndex);
-                switchToVisualEntry(id);
+                switchToVisualEntry(id, false);
             }
         }
     };
@@ -3413,7 +3443,7 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             navigationHistoryIndex = navigationHistory.size() - 1;
             UUID id = navigationHistory.get(navigationHistoryIndex);
-            switchToVisualEntry(id);
+            switchToVisualEntry(id, false);
         }
     };
     
