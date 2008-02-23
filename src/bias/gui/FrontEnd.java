@@ -1419,17 +1419,13 @@ public class FrontEnd extends JFrame {
             }
             if (c.getName() != null) {
                 UUID id = UUID.fromString(c.getName());
-                System.out.println(((JTabbedPane) c.getParent()).getTitleAt(((JTabbedPane) c.getParent()).getSelectedIndex()) + " == " + id);
                 if (navigationHistory.isEmpty() || (!navigating && !navigationHistory.get(navigationHistoryIndex).equals(id))) {
                     while (!navigationHistory.isEmpty() && navigationHistory.size() > navigationHistoryIndex + 1) {
                         navigationHistory.pop();
-                        System.out.println(">> " + navigationHistory.size());
                     }
                     navigationHistory.push(id);
                     navigationHistoryIndex++;
                 }
-                System.out.println(navigationHistory.size());
-                System.out.println(navigationHistoryIndex);
             }
         }
     }
@@ -3363,7 +3359,6 @@ public class FrontEnd extends JFrame {
             navigationHistoryIndex = 0;
             UUID id = navigationHistory.get(navigationHistoryIndex);
             switchToVisualEntry(id);
-            System.out.println("returned to (first) " + id);
         }
     };
     
@@ -3382,7 +3377,6 @@ public class FrontEnd extends JFrame {
                 navigationHistoryIndex--;
                 UUID id = navigationHistory.get(navigationHistoryIndex);
                 switchToVisualEntry(id);
-                System.out.println("returned to " + id);
             }
         }
     };
@@ -3402,7 +3396,6 @@ public class FrontEnd extends JFrame {
                 navigationHistoryIndex++;
                 UUID id = navigationHistory.get(navigationHistoryIndex);
                 switchToVisualEntry(id);
-                System.out.println("forwarded to " + id);
             }
         }
     };
@@ -3421,7 +3414,6 @@ public class FrontEnd extends JFrame {
             navigationHistoryIndex = navigationHistory.size() - 1;
             UUID id = navigationHistory.get(navigationHistoryIndex);
             switchToVisualEntry(id);
-            System.out.println("forwarded to (last) " + id);
         }
     };
     
