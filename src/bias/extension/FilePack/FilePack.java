@@ -62,17 +62,14 @@ import bias.utils.Validator;
                   "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
                   "an author of Bias application.")
 public class FilePack extends EntryExtension {
-
 	private static final long serialVersionUID = 1L;
     
-    private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "add.png"));
-    
+    // TODO [P1] column widths should be stored as relative (% of whole table width) values
+
+	private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "add.png"));
     private static final ImageIcon ICON_DELETE = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "delete.png"));
-    
     private static final ImageIcon ICON_VIEW = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "view.png"));
-    
     private static final ImageIcon ICON_APPLY = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "apply.png"));
-    
     private static final ImageIcon ICON_SAVE = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "save.png"));
     
     private static final int MAX_SORT_KEYS_NUMBER = 3;

@@ -87,6 +87,8 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 public class ToDoList extends EntryExtension {
     private static final long serialVersionUID = 1L;
     
+    // TODO [P1] column widths should be stored as relative (% of whole table width) values
+    
     private static final ImageIcon ICON_CONFIG = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "config.png"));
     private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "add.png"));
     private static final ImageIcon ICON_DELETE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "del.png"));
