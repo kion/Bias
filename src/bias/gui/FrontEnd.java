@@ -1436,24 +1436,24 @@ public class FrontEnd extends JFrame {
             }
             if (!navigationHistory.isEmpty()) {
                 if (navigationHistory.size() == 1) {
-                    firstAction.setEnabled(false);
-                    previousAction.setEnabled(false);
-                    nextAction.setEnabled(false);
-                    lastAction.setEnabled(false);
+                    backToFirstAction.setEnabled(false);
+                    backAction.setEnabled(false);
+                    forwardAction.setEnabled(false);
+                    forwardToLastAction.setEnabled(false);
                 } else {
                     if (navigationHistoryIndex == 0) {
-                        firstAction.setEnabled(false);
-                        previousAction.setEnabled(false);
+                        backToFirstAction.setEnabled(false);
+                        backAction.setEnabled(false);
                     } else {
-                        firstAction.setEnabled(true);
-                        previousAction.setEnabled(true);
+                        backToFirstAction.setEnabled(true);
+                        backAction.setEnabled(true);
                     }
                     if (navigationHistoryIndex == navigationHistory.size() - 1) {
-                        nextAction.setEnabled(false);
-                        lastAction.setEnabled(false);
+                        forwardAction.setEnabled(false);
+                        forwardToLastAction.setEnabled(false);
                     } else {
-                        nextAction.setEnabled(true);
-                        lastAction.setEnabled(true);
+                        forwardAction.setEnabled(true);
+                        forwardToLastAction.setEnabled(true);
                     }
                 }
             }
@@ -1684,7 +1684,7 @@ public class FrontEnd extends JFrame {
      */
     private JButton getJButton13() {
         if (jButton13 == null) {
-            jButton13 = new JButton(firstAction);
+            jButton13 = new JButton(backToFirstAction);
             jButton13.setText(Constants.EMPTY_STR);
         }
         return jButton13;
@@ -1697,7 +1697,7 @@ public class FrontEnd extends JFrame {
      */
     private JButton getJButton14() {
         if (jButton14 == null) {
-            jButton14 = new JButton(previousAction);
+            jButton14 = new JButton(backAction);
             jButton14.setText(Constants.EMPTY_STR);
         }
         return jButton14;
@@ -1710,7 +1710,7 @@ public class FrontEnd extends JFrame {
      */
     private JButton getJButton15() {
         if (jButton15 == null) {
-            jButton15 = new JButton(nextAction);
+            jButton15 = new JButton(forwardAction);
             jButton15.setText(Constants.EMPTY_STR);
         }
         return jButton15;
@@ -1723,7 +1723,7 @@ public class FrontEnd extends JFrame {
      */
     private JButton getJButton16() {
         if (jButton16 == null) {
-            jButton16 = new JButton(lastAction);
+            jButton16 = new JButton(forwardToLastAction);
             jButton16.setText(Constants.EMPTY_STR);
         }
         return jButton16;
@@ -3375,13 +3375,13 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    private FirstAction firstAction = new FirstAction();
-    private class FirstAction extends AbstractAction {
+    private BackToFirstAction backToFirstAction = new BackToFirstAction();
+    private class BackToFirstAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         
-        public FirstAction() {
-            putValue(Action.NAME, "firstEntry");
-            putValue(Action.SHORT_DESCRIPTION, "navigate to first entry");
+        public BackToFirstAction() {
+            putValue(Action.NAME, "backToFirst");
+            putValue(Action.SHORT_DESCRIPTION, "back to first");
             putValue(Action.SMALL_ICON, controlIcons.getIconFirst());
         }
 
@@ -3392,13 +3392,13 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    private PreviousAction previousAction = new PreviousAction();
-    private class PreviousAction extends AbstractAction {
+    private BackAction backAction = new BackAction();
+    private class BackAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         
-        public PreviousAction() {
-            putValue(Action.NAME, "previousEntry");
-            putValue(Action.SHORT_DESCRIPTION, "navigate to previous entry");
+        public BackAction() {
+            putValue(Action.NAME, "back");
+            putValue(Action.SHORT_DESCRIPTION, "back");
             putValue(Action.SMALL_ICON, controlIcons.getIconPrevious());
         }
 
@@ -3411,13 +3411,13 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    private NextAction nextAction = new NextAction();
-    private class NextAction extends AbstractAction {
+    private ForwardAction forwardAction = new ForwardAction();
+    private class ForwardAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         
-        public NextAction() {
-            putValue(Action.NAME, "nextEntry");
-            putValue(Action.SHORT_DESCRIPTION, "navigate to next entry");
+        public ForwardAction() {
+            putValue(Action.NAME, "forward");
+            putValue(Action.SHORT_DESCRIPTION, "forward");
             putValue(Action.SMALL_ICON, controlIcons.getIconNext());
         }
 
@@ -3430,13 +3430,13 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    private LastAction lastAction = new LastAction();
-    private class LastAction extends AbstractAction {
+    private ForwardToLastAction forwardToLastAction = new ForwardToLastAction();
+    private class ForwardToLastAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         
-        public LastAction() {
-            putValue(Action.NAME, "lastEntry");
-            putValue(Action.SHORT_DESCRIPTION, "navigate to last entry");
+        public ForwardToLastAction() {
+            putValue(Action.NAME, "forwardToLast");
+            putValue(Action.SHORT_DESCRIPTION, "forward to last");
             putValue(Action.SMALL_ICON, controlIcons.getIconLast());
         }
 
