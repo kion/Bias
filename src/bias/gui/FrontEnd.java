@@ -46,6 +46,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Stack;
 import java.util.UUID;
 import java.util.Map.Entry;
 
@@ -210,6 +211,12 @@ public class FrontEnd extends JFrame {
     private static Map<String, DataEntry> dataEntries = new HashMap<String, DataEntry>();
 
     private static Map<UUID, EntryExtension> entryExtensions = new LinkedHashMap<UUID, EntryExtension>();
+    
+    private static Stack<UUID> navigationHistory = new Stack<UUID>();
+    
+    private static int navigationHistoryIndex = -1;
+
+    private static boolean navigating = false;
 
     private static Map<DefaultMutableTreeNode, Recognizable> nodeEntries;
 
@@ -264,6 +271,14 @@ public class FrontEnd extends JFrame {
     private JButton jButton5 = null;
 
     private JButton jButton11 = null;
+
+    private JButton jButton13 = null;
+
+    private JButton jButton14 = null;
+
+    private JButton jButton15 = null;
+
+    private JButton jButton16 = null;
 
     private JPanel jPanel = null;
 
@@ -1186,7 +1201,11 @@ public class FrontEnd extends JFrame {
 
     public static boolean switchToVisualEntry(UUID id) {
         if (instance != null) {
-            return instance.switchToVisualEntry(instance.getJTabbedPane(), id, new LinkedList<Component>());
+            navigating = true;
+            boolean switched = instance.switchToVisualEntry(instance.getJTabbedPane(), id, new LinkedList<Component>());
+            navigating = false;
+            instance.handleNavigationHistory();
+            return switched;
         }
         return false;
     }
@@ -1388,8 +1407,32 @@ public class FrontEnd extends JFrame {
         public void stateChanged(ChangeEvent e) {
             currentTabPane = getActiveTabPane((JTabbedPane) e.getSource());
             initTabContent();
+            handleNavigationHistory();
         }
     };
+    
+    private void handleNavigationHistory() {
+        if (tabsInitialized && currentTabPane != null) {
+            Component c = currentTabPane.getSelectedComponent();
+            if (c == null) {
+                c = currentTabPane;
+            }
+            if (c.getName() != null) {
+                UUID id = UUID.fromString(c.getName());
+                System.out.println(((JTabbedPane) c.getParent()).getTitleAt(((JTabbedPane) c.getParent()).getSelectedIndex()) + " == " + id);
+                if (navigationHistory.isEmpty() || (!navigating && !navigationHistory.get(navigationHistoryIndex).equals(id))) {
+                    while (!navigationHistory.isEmpty() && navigationHistory.size() > navigationHistoryIndex + 1) {
+                        navigationHistory.pop();
+                        System.out.println(">> " + navigationHistory.size());
+                    }
+                    navigationHistory.push(id);
+                    navigationHistoryIndex++;
+                }
+                System.out.println(navigationHistory.size());
+                System.out.println(navigationHistoryIndex);
+            }
+        }
+    }
     
     private void initTabContent() {
         if (tabsInitialized && currentTabPane != null && currentTabPane.getSelectedIndex() != -1) {
@@ -1547,6 +1590,11 @@ public class FrontEnd extends JFrame {
             jToolBar.add(getJButton5());
             jToolBar.add(getJButton1());
             jToolBar.add(getJButton11());
+            jToolBar.addSeparator();
+            jToolBar.add(getJButton13());
+            jToolBar.add(getJButton14());
+            jToolBar.add(getJButton15());
+            jToolBar.add(getJButton16());
         }
         return jToolBar;
     }
@@ -1601,6 +1649,58 @@ public class FrontEnd extends JFrame {
             jButton11.setText(Constants.EMPTY_STR);
         }
         return jButton11;
+    }
+
+    /**
+     * This method initializes jButton13
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton13() {
+        if (jButton13 == null) {
+            jButton13 = new JButton(firstAction);
+            jButton13.setText(Constants.EMPTY_STR);
+        }
+        return jButton13;
+    }
+
+    /**
+     * This method initializes jButton14
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton14() {
+        if (jButton14 == null) {
+            jButton14 = new JButton(previousAction);
+            jButton14.setText(Constants.EMPTY_STR);
+        }
+        return jButton14;
+    }
+
+    /**
+     * This method initializes jButton11
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton15() {
+        if (jButton15 == null) {
+            jButton15 = new JButton(nextAction);
+            jButton15.setText(Constants.EMPTY_STR);
+        }
+        return jButton15;
+    }
+
+    /**
+     * This method initializes jButton16
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton16() {
+        if (jButton16 == null) {
+            jButton16 = new JButton(lastAction);
+            jButton16.setText(Constants.EMPTY_STR);
+        }
+        return jButton16;
     }
 
     /**
@@ -3246,6 +3346,82 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             exit();
+        }
+    };
+    
+    private FirstAction firstAction = new FirstAction();
+    private class FirstAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public FirstAction() {
+            putValue(Action.NAME, "firstEntry");
+            putValue(Action.SHORT_DESCRIPTION, "navigate to first entry");
+            putValue(Action.SMALL_ICON, controlIcons.getIconFirst());
+        }
+
+        public void actionPerformed(ActionEvent evt) {
+            navigationHistoryIndex = 0;
+            UUID id = navigationHistory.get(navigationHistoryIndex);
+            switchToVisualEntry(id);
+            System.out.println("returned to (first) " + id);
+        }
+    };
+    
+    private PreviousAction previousAction = new PreviousAction();
+    private class PreviousAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public PreviousAction() {
+            putValue(Action.NAME, "previousEntry");
+            putValue(Action.SHORT_DESCRIPTION, "navigate to previous entry");
+            putValue(Action.SMALL_ICON, controlIcons.getIconPrevious());
+        }
+
+        public void actionPerformed(ActionEvent evt) {
+            if (navigationHistoryIndex > 0) {
+                navigationHistoryIndex--;
+                UUID id = navigationHistory.get(navigationHistoryIndex);
+                switchToVisualEntry(id);
+                System.out.println("returned to " + id);
+            }
+        }
+    };
+    
+    private NextAction nextAction = new NextAction();
+    private class NextAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public NextAction() {
+            putValue(Action.NAME, "nextEntry");
+            putValue(Action.SHORT_DESCRIPTION, "navigate to next entry");
+            putValue(Action.SMALL_ICON, controlIcons.getIconNext());
+        }
+
+        public void actionPerformed(ActionEvent evt) {
+            if (!navigationHistory.isEmpty() && navigationHistory.size() > navigationHistoryIndex + 1) {
+                navigationHistoryIndex++;
+                UUID id = navigationHistory.get(navigationHistoryIndex);
+                switchToVisualEntry(id);
+                System.out.println("forwarded to " + id);
+            }
+        }
+    };
+    
+    private LastAction lastAction = new LastAction();
+    private class LastAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public LastAction() {
+            putValue(Action.NAME, "lastEntry");
+            putValue(Action.SHORT_DESCRIPTION, "navigate to last entry");
+            putValue(Action.SMALL_ICON, controlIcons.getIconLast());
+        }
+
+        public void actionPerformed(ActionEvent evt) {
+            navigationHistoryIndex = navigationHistory.size() - 1;
+            UUID id = navigationHistory.get(navigationHistoryIndex);
+            switchToVisualEntry(id);
+            System.out.println("forwarded to (last) " + id);
         }
     };
     
