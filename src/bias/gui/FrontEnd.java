@@ -1212,6 +1212,7 @@ public class FrontEnd extends JFrame {
             if (addToNavigationHistory) {
                 instance.handleNavigationHistory();
             }
+            instance.handleNavigationActionsStates();
             return switched;
         }
         return false;
@@ -1434,27 +1435,31 @@ public class FrontEnd extends JFrame {
                     navigationHistoryIndex++;
                 }
             }
-            if (!navigationHistory.isEmpty()) {
-                if (navigationHistory.size() == 1) {
+            handleNavigationActionsStates();
+        }
+    }
+    
+    private void handleNavigationActionsStates() {
+        if (!navigationHistory.isEmpty()) {
+            if (navigationHistory.size() == 1) {
+                backToFirstAction.setEnabled(false);
+                backAction.setEnabled(false);
+                forwardAction.setEnabled(false);
+                forwardToLastAction.setEnabled(false);
+            } else {
+                if (navigationHistoryIndex == 0) {
                     backToFirstAction.setEnabled(false);
                     backAction.setEnabled(false);
+                } else {
+                    backToFirstAction.setEnabled(true);
+                    backAction.setEnabled(true);
+                }
+                if (navigationHistoryIndex == navigationHistory.size() - 1) {
                     forwardAction.setEnabled(false);
                     forwardToLastAction.setEnabled(false);
                 } else {
-                    if (navigationHistoryIndex == 0) {
-                        backToFirstAction.setEnabled(false);
-                        backAction.setEnabled(false);
-                    } else {
-                        backToFirstAction.setEnabled(true);
-                        backAction.setEnabled(true);
-                    }
-                    if (navigationHistoryIndex == navigationHistory.size() - 1) {
-                        forwardAction.setEnabled(false);
-                        forwardToLastAction.setEnabled(false);
-                    } else {
-                        forwardAction.setEnabled(true);
-                        forwardToLastAction.setEnabled(true);
-                    }
+                    forwardAction.setEnabled(true);
+                    forwardToLastAction.setEnabled(true);
                 }
             }
         }
@@ -3382,7 +3387,8 @@ public class FrontEnd extends JFrame {
         public BackToFirstAction() {
             putValue(Action.NAME, "backToFirst");
             putValue(Action.SHORT_DESCRIPTION, "back to first");
-            putValue(Action.SMALL_ICON, controlIcons.getIconFirst());
+            putValue(Action.SMALL_ICON, controlIcons.getIconBackToFirst());
+            setEnabled(false);
         }
 
         public void actionPerformed(ActionEvent evt) {
@@ -3399,7 +3405,8 @@ public class FrontEnd extends JFrame {
         public BackAction() {
             putValue(Action.NAME, "back");
             putValue(Action.SHORT_DESCRIPTION, "back");
-            putValue(Action.SMALL_ICON, controlIcons.getIconPrevious());
+            putValue(Action.SMALL_ICON, controlIcons.getIconBack());
+            setEnabled(false);
         }
 
         public void actionPerformed(ActionEvent evt) {
@@ -3418,7 +3425,8 @@ public class FrontEnd extends JFrame {
         public ForwardAction() {
             putValue(Action.NAME, "forward");
             putValue(Action.SHORT_DESCRIPTION, "forward");
-            putValue(Action.SMALL_ICON, controlIcons.getIconNext());
+            putValue(Action.SMALL_ICON, controlIcons.getIconForward());
+            setEnabled(false);
         }
 
         public void actionPerformed(ActionEvent evt) {
@@ -3437,7 +3445,8 @@ public class FrontEnd extends JFrame {
         public ForwardToLastAction() {
             putValue(Action.NAME, "forwardToLast");
             putValue(Action.SHORT_DESCRIPTION, "forward to last");
-            putValue(Action.SMALL_ICON, controlIcons.getIconLast());
+            putValue(Action.SMALL_ICON, controlIcons.getIconForwardToLast());
+            setEnabled(false);
         }
 
         public void actionPerformed(ActionEvent evt) {

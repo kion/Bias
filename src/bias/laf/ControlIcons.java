@@ -24,10 +24,10 @@ public class ControlIcons {
     public static final ImageIcon ICON_CHANGE_PASSWORD = new ImageIcon(ControlIcons.class.getResource("/bias/res/change_password.png"));
     public static final ImageIcon ICON_SAVE = new ImageIcon(ControlIcons.class.getResource("/bias/res/save.png"));
     public static final ImageIcon ICON_EXIT = new ImageIcon(ControlIcons.class.getResource("/bias/res/exit.png"));
-    public static final ImageIcon ICON_FIRST = new ImageIcon(ControlIcons.class.getResource("/bias/res/first.png"));
-    public static final ImageIcon ICON_PREVIOUS = new ImageIcon(ControlIcons.class.getResource("/bias/res/previous.png"));
-    public static final ImageIcon ICON_NEXT = new ImageIcon(ControlIcons.class.getResource("/bias/res/next.png"));
-    public static final ImageIcon ICON_LAST = new ImageIcon(ControlIcons.class.getResource("/bias/res/last.png"));
+    public static final ImageIcon ICON_BACKTOFIRST = new ImageIcon(ControlIcons.class.getResource("/bias/res/back_to_first.png"));
+    public static final ImageIcon ICON_BACK = new ImageIcon(ControlIcons.class.getResource("/bias/res/back.png"));
+    public static final ImageIcon ICON_FORWARD = new ImageIcon(ControlIcons.class.getResource("/bias/res/forward.png"));
+    public static final ImageIcon ICON_FORWARDTOLAST = new ImageIcon(ControlIcons.class.getResource("/bias/res/forward_to_last.png"));
     public static final ImageIcon ICON_ADDONS = new ImageIcon(ControlIcons.class.getResource("/bias/res/addons.png"));
     public static final ImageIcon ICON_PREFERENCES = new ImageIcon(ControlIcons.class.getResource("/bias/res/prefs.png"));
     public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(ControlIcons.class.getResource("/bias/res/extensions.png"));
@@ -44,10 +44,10 @@ public class ControlIcons {
     private ImageIcon iconChangePassword;
     private ImageIcon iconDelete;
     private ImageIcon iconExit;
-    private ImageIcon iconFirst;
-    private ImageIcon iconPrevious;
-    private ImageIcon iconNext;
-    private ImageIcon iconLast;
+    private ImageIcon iconBackToFirst;
+    private ImageIcon iconBack;
+    private ImageIcon iconForward;
+    private ImageIcon iconForwardToLast;
     private ImageIcon iconPreferences;
     private ImageIcon iconAddOns;
     private ImageIcon iconExtensions;
@@ -70,10 +70,10 @@ public class ControlIcons {
         this.iconChangePassword = ICON_CHANGE_PASSWORD;
         this.iconDelete = ICON_DELETE;
         this.iconExit = ICON_EXIT; 
-        this.iconFirst = ICON_FIRST; 
-        this.iconPrevious = ICON_PREVIOUS; 
-        this.iconNext = ICON_NEXT; 
-        this.iconLast = ICON_LAST; 
+        this.iconBackToFirst = ICON_BACKTOFIRST; 
+        this.iconBack = ICON_BACK; 
+        this.iconForward = ICON_FORWARD; 
+        this.iconForwardToLast = ICON_FORWARDTOLAST; 
         this.iconPreferences = ICON_PREFERENCES;
         this.iconAddOns = ICON_ADDONS;
         this.iconExtensions = ICON_EXTENSIONS; 
@@ -93,10 +93,10 @@ public class ControlIcons {
             ImageIcon iconDelete,
             ImageIcon iconChangePassword,
             ImageIcon iconExit, 
-            ImageIcon iconFirst, 
-            ImageIcon iconPrevious, 
-            ImageIcon iconNext, 
-            ImageIcon iconLast, 
+            ImageIcon iconBackToFirst, 
+            ImageIcon iconBack, 
+            ImageIcon iconForward, 
+            ImageIcon iconForwardToLast, 
             ImageIcon iconPreferences, 
             ImageIcon iconAddOns, 
             ImageIcon iconExtensions, 
@@ -113,10 +113,10 @@ public class ControlIcons {
         this.iconDelete = iconDelete;
         this.iconChangePassword = iconChangePassword;
         this.iconExit = iconExit;
-        this.iconFirst = iconFirst;
-        this.iconPrevious = iconPrevious;
-        this.iconNext = iconNext;
-        this.iconLast = iconLast;
+        this.iconBackToFirst = iconBackToFirst;
+        this.iconBack = iconBack;
+        this.iconForward = iconForward;
+        this.iconForwardToLast = iconForwardToLast;
         this.iconPreferences = iconPreferences;
         this.iconAddOns = iconAddOns;
         this.iconExtensions = iconExtensions;
@@ -165,36 +165,36 @@ public class ControlIcons {
         this.iconExit = iconExit;
     }
 
-    public ImageIcon getIconFirst() {
-        return iconFirst;
+    public ImageIcon getIconBackToFirst() {
+        return iconBackToFirst;
     }
 
-    public void setIconFirst(ImageIcon iconFirst) {
-        this.iconFirst = iconFirst;
+    public void setIconBackToFirst(ImageIcon iconBackToFirst) {
+        this.iconBackToFirst = iconBackToFirst;
     }
 
-    public ImageIcon getIconPrevious() {
-        return iconPrevious;
+    public ImageIcon getIconBack() {
+        return iconBack;
     }
 
-    public void setIconPrevious(ImageIcon iconPrevious) {
-        this.iconPrevious = iconPrevious;
+    public void setIconBack(ImageIcon iconBack) {
+        this.iconBack = iconBack;
     }
 
-    public ImageIcon getIconNext() {
-        return iconNext;
+    public ImageIcon getIconForward() {
+        return iconForward;
     }
 
-    public void setIconNext(ImageIcon iconNext) {
-        this.iconNext = iconNext;
+    public void setIconForward(ImageIcon iconForward) {
+        this.iconForward = iconForward;
     }
 
-    public ImageIcon getIconLast() {
-        return iconLast;
+    public ImageIcon getIconForwardToLast() {
+        return iconForwardToLast;
     }
 
-    public void setIconLast(ImageIcon iconLast) {
-        this.iconLast = iconLast;
+    public void setIconForwardToLast(ImageIcon iconForwardToLast) {
+        this.iconForwardToLast = iconForwardToLast;
     }
 
     public ImageIcon getIconEntry() {
