@@ -7,7 +7,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
@@ -59,7 +58,6 @@ import javax.swing.text.StyledEditorKit;
 import javax.swing.text.AbstractDocument.BranchElement;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTML.Tag;
 
 import bias.Constants;
@@ -99,8 +97,6 @@ public class HTMLEditorPanel extends JPanel {
     private static final ImageIcon ICON_SAVE = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/save.png"));
 
     private static final String HTML_PAGE_FILE_NAME_PATTERN = "(?i).+\\.(htm|html)$";
-
-    private static final Font DEFAULT_FONT = new Font("SansSerif", Font.PLAIN, 12);
 
     private static final Collection<String> FONT_FAMILY_NAMES = fontFamilies();
     
@@ -256,22 +252,7 @@ public class HTMLEditorPanel extends JPanel {
     private JTextPane getJTextPane() {
         if (jTextPane == null) {
             jTextPane = new JTextPane();
-            jTextPane.setEditorKit(new HTMLEditorKit());
-            HTMLDocument doc = new HTMLDocument() {
-                private static final long serialVersionUID = 1L;
-                @Override
-                public Font getFont(AttributeSet attr) {
-                    Object family = attr.getAttribute(StyleConstants.FontFamily);
-                    Object size = attr.getAttribute(StyleConstants.FontSize);
-                    if (family == null && size == null) {
-                        return DEFAULT_FONT;
-                    }
-                    return super.getFont(attr);
-                }
-            };
-            doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
-            doc.setPreservesUnknownTags(false);
-            jTextPane.setStyledDocument(doc);
+            jTextPane.setEditorKit(new CustomHTMLEditorKit());
             jTextPane.setEditable(false);
 
             jTextPane.addCaretListener(new CaretListener() {

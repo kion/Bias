@@ -93,7 +93,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.JTextComponent;
-import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
@@ -4248,7 +4247,7 @@ public class FrontEnd extends JFrame {
         if (detailsPane == null) {
             detailsTextPane = new JTextPane();
             detailsTextPane.setEditable(false);
-            detailsTextPane.setEditorKit(new HTMLEditorKit());
+            detailsTextPane.setEditorKit(new CustomHTMLEditorKit());
             detailsTextPane.addHyperlinkListener(new HyperlinkListener() {
                 public void hyperlinkUpdate(HyperlinkEvent e) {
                     if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {

@@ -183,6 +183,10 @@ public class BackEnd {
 	    return BackEnd.class.getResource("/bias/res/" + extensionClass.getSimpleName() + "/" + resourceName);
 	}
     
+    public InputStream getResourceAsStream(Class<? extends Extension> extensionClass, String resourceName) {
+        return BackEnd.class.getResourceAsStream("/bias/res/" + extensionClass.getSimpleName() + "/" + resourceName);
+    }
+    
     public static void setPassword(String currentPassword, String newPassword) throws Exception {
         if ((password != null ? currentPassword != null : currentPassword == null) && newPassword != null) {
             if ((password == null && currentPassword == null) || currentPassword.equals(password)) {

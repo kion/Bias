@@ -25,7 +25,7 @@ import bias.utils.Validator;
  */
 
 @AddOnAnnotation(
-        version = "0.5.7", 
+        version = "0.6.1", 
         author = "R. Kasianenko", 
         description = "WYSIWYG HTML page editor",
         details = "<i>HTMLPage</i> extension for Bias is a part<br>" +
