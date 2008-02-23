@@ -14,8 +14,8 @@ import bias.Constants;
  */
 public abstract class Transferrer {
     
-    // TODO [P2] transfer-providers as functional plugins (?)
-
+    // TODO [P1] refactor: transfer-providers as functional extensions
+    
     /**
      * Available transfer types
      */
