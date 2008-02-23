@@ -1434,29 +1434,29 @@ public class FrontEnd extends JFrame {
                     navigationHistoryIndex++;
                 }
             }
-//            if (!navigationHistory.isEmpty()) {
-//                if (navigationHistory.size() == 1) {
-//                    firstAction.setEnabled(false);
-//                    previousAction.setEnabled(false);
-//                    nextAction.setEnabled(false);
-//                    lastAction.setEnabled(false);
-//                } else {
-//                    if (navigationHistoryIndex == 0) {
-//                        firstAction.setEnabled(false);
-//                        previousAction.setEnabled(false);
-//                    } else {
-//                        firstAction.setEnabled(true);
-//                        previousAction.setEnabled(true);
-//                    }
-//                    if (navigationHistoryIndex == navigationHistory.size() - 1) {
-//                        nextAction.setEnabled(false);
-//                        lastAction.setEnabled(false);
-//                    } else {
-//                        nextAction.setEnabled(true);
-//                        lastAction.setEnabled(true);
-//                    }
-//                }
-//            }
+            if (!navigationHistory.isEmpty()) {
+                if (navigationHistory.size() == 1) {
+                    firstAction.setEnabled(false);
+                    previousAction.setEnabled(false);
+                    nextAction.setEnabled(false);
+                    lastAction.setEnabled(false);
+                } else {
+                    if (navigationHistoryIndex == 0) {
+                        firstAction.setEnabled(false);
+                        previousAction.setEnabled(false);
+                    } else {
+                        firstAction.setEnabled(true);
+                        previousAction.setEnabled(true);
+                    }
+                    if (navigationHistoryIndex == navigationHistory.size() - 1) {
+                        nextAction.setEnabled(false);
+                        lastAction.setEnabled(false);
+                    } else {
+                        nextAction.setEnabled(true);
+                        lastAction.setEnabled(true);
+                    }
+                }
+            }
         }
     }
     
