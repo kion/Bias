@@ -415,6 +415,18 @@ public class FrontEnd extends JFrame {
         getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK), exitAction.getValue(Action.NAME));
         getJPanel().getActionMap().put(exitAction.getValue(Action.NAME), exitAction);
         
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.CTRL_MASK), backAction.getValue(Action.NAME));
+        getJPanel().getActionMap().put(backAction.getValue(Action.NAME), backAction);
+        
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.CTRL_MASK), forwardAction.getValue(Action.NAME));
+        getJPanel().getActionMap().put(forwardAction.getValue(Action.NAME), forwardAction);
+        
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.CTRL_MASK + InputEvent.SHIFT_MASK), backToFirstAction.getValue(Action.NAME));
+        getJPanel().getActionMap().put(backToFirstAction.getValue(Action.NAME), backToFirstAction);
+        
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.CTRL_MASK + InputEvent.SHIFT_MASK), forwardToLastAction.getValue(Action.NAME));
+        getJPanel().getActionMap().put(forwardToLastAction.getValue(Action.NAME), forwardToLastAction);
+        
     }
     
     private static void showSysTrayIcon() {
