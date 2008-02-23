@@ -158,6 +158,7 @@ public class ToDoList extends EntryExtension {
     public ToDoList(UUID id, byte[] data, byte[] settings) {
         super(id, data, settings);
         initialize();
+        revalidate();
     }
     
     private void initialize() {
