@@ -18,6 +18,7 @@ import javax.swing.UIManager;
 
 import bias.annotation.AddOnAnnotation;
 import bias.gui.FrontEnd;
+import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 import bias.utils.PropertiesUtils;
 
@@ -189,16 +190,13 @@ public class BiasJGLooksLAF extends LookAndFeel {
         UIManager.setLookAndFeel(new PlasticXPLookAndFeel());
     }
 
-    // TODO [P4] try to use custom LAF icons
-//    /* (non-Javadoc)
-//     * @see bias.laf.LookAndFeel#getControlIcons()
-//     */
-//    @Override
-//    public ControlIcons getControlIcons() {
-//        ControlIcons ci = super.getControlIcons();
-//        ci.setIconAbout(...);
-//        ...
-//        return ci;
-//    }
+    /* (non-Javadoc)
+     * @see bias.laf.LookAndFeel#getControlIcons()
+     */
+    @Override
+    public ControlIcons getControlIcons() {
+        // TODO [P3] try to use custom LAF icons
+        return null;
+    }
 
 }

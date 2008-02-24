@@ -146,7 +146,6 @@ public class FilePack extends EntryExtension {
 	/* (non-Javadoc)
 	 * @see bias.extension.Extension#serializeData()
 	 */
-	@Override
 	public byte[] serializeData() throws Throwable {
         Properties p = new Properties();
         for (Entry<Attachment, String> fpEntry : filePack.entrySet()) {
@@ -156,9 +155,8 @@ public class FilePack extends EntryExtension {
 	}
 	
     /* (non-Javadoc)
-     * @see bias.extension.EntryExtension#serializeSettings()
+     * @see bias.extension.Extension#serializeSettings()
      */
-    @Override
     public byte[] serializeSettings() throws Throwable {
         Properties props = PropertiesUtils.deserializeProperties(settings);
         int idx = jTable1.getSelectedRow();
@@ -180,7 +178,15 @@ public class FilePack extends EntryExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.Extension#getSearchData()
+     * @see bias.extension.EntryExtension#configure(byte[])
+     */
+    @Override
+    public byte[] configure(byte[] settings) throws Throwable {
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#getSearchData()
      */
     @Override
     public Collection<String> getSearchData() throws Throwable {

@@ -111,6 +111,7 @@ import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
 import bias.core.Recognizable;
+import bias.event.EventListener;
 import bias.extension.EntryExtension;
 import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
@@ -311,6 +312,88 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton3 = null;
 
+    // TODO [P1] add more event types for listeners registration
+    
+    private static Map<Class<? extends EventListener>, EventListener> startUpEventListeners;
+    public static void addStartUpEventListener(EventListener l) {
+        if (startUpEventListeners == null) {
+            startUpEventListeners = new HashMap<Class<? extends EventListener>, EventListener>();
+        }
+        addEventListener(startUpEventListeners, l);
+    }
+    public static void removeStartUpEventListener(EventListener l) {
+        removeEventListener(startUpEventListeners, l);
+    }
+    private static void fireStartUpEvent() {
+        fireEvent(startUpEventListeners, "start-up");
+    }
+    
+    private static Map<Class<? extends EventListener>, EventListener> beforeSaveEventListeners;
+    public static void addBeforeSaveEventListener(EventListener l) {
+        if (beforeSaveEventListeners == null) {
+            beforeSaveEventListeners = new HashMap<Class<? extends EventListener>, EventListener>();
+        }
+        addEventListener(beforeSaveEventListeners, l);
+    }
+    public static void removeBeforeSaveEventListener(EventListener l) {
+        removeEventListener(beforeSaveEventListeners, l);
+    }
+    private static void fireBeforeSaveEvent() {
+        fireEvent(beforeSaveEventListeners, "before-save");
+    }
+    
+    private static Map<Class<? extends EventListener>, EventListener> afterSaveEventListeners;
+    public static void addAfterSaveEventListener(EventListener l) {
+        if (afterSaveEventListeners == null) {
+            afterSaveEventListeners = new HashMap<Class<? extends EventListener>, EventListener>();
+        }
+        addEventListener(afterSaveEventListeners, l);
+    }
+    public static void removeAfterSaveEventListener(EventListener l) {
+        removeEventListener(afterSaveEventListeners, l);
+    }
+    private static void fireAfterSaveEvent() {
+        fireEvent(afterSaveEventListeners, "after-save");
+    }
+    
+    private static Map<Class<? extends EventListener>, EventListener> beforeExitEventListeners;
+    public static void addBeforeExitEventListener(EventListener l) {
+        if (beforeExitEventListeners == null) {
+            beforeExitEventListeners = new HashMap<Class<? extends EventListener>, EventListener>();
+        }
+        addEventListener(beforeExitEventListeners, l);
+    }
+    public static void removeBeforeExitEventListener(EventListener l) {
+        removeEventListener(beforeExitEventListeners, l);
+    }
+    private static void fireBeforeExitEvent() {
+        fireEvent(beforeExitEventListeners, "before-exit");
+    }
+    
+    private static void addEventListener(Map<Class<? extends EventListener>, EventListener> listeners, EventListener l) {
+        if (listeners.get(l.getClass()) == null) {
+            listeners.put(l.getClass(), l);
+        }
+    }
+    
+    private static void removeEventListener(Map<Class<? extends EventListener>, EventListener> listeners, EventListener l) {
+        if (listeners != null) {
+            listeners.remove(l.getClass());
+        }
+    }
+    
+    private static void fireEvent(Map<Class<? extends EventListener>, EventListener> listeners, String eventType) {
+        if (listeners != null) {
+            for (EventListener l : listeners.values()) {
+                try {
+                    l.onEvent();
+                } catch (Throwable t) {
+                    displayErrorMessage("[ " + eventType + " ] event listener '" + l.getClass().getSimpleName() + "' failed!", t);
+                }
+            }
+        }
+    }
+    
     /**
      * Default singleton's hidden constructor without parameters
      */
@@ -319,13 +402,14 @@ public class FrontEnd extends JFrame {
         initialize();
     }
 
-    public static void display() {
+    public static void startup() {
         getInstance().displayStatusBarMessage("loaded & ready");
         if (Preferences.getInstance().startHidden) {
             showSysTrayIcon();
         } else {
             getInstance().setVisible(true);
         }
+        fireStartUpEvent();
     }
     
     private static FrontEnd getInstance() {
@@ -680,15 +764,19 @@ public class FrontEnd extends JFrame {
             }
             try {
                 Class<? extends Extension> extensionClass = (Class<? extends Extension>) Class.forName(extension);
-                Extension extensionInstance = tools.get(extensionClass);
-                if (extensionInstance == null) {
-                    extensionInstance = ExtensionFactory.getInstance().newExtension(extensionClass);
-                }
+                Extension extensionInstance = null;
                 byte[] extSettings = BackEnd.getInstance().getExtensionSettings(extension);
-                if (extSettings == null) {
-                    extSettings = new byte[]{};
+                byte[] settings = null;
+                if (ToolExtension.class.isAssignableFrom(extensionClass)) {
+                    extensionInstance = tools.get((Class<? extends ToolExtension>) Class.forName(extension));
+                    settings = ((ToolExtension) extensionInstance).configure();
+                } else if (EntryExtension.class.isAssignableFrom(extensionClass)) {
+                    extensionInstance = ExtensionFactory.newEntryExtension((Class<? extends EntryExtension>) Class.forName(extension));
+                    if (extSettings == null) {
+                        extSettings = new byte[]{};
+                    }
+                    settings = ((EntryExtension) extensionInstance).configure(extSettings);
                 }
-                byte[] settings = extensionInstance.configure(extSettings);
                 if (settings == null) {
                     settings = new byte[]{};
                 }
@@ -697,18 +785,25 @@ public class FrontEnd extends JFrame {
                     if (extensionInstance instanceof ToolExtension) {
                         getJPanelIndicators().setVisible(false);
                         JPanel panel = indicatorAreas.get(extensionClass);
-                        JComponent indicator = ((ToolExtension) extensionInstance).getRepresentation().getIndicator();
-                        if (indicator != null) {
-                            if (panel == null) {
-                                panel = createStatusBarIndicatorArea((Class<? extends ToolExtension>) extensionInstance.getClass());
+                        ToolRepresentation tr = ((ToolExtension) extensionInstance).getRepresentation();
+                        boolean removeIndicator = false;
+                        if (tr != null) {
+                            JComponent indicator = tr.getIndicator();
+                            if (indicator != null) {
+                                if (panel == null) {
+                                    panel = createStatusBarIndicatorArea((Class<? extends ToolExtension>) extensionInstance.getClass());
+                                }
+                                panel.add(indicator);
+                                getJPanelIndicators().add(panel);
+                            } else {
+                                removeIndicator = true;
                             }
-                            panel.add(indicator);
-                            getJPanelIndicators().add(panel);
                         } else {
-                            if (panel != null) {
-                                panel.remove(1);
-                                getJPanelIndicators().remove(panel);
-                            }
+                            removeIndicator = true;
+                        }
+                        if (panel != null && removeIndicator) {
+                            panel.remove(1);
+                            getJPanelIndicators().remove(panel);
                         }
                         getJPanelIndicators().setVisible(true);
                     }
@@ -732,35 +827,34 @@ public class FrontEnd extends JFrame {
         return instance.dialog.isVisible() ? instance.dialog : instance;
     }
     
-    // TODO [P2] some memory-usage optimization would be nice (rea tools initialization after tools data import in overwrite mode)
     private static void representTools() {
-        Map<String, Class<? extends ToolExtension>> extensions = ExtensionFactory.getInstance().getAnnotatedToolExtensions();
+        Map<ToolExtension, String> extensions = ExtensionFactory.getAnnotatedToolExtensions();
         if (extensions != null) {
             instance.getJToolBar3().removeAll();
             tools = new LinkedHashMap<Class<? extends ToolExtension>, ToolExtension>();
-            Map<String, byte[]> toolsData = BackEnd.getInstance().getToolsData();
             int toolCnt = 0;
-            for (Entry<String, Class<? extends ToolExtension>> ext : extensions.entrySet()) {
+            for (Entry<ToolExtension, String> ext : extensions.entrySet()) {
+                ToolExtension tool = ext.getKey();
                 try {
-                    byte[] toolData = toolsData.get(ext.getValue().getName());
-                    final ToolExtension tool = ExtensionFactory.getInstance().newToolExtension(ext.getValue(), toolData);
                     ToolRepresentation representation = tool.getRepresentation();
-                    JButton toolButt = representation.getButton();
-                    if (toolButt != null) {
-                        if (Validator.isNullOrBlank(toolButt.getToolTipText())) {
-                            toolButt.setToolTipText(ext.getKey());
+                    if (representation != null) {
+                        JButton toolButt = representation.getButton();
+                        if (toolButt != null) {
+                            if (Validator.isNullOrBlank(toolButt.getToolTipText())) {
+                                toolButt.setToolTipText(ext.getValue());
+                            }
+                            instance.getJToolBar3().add(toolButt);
                         }
-                        instance.getJToolBar3().add(toolButt);
+                        JComponent indicator = representation.getIndicator();
+                        if (indicator != null) {
+                            JPanel panel = instance.createStatusBarIndicatorArea(tool.getClass());
+                            panel.add(indicator, BorderLayout.CENTER);
+                        }
                     }
-                    JComponent indicator = representation.getIndicator();
-                    if (indicator != null) {
-                        JPanel panel = instance.createStatusBarIndicatorArea(ext.getValue());
-                        panel.add(indicator, BorderLayout.CENTER);
-                    }
-                    tools.put(ext.getValue(), tool);
+                    tools.put(tool.getClass(), tool);
                     toolCnt++;
                 } catch (Throwable t) {
-                    displayErrorMessage("Failed to initialize tool '" + ext.getValue().getCanonicalName() + "'", t);
+                    displayErrorMessage("Failed to initialize tool '" + tool.getClass().getCanonicalName() + "'", t);
                 }
             }
             if (toolCnt != 0) {
@@ -886,7 +980,7 @@ public class FrontEnd extends JFrame {
         }
         EntryExtension extension;
         try {
-            extension = ExtensionFactory.getInstance().newEntryExtension(de);
+            extension = ExtensionFactory.newEntryExtension(de);
         } catch (Throwable t) {
             t.printStackTrace(System.err);
             extension = new MissingExtensionInformer(de);
@@ -895,11 +989,13 @@ public class FrontEnd extends JFrame {
     }
     
     private void store() throws Throwable {
+        fireBeforeSaveEvent();
         BackEnd.getInstance().setConfig(collectProperties());
         BackEnd.getInstance().setData(collectData());
         BackEnd.getInstance().setToolsData(collectToolsData());
         BackEnd.getInstance().store();
         displayStatusBarMessage("data saved");
+        fireAfterSaveEvent();
     }
     
     private Map<String, byte[]> collectToolsData() throws Throwable {
@@ -1007,16 +1103,21 @@ public class FrontEnd extends JFrame {
         return data;
     }
     
+    private void shutdown() {
+        fireBeforeExitEvent();
+        BackEnd.getInstance().shutdown(0);
+    }
+    
     private void exitWithOptionalAutoSave() {
         if (Preferences.getInstance().autoSaveOnExit) {
             try {
                 store();
-                BackEnd.getInstance().shutdown(0);
+                shutdown();
             } catch (Throwable t) {
                 displayErrorMessage("Failed to save!", t);
             }
         } else {
-            BackEnd.getInstance().shutdown(0);
+            shutdown();
         }
     }
     
@@ -1034,7 +1135,7 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             store();
-                            BackEnd.getInstance().shutdown(0);
+                            shutdown();
                         } catch (Throwable t) {
                             displayErrorMessage("Failed to save data!", t);
                         }
@@ -1319,13 +1420,13 @@ public class FrontEnd extends JFrame {
     
     public static void displayErrorMessage(Throwable t) {
         Splash.hideSplash();
-        JOptionPane.showMessageDialog(instance, t.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(instance, getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace(System.err);
     }
 
     public static void displayErrorMessage(String message, Throwable t) {
         Splash.hideSplash();
-        JOptionPane.showMessageDialog(instance, message, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(instance, message + getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace(System.err);
     }
 
@@ -1341,7 +1442,7 @@ public class FrontEnd extends JFrame {
 
     private void displayAddOnsScreenErrorMessage(String message, Throwable t) {
         Splash.hideSplash();
-        JOptionPane.showMessageDialog(dialog, message, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(dialog, message + getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace(System.err);
     }
 
@@ -1352,7 +1453,7 @@ public class FrontEnd extends JFrame {
     
     private void displayAddOnsScreenErrorMessage(Throwable t) {
         Splash.hideSplash();
-        JOptionPane.showMessageDialog(dialog, t.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(dialog, getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace(System.err);
     }
 
@@ -1366,6 +1467,17 @@ public class FrontEnd extends JFrame {
         tabPane.addChangeListener(tabChangeListener);
         tabPane.addMouseListener(tabMoveListener);
         tabPane.addMouseMotionListener(tabMoveListener);
+    }
+
+    private static String getFailureDetails(Throwable t) {
+        StringBuffer msg = new StringBuffer();
+        while (t != null) {
+            if (t.getMessage() != null) {
+                msg.append(Constants.BLANK_STR + t.getMessage());
+            }
+            t = t.getCause();
+        }
+        return msg.toString();
     }
 
     private MouseListener tabClickListener = new MouseAdapter() {
@@ -2085,7 +2197,7 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             try {
-                Map<String, Class<? extends EntryExtension>> extensions = ExtensionFactory.getInstance().getAnnotatedEntryExtensions();
+                Map<String, Class<? extends EntryExtension>> extensions = ExtensionFactory.getAnnotatedEntryExtensionClasses();
                 if (extensions.isEmpty()) {
                     displayMessage(
                             "You have no any extensions installed currently." + Constants.NEW_LINE +
@@ -2137,7 +2249,7 @@ public class FrontEnd extends JFrame {
                 // extension's first time usage
                 configureExtension(type.getName(), true);
             }
-            EntryExtension extension = ExtensionFactory.getInstance().newEntryExtension(type);
+            EntryExtension extension = ExtensionFactory.newEntryExtension(type);
             if (extension != null) {
                 JPanel p = getEntryExtensionPanel(extension.getId(), extension);
                 getJTabbedPane().addTab(caption, p);
@@ -2215,7 +2327,7 @@ public class FrontEnd extends JFrame {
         
         public void actionPerformed(ActionEvent evt) {
             try {
-                Map<String, Class<? extends EntryExtension>> extensions = ExtensionFactory.getInstance().getAnnotatedEntryExtensions();
+                Map<String, Class<? extends EntryExtension>> extensions = ExtensionFactory.getAnnotatedEntryExtensionClasses();
                 if (extensions.isEmpty()) {
                     displayMessage(
                             "You have no any extensions installed currently." + Constants.NEW_LINE +
@@ -2256,7 +2368,7 @@ public class FrontEnd extends JFrame {
                             // extension's first time usage
                             configureExtension(type.getName(), true);
                         }
-                        EntryExtension extension = ExtensionFactory.getInstance().newEntryExtension(type);
+                        EntryExtension extension = ExtensionFactory.newEntryExtension(type);
                         if (extension != null) {
                             JPanel p = getEntryExtensionPanel(extension.getId(), extension);
                             currentTabPane.addTab(caption, p);
@@ -3702,7 +3814,7 @@ public class FrontEnd extends JFrame {
                     try {
                         Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
                         // extension instantiation test
-                        ExtensionFactory.getInstance().newExtension(extClass);
+                        ExtensionFactory.newExtension(extClass);
                         // extension is ok, add it to the list
                         AddOnAnnotation extAnn = 
                             (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);

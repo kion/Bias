@@ -53,8 +53,6 @@ import org.w3c.dom.NodeList;
 
 import bias.Constants;
 import bias.Preferences;
-import bias.annotation.IgnoreConfigOnExport;
-import bias.annotation.IgnoreDataOnExport;
 import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.ToolExtension;
@@ -92,10 +90,6 @@ public class BackEnd {
     private static Collection<String> classPathEntries = new ArrayList<String>();
     
     private static Collection<String> outOfClasspathAddOns = new ArrayList<String>();
-
-    private static Collection<String> ignoreDataOnExport = new ArrayList<String>();
-
-    private static Collection<String> ignoreConfigOnExport = new ArrayList<String>();
 
     private Map<UUID, byte[]> icons = new LinkedHashMap<UUID, byte[]>();
     
@@ -314,33 +308,28 @@ public class BackEnd {
         // get lists of loaded extensions and lafs
         loadedExtensions = getExtensions();
         loadedLAFs = getLAFs();
-        // populate lists of extensions, which data/conigs should be ignored on export
-        populateIgnoreOnExport(loadedExtensions);
     }
     
-    @SuppressWarnings("unchecked")
-    private void populateIgnoreOnExport(Collection<String> loadedExtensions) {
-        for (String ext : loadedExtensions) {
-            try {
-                Class<Extension> extClass = (Class<Extension>) Class.forName(ext);
-                // extension instantiation test
-                Extension extension = ExtensionFactory.getInstance().newExtension(extClass);
-                // extension is ok, check annotations now
-                if (extension instanceof ToolExtension) {
-                    IgnoreDataOnExport ann = (IgnoreDataOnExport) extClass.getAnnotation(IgnoreDataOnExport.class);
-                    if (ann != null) {
-                        ignoreDataOnExport.add(ext);
-                    }
-                }
-                IgnoreConfigOnExport ann = (IgnoreConfigOnExport) extClass.getAnnotation(IgnoreConfigOnExport.class);
-                if (ann != null) {
-                    ignoreConfigOnExport.add(ext);
-                }
-            } catch (Throwable t) {
-                ignoreDataOnExport.add(ext);
-                ignoreConfigOnExport.add(ext);
+    private Collection<String> getDataExportExtensionsList() {
+        Collection<String> extensions = new ArrayList<String>();
+        for (Entry<ToolExtension, String> entry : ExtensionFactory.getAnnotatedToolExtensions().entrySet()) {
+            ToolExtension extension = entry.getKey();
+            if (extension.skipDataExport()) {
+                extensions.add(extension.getClass().getName());
             }
         }
+        return extensions;
+    }
+    
+    private Collection<String> getConfigExportExtensionsList() {
+        Collection<String> extensions = new ArrayList<String>();
+        for (Entry<ToolExtension, String> entry : ExtensionFactory.getAnnotatedToolExtensions().entrySet()) {
+            ToolExtension extension = entry.getKey();
+            if (extension.skipConfigExport()) {
+                extensions.add(extension.getClass().getName());
+            }
+        }
+        return extensions;
     }
     
     public void loadDataEntryData(DataEntry de) throws Exception {
@@ -778,7 +767,7 @@ public class BackEnd {
         // tools data files
         if (exportToolsData) {
             for (Entry<String, byte[]> toolEntry : toolsData.entrySet()) {
-                if (!ignoreDataOnExport.contains(toolEntry.getKey()) && toolEntry.getValue() != null) {
+                if (getDataExportExtensionsList().contains(toolEntry.getKey()) && toolEntry.getValue() != null) {
                     String tool = toolEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                     File toolDataFile = new File(dataDir, tool + Constants.TOOL_DATA_FILE_SUFFIX);
                     FSUtils.writeFile(toolDataFile, useCipher(cipher, toolEntry.getValue()));
@@ -801,7 +790,7 @@ public class BackEnd {
                 String addOnName = addOnConfig.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                 addOnName = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                 + addOnName  + Constants.PACKAGE_PATH_SEPARATOR + addOnName ;
-                if (!ignoreConfigOnExport.contains(addOnName)) {
+                if (getConfigExportExtensionsList().contains(addOnName)) {
                     reencryptFile(addOnConfig, configDir, cipher);
                 }
             }
@@ -1778,8 +1767,8 @@ public class BackEnd {
         this.data = data;
     }
 
-    public Map<String, byte[]> getToolsData() {
-        return toolsData;
+    public byte[] getToolData(String tool) {
+        return toolsData.get(tool);
     }
 
     public void setToolsData(Map<String, byte[]> toolsData) {

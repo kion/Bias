@@ -243,12 +243,9 @@ public class FinancialFlows extends EntryExtension {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
+    /* (non-Javadoc)
      * @see bias.extension.Extension#serializeData()
      */
-    @Override
     public byte[] serializeData() throws Throwable {
         Parts parts = objFactory.createParts();
         parts.setSingle(serializeSingleFlows());
@@ -258,12 +255,9 @@ public class FinancialFlows extends EntryExtension {
         return baos.toByteArray();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see bias.extension.EntryExtension#serializeSettings()
+    /* (non-Javadoc)
+     * @see bias.extension.Extension#serializeSettings()
      */
-    @Override
     public byte[] serializeSettings() throws Throwable {
         // TODO [P1] table-sorting options should be stored as well
         Properties p = new Properties();
@@ -311,7 +305,7 @@ public class FinancialFlows extends EntryExtension {
     /*
      * (non-Javadoc)
      * 
-     * @see bias.extension.Extension#getSearchData()
+     * @see bias.extension.EntryExtension#getSearchData()
      */
     @Override
     public Collection<String> getSearchData() throws Throwable {
@@ -324,10 +318,12 @@ public class FinancialFlows extends EntryExtension {
         return searchData;
     }
     
-    @Override
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#configure(byte[])
+     */
     public byte[] configure(byte[] settings) throws Throwable {
         // TODO [P1] implement (income/outcome types management, currency settings and so on should be here)
-        return super.configure(settings);
+        return null;
     }
 
     private void populateSearchData(Collection<String> searchData, JTable table) {

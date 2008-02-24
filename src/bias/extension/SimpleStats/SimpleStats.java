@@ -36,7 +36,6 @@ import javax.swing.table.TableRowSorter;
 
 import bias.Bias;
 import bias.annotation.AddOnAnnotation;
-import bias.annotation.IgnoreDataOnExport;
 import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
@@ -52,7 +51,6 @@ import bias.utils.PropertiesUtils;
  * @author kion
  */
 
-@IgnoreDataOnExport
 @AddOnAnnotation(
         version="0.3.9",
         author="R. Kasianenko",
@@ -82,7 +80,7 @@ public class SimpleStats extends ToolExtension {
     private boolean showUpTime = false;
     
     private JLabel label = null;
-
+    
     public SimpleStats(byte[] data, byte[] settings) {
         super(data, settings);
         startDate = new Date();
@@ -288,9 +286,8 @@ public class SimpleStats extends ToolExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.ToolExtension#serializeData()
+     * @see bias.extension.Extension#serializeData()
      */
-    @Override
     public byte[] serializeData() throws Throwable {
         StringBuffer sb = new StringBuffer();
         if (dates != null) {
@@ -309,9 +306,8 @@ public class SimpleStats extends ToolExtension {
     }
     
     /* (non-Javadoc)
-     * @see bias.extension.ToolExtension#serializeSettings()
+     * @see bias.extension.Extension#serializeSettings()
      */
-    @Override
     public byte[] serializeSettings() throws Throwable {
         if (showUpTime) {
             settings.setProperty(PROPERTY_SHOW_UPTIME, "" + true);
@@ -322,10 +318,9 @@ public class SimpleStats extends ToolExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.ToolExtension#configure(byte[])
+     * @see bias.extension.ToolExtension#configure()
      */
-    @Override
-    public byte[] configure(byte[] settings) throws Throwable {
+    public byte[] configure() throws Throwable {
         final JCheckBox showUpTime = new JCheckBox("Show UpTime in statusbar", this.showUpTime);
         showUpTime.addChangeListener(new ChangeListener(){
             public void stateChanged(ChangeEvent e) {
@@ -356,4 +351,12 @@ public class SimpleStats extends ToolExtension {
         }
     }
 
+    /* (non-Javadoc)
+     * @see bias.extension.ToolExtension#skipDataExport()
+     */
+    @Override
+    public boolean skipDataExport() {
+        return true;
+    }
+    
 }

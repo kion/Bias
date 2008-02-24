@@ -51,12 +51,9 @@ public class HTMLPage extends EntryExtension {
         initialize();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
+    /* (non-Javadoc)
      * @see bias.extension.Extension#serializeData()
      */
-    @Override
     public byte[] serializeData() throws Throwable {
         String data  = getHTMLEditorPanel().getCode();
         Collection<String> usedAttachmentNames = getHTMLEditorPanel().getProcessedAttachmentNames();
@@ -65,9 +62,8 @@ public class HTMLPage extends EntryExtension {
     }
     
     /* (non-Javadoc)
-     * @see bias.extension.EntryExtension#serializeSettings()
+     * @see bias.extension.Extension#serializeSettings()
      */
-    @Override
     public byte[] serializeSettings() throws Throwable {
         Properties props = new Properties();
         JScrollPane sc = ((JScrollPane) getHTMLEditorPanel().getComponent(0));
@@ -89,7 +85,15 @@ public class HTMLPage extends EntryExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.Extension#getSearchData()
+     * @see bias.extension.EntryExtension#configure(byte[])
+     */
+    @Override
+    public byte[] configure(byte[] settings) throws Throwable {
+        return null;
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#getSearchData()
      */
     @Override
     public Collection<String> getSearchData() throws Throwable {
@@ -152,5 +156,5 @@ public class HTMLPage extends EntryExtension {
             // ignore it, these attachments will be removed next time Bias persists data
         }
     }
-    
+
 }

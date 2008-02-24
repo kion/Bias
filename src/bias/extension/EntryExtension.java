@@ -62,36 +62,21 @@ public abstract class EntryExtension extends JComponent implements Extension {
         return settings;
     }
 
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#configure(byte[])
+    /**
+     * Configures extension.
+     * Should be implemented to return settings for certain extension.
+     * 
+     * @param settings initial settings
+     * @return settings byte array containing serialized configuration settings
      */
-    public byte[] configure(byte[] settings) throws Throwable {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#serializeSettings()
-     */
-    public byte[] serializeSettings() throws Throwable {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#serializeData()
-     */
-    public byte[] serializeData() throws Throwable {
-        return null;
-    }
+    public abstract byte[] configure(byte[] settings) throws Throwable;
 
     /**
      * Returns extension's search data.
-     * By default returns null (no data for search provided).
-     * Should be overridden to return search data for certain extension's instance.
+     * Should be implemented to return search data for certain extension's instance.
      * 
      * @return data for search provided by extension's instance
      */
-    public Collection<String> getSearchData() throws Throwable {
-        return null;
-    }
+    public abstract Collection<String> getSearchData() throws Throwable;
 
 }

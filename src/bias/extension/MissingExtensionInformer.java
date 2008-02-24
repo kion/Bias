@@ -4,6 +4,7 @@
 package bias.extension;
 
 import java.awt.BorderLayout;
+import java.util.Collection;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
@@ -45,7 +46,6 @@ public class MissingExtensionInformer extends EntryExtension {
     /* (non-Javadoc)
      * @see bias.extension.Extension#serializeData()
      */
-    @Override
     public byte[] serializeData() throws Throwable {
         return getData();
     }
@@ -53,9 +53,24 @@ public class MissingExtensionInformer extends EntryExtension {
     /* (non-Javadoc)
      * @see bias.extension.Extension#serializeSettings()
      */
-    @Override
     public byte[] serializeSettings() throws Throwable {
         return getSettings();
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#configure(byte[])
+     */
+    @Override
+    public byte[] configure(byte[] settings) throws Throwable {
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#getSearchData()
+     */
+    @Override
+    public Collection<String> getSearchData() throws Throwable {
+        return null;
     }
 
     /**

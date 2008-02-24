@@ -141,9 +141,8 @@ public class SimpleSearch extends ToolExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.ToolExtension#serializeSettings()
+     * @see bias.extension.Extension#serializeSettings()
      */
-    @Override
     public byte[] serializeSettings() throws Throwable {
         Properties props = new Properties();
         if (lastSearchCriteria != null) {
@@ -163,6 +162,21 @@ public class SimpleSearch extends ToolExtension {
         return PropertiesUtils.serializeProperties(props);
     }
     
+    /* (non-Javadoc)
+     * @see bias.extension.Extension#serializeData()
+     */
+    public byte[] serializeData() throws Throwable {
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.ToolExtension#configure()
+     */
+    @Override
+    public byte[] configure() throws Throwable {
+        return null;
+    }
+
     /* (non-Javadoc)
      * @see bias.extension.ToolExtension#getRepresentation()
      */
@@ -207,7 +221,7 @@ public class SimpleSearch extends ToolExtension {
                 regularExpressionPanel.add(isRegularExpressionL, BorderLayout.CENTER);
                 regularExpressionPanel.add(isRegularExpressionCB, BorderLayout.EAST);
                 
-                final Map<String, Class<? extends EntryExtension>> types = ExtensionFactory.getInstance().getAnnotatedEntryExtensions();
+                final Map<String, Class<? extends EntryExtension>> types = ExtensionFactory.getAnnotatedEntryExtensionClasses();
                 
                 final JLabel filterClassL = new JLabel("search for entries of this type only:");
                 final JComboBox filterClassCB = new JComboBox();
@@ -439,5 +453,5 @@ public class SimpleSearch extends ToolExtension {
         }
         return entries;
     }
-    
+
 }

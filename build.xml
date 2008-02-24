@@ -39,7 +39,7 @@
 			</fileset>
 		</delete>
 		<jar basedir="bin" destfile="build/bias.jar" 
-			includes="bias/*.* bias/annotation/** bias/core/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/** bias/transfer/**">
+			includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/** bias/transfer/**">
 			<manifest>
 				<attribute name="Main-Class" value="bias.Launcher" />
 			</manifest>
@@ -258,6 +258,31 @@
 	<target name="Test_Extension_SimpleStats" depends="Build_Extension_SimpleStats">
 		<delete file="build/addons/SimpleStats.ext.jar"/>
 		<copy file="tmp/ext/SimpleStats.jar" tofile="build/addons/SimpleStats.ext.jar"/>
+		<antcall target="BuildAndRunApp"/>
+	</target>
+
+	<!-- ================================= 
+          target: Build_Extension_MainEntry
+         ================================= -->
+	<target name="Build_Extension_MainEntry" description="MainEntry Add-On" depends="prepare_ext_build">
+		<copy todir="tmp/tmp">
+			<fileset dir="bin" includes="bias/extension/MainEntry/** bias/res/MainEntry/**" />
+		</copy>
+		<jar basedir="tmp/tmp" destfile="tmp/ext/MainEntry.jar" 
+			includes="*/**" />
+		<jar basedir="tmp" destfile="build/MainEntry.jar" includes="ext/**">
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="MainEntry" />
+			</manifest>
+		</jar>	
+	</target>
+
+	<!-- ================================= 
+          target: Test_Extension_MainEntry
+         ================================= -->
+	<target name="Test_Extension_MainEntry" depends="Build_Extension_MainEntry">
+		<delete file="build/addons/MainEntry.ext.jar"/>
+		<copy file="tmp/ext/MainEntry.jar" tofile="build/addons/MainEntry.ext.jar"/>
 		<antcall target="BuildAndRunApp"/>
 	</target>
 

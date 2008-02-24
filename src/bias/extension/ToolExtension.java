@@ -46,31 +46,37 @@ public abstract class ToolExtension implements Extension {
     public byte[] getSettings() {
         return settings;
     }
-
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#configure(byte[])
-     */
-    public byte[] configure(byte[] settings) throws Throwable {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#serializeSettings()
-     */
-    public byte[] serializeSettings() throws Throwable {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#serializeData()
-     */
-    public byte[] serializeData() throws Throwable {
-        return null;
-    }
     
     /**
-     * @return tool representation
+     * Configures tool-extension.
+     * Should be implemented to return settings for certain tool-extension.
+     * 
+     * @return settings byte array containing serialized configuration settings
+     */
+    public abstract byte[] configure() throws Throwable;
+
+    /**
+     * Returns tool representation.
+     * Should be implemented by certain extending tool-class to define corresponding tool's representation.
+     * 
+     * @return ToolRepresentation instance containing corresponding tool representation 
      */
     public abstract ToolRepresentation getRepresentation();
+
+    /**
+     * Defines whether extension's data should be skipped on export
+     * By default returns false (data will be exported).
+     */
+    public boolean skipDataExport() {
+        return false;
+    }
+
+    /**
+     * Defines whether extension's configuration should be skipped on export
+     * By default returns false (configuration will be exported).
+     */
+    public boolean skipConfigExport() {
+        return false;
+    }
 
 }

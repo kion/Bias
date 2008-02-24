@@ -19,25 +19,19 @@ public abstract class LookAndFeel {
     
     /**
      * Configures Look-&-Feel.
-     * By default returns null (no settings).
-     * Should be overriden to return settings for certain Look-&-Feel.
+     * Should be implemented to return settings for certain Look-&-Feel.
      * 
      * @param settings initial settings
      * @return settings byte array containing serialized configuration settings
      */
-    public byte[] configure(byte[] settings) {
-        return null;
-    }
+    public abstract byte[] configure(byte[] settings);
     
     /**
      * Defines icons of controls.
-     * By default returns default ControlIcons structure.
-     * Should be overriden to return control icons for concrete Look-&-Feel.
+     * Should be implemented to return control icons for concrete Look-&-Feel.
 
      * @return ControlIcons structure
      */
-    public ControlIcons getControlIcons() {
-        return new ControlIcons();
-    }
+    public abstract ControlIcons getControlIcons();
 
 }

@@ -9,16 +9,6 @@ package bias.extension;
 public interface Extension {
 
     /**
-     * Configures extension.
-     * By default returns null (no settings).
-     * Should be overridden to return settings for certain extension.
-     * 
-     * @param settings initial settings
-     * @return settings byte array containing serialized configuration settings
-     */
-    public byte[] configure(byte[] settings) throws Throwable;
-
-    /**
      * Serializes extension's settings to array of bytes
      * By default returns null (no settings).
      * Should be overridden to return settings for certain extension's instance.

@@ -11,6 +11,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.UUID;
 
 import javax.imageio.ImageIO;
@@ -35,7 +36,7 @@ import com.sun.image.codec.jpeg.ImageFormatException;
  */
 
 @AddOnAnnotation(
-        version="0.1.1",
+        version="0.2.3",
         author="R. Kasianenko",
         description = "Simple painting component",
         details = "<i>Graffiti</i> extension for Bias is a part<br>" +
@@ -124,14 +125,36 @@ public class Graffiti extends EntryExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.gui.Extension#serializeData()
+     * @see bias.extension.Extension#serializeData()
      */
-    @Override
     public byte[] serializeData() throws Throwable {
         BufferedImage image = pp.getImage();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(image, IMG_FORMAT, baos);
         return baos.toByteArray();
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.Extension#serializeSettings()
+     */
+    public byte[] serializeSettings() throws Throwable {
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#configure(byte[])
+     */
+    @Override
+    public byte[] configure(byte[] settings) throws Throwable {
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#getSearchData()
+     */
+    @Override
+    public Collection<String> getSearchData() throws Throwable {
+        return null;
     }
 
     /**

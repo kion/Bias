@@ -30,7 +30,7 @@ public class Bias {
         // pass password to back-end
         BackEnd.setPassword(null, password);
         // display front-end
-        FrontEnd.display();
+        FrontEnd.startup();
     }
     
 }

@@ -114,9 +114,8 @@ public class PlainText extends EntryExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.gui.Extension#serializeSettings()
+     * @see bias.extension.Extension#serializeSettings()
      */
-    @Override
     public byte[] serializeSettings() throws Throwable {
         Properties settings = new Properties();
         settings.setProperty(PROPERTY_FONT_SIZE, "" + currentFontSize);
@@ -138,9 +137,8 @@ public class PlainText extends EntryExtension {
     }
     
     /* (non-Javadoc)
-     * @see bias.gui.Extension#serializeData()
+     * @see bias.extension.Extension#serializeData()
      */
-    @Override
     public byte[] serializeData() throws Throwable {
         if (dataChanged) {
             return getJTextPane().getText().getBytes();
@@ -150,7 +148,7 @@ public class PlainText extends EntryExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.Extension#getSearchData()
+     * @see bias.extension.EntryExtension#getSearchData()
      */
     @Override
     public Collection<String> getSearchData() throws Throwable {

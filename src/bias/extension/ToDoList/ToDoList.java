@@ -601,9 +601,8 @@ public class ToDoList extends EntryExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.EntryExtension#serializeData()
+     * @see bias.extension.Extension#serializeData()
      */
-    @Override
     public byte[] serializeData() throws Throwable {
         Document doc = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         Element rootNode = doc.createElement(XML_ELEMENT_ROOT);
@@ -632,9 +631,8 @@ public class ToDoList extends EntryExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.EntryExtension#serializeSettings()
+     * @see bias.extension.Extension#serializeSettings()
      */
-    @Override
     public byte[] serializeSettings() throws Throwable {
         Properties props = PropertiesUtils.deserializeProperties(settings);
         for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
