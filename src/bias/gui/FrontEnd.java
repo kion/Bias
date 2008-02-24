@@ -406,6 +406,9 @@ public class FrontEnd extends JFrame {
         getInstance().displayStatusBarMessage("loaded & ready");
         if (Preferences.getInstance().startHidden) {
             showSysTrayIcon();
+            if (!sysTrayIconVisible) {
+                getInstance().setVisible(true);
+            }
         } else {
             getInstance().setVisible(true);
         }
@@ -512,9 +515,13 @@ public class FrontEnd extends JFrame {
         
     }
     
+    private static boolean sysTrayIconNotSupportedInformed = false;
     private static void showSysTrayIcon() {
         if (!SystemTray.isSupported()) {
-            displayErrorMessage("System tray API is not available on this platform!");
+            if (sysTrayIconNotSupportedInformed == false) {
+                displayErrorMessage("System tray API is not available on this platform!");
+                sysTrayIconNotSupportedInformed = true;
+            }
         } else if (!sysTrayIconVisible) {
             try {
                 // initialize tray icon
@@ -689,7 +696,9 @@ public class FrontEnd extends JFrame {
                     try {
                         if (Preferences.getInstance().remainInSysTrayOnWindowClose) {
                             showSysTrayIcon();
-                            setVisible(false);
+                            if (sysTrayIconVisible) {
+                                getInstance().setVisible(false);
+                            }
                         } else {
                             exit();
                         }
@@ -701,7 +710,9 @@ public class FrontEnd extends JFrame {
                 public void windowIconified(WindowEvent e) {
                     if (Preferences.getInstance().minimizeToSysTray) {
                         showSysTrayIcon();
-                        setVisible(false);
+                        if (sysTrayIconVisible) {
+                            getInstance().setVisible(false);
+                        }
                     }
                 }
             });
