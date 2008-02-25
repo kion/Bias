@@ -111,7 +111,12 @@ import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
 import bias.core.Recognizable;
+import bias.event.AfterSaveEventListener;
+import bias.event.BeforeExitEventListener;
+import bias.event.BeforeSaveEventListener;
 import bias.event.EventListener;
+import bias.event.SaveEvent;
+import bias.event.StartUpEventListener;
 import bias.extension.EntryExtension;
 import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
@@ -314,83 +319,105 @@ public class FrontEnd extends JFrame {
 
     // TODO [P1] add more event types for listeners registration
     
-    private static Map<Class<? extends EventListener>, EventListener> startUpEventListeners;
-    public static void addStartUpEventListener(EventListener l) {
+    private static Map<Class<? extends StartUpEventListener>, StartUpEventListener> startUpEventListeners;
+    public static void addStartUpEventListener(StartUpEventListener l) {
         if (startUpEventListeners == null) {
-            startUpEventListeners = new HashMap<Class<? extends EventListener>, EventListener>();
+            startUpEventListeners = new HashMap<Class<? extends StartUpEventListener>, StartUpEventListener>();
         }
         addEventListener(startUpEventListeners, l);
     }
-    public static void removeStartUpEventListener(EventListener l) {
+    public static void removeStartUpEventListener(StartUpEventListener l) {
         removeEventListener(startUpEventListeners, l);
     }
     private static void fireStartUpEvent() {
-        fireEvent(startUpEventListeners, "start-up");
+        if (startUpEventListeners != null) {
+            for (StartUpEventListener l : startUpEventListeners.values()) {
+                try {
+                    l.onEvent();
+                } catch (Throwable t) {
+                    displayErrorMessage("start-up event listener '" + l.getClass().getSimpleName() + "' failed!", t);
+                }
+            }
+        }
     }
     
-    private static Map<Class<? extends EventListener>, EventListener> beforeSaveEventListeners;
-    public static void addBeforeSaveEventListener(EventListener l) {
+    private static Map<Class<? extends BeforeSaveEventListener>, BeforeSaveEventListener> beforeSaveEventListeners;
+    public static void addBeforeSaveEventListener(BeforeSaveEventListener l) {
         if (beforeSaveEventListeners == null) {
-            beforeSaveEventListeners = new HashMap<Class<? extends EventListener>, EventListener>();
+            beforeSaveEventListeners = new HashMap<Class<? extends BeforeSaveEventListener>, BeforeSaveEventListener>();
         }
         addEventListener(beforeSaveEventListeners, l);
     }
-    public static void removeBeforeSaveEventListener(EventListener l) {
+    public static void removeBeforeSaveEventListener(StartUpEventListener l) {
         removeEventListener(beforeSaveEventListeners, l);
     }
-    private static void fireBeforeSaveEvent() {
-        fireEvent(beforeSaveEventListeners, "before-save");
+    private static void fireBeforeSaveEvent(SaveEvent e) {
+        if (beforeSaveEventListeners != null) {
+            for (BeforeSaveEventListener l : beforeSaveEventListeners.values()) {
+                try {
+                    l.onEvent(e);
+                } catch (Throwable t) {
+                    displayErrorMessage("before-save event listener '" + l.getClass().getSimpleName() + "' failed!", t);
+                }
+            }
+        }
     }
     
-    private static Map<Class<? extends EventListener>, EventListener> afterSaveEventListeners;
-    public static void addAfterSaveEventListener(EventListener l) {
+    private static Map<Class<? extends AfterSaveEventListener>, AfterSaveEventListener> afterSaveEventListeners;
+    public static void addAfterSaveEventListener(AfterSaveEventListener l) {
         if (afterSaveEventListeners == null) {
-            afterSaveEventListeners = new HashMap<Class<? extends EventListener>, EventListener>();
+            afterSaveEventListeners = new HashMap<Class<? extends AfterSaveEventListener>, AfterSaveEventListener>();
         }
         addEventListener(afterSaveEventListeners, l);
     }
-    public static void removeAfterSaveEventListener(EventListener l) {
+    public static void removeAfterSaveEventListener(StartUpEventListener l) {
         removeEventListener(afterSaveEventListeners, l);
     }
-    private static void fireAfterSaveEvent() {
-        fireEvent(afterSaveEventListeners, "after-save");
+    private static void fireAfterSaveEvent(SaveEvent e) {
+        if (afterSaveEventListeners != null) {
+            for (AfterSaveEventListener l : afterSaveEventListeners.values()) {
+                try {
+                    l.onEvent(e);
+                } catch (Throwable t) {
+                    displayErrorMessage("after-save event listener '" + l.getClass().getSimpleName() + "' failed!", t);
+                }
+            }
+        }
     }
     
-    private static Map<Class<? extends EventListener>, EventListener> beforeExitEventListeners;
-    public static void addBeforeExitEventListener(EventListener l) {
+    private static Map<Class<? extends BeforeExitEventListener>, BeforeExitEventListener> beforeExitEventListeners;
+    public static void addBeforeExitEventListener(BeforeExitEventListener l) {
         if (beforeExitEventListeners == null) {
-            beforeExitEventListeners = new HashMap<Class<? extends EventListener>, EventListener>();
+            beforeExitEventListeners = new HashMap<Class<? extends BeforeExitEventListener>, BeforeExitEventListener>();
         }
         addEventListener(beforeExitEventListeners, l);
     }
-    public static void removeBeforeExitEventListener(EventListener l) {
+    public static void removeBeforeExitEventListener(StartUpEventListener l) {
         removeEventListener(beforeExitEventListeners, l);
     }
     private static void fireBeforeExitEvent() {
-        fireEvent(beforeExitEventListeners, "before-exit");
+        if (beforeExitEventListeners != null) {
+            for (BeforeExitEventListener l : beforeExitEventListeners.values()) {
+                try {
+                    l.onEvent();
+                } catch (Throwable t) {
+                    displayErrorMessage("before exit event listener '" + l.getClass().getSimpleName() + "' failed!", t);
+                }
+            }
+        }
     }
     
-    private static void addEventListener(Map<Class<? extends EventListener>, EventListener> listeners, EventListener l) {
+    @SuppressWarnings("unchecked")
+    private static void addEventListener(Map listeners, EventListener l) {
         if (listeners.get(l.getClass()) == null) {
             listeners.put(l.getClass(), l);
         }
     }
     
-    private static void removeEventListener(Map<Class<? extends EventListener>, EventListener> listeners, EventListener l) {
+    @SuppressWarnings("unchecked")
+    private static void removeEventListener(Map listeners, EventListener l) {
         if (listeners != null) {
             listeners.remove(l.getClass());
-        }
-    }
-    
-    private static void fireEvent(Map<Class<? extends EventListener>, EventListener> listeners, String eventType) {
-        if (listeners != null) {
-            for (EventListener l : listeners.values()) {
-                try {
-                    l.onEvent();
-                } catch (Throwable t) {
-                    displayErrorMessage("[ " + eventType + " ] event listener '" + l.getClass().getSimpleName() + "' failed!", t);
-                }
-            }
         }
     }
     
@@ -999,14 +1026,14 @@ public class FrontEnd extends JFrame {
         return extension;
     }
     
-    private void store() throws Throwable {
-        fireBeforeSaveEvent();
+    private void store(boolean beforeExit) throws Throwable {
+        fireBeforeSaveEvent(new SaveEvent(beforeExit));
         BackEnd.getInstance().setConfig(collectProperties());
         BackEnd.getInstance().setData(collectData());
         BackEnd.getInstance().setToolsData(collectToolsData());
         BackEnd.getInstance().store();
         displayStatusBarMessage("data saved");
-        fireAfterSaveEvent();
+        fireAfterSaveEvent(new SaveEvent(beforeExit));
     }
     
     private Map<String, byte[]> collectToolsData() throws Throwable {
@@ -1122,7 +1149,7 @@ public class FrontEnd extends JFrame {
     private void exitWithOptionalAutoSave() {
         if (Preferences.getInstance().autoSaveOnExit) {
             try {
-                store();
+                store(true);
                 shutdown();
             } catch (Throwable t) {
                 displayErrorMessage("Failed to save!", t);
@@ -1145,7 +1172,7 @@ public class FrontEnd extends JFrame {
                 b.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            store();
+                            store(true);
                             shutdown();
                         } catch (Throwable t) {
                             displayErrorMessage("Failed to save data!", t);
@@ -2863,7 +2890,7 @@ public class FrontEnd extends JFrame {
                     return;
                 }
                 // store first
-                store();
+                store(false);
                 // now proceed with export
                 final JComboBox configsCB = new JComboBox();
                 configsCB.addItem(Constants.EMPTY_STR);
@@ -3492,7 +3519,7 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             try {
-                store();
+                store(false);
             } catch (Throwable t) {
                 displayErrorMessage("Failed to save!", t);
             }
