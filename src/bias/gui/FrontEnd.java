@@ -3892,7 +3892,7 @@ public class FrontEnd extends JFrame {
                     String extension = extensionEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                     extModel.addRow(new Object[]{extension, null, null, extensionEntry.getValue()});
                 }
-                JButton extDetailsButt = new JButton("Show Extension's details");
+                JButton extDetailsButt = new JButton("Extension's details");
                 extDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extList.getSelectedRowCount() == 1) {
@@ -3919,7 +3919,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton extConfigButt = new JButton("Configure selected");
+                JButton extConfigButt = new JButton("Configure");
                 extConfigButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extList.getSelectedRowCount() == 1) {
@@ -3944,7 +3944,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton extInstButt = new JButton("Install more");
+                JButton extInstButt = new JButton("Install/Update...");
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extensionFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
@@ -3975,7 +3975,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton extUninstButt = new JButton("Uninstall selected");
+                JButton extUninstButt = new JButton("Uninstall");
                 extUninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
@@ -4084,7 +4084,7 @@ public class FrontEnd extends JFrame {
                     String laf = lafEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                     lafModel.addRow(new Object[]{laf, null, null, lafEntry.getValue()});
                 }
-                JButton lafDetailsButt = new JButton("Show Look-&-Feel's details");
+                JButton lafDetailsButt = new JButton("Look-&-Feel's details");
                 lafDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafList.getSelectedRowCount() == 1) {
@@ -4150,7 +4150,7 @@ public class FrontEnd extends JFrame {
                         }    
                     }
                 });
-                JButton lafInstButt = new JButton("Install more");
+                JButton lafInstButt = new JButton("Install/Update...");
                 lafInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
@@ -4181,7 +4181,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton lafUninstButt = new JButton("Uninstall selected");
+                JButton lafUninstButt = new JButton("Uninstall");
                 lafUninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
@@ -4227,7 +4227,7 @@ public class FrontEnd extends JFrame {
                 JScrollPane jsp = new JScrollPane(icList);
                 jsp.setPreferredSize(new Dimension(200,200));
                 jsp.setMinimumSize(new Dimension(200,200));
-                JButton addIconButt = new JButton("Add more");
+                JButton addIconButt = new JButton("Add...");
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
@@ -4262,7 +4262,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton removeIconButt = new JButton("Remove selected");
+                JButton removeIconButt = new JButton("Remove");
                 removeIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {

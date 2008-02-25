@@ -37,8 +37,6 @@ import bias.utils.Validator;
                   "an author of Bias application.")
 public class MainEntry extends ToolExtension implements BeforeSaveEventListener {
     
-    // TODO [P1] should (optionally) switch to main entry only when saving AND exiting ?
-    
     private static final String PROPERTY_MAIN_ENTRY_UUID = "MAIN_ENTRY_UUID";
     private static final String PROPERTY_SWITCH_BEFORE_EXIT_ONLY = "SWITCH_BEFORE_EXIT_ONLY";
     
