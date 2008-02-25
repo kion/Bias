@@ -2520,8 +2520,8 @@ public class FrontEnd extends JFrame {
                 pb.add(delButt);
                 p.add(pb, BorderLayout.SOUTH);
                 Component[] c = new Component[] {
-                        new JLabel("Choose existing import configuration to use," + Constants.NEW_LINE + 
-                                   "or leave selection empty and press OK for custom export."),
+                        new JLabel("<html>Choose existing import configuration to use, <br/>" + 
+                                   "or leave selection empty and press OK for custom export.</html>"),
                         p          
                 };
                 int opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Import", JOptionPane.OK_CANCEL_OPTION);
@@ -2919,8 +2919,8 @@ public class FrontEnd extends JFrame {
                 pb.add(delButt);
                 p.add(pb, BorderLayout.SOUTH);
                 Component[] c = new Component[] {
-                        new JLabel("Choose existing export configuration to use," + Constants.NEW_LINE + 
-                                   "or leave selection empty and press OK for custom export."),
+                        new JLabel("<html>Choose existing export configuration to use, <br/>" + 
+                                   "or leave selection empty and press OK for custom export.</html>"),
                         p          
                 };
                 opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Export", JOptionPane.OK_CANCEL_OPTION);
