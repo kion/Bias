@@ -1507,6 +1507,8 @@ public class FrontEnd extends JFrame {
         tabPane.addMouseMotionListener(tabMoveListener);
     }
 
+    // TODO [P1] does this work properly ?...
+    
     private static String getFailureDetails(Throwable t) {
         StringBuffer msg = new StringBuffer();
         while (t != null) {
