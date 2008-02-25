@@ -3380,7 +3380,7 @@ public class FrontEnd extends JFrame {
         case FTP:
             JLabel serverL = new JLabel("FTP Server (domain name or IP, including port if using non-default one)");
             JTextField serverTF = new JTextField();
-            JLabel filepathL = new JLabel("Path to import file on server");
+            JLabel filepathL = new JLabel("Path to file on server");
             JTextField filepathTF = new JTextField();
             JLabel usernameL = new JLabel("Username to login");
             JTextField usernameTF = new JTextField();
