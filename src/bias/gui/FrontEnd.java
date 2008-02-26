@@ -275,6 +275,10 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton5 = null;
 
+    private JButton jButton17 = null;
+
+    private JButton jButton18 = null;
+
     private JButton jButton11 = null;
 
     private JButton jButton13 = null;
@@ -1240,6 +1244,9 @@ public class FrontEnd extends JFrame {
         return null;
     }
 
+    // TODO [P2] optimization: this method can reuse getVisualEntryDescriptors and get keys from map returned by it
+    //           alternatively, it can be optimized the same way as mentioned method (is LinkedList really needed here?)
+    
     private Collection<UUID> getVisualEntriesIDs() {
         return getVisualEntriesIDs(getJTabbedPane());
     }
@@ -1263,9 +1270,7 @@ public class FrontEnd extends JFrame {
         return ids;
     }
 
-    // TODO [P2] some optimization might be needed here 
-    //      (do not iterate over all tabs (to get full extensions list) each time, 
-    //      some caching would be nice)
+    // TODO [P2] optimization: do not iterate over all tabs (to get full extensions list) each time, some caching would be nice
     
     public static Map<UUID, EntryExtension> getEntryExtensions() throws Throwable {
         if (instance != null) {
@@ -1308,6 +1313,8 @@ public class FrontEnd extends JFrame {
         return entryExtensions;
     }
 
+    // TODO [P2] optimization: visual entries map should be cached until collection of categories/entries is not changed
+    
     public static Map<UUID, VisualEntryDescriptor> getVisualEntryDescriptors() {
         if (instance != null) {
             return instance.getVisualEntryDescriptors(instance.getJTabbedPane(), null, new LinkedList<Recognizable>());
@@ -1344,6 +1351,33 @@ public class FrontEnd extends JFrame {
                 } else if (((JPanel) c).getComponent(0).getClass().getName().equals(filterClass.getName())) {
                     entries.put(id, new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath), ENTRY_TYPE.ENTRY));
                 }
+                entryPath.removeLast();
+            }
+        }
+        return entries;
+    }
+
+    // TODO [P2] optimization: categories map should be cached until collection of categories is not changed
+    
+    public static Map<UUID, VisualEntryDescriptor> getCategoryDescriptors() {
+        if (instance != null) {
+            return instance.getCategoryDescriptors(instance.getJTabbedPane(), new LinkedList<Recognizable>());
+        }
+        return null;
+    }
+
+    private Map<UUID, VisualEntryDescriptor> getCategoryDescriptors(JTabbedPane tabPane, LinkedList<Recognizable> entryPath) {
+        Map<UUID, VisualEntryDescriptor> entries = new LinkedHashMap<UUID, VisualEntryDescriptor>();
+        for (int i = 0; i < tabPane.getTabCount(); i++) {
+            Component c = tabPane.getComponent(i);
+            String caption = tabPane.getTitleAt(i);
+            Icon icon = tabPane.getIconAt(i);
+            if (c instanceof JTabbedPane) {
+                UUID id = UUID.fromString(c.getName());
+                Recognizable entry = new Recognizable(id, caption, icon);
+                entryPath.addLast(entry);
+                entries.put(id, new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath), ENTRY_TYPE.CATEGORY));
+                entries.putAll(getCategoryDescriptors((JTabbedPane) c, new LinkedList<Recognizable>(entryPath)));
                 entryPath.removeLast();
             }
         }
@@ -1407,6 +1441,10 @@ public class FrontEnd extends JFrame {
         }
     }
 
+    private JTabbedPane getActiveTabPane() {
+        return getActiveTabPane(getJTabbedPane());
+    }
+    
     private JTabbedPane getActiveTabPane(JTabbedPane rootTabPane) {
         if (rootTabPane.getTabCount() > 0) {
             if (rootTabPane.getSelectedIndex() != -1) {
@@ -1421,6 +1459,28 @@ public class FrontEnd extends JFrame {
             }
         }
         return rootTabPane;
+    }
+    
+    private Component getComponentById(UUID id) {
+        return getComponentById(getJTabbedPane(), id);
+    }
+    
+    private Component getComponentById(JTabbedPane rootTabPane, UUID id) {
+        if (rootTabPane.getTabCount() > 0) {
+            for (Component c : rootTabPane.getComponents()) {
+                if (!Validator.isNullOrBlank(c.getName()) && UUID.fromString(c.getName()).equals(id)) {
+                    return c;
+                } else {
+                    if (c instanceof JTabbedPane) {
+                        Component cmp = getComponentById((JTabbedPane) c, id);
+                        if (cmp != null) {
+                            return cmp;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
     
     public static void displayBottomPanel(JLabel title, JPanel content) {
@@ -1521,28 +1581,18 @@ public class FrontEnd extends JFrame {
     }
 
     private MouseListener tabClickListener = new MouseAdapter() {
-        public void mouseClicked(java.awt.event.MouseEvent e) {
+        public void mouseClicked(MouseEvent e) {
             currentTabPane = (JTabbedPane) e.getSource();
             if (currentTabPane.getSelectedIndex() != -1) {
                 if (currentTabPane.getSelectedComponent() instanceof JTabbedPane) {
                     currentTabPane = (JTabbedPane) currentTabPane.getSelectedComponent();
                 }
             }
-            if (e.getClickCount() == 2) {
+            if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
                 JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
                 int index = tabbedPane.getSelectedIndex();
                 String caption = tabbedPane.getTitleAt(index);
-                JLabel pLabel = new JLabel("Entry's category placement:");
-                JComboBox placementsChooser = new JComboBox();
-                for (Placement placement : PLACEMENTS) {
-                    placementsChooser.addItem(placement);
-                }
-                for (int i = 0; i < placementsChooser.getItemCount(); i++) {
-                	if (((Placement) placementsChooser.getItemAt(i)).getInteger().equals(tabbedPane.getTabPlacement())) {
-                		placementsChooser.setSelectedIndex(i);
-                		break;
-                	}
-                }
+                
                 JLabel icLabel = new JLabel("Choose icon:");
                 JComboBox iconChooser = new JComboBox();
                 iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
@@ -1559,17 +1609,18 @@ public class FrontEnd extends JFrame {
                     }
                 }
                 JLabel cLabel = new JLabel("Caption:");
-                caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser, cLabel },
+                
+                caption = JOptionPane.showInputDialog(
+                        FrontEnd.this, 
+                        new Component[] { icLabel, iconChooser, cLabel },
                         caption);
                 if (caption != null) {
                 	tabbedPane.setTitleAt(index, caption);
-                	tabbedPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
                     ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
                     if (icon != null) {
                     	tabbedPane.setIconAt(tabbedPane.getSelectedIndex(), icon);
                     }
                 }
-                
             }
         }
     };
@@ -1778,11 +1829,15 @@ public class FrontEnd extends JFrame {
             jToolBar.add(getJButton7());
             jToolBar.add(getJButton2());
             jToolBar.add(getJButton12());
+            jToolBar.addSeparator();
             jToolBar.add(getJButton3());
             jToolBar.add(getJButton4());
+            jToolBar.add(getJButton17());
             jToolBar.add(getJButton());
             jToolBar.add(getJButton5());
+            jToolBar.add(getJButton18());
             jToolBar.add(getJButton1());
+            jToolBar.addSeparator();
             jToolBar.add(getJButton11());
             jToolBar.addSeparator();
             jToolBar.add(getJButton13());
@@ -1830,6 +1885,32 @@ public class FrontEnd extends JFrame {
             jButton5.setText(Constants.EMPTY_STR);
         }
         return jButton5;
+    }
+
+    /**
+     * This method initializes jButton17
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton17() {
+        if (jButton17 == null) {
+            jButton17 = new JButton(adjustCategoryAction);
+            jButton17.setText(Constants.EMPTY_STR);
+        }
+        return jButton17;
+    }
+
+    /**
+     * This method initializes jButton18
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton18() {
+        if (jButton18 == null) {
+            jButton18 = new JButton(adjustEntryAction);
+            jButton18.setText(Constants.EMPTY_STR);
+        }
+        return jButton18;
     }
 
     /**
@@ -2196,7 +2277,7 @@ public class FrontEnd extends JFrame {
     };
 
     private void addRootCategoryAction() {
-        JLabel pLabel = new JLabel("Choose placement:");
+        JLabel pLabel = new JLabel("Choose tabs placement:");
         JComboBox placementsChooser = new JComboBox();
         for (Placement placement : PLACEMENTS) {
             placementsChooser.addItem(placement);
@@ -2431,6 +2512,82 @@ public class FrontEnd extends JFrame {
         }
     };
 
+    private AdjustCategoryAction adjustCategoryAction = new AdjustCategoryAction();
+    private class AdjustCategoryAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public AdjustCategoryAction() {
+            putValue(Action.NAME, "adjustCategory");
+            putValue(Action.SHORT_DESCRIPTION, "adjust active category");
+            putValue(Action.SMALL_ICON, controlIcons.getIconAdjustCategory());
+        }
+        
+        public void actionPerformed(ActionEvent evt) {
+            try {
+                JLabel pLabel = new JLabel("Tabs placement:");
+                JComboBox placementsChooser = new JComboBox();
+                for (Placement placement : PLACEMENTS) {
+                    placementsChooser.addItem(placement);
+                }
+                for (int i = 0; i < placementsChooser.getItemCount(); i++) {
+                    if (((Placement) placementsChooser.getItemAt(i)).getInteger().equals(currentTabPane.getTabPlacement())) {
+                        placementsChooser.setSelectedIndex(i);
+                        break;
+                    }
+                }
+                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, new Component[]{ pLabel, placementsChooser }, "Category adjustment", JOptionPane.OK_CANCEL_OPTION);
+                if (opt == JOptionPane.OK_OPTION) {
+                    currentTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
+                }
+            } catch (Exception ex) {
+                displayErrorMessage("Failed to adjust category!", ex);
+            }
+        }
+    };
+    
+    private AdjustEntryAction adjustEntryAction = new AdjustEntryAction();
+    private class AdjustEntryAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public AdjustEntryAction() {
+            putValue(Action.NAME, "adjustEntry");
+            putValue(Action.SHORT_DESCRIPTION, "adjust active entry");
+            putValue(Action.SMALL_ICON, controlIcons.getIconAdjustEntry());
+        }
+        
+        public void actionPerformed(ActionEvent evt) {
+            try {
+                JLabel ecLabel = new JLabel("Entry's category (will be moved on change):");
+                JComboBox ecCB = new JComboBox();
+                ecCB.addItem(Constants.EMPTY_STR);
+                Map<UUID, VisualEntryDescriptor> veds = getCategoryDescriptors();
+                for (VisualEntryDescriptor veDescriptor : veds.values()) {
+                    ecCB.addItem(veDescriptor);
+                }
+                if (!Validator.isNullOrBlank(currentTabPane.getName())) {
+                    ecCB.setSelectedItem(veds.get(UUID.fromString(currentTabPane.getName())));
+                }
+                Object eCat = ecCB.getSelectedItem();
+                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, new Component[]{ ecLabel, ecCB }, "Entry adjustment", JOptionPane.OK_CANCEL_OPTION);
+                if (opt == JOptionPane.OK_OPTION) {
+                    if (!eCat.equals(ecCB.getSelectedItem())) {
+                        JTabbedPane sourcePane = getActiveTabPane();
+                        JTabbedPane destinationPane;
+                        if (ecCB.getSelectedItem().equals(Constants.EMPTY_STR)) {
+                            destinationPane = getJTabbedPane();
+                        } else {
+                            VisualEntryDescriptor ve = (VisualEntryDescriptor) ecCB.getSelectedItem();
+                            destinationPane = (JTabbedPane) getComponentById(ve.getEntry().getId());
+                        }
+                        TabMoveUtil.moveTab(sourcePane, sourcePane.getSelectedIndex(), destinationPane);
+                    }
+                }
+            } catch (Exception ex) {
+                displayErrorMessage("Failed to adjust entry!", ex);
+            }
+        }
+    };
+
     private DeleteAction deleteEntryOrCategoryAction = new DeleteAction();
     private class DeleteAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
@@ -2463,7 +2620,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 } catch (Exception ex) {
-                    displayErrorMessage(ex);
+                    displayErrorMessage("Failed to delete entry!", ex);
                 }
             }
         }
@@ -3473,7 +3630,7 @@ public class FrontEnd extends JFrame {
                 if (getJTabbedPane().getTabCount() == 0 || getJTabbedPane().getSelectedIndex() == -1) {
                     currentTabPane = getJTabbedPane();
                 }
-                JLabel pLabel = new JLabel("Choose placement:");
+                JLabel pLabel = new JLabel("Choose tabs placement:");
                 JComboBox placementsChooser = new JComboBox();
                 for (Placement placement : PLACEMENTS) {
                     placementsChooser.addItem(placement);

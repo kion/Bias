@@ -5,7 +5,7 @@ package bias.gui;
 
 import java.awt.Component;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JTabbedPane;
 
 /**
@@ -32,15 +32,15 @@ public class TabMoveUtil {
         for (int i = 0; i < cnt; i++) {
             captions[i] = tabPane.getTitleAt(i);
         }
-        ImageIcon[] icons = new ImageIcon[cnt];
+        Icon[] icons = new Icon[cnt];
         for (int i = 0; i < cnt; i++) {
-            icons[i] = (ImageIcon) tabPane.getIconAt(i);
+            icons[i] = tabPane.getIconAt(i);
         }
 
         // remember component/caption/icon that has to be moved
         Component srcComp = components[srcIndex];
         String srcCap = captions[srcIndex];
-        ImageIcon srcIcon = icons[srcIndex];
+        Icon srcIcon = icons[srcIndex];
 
         // rearrange components/captions/icons using shifting
         if (srcIndex > dstIndex) {
@@ -75,6 +75,16 @@ public class TabMoveUtil {
 
         // repaint tabpane
         tabPane.repaint();
+
+    }
+
+    public static void moveTab(JTabbedPane srcTabPane, int index, JTabbedPane dstTabPane) {
+        
+        Component component = srcTabPane.getComponent(index);
+        String caption = srcTabPane.getTitleAt(index);
+        Icon icon = srcTabPane.getIconAt(index);
+        srcTabPane.remove(component);
+        dstTabPane.addTab(caption, icon, component);
 
     }
 

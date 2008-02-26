@@ -13,14 +13,17 @@ public class ControlIcons {
     /**
      * Default control icons
      */
+    // FIXME [P1] find some nice and single-styled default icons, current ones looks bad, more so, they are from different icon-sets
     public static final ImageIcon ICON_ABOUT = new ImageIcon(ControlIcons.class.getResource("/bias/res/about.png"));
     public static final ImageIcon ICON_IMPORT = new ImageIcon(ControlIcons.class.getResource("/bias/res/import.png"));
     public static final ImageIcon ICON_EXPORT = new ImageIcon(ControlIcons.class.getResource("/bias/res/export.png"));
     public static final ImageIcon ICON_DELETE = new ImageIcon(ControlIcons.class.getResource("/bias/res/delete.png"));
     public static final ImageIcon ICON_CATEGORY = new ImageIcon(ControlIcons.class.getResource("/bias/res/add_category.png"));
     public static final ImageIcon ICON_ROOT_CATEGORY = new ImageIcon(ControlIcons.class.getResource("/bias/res/add_root_category.png"));
+    public static final ImageIcon ICON_ADJUST_CATEGORY = new ImageIcon(ControlIcons.class.getResource("/bias/res/adjust_category.png"));
     public static final ImageIcon ICON_ENTRY = new ImageIcon(ControlIcons.class.getResource("/bias/res/add_entry.png"));
     public static final ImageIcon ICON_ROOT_ENTRY = new ImageIcon(ControlIcons.class.getResource("/bias/res/add_root_entry.png"));
+    public static final ImageIcon ICON_ADJUST_ENTRY = new ImageIcon(ControlIcons.class.getResource("/bias/res/adjust_entry.png"));
     public static final ImageIcon ICON_CHANGE_PASSWORD = new ImageIcon(ControlIcons.class.getResource("/bias/res/change_password.png"));
     public static final ImageIcon ICON_SAVE = new ImageIcon(ControlIcons.class.getResource("/bias/res/save.png"));
     public static final ImageIcon ICON_EXIT = new ImageIcon(ControlIcons.class.getResource("/bias/res/exit.png"));
@@ -38,8 +41,10 @@ public class ControlIcons {
     private ImageIcon iconImport;
     private ImageIcon iconExport;
     private ImageIcon iconRootCategory;
+    private ImageIcon iconAdjustCategory;
     private ImageIcon iconCategory;
     private ImageIcon iconRootEntry;
+    private ImageIcon iconAdjustEntry;
     private ImageIcon iconEntry;
     private ImageIcon iconChangePassword;
     private ImageIcon iconDelete;
@@ -64,8 +69,10 @@ public class ControlIcons {
         this.iconImport = ICON_IMPORT; 
         this.iconExport = ICON_EXPORT; 
         this.iconRootCategory = ICON_ROOT_CATEGORY; 
+        this.iconAdjustCategory = ICON_ADJUST_CATEGORY; 
         this.iconCategory = ICON_CATEGORY;
         this.iconRootEntry = ICON_ROOT_ENTRY; 
+        this.iconAdjustEntry = ICON_ADJUST_ENTRY; 
         this.iconEntry = ICON_ENTRY;
         this.iconChangePassword = ICON_CHANGE_PASSWORD;
         this.iconDelete = ICON_DELETE;
@@ -88,8 +95,10 @@ public class ControlIcons {
             ImageIcon iconExport, 
             ImageIcon iconRootCategory, 
             ImageIcon iconCategory, 
+            ImageIcon iconAdjustCategory, 
             ImageIcon iconRootEntry, 
             ImageIcon iconEntry, 
+            ImageIcon iconAdjustEntry, 
             ImageIcon iconDelete,
             ImageIcon iconChangePassword,
             ImageIcon iconExit, 
@@ -108,8 +117,10 @@ public class ControlIcons {
         this.iconExport = iconExport;
         this.iconRootCategory = iconRootCategory;
         this.iconCategory = iconCategory;
+        this.iconAdjustCategory = iconAdjustCategory;
         this.iconRootEntry = iconRootEntry;
         this.iconEntry = iconEntry;
+        this.iconAdjustEntry = iconAdjustEntry;
         this.iconDelete = iconDelete;
         this.iconChangePassword = iconChangePassword;
         this.iconExit = iconExit;
@@ -283,6 +294,22 @@ public class ControlIcons {
 
     public void setIconChangePassword(ImageIcon iconChangePassword) {
         this.iconChangePassword = iconChangePassword;
+    }
+
+    public ImageIcon getIconAdjustCategory() {
+        return iconAdjustCategory;
+    }
+
+    public void setIconAdjustCategory(ImageIcon iconAdjustCategory) {
+        this.iconAdjustCategory = iconAdjustCategory;
+    }
+
+    public ImageIcon getIconAdjustEntry() {
+        return iconAdjustEntry;
+    }
+
+    public void setIconAdjustEntry(ImageIcon iconAdjustEntry) {
+        this.iconAdjustEntry = iconAdjustEntry;
     }
 
 }

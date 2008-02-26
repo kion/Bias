@@ -4,6 +4,7 @@
 package bias.extension.MainEntry;
 
 import java.awt.Component;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -76,18 +77,15 @@ public class MainEntry extends ToolExtension implements BeforeSaveEventListener 
      */
     public byte[] configure() throws Throwable {
         Properties props = PropertiesUtils.deserializeProperties(getSettings());
-        VisualEntryDescriptor currDescriptor = null;
         JLabel meLabel = new JLabel("Main entry (to switch to before save):");
         JComboBox meCB = new JComboBox();
         meCB.addItem(Constants.EMPTY_STR);
-        for (VisualEntryDescriptor veDescriptor : FrontEnd.getVisualEntryDescriptors().values()) {
+        Map<UUID, VisualEntryDescriptor> veds = FrontEnd.getVisualEntryDescriptors();
+        for (VisualEntryDescriptor veDescriptor : veds.values()) {
             meCB.addItem(veDescriptor);
-            if (veDescriptor.getEntry().getId().equals(mainEntryId)) {
-                currDescriptor = veDescriptor;
-            }
         }
-        if (currDescriptor != null) {
-            meCB.setSelectedItem(currDescriptor);
+        if (mainEntryId != null) {
+            meCB.setSelectedItem(veds.get(mainEntryId));
         }
         JCheckBox sCB = new JCheckBox("Switch to main entry only before exit");
         sCB.setSelected(switchOnlyBeforeExit);

@@ -740,17 +740,14 @@ public class HTMLEditorPanel extends JPanel {
                     if (href != null) {
                         id = href.substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
                     }
-                    VisualEntryDescriptor currDescriptor = null;
                     JLabel entryLabel = new JLabel("entry:");
                     JComboBox hrefComboBox = new JComboBox();
-                    for (VisualEntryDescriptor veDescriptor : FrontEnd.getVisualEntryDescriptors().values()) {
+                    Map<UUID, VisualEntryDescriptor> veds = FrontEnd.getVisualEntryDescriptors();
+                    for (VisualEntryDescriptor veDescriptor : veds.values()) {
                         hrefComboBox.addItem(veDescriptor);
-                        if (veDescriptor.getEntry().getId().toString().equals(id)) {
-                            currDescriptor = veDescriptor;
-                        }
                     }
-                    if (currDescriptor != null) {
-                        hrefComboBox.setSelectedItem(currDescriptor);
+                    if (id != null) {
+                        hrefComboBox.setSelectedItem(veds.get(UUID.fromString(id)));
                     }
                     JLabel textLabel = new JLabel("text:");
                     text = JOptionPane.showInputDialog(HTMLEditorPanel.this, new Component[] { entryLabel, hrefComboBox, textLabel }, text);
