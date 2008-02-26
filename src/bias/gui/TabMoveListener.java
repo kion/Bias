@@ -49,7 +49,7 @@ public class TabMoveListener extends MouseAdapter {
             }
         }
         deHighLight(tabbedPane);
-        ((JTabbedPane) e.getSource()).setCursor(Cursor.getDefaultCursor());
+        tabbedPane.setCursor(Cursor.getDefaultCursor());
         srcIndex = -1;
         currIndex = -1;
     }
@@ -64,9 +64,9 @@ public class TabMoveListener extends MouseAdapter {
             JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
             int index = tabbedPane.indexAtLocation(e.getX(), e.getY());
             if (index != -1) {
-                ((JTabbedPane) e.getSource()).setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             } else {
-                ((JTabbedPane) e.getSource()).setCursor(Cursor.getDefaultCursor());
+                tabbedPane.setCursor(Cursor.getDefaultCursor());
             }
             if (index != -1 && index != currIndex) { // moved over another tab
                 deHighLight(tabbedPane);
