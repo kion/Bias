@@ -4106,7 +4106,7 @@ public class FrontEnd extends JFrame {
                 JButton extInstButt = new JButton("Install/Update...");
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (extensionFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
+                        if (extensionFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
                             Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, dialog);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
@@ -4313,7 +4313,7 @@ public class FrontEnd extends JFrame {
                 JButton lafInstButt = new JButton("Install/Update...");
                 lafInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (lafFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
+                        if (lafFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
                             Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, dialog);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
@@ -4391,7 +4391,7 @@ public class FrontEnd extends JFrame {
                 JButton addIconButt = new JButton("Add...");
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (iconsFileChooser.showOpenDialog(FrontEnd.this) == JFileChooser.APPROVE_OPTION) {
+                        if (iconsFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
                             Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, dialog);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
@@ -4538,7 +4538,7 @@ public class FrontEnd extends JFrame {
                 }
                 
             } catch (Throwable t) {
-                displayErrorMessage(t);
+                displayErrorMessage("Failed to display add-ons configuration screen!", t);
             }
         	
         }
