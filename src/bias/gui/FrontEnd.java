@@ -4113,13 +4113,14 @@ public class FrontEnd extends JFrame {
                                     try {
                                         for (File file : extensionFileChooser.getSelectedFiles()) {
                                             String installedExt = BackEnd.getInstance().installExtension(file);
+                                            String comment = BackEnd.getInstance().getNewExtensions().get(installedExt);
                                             installedExt = installedExt.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                                             int idx = findDataRowIndex(extModel, 0, installedExt);
                                             if (idx != -1) {
                                                 extModel.removeRow(idx);
-                                                extModel.insertRow(idx, new Object[]{installedExt, null, null, Constants.COMMENT_ADDON_UPDATED});
+                                                extModel.insertRow(idx, new Object[]{installedExt, null, null, comment});
                                             } else {
-                                                extModel.addRow(new Object[]{installedExt, null, null, Constants.COMMENT_ADDON_INSTALLED});
+                                                extModel.addRow(new Object[]{installedExt, null, null, comment});
                                             }
                                             modified = true;
                                         }
@@ -4319,13 +4320,14 @@ public class FrontEnd extends JFrame {
                                     try {
                                         for (File file : lafFileChooser.getSelectedFiles()) {
                                             String installedLAF = BackEnd.getInstance().installLAF(file);
+                                            String comment = BackEnd.getInstance().getNewLAFs().get(installedLAF);
                                             installedLAF = installedLAF.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                                             int idx = findDataRowIndex(lafModel, 0, installedLAF);
                                             if (idx != -1) {
                                                 lafModel.removeRow(idx);
-                                                lafModel.addRow(new Object[]{installedLAF, null, null, Constants.COMMENT_ADDON_UPDATED});
+                                                lafModel.addRow(new Object[]{installedLAF, null, null, comment});
                                             } else {
-                                                lafModel.addRow(new Object[]{installedLAF, null, null, Constants.COMMENT_ADDON_INSTALLED});
+                                                lafModel.addRow(new Object[]{installedLAF, null, null, comment});
                                             }
                                             modified = true;
                                         }
