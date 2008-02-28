@@ -12,8 +12,6 @@ import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
@@ -228,33 +226,9 @@ public class SimpleStats extends ToolExtension {
         }
     };
     
-    private String calculateSessionLength(long startDate, long endDate) {
-        List<String> list = new LinkedList<String>();
-        StringBuffer lenStr = new StringBuffer();
-        long len = endDate - startDate;
-        long sec = len/1000;
-        if (sec > 0) {
-            long min = sec / 60;
-            if (min > 0) {
-                sec = sec % 60;
-                long hr = min / 60;
-                if (hr > 0) {
-                    min = min % 60;
-                    long days = hr / 24;
-                    if (days > 0) {
-                        hr = hr % 24;
-                        list.add(days + " d ");
-                    }
-                    list.add(hr + " hr ");
-                }
-                list.add(min + " min ");
-            }
-            list.add(sec + " sec ");
-        }
-        for (String s : list) {
-            lenStr.append(s);
-        }
-        return lenStr.toString();
+    private String calculateSessionLength(long startTime, long endTime) {
+        long duration = endTime - startTime;
+        return FormatUtils.formatTimeDuration(duration);
     }
     
     private void parseTypes(Map<String, Integer> typesCounts, DataCategory dc) {
