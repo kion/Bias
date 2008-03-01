@@ -5,10 +5,10 @@ package bias.laf.BiasSubstanceLAF;
 
 import javax.swing.UIManager;
 
+import org.jvnet.substance.fonts.FontPolicies;
 import org.jvnet.substance.skin.SubstanceBusinessLookAndFeel;
 
 import bias.annotation.AddOnAnnotation;
-import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 
 /**
@@ -41,23 +41,8 @@ public class BiasSubstanceLAF extends LookAndFeel {
 //      laf = new SubstanceMangoLookAndFeel();
 //      laf = new SubstanceFieldOfWheatLookAndFeel();
       laf = new SubstanceBusinessLookAndFeel();
+      SubstanceBusinessLookAndFeel.setFontPolicy(FontPolicies.getTransitionalPlasticPolicy());
       UIManager.setLookAndFeel(laf);
     }
     
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#configure(byte[])
-     */
-    @Override
-    public byte[] configure(byte[] settings) {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#getControlIcons()
-     */
-    @Override
-    public ControlIcons getControlIcons() {
-        return null;
-    }
-
 }

@@ -6,7 +6,6 @@ package bias.laf.BiasLipstikLAF;
 import javax.swing.UIManager;
 
 import bias.annotation.AddOnAnnotation;
-import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 
 import com.lipstikLF.LipstikLookAndFeel;
@@ -29,22 +28,6 @@ public class BiasLipstikLAF extends LookAndFeel {
     @Override
     public void activate(byte[] settings) throws Throwable {
         UIManager.setLookAndFeel(new LipstikLookAndFeel());
-    }
-
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#configure(byte[])
-     */
-    @Override
-    public byte[] configure(byte[] settings) {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#getControlIcons()
-     */
-    @Override
-    public ControlIcons getControlIcons() {
-        return null;
     }
 
 }

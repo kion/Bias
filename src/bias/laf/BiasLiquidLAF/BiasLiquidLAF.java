@@ -6,7 +6,6 @@ package bias.laf.BiasLiquidLAF;
 import javax.swing.UIManager;
 
 import bias.annotation.AddOnAnnotation;
-import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 
 import com.birosoft.liquid.LiquidLookAndFeel;
@@ -33,20 +32,4 @@ public class BiasLiquidLAF extends LookAndFeel {
         UIManager.setLookAndFeel(new LiquidLookAndFeel());
     }
     
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#configure(byte[])
-     */
-    @Override
-    public byte[] configure(byte[] settings) {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#getControlIcons()
-     */
-    @Override
-    public ControlIcons getControlIcons() {
-        return null;
-    }
-
 }

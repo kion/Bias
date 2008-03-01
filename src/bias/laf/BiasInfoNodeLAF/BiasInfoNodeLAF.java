@@ -7,7 +7,6 @@ import javax.swing.UIManager;
 
 import net.infonode.gui.laf.InfoNodeLookAndFeel;
 import bias.annotation.AddOnAnnotation;
-import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 
 /**
@@ -38,20 +37,4 @@ public class BiasInfoNodeLAF extends LookAndFeel {
         UIManager.setLookAndFeel(new InfoNodeLookAndFeel());
     }
     
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#configure(byte[])
-     */
-    @Override
-    public byte[] configure(byte[] settings) {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#getControlIcons()
-     */
-    @Override
-    public ControlIcons getControlIcons() {
-        return null;
-    }
-
 }

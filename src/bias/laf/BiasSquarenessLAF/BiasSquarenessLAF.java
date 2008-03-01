@@ -7,7 +7,6 @@ import javax.swing.UIManager;
 
 import net.beeger.squareness.SquarenessLookAndFeel;
 import bias.annotation.AddOnAnnotation;
-import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 
 /**
@@ -28,22 +27,6 @@ public class BiasSquarenessLAF extends LookAndFeel {
     @Override
     public void activate(byte[] settings) throws Throwable {
         UIManager.setLookAndFeel(new SquarenessLookAndFeel());
-    }
-
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#configure(byte[])
-     */
-    @Override
-    public byte[] configure(byte[] settings) {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#getControlIcons()
-     */
-    @Override
-    public ControlIcons getControlIcons() {
-        return null;
     }
 
 }

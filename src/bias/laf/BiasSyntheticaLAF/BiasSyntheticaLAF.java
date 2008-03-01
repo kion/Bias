@@ -6,7 +6,6 @@ package bias.laf.BiasSyntheticaLAF;
 import javax.swing.UIManager;
 
 import bias.annotation.AddOnAnnotation;
-import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 import de.javasoft.plaf.synthetica.SyntheticaBlackMoonLookAndFeel;
 import de.javasoft.plaf.synthetica.SyntheticaLookAndFeel;
@@ -42,20 +41,4 @@ public class BiasSyntheticaLAF extends LookAndFeel {
 //      SyntheticaLookAndFeel.setRememberFileChooserPreferences(false);
     }
     
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#configure(byte[])
-     */
-    @Override
-    public byte[] configure(byte[] settings) {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#getControlIcons()
-     */
-    @Override
-    public ControlIcons getControlIcons() {
-        return null;
-    }
-
 }

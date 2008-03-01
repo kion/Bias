@@ -13,7 +13,6 @@ import javax.swing.UIManager;
 
 import bias.annotation.AddOnAnnotation;
 import bias.gui.FrontEnd;
-import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
 import bias.utils.PropertiesUtils;
 
@@ -71,14 +70,6 @@ public class BiasTonicSlimLAF extends LookAndFeel {
                 UIManager.getDefaults().put("TabbedPane.thickBorders", tb);
             }
         }
-    }
-
-    /* (non-Javadoc)
-     * @see bias.laf.LookAndFeel#getControlIcons()
-     */
-    @Override
-    public ControlIcons getControlIcons() {
-        return null;
     }
 
 }
