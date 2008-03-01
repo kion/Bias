@@ -49,19 +49,25 @@ public abstract class ToolExtension implements Extension {
     
     /**
      * Configures tool-extension.
-     * Should be implemented to return settings for certain tool-extension.
+     * Should be overridden to return settings for certain tool-extension.
+     * By default returns null (no configuration).
      * 
      * @return settings byte array containing serialized configuration settings
      */
-    public abstract byte[] configure() throws Throwable;
+    public byte[] configure() throws Throwable {
+        return null;
+    }
 
     /**
      * Returns tool representation.
-     * Should be implemented by certain extending tool-class to define corresponding tool's representation.
+     * Should be overridden by certain extending tool-class to define corresponding tool's representation.
+     * By default returns null (no representation provided).
      * 
      * @return ToolRepresentation instance containing corresponding tool representation 
      */
-    public abstract ToolRepresentation getRepresentation();
+    public ToolRepresentation getRepresentation() {
+        return null;
+    }
 
     /**
      * Defines whether extension's data should be skipped on export

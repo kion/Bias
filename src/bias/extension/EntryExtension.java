@@ -64,19 +64,25 @@ public abstract class EntryExtension extends JComponent implements Extension {
 
     /**
      * Configures extension.
-     * Should be implemented to return settings for certain extension.
+     * Should be overridden to return settings for certain extension.
+     * By default returns null (no configuration).
      * 
      * @param settings initial settings
      * @return settings byte array containing serialized configuration settings
      */
-    public abstract byte[] configure(byte[] settings) throws Throwable;
+    public byte[] configure(byte[] settings) throws Throwable {
+        return null;
+    }
 
     /**
      * Returns extension's search data.
-     * Should be implemented to return search data for certain extension's instance.
+     * Should be overridden to return search data for certain extension's instance.
+     * By default returns null (no search data provided).
      * 
      * @return data for search provided by extension's instance
      */
-    public abstract Collection<String> getSearchData() throws Throwable;
+    public Collection<String> getSearchData() throws Throwable {
+        return null;
+    }
 
 }
