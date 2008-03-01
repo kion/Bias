@@ -107,7 +107,7 @@ public class ExtensionFactory {
                     Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
                     if (ToolExtension.class.isAssignableFrom(extClass)) {
                         // extension instantiation test
-                        ToolExtension ext = newToolExtension((Class<ToolExtension>) Class.forName(fullExtName), BackEnd.getInstance().getToolData(extension.getName()));
+                        ToolExtension ext = newToolExtension((Class<ToolExtension>) Class.forName(fullExtName), BackEnd.getInstance().getToolData(fullExtName));
                         // extension is ok, add it to the list
                         String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
                         toolTypes.put(ext, annotationStr);
