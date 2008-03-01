@@ -14,11 +14,9 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
 import bias.Constants;
-import bias.annotation.AddOnAnnotation;
 import bias.event.BeforeSaveEventListener;
 import bias.event.SaveEvent;
 import bias.extension.ToolExtension;
-import bias.extension.ToolRepresentation;
 import bias.gui.FrontEnd;
 import bias.gui.VisualEntryDescriptor;
 import bias.utils.PropertiesUtils;
@@ -28,14 +26,14 @@ import bias.utils.Validator;
  * @author kion
  */
 
-@AddOnAnnotation(
-        version="0.3.1",
-        author="R. Kasianenko",
-        description = "Allows to select certain entry as main",
-        details = "<i>FixedMainEntry</i> extension for Bias is a part<br>" +
-                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
-                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
-                  "an author of Bias application.")
+//@AddOnAnnotation(
+//        version="0.3.1",
+//        author="R. Kasianenko",
+//        description = "Handle selected entry as main",
+//        details = "<i>FixedMainEntry</i> extension for Bias is a part<br>" +
+//                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
+//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
+//                  "an author of Bias application.")
 public class MainEntry extends ToolExtension implements BeforeSaveEventListener {
     
     private static final String PROPERTY_MAIN_ENTRY_UUID = "MAIN_ENTRY_UUID";
@@ -106,28 +104,6 @@ public class MainEntry extends ToolExtension implements BeforeSaveEventListener 
             props.remove(PROPERTY_SWITCH_BEFORE_EXIT_ONLY);
         }
         return PropertiesUtils.serializeProperties(props);
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.ToolExtension#getRepresentation()
-     */
-    @Override
-    public ToolRepresentation getRepresentation() {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#serializeData()
-     */
-    public byte[] serializeData() throws Throwable {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#serializeSettings()
-     */
-    public byte[] serializeSettings() throws Throwable {
-        return null;
     }
 
     /* (non-Javadoc)

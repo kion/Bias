@@ -11,7 +11,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.UUID;
 
 import javax.imageio.ImageIO;
@@ -23,7 +22,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.border.LineBorder;
 
-import bias.annotation.AddOnAnnotation;
 import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.extension.Graffiti.brush.LiveBrush;
@@ -35,14 +33,14 @@ import com.sun.image.codec.jpeg.ImageFormatException;
  * @author kion
  */
 
-@AddOnAnnotation(
-        version="0.2.3",
-        author="R. Kasianenko",
-        description = "Simple painting component",
-        details = "<i>Graffiti</i> extension for Bias is a part<br>" +
-                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
-                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
-                  "an author of Bias application.")
+//@AddOnAnnotation(
+//        version="0.2.3",
+//        author="R. Kasianenko",
+//        description = "Basic Graphics Manipulation",
+//        details = "<i>Graffiti</i> extension for Bias is a part<br>" +
+//                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
+//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
+//                  "an author of Bias application.")
 public class Graffiti extends EntryExtension {
 
     // TODO [P2] implement existing image loading
@@ -132,29 +130,6 @@ public class Graffiti extends EntryExtension {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(image, IMG_FORMAT, baos);
         return baos.toByteArray();
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#serializeSettings()
-     */
-    public byte[] serializeSettings() throws Throwable {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.EntryExtension#configure(byte[])
-     */
-    @Override
-    public byte[] configure(byte[] settings) throws Throwable {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.EntryExtension#getSearchData()
-     */
-    @Override
-    public Collection<String> getSearchData() throws Throwable {
-        return null;
     }
 
     /**

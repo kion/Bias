@@ -32,7 +32,6 @@ import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
-import bias.annotation.AddOnAnnotation;
 import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.gui.FrontEnd;
@@ -43,14 +42,14 @@ import bias.utils.Validator;
  * @author kion
  */
 
-@AddOnAnnotation(
-        version="0.9.1",
-        author="R. Kasianenko",
-        description = "Simple plain text editor",
-        details = "<i>PlainText</i> extension for Bias is a part<br>" +
-                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
-                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
-                  "an author of Bias application.")
+//@AddOnAnnotation(
+//        version="0.9.1",
+//        author="R. Kasianenko",
+//        description = "Plain Text Editor",
+//        details = "<i>PlainText</i> extension for Bias is a part<br>" +
+//                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
+//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
+//                  "an author of Bias application.")
 public class PlainText extends EntryExtension {
 
     private static final long serialVersionUID = 1L;

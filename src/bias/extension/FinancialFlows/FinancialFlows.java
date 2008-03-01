@@ -74,7 +74,6 @@ import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.time.TimeSeriesDataItem;
 import org.jfree.ui.RectangleInsets;
 
-import bias.annotation.AddOnAnnotation;
 import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.extension.FinancialFlows.xmlb.Direction;
@@ -94,18 +93,18 @@ import com.toedter.calendar.JDateChooserCellEditor;
  * @author kion
  */
 
-@AddOnAnnotation(
-        version = "0.1.1", 
-        author = "R. Kasianenko", 
-        description = "Financial Flows Management & Statistics", 
-        details = "<i>FinancialFlows</i> extension for Bias is a part of standard \"all-inclusive-delivery-set\" of Bias application.<br>" + 
-                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br><br>" + 
-                  "Extension uses:<br><ul>" + 
-                  "<li><a href=\"http://www.jfree.org/jfreechart/\">JFreeChart</a> - a free Java chart library that makes it easy<br>" + 
-                  "to display professional quality charts in Java applications,<br>" + 
-                  "provided by <a href=\"http://www.jfree.org/\">JFree.org</a> - site of free software projects targetting the Java platform,<br>" + 
-                  "owned and operated by <a href=\"http://jroller.com/page/dgilbert/\">David Gilbert</a> and <a href=\"http://www.sherito.org/\">Thomas Morgner</a></li>" + 
-                  "<li><a href=\"http://www.toedter.com/en/jcalendar/\">JCalendar</a> - a Java date chooser bean for graphically picking a date provided by <a href=\"http://www.toedter.com/en/contact.html\">Kai Toedter</a>.</li></ul>")
+//@AddOnAnnotation(
+//        version = "0.1.1", 
+//        author = "R. Kasianenko", 
+//        description = "Financial Flows Management & Statistics", 
+//        details = "<i>FinancialFlows</i> extension for Bias is a part of standard \"all-inclusive-delivery-set\" of Bias application.<br>" + 
+//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br><br>" + 
+//                  "Extension uses:<br><ul>" + 
+//                  "<li><a href=\"http://www.jfree.org/jfreechart/\">JFreeChart</a> - a free Java chart library that makes it easy<br>" + 
+//                  "to display professional quality charts in Java applications,<br>" + 
+//                  "provided by <a href=\"http://www.jfree.org/\">JFree.org</a> - site of free software projects targetting the Java platform,<br>" + 
+//                  "owned and operated by <a href=\"http://jroller.com/page/dgilbert/\">David Gilbert</a> and <a href=\"http://www.sherito.org/\">Thomas Morgner</a></li>" + 
+//                  "<li><a href=\"http://www.toedter.com/en/jcalendar/\">JCalendar</a> - a Java date chooser bean for graphically picking a date provided by <a href=\"http://www.toedter.com/en/contact.html\">Kai Toedter</a>.</li></ul>")
 public class FinancialFlows extends EntryExtension {
 
     private static final long serialVersionUID = 1L;

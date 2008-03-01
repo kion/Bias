@@ -57,6 +57,8 @@ public class FormatUtils {
                 list.add(min + " min ");
             }
             list.add(sec + " sec ");
+        } else {
+            list.add("none");
         }
         for (String s : list) {
             lenStr.append(s);

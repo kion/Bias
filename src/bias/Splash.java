@@ -21,10 +21,6 @@ public class Splash extends Window {
 
     private static final long serialVersionUID = 1L;
 
-    public static final URL SPLASH_IMAGE_LOAD = Launcher.class.getResource("/bias/res/load.gif");
-    
-    public static final URL SPLASH_IMAGE_INSTALL = Launcher.class.getResource("/bias/res/install.gif");
-    
     private URL imageURL;
 
     private Image image;

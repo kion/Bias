@@ -11,6 +11,7 @@ import java.net.URLConnection;
 import java.util.Properties;
 
 import bias.Constants;
+import bias.Preferences;
 import bias.transfer.Transferrer;
 
 /**
@@ -37,6 +38,8 @@ public class FTPTransferrer extends Transferrer {
         String filePath = options.getProperty(Constants.TRANSFER_OPTION_FILEPATH);
         URL url = new URL(PROTOCOL_PREFIX + username + ":" + password + "@" + server + filePath + ";type=i");
         URLConnection urlc = url.openConnection();
+        urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut);
+        urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut);
         OutputStream os = urlc.getOutputStream();
         os.write(data);
         os.close();
@@ -56,6 +59,8 @@ public class FTPTransferrer extends Transferrer {
         }
         URL url = new URL(PROTOCOL_PREFIX + username + ":" + password + "@" + server + filePath + ";type=i");
         URLConnection urlc = url.openConnection();
+        urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut);
+        urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut);
         InputStream is = urlc.getInputStream();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int b;

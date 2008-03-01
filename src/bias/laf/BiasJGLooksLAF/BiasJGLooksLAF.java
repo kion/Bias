@@ -16,10 +16,9 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
-import bias.annotation.AddOnAnnotation;
 import bias.gui.FrontEnd;
-import bias.laf.UIIcons;
 import bias.laf.LookAndFeel;
+import bias.laf.UIIcons;
 import bias.utils.PropertiesUtils;
 
 import com.jgoodies.looks.FontPolicies;
@@ -53,13 +52,13 @@ import com.jgoodies.looks.plastic.theme.SkyYellow;
  * @author kion
  */
 
-@AddOnAnnotation(
-        version="0.3.1",
-        author="R. Kasianenko",
-        description = "Bias JGoodies Looks Look-&-Feel",
-        details = "<i>BiasJGLooksLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +
-        		  "It uses multi-platform <a href=\"http://www.jgoodies.com/freeware/looks/index.html\">JGoodies Looks Look-&-Feel</a> for Java/Swing applications,<br>" +
-        		  "provided by <a href=\"http://www.jgoodies.com/\">JGoodies</a> - a product development, software consulting, and design company.")
+//@AddOnAnnotation(
+//        version="0.3.1",
+//        author="R. Kasianenko",
+//        description = "Bias JGoodies Looks Look-&-Feel",
+//        details = "<i>BiasJGLooksLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +
+//        		  "It uses multi-platform <a href=\"http://www.jgoodies.com/freeware/looks/index.html\">JGoodies Looks Look-&-Feel</a> for Java/Swing applications,<br>" +
+//        		  "provided by <a href=\"http://www.jgoodies.com/\">JGoodies</a> - a product development, software consulting, and design company.")
 public class BiasJGLooksLAF extends LookAndFeel {
     
     private static final String PROPERTY_THEME = "Theme";

@@ -53,6 +53,8 @@ public class Preferences {
                             field.set(this, value);
                         } else if ("boolean".equals(type)) {
                             field.setBoolean(this, Boolean.parseBoolean(value));
+                        } else if ("int".equals(type)) {
+                            field.setInt(this, Integer.valueOf(value));
                         }
                     } catch (NoSuchFieldException nsfe) {
                         // field is not used anymore, ignore
@@ -93,6 +95,8 @@ public class Preferences {
                         prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, s);
                     } else if ("boolean".equals(type)) {
                         prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, "" + field.getBoolean(this));
+                    } else if ("int".equals(type)) {
+                        prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, "" + field.getInt(this));
                     }
                 } catch (Exception ex) {
                     prefElement = null;
@@ -146,11 +150,18 @@ public class Preferences {
     
     /* PREFERENCES DECLARATION SECTION */
     
+    // TODO [P1] add some preference(s) to control auto-update-feature
+    
     @PreferenceAnnotation(
             title = "Preferred date format:",
             description = "Defines preferred date format for dates rendering.")
     @PreferenceValidationAnnotation(validationClass = PreferredDateFormatValidator.class)        
     public String preferredDateFormat = "dd.MM.yyyy @ HH:mm:ss";
+    
+    @PreferenceAnnotation(
+            title = "Preferred timeout for network operations (in seconds):",
+            description = "Defines preferred timeout for network operations (which will fail on timeout specified)")
+    public int preferredTimeOut = 60;
     
     @PreferenceAnnotation(
             title = "Show system tray icon",

@@ -13,16 +13,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Method;
-import java.net.URI;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -34,8 +32,6 @@ import java.util.Map.Entry;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -52,12 +48,15 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import bias.Constants;
+import bias.Launcher;
 import bias.Preferences;
+import bias.Constants.ADDON_TYPE;
 import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.ToolExtension;
 import bias.utils.ArchUtils;
 import bias.utils.FSUtils;
+import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 
 import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
@@ -79,18 +78,12 @@ public class BackEnd {
     
     private File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
 
-    private static Collection<String> loadedExtensions;
+    private static Collection<AddOnInfo> loadedAddOns;
 
-    private static Map<String, String> newExtensions = new LinkedHashMap<String, String>();
+    private static Map<ADDON_TYPE, Map<String, String>> newAddOns = new LinkedHashMap<ADDON_TYPE, Map<String, String>>();
 
-    private static Collection<String> loadedLAFs;
+    private static Collection<String> uninstallAddOnsList = new ArrayList<String>();
     
-    private static Map<String, String> newLAFs = new LinkedHashMap<String, String>();
-
-    private static Collection<String> classPathEntries = new ArrayList<String>();
-    
-    private static Collection<String> outOfClasspathAddOns = new ArrayList<String>();
-
     private Map<UUID, byte[]> icons = new LinkedHashMap<UUID, byte[]>();
     
     private Map<String, DataEntry> identifiedData = new LinkedHashMap<String, DataEntry>();
@@ -126,6 +119,36 @@ public class BackEnd {
     private static final FilenameFilter FILE_FILTER_TOOL_DATA = new FilenameFilter(){
         public boolean accept(File dir, String name) {
             return name.endsWith(Constants.TOOL_DATA_FILE_SUFFIX);
+        }
+    };
+    
+    private static final FilenameFilter FILE_FILTER_ADDON_INFO = new FilenameFilter(){
+        public boolean accept(File dir, String name) {
+            return name.endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX) || name.endsWith(Constants.ADDON_LAF_INFO_FILE_SUFFIX) || name.endsWith(Constants.ADDON_ICONSET_INFO_FILE_SUFFIX);
+        }
+    };
+    
+    private static final FilenameFilter FILE_FILTER_ICONSET_INFO = new FilenameFilter(){
+        public boolean accept(File dir, String name) {
+            return name.endsWith(Constants.ADDON_ICONSET_INFO_FILE_SUFFIX);
+        }
+    };
+    
+    private static final FilenameFilter FILE_FILTER_EXTENSION_INFO = new FilenameFilter(){
+        public boolean accept(File dir, String name) {
+            return name.endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX);
+        }
+    };
+    
+    private static final FilenameFilter FILE_FILTER_LAF_INFO = new FilenameFilter(){
+        public boolean accept(File dir, String name) {
+            return name.endsWith(Constants.ADDON_LAF_INFO_FILE_SUFFIX);
+        }
+    };
+    
+    private static final FilenameFilter FILE_FILTER_ICONSET_INFO_OR_REG = new FilenameFilter(){
+        public boolean accept(File dir, String name) {
+            return name.endsWith(Constants.ADDON_ICONSET_INFO_FILE_SUFFIX) || name.endsWith(Constants.ICONSET_REGISTRY_FILE_SUFFIX);
         }
     };
     
@@ -241,7 +264,7 @@ public class BackEnd {
                 data = FSUtils.readFile(dataFile);
                 decryptedData = decrypt(data);
                 String tool = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                tool = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                tool = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                             + tool + Constants.PACKAGE_PATH_SEPARATOR + tool;
                 toolsData.put(tool, decryptedData);
             }
@@ -265,69 +288,48 @@ public class BackEnd {
                 for (String iconId : iconsList) {
                     if (!Validator.isNullOrBlank(iconId)) {
                         File iconFile = new File(Constants.ICONS_DIR, iconId + Constants.ICON_FILE_SUFFIX);
-                        data = FSUtils.readFile(iconFile);
-                        icons.put(UUID.fromString(iconId), data);
+                        if (iconFile.exists()) {
+                            data = FSUtils.readFile(iconFile);
+                            icons.put(UUID.fromString(iconId), data);
+                        }
                     }
                 }
             }
         }
-        // classpath entries
-        File classPathConfigFile = new File(Constants.CONFIG_DIR, Constants.CLASSPATH_CONFIG_FILE);
-        if (classPathConfigFile.exists()) {
-            // read classpath entries
-            byte[] cpData = FSUtils.readFile(classPathConfigFile);
-            if (cpData != null) {
-                for (String cpEntry : new String(cpData).split(Constants.CLASSPATH_SEPARATOR)) {
-                    classPathEntries.add(cpEntry);
-                }
-            }
-        }
-        loadClassPathEntries();
-        // remove addon-files that are not in classpath
-        for (File addonFile : Constants.ADDONS_DIR.listFiles()) {
-            URI rootURI = Constants.ROOT_DIR.toURI();
-            URI addonFileURI = addonFile.toURI();
-            URI relativeURI = rootURI.relativize(addonFileURI);
-            if (!classPathEntries.contains(relativeURI.toString())) {
-                addonFile.delete();
-                String addonName = addonFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                outOfClasspathAddOns.add(addonName);
-            }
-        }
-        // remove lib-files that are not in classpath
-        for (File addonLibFile : Constants.LIBS_DIR.listFiles()) {
-            URI rootURI = Constants.ROOT_DIR.toURI();
-            URI addonLibFileURI = addonLibFile.toURI();
-            URI relativeURI = rootURI.relativize(addonLibFileURI);
-            if (!classPathEntries.contains(relativeURI.toString())) {
-                addonLibFile.delete();
-            }
-        }
         // parse metadata file
         this.data = parseMetadata(metadata, identifiedData, null, false);
-        // get lists of loaded extensions and lafs
-        loadedExtensions = getExtensions();
-        loadedLAFs = getLAFs();
+        // get lists of loaded addons
+        loadedAddOns = getAddOns(null);
     }
     
     private Collection<String> getDataExportExtensionsList() {
         Collection<String> extensions = new ArrayList<String>();
-        for (Entry<ToolExtension, String> entry : ExtensionFactory.getAnnotatedToolExtensions().entrySet()) {
-            ToolExtension extension = entry.getKey();
-            if (extension.skipDataExport()) {
-                extensions.add(extension.getClass().getName());
+        try {
+            for (Entry<ToolExtension, String> entry : ExtensionFactory.getAnnotatedToolExtensions().entrySet()) {
+                ToolExtension extension = entry.getKey();
+                if (!extension.skipDataExport()) {
+                    extensions.add(extension.getClass().getName());
+                }
             }
+        } catch (Throwable t) {
+            // ignore
+            t.printStackTrace(System.err);
         }
         return extensions;
     }
     
     private Collection<String> getConfigExportExtensionsList() {
         Collection<String> extensions = new ArrayList<String>();
-        for (Entry<ToolExtension, String> entry : ExtensionFactory.getAnnotatedToolExtensions().entrySet()) {
-            ToolExtension extension = entry.getKey();
-            if (extension.skipConfigExport()) {
-                extensions.add(extension.getClass().getName());
+        try {
+            for (Entry<ToolExtension, String> entry : ExtensionFactory.getAnnotatedToolExtensions().entrySet()) {
+                ToolExtension extension = entry.getKey();
+                if (!extension.skipConfigExport()) {
+                    extensions.add(extension.getClass().getName());
+                }
             }
+        } catch (Throwable t) {
+            // ignore
+            t.printStackTrace(System.err);
         }
         return extensions;
     }
@@ -423,7 +425,7 @@ public class BackEnd {
                         encryptedData = encrypt(decryptedData);
                         FSUtils.writeFile(localDataFile, encryptedData);
                         String tool = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                        tool = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + tool + Constants.PACKAGE_PATH_SEPARATOR + tool;
+                        tool = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + tool + Constants.PACKAGE_PATH_SEPARATOR + tool;
                         toolsData.put(tool, decryptedData);
                     }
                 }
@@ -513,54 +515,59 @@ public class BackEnd {
                         }
                     }
                 }
+                for (File iconSetInfoOrRegFile : iconsDir.listFiles(FILE_FILTER_ICONSET_INFO_OR_REG)) {
+                    File localIconSetInfoOrRegFile = new File(Constants.ICONS_DIR, iconSetInfoOrRegFile.getName());
+                    FSUtils.duplicateFile(iconSetInfoOrRegFile, localIconSetInfoOrRegFile);
+                }
             }
         }
+        // TODO [P1] core should be optionally updated
+        // TODO [P1] existing addons should be optionally updated
         // classpath and addons/libs files
         if (importAddOns) {
-            File classPathConfigFile = new File(configDir, Constants.CLASSPATH_CONFIG_FILE);
-            if (classPathConfigFile.exists()) {
-                // read classpath entries
-                byte[] cpData = FSUtils.readFile(classPathConfigFile);
-                if (cpData != null) {
-                    for (String cpEntry : new String(cpData).split(Constants.CLASSPATH_SEPARATOR)) {
-                        if (!classPathEntries.contains(cpEntry)) {
-                            String[] addonFilePath = cpEntry.split(Constants.PATH_SEPARATOR);
-                            if (addonFilePath.length == 2) {
-                                File dir = new File(importDir, addonFilePath[0]);
-                                File addonFile = new File(dir, addonFilePath[1]);
-                                if (addonFile.exists()) {
-                                    File localDir = new File(Constants.ROOT_DIR, addonFilePath[0]);
-                                    File localAddOnFile = new File(localDir, addonFilePath[1]);
-                                    if (localDir.exists() && !localAddOnFile.exists()) {
-                                        FSUtils.duplicateFile(addonFile, localAddOnFile);
-                                        classPathEntries.add(cpEntry);
-                                        if (!cpEntry.startsWith(Constants.LIBS_DIR.getName())) {
-                                            if (cpEntry.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
-                                                String extension = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                                extension = extension.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                                                extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                                            + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-                                                if (!newExtensions.keySet().contains(extension)) {
-                                                    newExtensions.put(extension, Constants.COMMENT_ADDON_IMPORTED);
-                                                }
-                                            } else if (cpEntry.matches(Constants.LAF_JAR_FILE_PATTERN)) {
-                                                String laf = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                                laf = laf.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                                                laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                                            + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                                                if (!newLAFs.keySet().contains(laf)) {
-                                                    newLAFs.put(laf, Constants.COMMENT_ADDON_IMPORTED);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                storeClassPathConfiguration();
-            }
+//            File classPathConfigFile = new File(configDir, Constants.CLASSPATH_CONFIG_FILE);
+//            if (classPathConfigFile.exists()) {
+//                // read classpath entries
+//                byte[] cpData = FSUtils.readFile(classPathConfigFile);
+//                if (cpData != null) {
+//                    for (String cpEntry : new String(cpData).split(Constants.CLASSPATH_SEPARATOR)) {
+//                        if (!classPathEntries.contains(cpEntry)) {
+//                            String[] addonFilePath = cpEntry.split(Constants.PATH_SEPARATOR);
+//                            if (addonFilePath.length == 2) {
+//                                File dir = new File(importDir, addonFilePath[0]);
+//                                File addonFile = new File(dir, addonFilePath[1]);
+//                                if (addonFile.exists()) {
+//                                    File localDir = new File(Constants.ROOT_DIR, addonFilePath[0]);
+//                                    File localAddOnFile = new File(localDir, addonFilePath[1]);
+//                                    if (localDir.exists() && !localAddOnFile.exists()) {
+//                                        FSUtils.duplicateFile(addonFile, localAddOnFile);
+//                                        classPathEntries.add(cpEntry);
+//                                        if (!cpEntry.startsWith(Constants.LIBS_DIR.getName())) {
+//                                            if (cpEntry.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
+//                                                String extension = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+//                                                extension = extension.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+//                                                extension = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+//                                                            + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
+//                                                if (!newAddOns.keySet().contains(extension)) {
+//                                                    newAddOns.put(extension, Constants.COMMENT_ADDON_IMPORTED);
+//                                                }
+//                                            } else if (cpEntry.matches(Constants.LAF_JAR_FILE_PATTERN)) {
+//                                                String laf = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
+//                                                laf = laf.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+//                                                laf = Constants.LAF_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+//                                                            + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+//                                                if (!newAddOns.keySet().contains(laf)) {
+//                                                    newAddOns.put(laf, Constants.COMMENT_ADDON_IMPORTED);
+//                                                }
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
         }
         // parse metadata file
         DataCategory importedData = parseMetadata(metadata, importedIdentifiedData, existingIDs, overwriteDataEntries);
@@ -750,19 +757,25 @@ public class BackEnd {
         }
         // icons
         if (exportIcons) {
-            File iconsDir = new File(exportDir, Constants.ICONS_DIR.getName());
-            iconsDir.mkdir();
-            StringBuffer iconsList = new StringBuffer();
-            for (Entry<UUID, byte[]> icon : icons.entrySet()) {
-                if (!exportOnlyRelatedIcons || ids.contains(icon.getKey())) {
-                    File iconFile = new File(iconsDir, icon.getKey().toString() + Constants.ICON_FILE_SUFFIX);
-                    FSUtils.writeFile(iconFile, icon.getValue());
-                    iconsList.append(icon.getKey().toString());
-                    iconsList.append(Constants.NEW_LINE);
+            if (!icons.isEmpty()) {
+                File iconsDir = new File(exportDir, Constants.ICONS_DIR.getName());
+                iconsDir.mkdir();
+                StringBuffer iconsList = new StringBuffer();
+                for (Entry<UUID, byte[]> icon : icons.entrySet()) {
+                    if (!exportOnlyRelatedIcons || ids.contains(icon.getKey())) {
+                        File iconFile = new File(iconsDir, icon.getKey().toString() + Constants.ICON_FILE_SUFFIX);
+                        FSUtils.writeFile(iconFile, icon.getValue());
+                        iconsList.append(icon.getKey().toString());
+                        iconsList.append(Constants.NEW_LINE);
+                    }
+                }
+                File iconsListFile = new File(configDir, Constants.ICONS_CONFIG_FILE);
+                FSUtils.writeFile(iconsListFile, iconsList.toString().getBytes());
+                for (File localIconSetInfoOrRegFile : Constants.ICONS_DIR.listFiles(FILE_FILTER_ICONSET_INFO_OR_REG)) {
+                    File iconSetInfoOrRegFile = new File(iconsDir, localIconSetInfoOrRegFile.getName());
+                    FSUtils.duplicateFile(localIconSetInfoOrRegFile, iconSetInfoOrRegFile);
                 }
             }
-            File iconsListFile = new File(configDir, Constants.ICONS_CONFIG_FILE);
-            FSUtils.writeFile(iconsListFile, iconsList.toString().getBytes());
         }
         // tools data files
         if (exportToolsData) {
@@ -776,9 +789,6 @@ public class BackEnd {
         }
         // addons
         if (exportAddOns) {
-            File localClassPathConfigFile = new File(Constants.CONFIG_DIR, Constants.CLASSPATH_CONFIG_FILE);
-            File classPathConfigFile = new File(configDir, Constants.CLASSPATH_CONFIG_FILE);
-            FSUtils.duplicateFile(localClassPathConfigFile, classPathConfigFile);
             File addonsDir = new File(exportDir, Constants.ADDONS_DIR.getName());
             FSUtils.duplicateFile(Constants.ADDONS_DIR, addonsDir);
             File libsDir = new File(exportDir, Constants.LIBS_DIR.getName());
@@ -788,7 +798,7 @@ public class BackEnd {
         if (exportAddOnConfigs) {
             for (File addOnConfig : Constants.CONFIG_DIR.listFiles(FILE_FILTER_ADDON_CONFIG)) {
                 String addOnName = addOnConfig.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                addOnName = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                addOnName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                 + addOnName  + Constants.PACKAGE_PATH_SEPARATOR + addOnName ;
                 if (getConfigExportExtensionsList().contains(addOnName)) {
                     reencryptFile(addOnConfig, configDir, cipher);
@@ -1045,7 +1055,7 @@ public class BackEnd {
                 settings = decrypt(FSUtils.readFile(dataEntryConfigFile));
             }
             if (settings == null) {
-                settings = getExtensionSettings(dataEntry.getType());
+                settings = getAddOnSettings(dataEntry.getType(), ADDON_TYPE.Extension);
             }
             dataEntry.setSettings(settings);
         }
@@ -1053,7 +1063,7 @@ public class BackEnd {
 
     private void storeDataEntrySettings(DataEntry dataEntry) throws Exception {
         if (dataEntry != null && dataEntry.getSettings() != null) {
-            byte[] defSettings = getExtensionSettings(dataEntry.getType());
+            byte[] defSettings = getAddOnSettings(dataEntry.getType(), ADDON_TYPE.Extension);
             File deConfigFile = new File(Constants.CONFIG_DIR, dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX);
             if (!Arrays.equals(defSettings, dataEntry.getSettings())) {
                 FSUtils.writeFile(deConfigFile, encrypt(dataEntry.getSettings()));
@@ -1063,393 +1073,186 @@ public class BackEnd {
         }
     }
     
-    private void loadClassPathEntries() throws Throwable {
-        for (String name : classPathEntries) {
-            if (name.startsWith(Constants.LIBS_DIR.getName())) {
-                name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                File libFile = new File(Constants.LIBS_DIR, name);
-                File updateFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + name);
-                if (updateFile.exists()) {
-                    FSUtils.duplicateFile(updateFile, libFile);
-                    FSUtils.delete(updateFile);
-                }
-                addClassPathURL(Constants.FILE_PROTOCOL_PREFIX + Constants.LIBS_DIR.getAbsolutePath() + File.separator + name);
-            } else {    
-                name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                File addonFile = new File(Constants.ADDONS_DIR, name);
-                File updateFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + name);
-                if (updateFile.exists()) {
-                    FSUtils.duplicateFile(updateFile, addonFile);
-                    FSUtils.delete(updateFile);
-                }
-                addClassPathURL(Constants.FILE_PROTOCOL_PREFIX + Constants.ADDONS_DIR.getAbsolutePath() + File.separator + name);
-            }
-        }
-    }
-
-    private void addClassPathURL(String path) throws Throwable {
-        URL u = new URL(path);
-        URLClassLoader urlClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-        Class<?> urlClass = URLClassLoader.class;
-        Method method = urlClass.getDeclaredMethod("addURL", new Class[]{ URL.class });
-        method.setAccessible(true);
-        method.invoke(urlClassLoader, new Object[]{ u });
-    }
-
-    public Map<String, String> getNewExtensions() {
-        return newExtensions;
+    public Map<String, String> getNewAddOns(ADDON_TYPE addOnType) {
+        return newAddOns.get(addOnType);
     }
     
-    public Collection<String> getExtensions() {
-        Collection<String> extensions = new LinkedHashSet<String>();
-        for (String name : classPathEntries) {
-            if (!name.startsWith(Constants.LIBS_DIR.getName())) {
-                name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                if (name.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
-                    String extension = name.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                    extension = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-                    if (!newExtensions.keySet().contains(extension)) {
-                        extensions.add(extension);
-                    }
-                }
+    private void storeAddOnInfo(AddOnInfo addOnInfo, ADDON_TYPE addOnType) throws Throwable {
+        String suffix = null;
+        switch (addOnType) {
+        case Extension:
+            suffix = Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX;
+            break;
+        case LookAndFeel:
+            suffix = Constants.ADDON_LAF_INFO_FILE_SUFFIX;
+            break;
+        case IconSet:
+            suffix = Constants.ADDON_ICONSET_INFO_FILE_SUFFIX;
+            break;
+        }
+        File iconSetInfoFile = new File(Constants.CONFIG_DIR, addOnInfo.getName() + suffix);
+        if (!iconSetInfoFile.exists()) {
+            iconSetInfoFile.createNewFile();
+        }
+        Properties info = new Properties();
+        info.setProperty(Constants.ATTRIBUTE_ADD_ON_VERSION, addOnInfo.getVersion());
+        info.setProperty(Constants.ATTRIBUTE_ADD_ON_AUTHOR, addOnInfo.getAuthor());
+        info.setProperty(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION, addOnInfo.getDescription());
+        FSUtils.writeFile(iconSetInfoFile, PropertiesUtils.serializeProperties(info));
+    }
+    
+    private AddOnInfo readAddOnInfo(File addOnInfoFile) throws Throwable {
+        Properties info = new Properties();
+        info.load(new FileInputStream(addOnInfoFile));
+        AddOnInfo aoi = new AddOnInfo();
+        aoi.setName(addOnInfoFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
+        aoi.setVersion(info.getProperty(Constants.ATTRIBUTE_ADD_ON_VERSION));
+        aoi.setAuthor(info.getProperty(Constants.ATTRIBUTE_ADD_ON_AUTHOR));
+        aoi.setDescription(info.getProperty(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION));
+        return aoi;
+    }
+    
+    public Collection<AddOnInfo> getAddOns(ADDON_TYPE addOnType) throws Throwable {
+        Collection<AddOnInfo> addOns = new HashSet<AddOnInfo>();
+        FilenameFilter ff = FILE_FILTER_ADDON_INFO;
+        if (addOnType != null) {
+            switch (addOnType) {
+            case Extension:
+                ff = FILE_FILTER_EXTENSION_INFO;
+                break;
+            case LookAndFeel:
+                ff = FILE_FILTER_LAF_INFO;
+                break;
+            case IconSet:
+                ff = FILE_FILTER_ICONSET_INFO;
+                break;
             }
         }
-        return extensions;
+        for (File addOnInfoFile : Constants.CONFIG_DIR.listFiles(ff)) {
+            addOns.add(readAddOnInfo(addOnInfoFile));
+        }
+        return addOns;
     }
 
-    public byte[] getExtensionSettings(String extension) throws Exception {
+    public byte[] getAddOnSettings(String addOnName, ADDON_TYPE addOnType) throws Exception {
         byte[] settings = null;
-        if (!Validator.isNullOrBlank(extension)) {
-            String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            File extConfigFile = new File(Constants.CONFIG_DIR, extensionName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
-            if (extConfigFile.exists()) {
-                settings = decrypt(FSUtils.readFile(extConfigFile));
+        if (!Validator.isNullOrBlank(addOnName)) {
+            addOnName = addOnName.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+            File addOnConfigFile = new File(
+                    Constants.CONFIG_DIR, 
+                    addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.LAF_CONFIG_FILE_SUFFIX));
+            if (addOnConfigFile.exists()) {
+                settings = decrypt(FSUtils.readFile(addOnConfigFile));
             }
         }
         return settings;
     }
 
-    public void storeExtensionSettings(String extension, byte[] settings) throws Exception {
-        if (!Validator.isNullOrBlank(extension) && settings != null) {
-            String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            File extConfigFile = new File(Constants.CONFIG_DIR, extensionName + Constants.EXTENSION_CONFIG_FILE_SUFFIX);
-            FSUtils.writeFile(extConfigFile, encrypt(settings));
+    public void storeAddOnSettings(String addOnName, ADDON_TYPE addOnType, byte[] settings) throws Exception {
+        if (!Validator.isNullOrBlank(addOnName) && settings != null) {
+            addOnName = addOnName.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+            File addOnConfigFile = new File(
+                    Constants.CONFIG_DIR, 
+                    addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.LAF_CONFIG_FILE_SUFFIX));
+            FSUtils.writeFile(addOnConfigFile, encrypt(settings));
         }
     }
 
-    public String installExtension(File extensionFile) throws Throwable {
-        String installedExtensionName = null;
-        if (extensionFile != null && extensionFile.exists() && !extensionFile.isDirectory()) {
-            boolean jarFound = false;
-            boolean error = false;
-            String name = extensionFile.getName();
-            byte[] installedExtensionJAR = null;
-            Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
-            String extName = null;
+    public AddOnInfo installAddOn(File addOnFile, ADDON_TYPE addOnType) throws Throwable {
+        AddOnInfo addOnInfo = null;
+        if (addOnFile != null && addOnFile.exists() && !addOnFile.isDirectory()) {
+            String name = addOnFile.getName();
             if (name.matches(Constants.JAR_FILE_PATTERN)) {
-                JarInputStream in = new JarInputStream(new FileInputStream(extensionFile));
+                JarInputStream in = new JarInputStream(new FileInputStream(addOnFile));
                 Manifest manifest = in.getManifest();
                 if (manifest == null) {
                     throw new Exception(
                             "Invalid extension pack:" + Constants.NEW_LINE +
                             "MANIFEST.MF file is missing!");
                 }
-                extName = manifest.getMainAttributes().getValue(Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE);
-                if (Validator.isNullOrBlank(extName)) {
+                String addOnTypeStr = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_TYPE);
+                if (Validator.isNullOrBlank(addOnTypeStr)) {
                     throw new Exception(
-                            "Invalid extension pack:" + Constants.NEW_LINE +
-                            Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE 
+                            "Invalid extension pack: " + Constants.NEW_LINE +
+                            Constants.ATTRIBUTE_ADD_ON_TYPE 
                             + " attribute in MANIFEST.MF file is missing/empty!");
                 }
-                JarEntry je = null;
-                while ((je = in.getNextJarEntry()) != null) {
-                    String jeName = je.getName();
-                    ByteArrayOutputStream out = null;
-                    int type = 0;
-                    if (jeName.matches(Constants.EXTENSION_JAR_FILE_PATH_PATTERN)) {
-                        if (!jarFound) {
-                            if (extName.equals(
-                                    jeName.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR)
-                                          .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR))) {
-                                type = 1;
-                            } else {
-                                error = true;
-                                break;
-                            }
-                            jarFound = true;
-                        } else {
-                            error = true;
-                            break;
-                        }
-                    } else if (jeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
-                        type = 2;
-                    }
-                    if (type != 0) {
-                        out = new ByteArrayOutputStream();
-                        int b;
-                        while ((b = in.read()) != -1) {
-                            out.write(b);
-                        }
-                        out.close();
-                        String installedName = jeName.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR)
-                                                     .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                        if (type == 1) {
-                            installedExtensionName = installedName;
-                            installedExtensionJAR = out.toByteArray();
-                        } else if (type == 2) {
-                            String libName = installedName + Constants.ADDON_LIB_FILENAME_SEPARATOR + extName + Constants.EXTENSION_JAR_FILE_SUFFIX; 
-                            libsMap.put(libName, out.toByteArray());
-                        }
-                    }
-                }
-                in.close();
-            }
-            if (Validator.isNullOrBlank(installedExtensionName)) {
-                throw new Exception("Invalid extension pack: nothing to install!");
-            } else if (error) {
-                throw new Exception(
-                        "Invalid extension pack:" + Constants.NEW_LINE +
-                        "Extension add-on pack should contain only one extension JAR file with name corresponding to declared " 
-                        + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute" + Constants.NEW_LINE +
-                        "in MANIFEST.MF file and \"jar\" file extension!");
-            } else {
-                boolean update = false;
-                String comment = Constants.COMMENT_ADDON_INSTALLED;
-                String fullExtName = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                            + extName + Constants.PACKAGE_PATH_SEPARATOR + extName;
-                if (getExtensions().contains(fullExtName) || loadedExtensions.contains(fullExtName)) {
-                    update = true;
-                    comment = Constants.COMMENT_ADDON_UPDATED;
-                }
-                File installedExtensionFile = new File(Constants.ADDONS_DIR, installedExtensionName + Constants.EXTENSION_JAR_FILE_SUFFIX);
-                if (update) {
-                    File installedUpdateExtensionFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + installedExtensionName + Constants.EXTENSION_JAR_FILE_SUFFIX);
-                    FSUtils.writeFile(installedUpdateExtensionFile, installedExtensionJAR);
-                } else {
-                    FSUtils.writeFile(installedExtensionFile, installedExtensionJAR);
-                }
-                addClassPathEntry(installedExtensionFile);
-                if (!libsMap.isEmpty()) {
-                    for (Entry<String, byte[]> entry : libsMap.entrySet()) {
-                        if (entry.getValue() != null) {
-                            File libFile = new File(Constants.LIBS_DIR, entry.getKey());
-                            if (update) {
-                                File libUpdateFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + entry.getKey());
-                                FSUtils.writeFile(libUpdateFile, entry.getValue());
-                            } else {
-                                FSUtils.writeFile(libFile, entry.getValue());
-                            }
-                            addClassPathEntry(libFile);
-                        }
-                    }
-                }
-                storeClassPathConfiguration();
-                installedExtensionName = fullExtName;
-                newExtensions.put(installedExtensionName, comment);
-            }
-        } else {
-            throw new Exception("Invalid extension pack!");
-        }
-        return installedExtensionName;
-    }
-    
-    public void uninstallExtension(String extension) throws Exception {
-        String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-        Collection<String> currentClassPathEntries = new ArrayList<String>(classPathEntries);
-        Iterator<String> it = currentClassPathEntries.iterator();
-        while (it.hasNext()) {
-            String cpEntry = it.next();
-            String addonFileName = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-            if (addonFileName.matches(Constants.EXTENSION_JAR_FILE_PATTERN)
-                    && addonFileName.contains(extensionName)) {
-                classPathEntries.remove(cpEntry);
-            }
-        }
-        storeClassPathConfiguration();
-        newExtensions.remove(extension);
-    }
-    
-    public Map<String, String> getNewLAFs() {
-        return newLAFs;
-    }
-    
-    public Collection<String> getLAFs() {
-        Collection<String> lafs = new LinkedHashSet<String>();
-        for (String name : classPathEntries) {
-            if (!name.startsWith(Constants.LIBS_DIR.getName())) {
-                name = name.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-                if (name.matches(Constants.LAF_JAR_FILE_PATTERN)) {
-                    String laf = name.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                    laf = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                    if (!newLAFs.keySet().contains(laf)) {
-                        lafs.add(laf);
-                    }
-                }
-            }
-        }
-        return lafs;
-    }
-    
-    public byte[] getLAFSettings(String laf) throws Exception {
-        byte[] settings = null;
-        if (!Validator.isNullOrBlank(laf)) {
-            String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            File lafConfigFile = new File(Constants.CONFIG_DIR, lafName + Constants.LAF_CONFIG_FILE_SUFFIX);
-            if (lafConfigFile.exists()) {
-                settings = decrypt(FSUtils.readFile(lafConfigFile));
-            }
-        }
-        return settings;
-    }
-
-    public void storeLAFSettings(String laf, byte[] settings) throws Exception {
-        if (!Validator.isNullOrBlank(laf) && settings != null) {
-            String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            File lafConfigFile = new File(Constants.CONFIG_DIR, lafName + Constants.LAF_CONFIG_FILE_SUFFIX);
-            FSUtils.writeFile(lafConfigFile, encrypt(settings));
-        }
-    }
-
-    public String installLAF(File lafFile) throws Exception {
-        String installedLAFName = null;
-        if (lafFile != null && lafFile.exists() && !lafFile.isDirectory()) {
-            boolean jarFound = false;
-            boolean error = false;
-            String name = lafFile.getName();
-            byte[] installedLAFJAR = null;
-            Map<String, byte[]> libsMap = new HashMap<String, byte[]>();
-            String lafName = null;
-            if (name.matches(Constants.JAR_FILE_PATTERN)) {
-                JarInputStream in = new JarInputStream(new FileInputStream(lafFile));
-                Manifest manifest = in.getManifest();
-                if (manifest == null) {
+                if (!addOnTypeStr.equals(addOnType.name())) {
                     throw new Exception(
-                            "Invalid LAF pack:" + Constants.NEW_LINE +
-                            "MANIFEST.MF file is missing!");
+                            "Invalid extension pack type: " + Constants.NEW_LINE +
+                            "(actual: '" + addOnTypeStr + "', expected: '" + addOnType.name() + "')!");
                 }
-                lafName = manifest.getMainAttributes().getValue(Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE);
-                if (Validator.isNullOrBlank(lafName)) {
+                String addOnName = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_NAME);
+                if (Validator.isNullOrBlank(addOnName)) {
                     throw new Exception(
-                            "Invalid LAF pack:" + Constants.NEW_LINE +
-                            Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE 
+                            "Invalid extension pack: " + Constants.NEW_LINE +
+                            Constants.ATTRIBUTE_ADD_ON_NAME 
                             + " attribute in MANIFEST.MF file is missing/empty!");
                 }
-                JarEntry je = null;
-                while ((je = in.getNextJarEntry()) != null) {
-                    String jeName = je.getName();
-                    ByteArrayOutputStream out = null;
-                    int type = 0;
-                    if (jeName.matches(Constants.LAF_JAR_FILE_PATH_PATTERN)) {
-                        if (!jarFound) {
-                            if (lafName.equals(
-                                    jeName.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR)
-                                          .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR))) {
-                                type = 1;
-                            } else {
-                                error = true;
-                                break;
-                            }
-                            jarFound = true;
-                        } else {
-                            error = true;
-                            break;
-                        }
-                    } else if (jeName.matches(Constants.LIB_FILE_PATH_PATTERN)) {
-                        type = 2;
-                    }
-                    if (type != 0) {
-                        out = new ByteArrayOutputStream();
-                        int b;
-                        while ((b = in.read()) != -1) {
-                            out.write(b);
-                        }
-                        out.close();
-                        String installedName = jeName.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR)
-                                                     .replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                        if (type == 1) {
-                            installedLAFName = installedName;
-                            installedLAFJAR = out.toByteArray();
-                        } else if (type == 2) {
-                            String libName = installedName + Constants.ADDON_LIB_FILENAME_SEPARATOR + lafName + Constants.LAF_JAR_FILE_SUFFIX; 
-                            libsMap.put(libName, out.toByteArray());
-                        }
-                    }
+                String addOnVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_VERSION);
+                if (Validator.isNullOrBlank(addOnVersion)) {
+                    throw new Exception(
+                            "Invalid extension pack: " + Constants.NEW_LINE +
+                            Constants.ATTRIBUTE_ADD_ON_VERSION 
+                            + " attribute in MANIFEST.MF file is missing/empty!");
                 }
+                String addOnAuthor = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_AUTHOR);
+                String addOnDescription = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION);
                 in.close();
-            }
-            if (Validator.isNullOrBlank(installedLAFName)) {
-                throw new Exception("Invalid LAF pack: nothing to install!");
-            } else if (error) {
-                throw new Exception(
-                        "Invalid LAF pack:" + Constants.NEW_LINE +
-                        "LAF add-on pack should contain only one LAF JAR file with name corresponding to declared " 
-                        + Constants.MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE + " attribute" + Constants.NEW_LINE +
-                        "in MANIFEST.MF file and \"jar\" file extension!");
-            } else {
+                addOnInfo = new AddOnInfo(addOnName, addOnVersion, addOnAuthor, addOnDescription);
+                
                 boolean update = false;
-                String comment = Constants.COMMENT_ADDON_INSTALLED;
-                String fullLAFName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                            + lafName + Constants.PACKAGE_PATH_SEPARATOR + lafName;
-                if (getLAFs().contains(fullLAFName) || loadedLAFs.contains(fullLAFName)) {
+                String comment = Constants.ADDON_STATUS_INSTALLED;
+                if (getAddOns(addOnType).contains(addOnInfo) || loadedAddOns.contains(addOnName)) {
                     update = true;
-                    comment = Constants.COMMENT_ADDON_UPDATED;
+                    comment = Constants.ADDON_STATUS_UPDATED;
                 }
-                File installedLAFFile = new File(Constants.ADDONS_DIR, installedLAFName + Constants.LAF_JAR_FILE_SUFFIX);
+                String fileSuffix = addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.LAF_JAR_FILE_SUFFIX;
+                File installedAddOnFile = new File(Constants.ADDONS_DIR, addOnName + fileSuffix);
                 if (update) {
-                    File installedUpdateLAFFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + installedLAFName + Constants.LAF_JAR_FILE_SUFFIX);
-                    FSUtils.writeFile(installedUpdateLAFFile, installedLAFJAR);
+                    File updateAddOnFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + addOnName + fileSuffix);
+                    FSUtils.duplicateFile(addOnFile, updateAddOnFile);
                 } else {
-                    FSUtils.writeFile(installedLAFFile, installedLAFJAR);
+                    FSUtils.duplicateFile(addOnFile, installedAddOnFile);
                 }
-                addClassPathEntry(installedLAFFile);
-                if (!libsMap.isEmpty()) {
-                    for (Entry<String, byte[]> entry : libsMap.entrySet()) {
-                        if (entry.getValue() != null) {
-                            File libFile = new File(Constants.LIBS_DIR, entry.getKey());
-                            if (update) {
-                                File libUpdateFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + entry.getKey());
-                                FSUtils.writeFile(libUpdateFile, entry.getValue());
-                            } else {
-                                FSUtils.writeFile(libFile, entry.getValue());
-                            }
-                            addClassPathEntry(libFile);
-                        }
-                    }
+                storeAddOnInfo(addOnInfo, addOnType);
+                Map<String, String> m = newAddOns.get(addOnType);
+                if (m == null) {
+                    m = new LinkedHashMap<String, String>();
+                    newAddOns.put(addOnType, m);
                 }
-                storeClassPathConfiguration();
-                installedLAFName = fullLAFName;
-                newLAFs.put(installedLAFName, comment);
+                m.put(addOnName, comment);
             }
         } else {
-            throw new Exception("Invalid LAF pack!");
+            throw new Exception("Invalid add-on pack!");
         }
-        return installedLAFName;
+        return addOnInfo;
     }
     
-    public void uninstallLAF(String laf) throws Exception {
-        String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-        Collection<String> currentClassPathEntries = new ArrayList<String>(classPathEntries);
-        Iterator<String> it = currentClassPathEntries.iterator();
-        while (it.hasNext()) {
-            String cpEntry = it.next();
-            String addonFileName = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-            if (addonFileName.matches(Constants.LAF_JAR_FILE_PATTERN)
-                    && addonFileName.contains(lafName)) {
-                classPathEntries.remove(cpEntry);
-            }
+    public void uninstallAddOn(String addOnName, ADDON_TYPE addOnType) throws Exception {
+        String fullName = addOnName;
+        addOnName = addOnName.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+        uninstallAddOnsList.add(addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.LAF_JAR_FILE_SUFFIX));
+        storeUninstallConfiguration();
+        String suffix = null;
+        switch (addOnType) {
+        case Extension:
+            suffix = Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX;
+            break;
+        case LookAndFeel:
+            suffix = Constants.ADDON_LAF_INFO_FILE_SUFFIX;
+            break;
+        case IconSet:
+            suffix = Constants.ADDON_ICONSET_INFO_FILE_SUFFIX;
+            break;
         }
-        storeClassPathConfiguration();
-        newLAFs.remove(laf);
-    }
-    
-    public boolean unusedAddOnsFound() {
-        return !outOfClasspathAddOns.isEmpty();
+        File addOnInfoFile = new File(Constants.CONFIG_DIR, addOnName + suffix);
+        FSUtils.delete(addOnInfoFile);
+        newAddOns.remove(fullName);
     }
     
     public void removeUnusedAddOnDataAndConfigFiles() {
-        for (String addonName : outOfClasspathAddOns) {
+        for (String addonName : Launcher.getUninstalledAddOnsList()) {
             File extensionDataFile = new File(Constants.DATA_DIR, addonName + Constants.TOOL_DATA_FILE_SUFFIX);
             if (extensionDataFile.exists()) {
                 FSUtils.delete(extensionDataFile);
@@ -1463,37 +1266,77 @@ public class BackEnd {
                 FSUtils.delete(lafConfigFile);
             }
         }
-        outOfClasspathAddOns.clear();
     }
         
-    private void addClassPathEntry(File jarFile) {
-        URI rootURI = Constants.ROOT_DIR.toURI();
-        URI jarFileURI = jarFile.toURI();
-        URI relativeURI = rootURI.relativize(jarFileURI);
-        if (!classPathEntries.contains(relativeURI.toString())) {
-            classPathEntries.add(relativeURI.toString());
+    private void storeUninstallConfiguration() throws Exception {
+        StringBuffer removeList = new StringBuffer();
+        Iterator<String> it = uninstallAddOnsList.iterator();
+        while (it.hasNext()) {
+            String cpEntry = it.next();
+            removeList.append(cpEntry);
+            if (it.hasNext()) {
+                removeList.append(Constants.PROPERTY_VALUES_SEPARATOR);
+            }
+        }
+        File removeAddOnsConfigFile = new File(Constants.CONFIG_DIR, Constants.UNINSTALL_CONFIG_FILE);
+        if (!removeAddOnsConfigFile.exists()) {
+            removeAddOnsConfigFile.createNewFile();
+        }
+        if (!Validator.isNullOrBlank(removeList)) {
+            FSUtils.writeFile(removeAddOnsConfigFile, removeList.toString().getBytes());
+        } else {
+            removeAddOnsConfigFile.delete();
         }
     }
     
-    private void storeClassPathConfiguration() throws Exception {
-        StringBuffer classpath = new StringBuffer();
-        Iterator<String> it = classPathEntries.iterator();
-        while (it.hasNext()) {
-            String cpEntry = it.next();
-            classpath.append(cpEntry);
-            if (it.hasNext()) {
-                classpath.append(Constants.CLASSPATH_SEPARATOR);
+    public Collection<AddOnInfo> getIconSets() throws Throwable {
+        Collection<AddOnInfo> iconSets = new LinkedList<AddOnInfo>();
+        for (File iconSetInfoFile : Constants.CONFIG_DIR.listFiles(FILE_FILTER_ICONSET_INFO)) {
+            String name = iconSetInfoFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+            Properties info = PropertiesUtils.deserializeProperties(FSUtils.readFile(iconSetInfoFile));
+            AddOnInfo aoi = new AddOnInfo();
+            aoi.setName(name);
+            aoi.setVersion(info.getProperty(Constants.ATTRIBUTE_ADD_ON_VERSION));
+            aoi.setAuthor(info.getProperty(Constants.ATTRIBUTE_ADD_ON_AUTHOR));
+            aoi.setDescription(info.getProperty(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION));
+            iconSets.add(aoi);
+        }
+        return iconSets;
+    }
+    
+    private void storeIconSet(AddOnInfo iconSetInfo, Collection<String> iconIds) throws Throwable {
+        if (iconSetInfo.getName() != null && iconSetInfo.getVersion() != null) {
+            storeAddOnInfo(iconSetInfo, ADDON_TYPE.IconSet);
+            StringBuffer iconIdsList = new StringBuffer();
+            File iconSetRegFile = new File(Constants.CONFIG_DIR, iconSetInfo.getName() + Constants.ICONSET_REGISTRY_FILE_SUFFIX);
+            if (!iconSetRegFile.exists()) {
+                iconSetRegFile.createNewFile();
+            } else {
+                iconIdsList.append(new String(FSUtils.readFile(iconSetRegFile)));
+                iconIdsList.append(Constants.NEW_LINE);
             }
+            for (String iconId : iconIds) {
+                iconIdsList.append(iconId);
+                iconIdsList.append(Constants.NEW_LINE);
+            }
+            FSUtils.writeFile(iconSetRegFile, iconIdsList.toString().getBytes());
         }
-        File classPathConfigFile = new File(Constants.CONFIG_DIR, Constants.CLASSPATH_CONFIG_FILE);
-        if (!classPathConfigFile.exists()) {
-            classPathConfigFile.createNewFile();
+    }
+    
+    public Collection<String> removeIconSet(String iconSetName) throws Throwable {
+        Collection<String> removedIds = new ArrayList<String>();
+        File iconSetRegFile = new File(Constants.CONFIG_DIR, iconSetName + Constants.ICONSET_REGISTRY_FILE_SUFFIX);
+        if (iconSetRegFile.exists()) {
+            String[] iconIdsList = new String(FSUtils.readFile(iconSetRegFile)).split(Constants.NEW_LINE);
+            for (String iconId : iconIdsList) {
+                removeIcon(iconId);
+                removedIds.add(iconId);
+            }
+            FSUtils.delete(iconSetRegFile);
         }
-        if (!Validator.isNullOrBlank(classpath)) {
-            FSUtils.writeFile(classPathConfigFile, classpath.toString().getBytes());
-        } else {
-            classPathConfigFile.delete();
-        }
+        File iconSetInfoFile = new File(Constants.CONFIG_DIR, iconSetName + Constants.ADDON_ICONSET_INFO_FILE_SUFFIX);
+        FSUtils.delete(iconSetInfoFile);
+        return removedIds;
     }
     
     public Collection<ImageIcon> getIcons() {
@@ -1505,34 +1348,47 @@ public class BackEnd {
         return icons;
     }
     
-    public Collection<ImageIcon> addIcons(File file) throws Exception {
-        Collection<ImageIcon> icons = new LinkedList<ImageIcon>();
+    public Collection<ImageIcon> addIcons(File file) throws Throwable {
+        Map<ImageIcon, String> icons = new LinkedHashMap<ImageIcon, String>();
         if (file != null && file.exists() && !file.isDirectory()) {
             if (file.getName().matches(Constants.JAR_FILE_PATTERN)) {
-                ZipInputStream in = new ZipInputStream(new FileInputStream(file));
-                ZipEntry zEntry;                     
-                while ((zEntry = in.getNextEntry()) != null) {
+                JarInputStream in = new JarInputStream(new FileInputStream(file));
+                AddOnInfo aoi = null;
+                Manifest manifest = in.getManifest();
+                if (manifest != null) {
+                    String iconSetName = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_NAME);
+                    String iconSetVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_VERSION);
+                    String iconSetAuthor = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_AUTHOR);
+                    String iconSetDescription = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION);
+                    aoi = new AddOnInfo(iconSetName, iconSetVersion, iconSetAuthor, iconSetDescription);
+                }
+                JarEntry entry;                     
+                while ((entry = in.getNextJarEntry()) != null) {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     int b;
                     while ((b = in.read()) != -1) {
                         out.write(b);
                     }
                     out.close();
-                    ImageIcon icon = addIcon(zEntry.getName(), new ByteArrayInputStream(out.toByteArray()));
+                    ImageIcon icon = addIcon(entry.getName(), new ByteArrayInputStream(out.toByteArray()));
                     if (icon != null) {
-                        icons.add(icon);
+                        icons.put(icon, icon.getDescription());
                     }
+                }
+                in.close();
+                if (aoi != null) {
+                    storeIconSet(aoi, icons.values());
                 }
             } else {
                 ImageIcon icon = addIcon(file.getName(), new FileInputStream(file));
                 if (icon != null) {
-                    icons.add(icon);
+                    icons.put(icon, icon.getDescription());
                 }
             }
         } else {
             throw new Exception("Invalid icon file/pack!");
         }
-        return icons;
+        return icons.keySet();
     }
     
     private ImageIcon addIcon(String idStr, InputStream is) throws IOException {
@@ -1560,8 +1416,7 @@ public class BackEnd {
         return icon;
     }
 
-    public void removeIcon(ImageIcon icon) throws Exception {
-        String id = icon.getDescription();
+    public void removeIcon(String id) throws Exception {
         File iconFile = new File(Constants.ICONS_DIR, id + Constants.ICON_FILE_SUFFIX);
         FSUtils.delete(iconFile);
         icons.remove(UUID.fromString(id));

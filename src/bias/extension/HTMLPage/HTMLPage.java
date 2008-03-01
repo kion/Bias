@@ -12,7 +12,6 @@ import java.util.UUID;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 
-import bias.annotation.AddOnAnnotation;
 import bias.core.Attachment;
 import bias.core.BackEnd;
 import bias.extension.EntryExtension;
@@ -24,14 +23,14 @@ import bias.utils.Validator;
  * @author kion
  */
 
-@AddOnAnnotation(
-        version = "0.6.1", 
-        author = "R. Kasianenko", 
-        description = "WYSIWYG HTML page editor",
-        details = "<i>HTMLPage</i> extension for Bias is a part<br>" +
-                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
-                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
-                  "an author of Bias application.")
+//@AddOnAnnotation(
+//        version = "0.6.1", 
+//        author = "R. Kasianenko", 
+//        description = "WYSIWYG HTML Page Composer",
+//        details = "<i>HTMLPage</i> extension for Bias is a part<br>" +
+//                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
+//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
+//                  "an author of Bias application.")
 public class HTMLPage extends EntryExtension {
     private static final long serialVersionUID = 1L;
     
@@ -84,14 +83,6 @@ public class HTMLPage extends EntryExtension {
         return PropertiesUtils.serializeProperties(props);
     }
 
-    /* (non-Javadoc)
-     * @see bias.extension.EntryExtension#configure(byte[])
-     */
-    @Override
-    public byte[] configure(byte[] settings) throws Throwable {
-        return null;
-    }
-    
     /* (non-Javadoc)
      * @see bias.extension.EntryExtension#getSearchData()
      */

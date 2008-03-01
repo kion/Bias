@@ -14,7 +14,7 @@ import bias.utils.FSUtils;
  */
 public class Constants {
     
-    public static final File ROOT_DIR = Bias.getJarFile().getParentFile();
+    public static final File ROOT_DIR = Launcher.getRootDir();
     public static final File ADDONS_DIR = new File(ROOT_DIR, "addons");
     public static final File LIBS_DIR = new File(ROOT_DIR, "libs");
     public static final File CONFIG_DIR = new File(ROOT_DIR, "conf");
@@ -48,9 +48,26 @@ public class Constants {
         TMP_DIR.mkdir();
     }
     
-    public static final String COMMENT_ADDON_IMPORTED = "Imported  [restart needed]";
-    public static final String COMMENT_ADDON_INSTALLED = "Installed [restart needed]";
-    public static final String COMMENT_ADDON_UPDATED = "Updated [restart needed]";
+    public static enum ADDON_TYPE {
+        Extension,
+        LookAndFeel,
+        IconSet
+    }
+    
+    public static final String HTML_PREFIX = "<html>";
+    public static final String HTML_COLOR_NORMAL = "<font color=\"#000000\">";
+    public static final String HTML_COLOR_HIGHLIGHT_LINK = "<font color=\"blue\">";
+    public static final String HTML_COLOR_HIGHLIGHT_NORMAL = "<font color=\"#00A000\">";
+    public static final String HTML_COLOR_HIGHLIGHT_ERROR = "<font color=\"#FA0000\">";
+    public static final String HTML_COLOR_SUFFIX = "</font>";
+    public static final String HTML_SUFFIX = "</html>";
+    public static final String ADDON_FIELD_VALUE_NA = "N/A";
+
+    public static final String ADDON_STATUS_IMPORTED = "Imported  [restart needed]";
+    public static final String ADDON_STATUS_INSTALLED = "Installed [restart needed]";
+    public static final String ADDON_STATUS_UPDATED = "Updated [restart needed]";
+    public static final String ADDON_STATUS_OK = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_NORMAL + "[OK]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
+    public static final String ADDON_STATUS_BROKEN = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + "[BROKEN]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     
     public static final String UNICODE_ENCODING = "UTF-8";
     
@@ -64,9 +81,12 @@ public class Constants {
 
     public static final String PATH_PREFIX_PATTERN = "^.*/";
     public static final String PATH_SEPARATOR = "/";
+
+    public static final String ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME = "repository.xml";
+    public static final String ADDON_FILENAME_VERSION_SEPARATOR = "_";
+    public static final String ADDON_FILENAME_SUFFIX = ".jar";
+    public static final String ADDON_DETAILS_FILENAME_SUFFIX = ".html";
     
-    public static final String ADDON_LIB_FILENAME_SEPARATOR = "_";
-    public static final String CLASSPATH_SEPARATOR = ":";
     public static final String PROPERTY_VALUES_SEPARATOR = ",";
     
     public static final String PACKAGE_PATH_SEPARATOR = ".";
@@ -78,20 +98,16 @@ public class Constants {
     public static final String ZIP_FILE_PATTERN = "(?i).+\\.zip$";
     public static final String ZIP_FILE_PATTERN_DESCRIPTION = "ZIP archive file";
 
-    public static final String FILE_PROTOCOL_PREFIX = "file:";
     public static final String ENTRY_PROTOCOL_PREFIX = "entry://";
     
     public static final String GLOBAL_CONFIG_FILE = "config.properties";
     public static final String PREFERENCES_FILE = "preferences.properties";
-    public static final String SYNC_TABLE_FILE = "sync_table.properties";
-    public static final String SYNC_TABLE_REMOTE_FILE = "sync_table_remote.properties";
-    public static final String CLASSPATH_CONFIG_FILE = "classpath.conf";
+    public static final String UNINSTALL_CONFIG_FILE = "uninstall.conf";
     public static final String METADATA_FILE_NAME = "metadata.xml";
     public static final String ICONS_CONFIG_FILE = "icons.conf";
     public static final String DATA_FILE_SUFFIX = ".data";
     public static final String TOOL_DATA_FILE_SUFFIX = ".tooldata";
     public static final String FILE_SUFFIX_PATTERN = "\\..*$";
-    public static final String MANIFEST_FILE_ADD_ON_NAME_ATTRIBUTE = "Bias-Add-On-Name";
     public static final String EXTENSION_DIR_PATTERN = "^ext/";
     public static final String LAF_DIR_PATTERN = "^laf/";
     public static final String EXTENSION_JAR_FILE_PATH_PATTERN = "(?i)" + EXTENSION_DIR_PATTERN + "[^/]+\\.jar$";
@@ -102,17 +118,25 @@ public class Constants {
     public static final String LAF_JAR_FILE_SUFFIX = ".laf.jar";
     public static final String IMPORT_CONFIG_FILE_SUFFIX = ".import.properties";
     public static final String EXPORT_CONFIG_FILE_SUFFIX = ".export.properties";
-    public static final String EXTENSION_DIR_PACKAGE_NAME = Extension.class.getPackage().getName();
-    public static final String LAF_DIR_PACKAGE_NAME = LookAndFeel.class.getPackage().getName();
+    public static final String EXTENSION_PACKAGE_NAME = Extension.class.getPackage().getName();
+    public static final String LAF_PACKAGE_NAME = LookAndFeel.class.getPackage().getName();
     public static final String ICON_FORMAT = "PNG";
     public static final String ICON_FILE_SUFFIX = ".png";
-    public static final String LIB_DIR_PATTERN = "^lib/";
-    public static final String LIB_FILE_PATH_PATTERN = "(?i)" + LIB_DIR_PATTERN + "[^/]+\\.jar$";
     public static final String EXTENSION_CONFIG_FILE_SUFFIX = ".ext.conf";
     public static final String LAF_CONFIG_FILE_SUFFIX = ".laf.conf";
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
-    public static final String CLASS_FILE_SUFFIX = ".class";
+    public static final String ADDON_EXTENSION_INFO_FILE_SUFFIX = ".ext.info";
+    public static final String ADDON_LAF_INFO_FILE_SUFFIX = ".laf.info";
+    public static final String ADDON_ICONSET_INFO_FILE_SUFFIX = ".iconset.info";
+    public static final String ICONSET_REGISTRY_FILE_SUFFIX = ".iconset.reg";
     public static final String UPDATE_FILE_PREFIX = "update_";
+    public static final String APP_CORE_FILE_NAME = "appcore.jar";
+
+    public static final String ATTRIBUTE_ADD_ON_NAME = "Bias-Add-On-Name";
+    public static final String ATTRIBUTE_ADD_ON_TYPE = "Bias-Add-On-Type";
+    public static final String ATTRIBUTE_ADD_ON_VERSION = "Bias-Add-On-Version";
+    public static final String ATTRIBUTE_ADD_ON_AUTHOR = "Bias-Add-On-Author";
+    public static final String ATTRIBUTE_ADD_ON_DESCRIPTION = "Bias-Add-On-Description";
 
     public static final String DATA_TREE_ROOT_NODE_CAPTION = "ALL DATA";
     public static final String OPTION_TRANSFER_TYPE = "TRANSFER_TYPE";

@@ -59,7 +59,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import bias.Constants;
-import bias.annotation.AddOnAnnotation;
 import bias.core.Attachment;
 import bias.core.BackEnd;
 import bias.extension.EntryExtension;
@@ -76,14 +75,14 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  * @author kion
  */
 
-@AddOnAnnotation(
-        version="0.8.9",
-        author="R. Kasianenko",
-        description = "ToDo List",
-        details = "<i>ToDoList</i> extension for Bias is a part<br>" +
-                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
-                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
-                  "an author of Bias application.")
+//@AddOnAnnotation(
+//        version="0.8.9",
+//        author="R. Kasianenko",
+//        description = "ToDo List",
+//        details = "<i>ToDoList</i> extension for Bias is a part<br>" +
+//                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
+//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
+//                  "an author of Bias application.")
 public class ToDoList extends EntryExtension {
     private static final long serialVersionUID = 1L;
     

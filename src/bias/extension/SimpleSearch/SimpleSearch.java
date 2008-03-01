@@ -43,7 +43,6 @@ import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import bias.annotation.AddOnAnnotation;
 import bias.core.BackEnd;
 import bias.core.Recognizable;
 import bias.extension.EntryExtension;
@@ -61,14 +60,14 @@ import bias.utils.Validator;
  * @author kion
  */
 
-@AddOnAnnotation(
-        version="0.7.7",
-        author="R. Kasianenko",
-        description = "Simple search tool",
-        details = "<i>SimpleSearch</i> extension for Bias is a part<br>" +
-                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
-                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
-                  "an author of Bias application.")
+//@AddOnAnnotation(
+//        version="0.7.7",
+//        author="R. Kasianenko",
+//        description = "Search Tool",
+//        details = "<i>SimpleSearch</i> extension for Bias is a part<br>" +
+//                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
+//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
+//                  "an author of Bias application.")
 public class SimpleSearch extends ToolExtension {
 
     private static final ImageIcon ICON = new ImageIcon(BackEnd.getInstance().getResourceURL(SimpleSearch.class, "icon.png"));
@@ -162,21 +161,6 @@ public class SimpleSearch extends ToolExtension {
         return PropertiesUtils.serializeProperties(props);
     }
     
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#serializeData()
-     */
-    public byte[] serializeData() throws Throwable {
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.ToolExtension#configure()
-     */
-    @Override
-    public byte[] configure() throws Throwable {
-        return null;
-    }
-
     /* (non-Javadoc)
      * @see bias.extension.ToolExtension#getRepresentation()
      */
@@ -332,10 +316,12 @@ public class SimpleSearch extends ToolExtension {
                                                     FrontEnd.switchToVisualEntry(r.getId());                                        
                                                 }
                                             };
-                                            JPanel entryPathItemIcon = new IconViewPanel(((ImageIcon) r.getIcon()).getImage());
-                                            entryPathItemIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                                            entryPathItemIcon.addMouseListener(ml);
-                                            entryPathItemPanel.add(entryPathItemIcon);
+                                            if (r.getIcon() != null) {
+                                                JPanel entryPathItemIcon = new IconViewPanel(((ImageIcon) r.getIcon()).getImage());
+                                                entryPathItemIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                                                entryPathItemIcon.addMouseListener(ml);
+                                                entryPathItemPanel.add(entryPathItemIcon);
+                                            }
                                             JLabel entryPathItemLabel = new JLabel("<html><u><font color=blue>" + r.getCaption() + "</font></u></html>");
                                             entryPathItemLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                                             entryPathItemLabel.addMouseListener(ml);

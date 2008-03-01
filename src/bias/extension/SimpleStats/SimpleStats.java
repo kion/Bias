@@ -32,8 +32,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
-import bias.Bias;
-import bias.annotation.AddOnAnnotation;
+import bias.Constants;
 import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
@@ -49,14 +48,14 @@ import bias.utils.PropertiesUtils;
  * @author kion
  */
 
-@AddOnAnnotation(
-        version="0.3.9",
-        author="R. Kasianenko",
-        description = "Simple statistics tool",
-        details = "<i>SimpleStats</i> extension for Bias is a part<br>" +
-                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
-                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
-                  "an author of Bias application.")
+//@AddOnAnnotation(
+//        version="0.3.9",
+//        author="R. Kasianenko",
+//        description = "Statistics Tool",
+//        details = "<i>SimpleStats</i> extension for Bias is a part<br>" +
+//                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
+//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
+//                  "an author of Bias application.")
 public class SimpleStats extends ToolExtension {
 
     private static final ImageIcon ICON = new ImageIcon(BackEnd.getInstance().getResourceURL(SimpleStats.class, "icon.png"));
@@ -142,7 +141,7 @@ public class SimpleStats extends ToolExtension {
                 JLabel l = new JLabel("Disk Usage");
                 l.setForeground(new Color(0, 100, 0));
                 diskStatsPanel.add(l, BorderLayout.NORTH);
-                long size = FSUtils.getFileSize(Bias.getJarFile().getParentFile());
+                long size = FSUtils.getFileSize(Constants.ROOT_DIR);
                 String sizeStr = FormatUtils.formatByteSize(size);
                 JLabel ls = new JLabel(sizeStr);
                 diskStatsPanel.add(ls, BorderLayout.CENTER);

@@ -9,17 +9,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.text.html.HTMLEditorKit;
 
-import bias.annotation.AddOnAnnotation;
 import bias.core.DataEntry;
 
 /**
  * @author kion
  */
 
-@AddOnAnnotation(
-        version="1.0",
-        author="R. Kasianenko",
-        description = "Special extension to inform about missing extensions")
 public class MissingExtensionInformer extends EntryExtension {
 
     private static final long serialVersionUID = 1L;

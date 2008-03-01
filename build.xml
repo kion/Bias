@@ -7,15 +7,10 @@
                    
      author: kion                                                                
      ====================================================================== -->
-	<project name="Bias" default="BuildAndRunApp">
+<project name="Bias" default="BuildAndRunApp">
 	<description>
     	Bias OpenSource Personal Information Manager Project
     </description>
-
-	<!-- =================================
-		  properties
-		 ================================= -->
-	<property file="build.properties" />
 
 	<!-- ================================= 
           target: RunApp              
@@ -36,506 +31,397 @@
 		<delete>
 			<fileset dir="build">
 				<include name="bias.jar" />
+				<include name="appcore.jar" />
 			</fileset>
 		</delete>
-		<jar basedir="bin" destfile="build/bias.jar" 
-			includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/** bias/transfer/**">
+		<jar basedir="bin" destfile="build/bias.jar" includes="bias/Launcher** bias/Splash** bias/utils/FSUtils** bias/res/load.gif">
 			<manifest>
 				<attribute name="Main-Class" value="bias.Launcher" />
 			</manifest>
-		</jar>	
+		</jar>
+		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/online/** bias/event/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/** bias/transfer/**" excludes="bias/Launcher** bias/res/load.gif">
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Build_Extension_FilePack
          ================================= -->
-	<target name="Build_Extension_FilePack" description="FilePack Add-On" depends="prepare_ext_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/extension/FilePack/** bias/res/FilePack/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/ext/FilePack.jar" 
-			includes="*/**" />
-		<jar basedir="tmp" destfile="build/FilePack.jar" includes="ext/**">
+	<target name="Build_Extension_FilePack" description="FilePack Add-On">
+		<jar basedir="bin" destfile="build/FilePack.jar" includes="bias/extension/FilePack/** bias/res/FilePack/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="FilePack" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="0.3.1" />
+				<attribute name="Bias-Add-On-Description" value="File Package" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Test_Extension_FilePack
          ================================= -->
 	<target name="Test_Extension_FilePack" depends="Build_Extension_FilePack">
-		<delete file="build/addons/FilePack.ext.jar"/>
-		<copy file="tmp/ext/FilePack.jar" tofile="build/addons/FilePack.ext.jar"/>
-		<antcall target="BuildAndRunApp"/>
+		<delete file="build/addons/FilePack.ext.jar" />
+		<copy file="build/FilePack.jar" tofile="build/addons/FilePack.ext.jar" />
+		<antcall target="BuildAndRunApp" />
 	</target>
 
 	<!-- ================================= 
           target: Build_Extension_FinancialFlows
          ================================= -->
-	<target name="Build_Extension_FinancialFlows" description="FinancialFlows Add-On" depends="prepare_ext_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/extension/FinancialFlows/** bias/res/FinancialFlows/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/ext/FinancialFlows.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${swingComponentsLibsDir}">
-				<include name="jcalendar.jar" />
-			</fileset>
-			<fileset dir="${toolsAndUtilsLibsDir}">
-				<include name="jcommon.jar" />
-				<include name="jfreechart.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/FinancialFlows.jar" includes="ext/** lib/**">
+	<target name="Build_Extension_FinancialFlows" description="FinancialFlows Add-On">
+		<jar basedir="bin" destfile="build/FinancialFlows.jar" includes="bias/extension/FinancialFlows/** bias/res/FinancialFlows/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="FinancialFlows" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="0.1.1" />
+				<attribute name="Bias-Add-On-Description" value="Financial Flows Management and Statistics" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Test_Extension_FinancialFlows
          ================================= -->
 	<target name="Test_Extension_FinancialFlows" depends="Build_Extension_FinancialFlows">
-		<delete file="build/libs/jcalendar_FinancialFlows.ext.jar"/>
-		<delete file="build/libs/jcalendar_FinancialFlows.ext.jar"/>
-		<delete file="build/libs/jcalendar_FinancialFlows.ext.jar"/>
-		<delete file="build/addons/FinancialFlows.ext.jar"/>
-		<copy file="tmp/lib/jcalendar.jar" tofile="build/libs/jcalendar_FinancialFlows.ext.jar"/>
-		<copy file="tmp/lib/jcommon.jar" tofile="build/libs/jcommon_FinancialFlows.ext.jar"/>
-		<copy file="tmp/lib/jfreechart.jar" tofile="build/libs/jfreechart_FinancialFlows.ext.jar"/>
-		<copy file="tmp/ext/FinancialFlows.jar" tofile="build/addons/FinancialFlows.ext.jar"/>
-		<antcall target="BuildAndRunApp"/>
+		<delete file="build/addons/FinancialFlows.ext.jar" />
+		<copy file="build/FinancialFlows.jar" tofile="build/addons/FinancialFlows.ext.jar" />
+		<antcall target="BuildAndRunApp" />
 	</target>
 
 	<!-- ================================= 
           target: Build_Extension_Graffiti              
          ================================= -->
-	<target name="Build_Extension_Graffiti" description="Graffiti Add-On" depends="prepare_ext_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/extension/Graffiti/** bias/res/Graffiti/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/ext/Graffiti.jar" 
-			includes="*/**" />
-		<jar basedir="tmp" destfile="build/Graffiti.jar" includes="ext/**">
+	<target name="Build_Extension_Graffiti" description="Graffiti Add-On">
+		<jar basedir="bin" destfile="build/Graffiti.jar" includes="bias/extension/Graffiti/** bias/res/Graffiti/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="Graffiti" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="0.2.3" />
+				<attribute name="Bias-Add-On-Description" value="Basic Graphics Manipulation" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Test_Extension_Graffiti
          ================================= -->
 	<target name="Test_Extension_Graffiti" depends="Build_Extension_Graffiti">
-		<delete file="build/addons/Graffiti.ext.jar"/>
-		<copy file="tmp/ext/Graffiti.jar" tofile="build/addons/Graffiti.ext.jar"/>
-		<antcall target="BuildAndRunApp"/>
+		<delete file="build/addons/Graffiti.ext.jar" />
+		<copy file="build/Graffiti.jar" tofile="build/addons/Graffiti.ext.jar" />
+		<antcall target="BuildAndRunApp" />
 	</target>
 
 	<!-- ================================= 
           target: Build_Extension_HTMLPage              
          ================================= -->
-	<target name="Build_Extension_HTMLPage" description="HTMLPage Add-On" depends="prepare_ext_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/extension/HTMLPage/** bias/res/HTMLPage/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/ext/HTMLPage.jar" 
-			includes="*/**" />
-		<jar basedir="tmp" destfile="build/HTMLPage.jar" includes="ext/**">
+	<target name="Build_Extension_HTMLPage" description="HTMLPage Add-On">
+		<jar basedir="bin" destfile="build/HTMLPage.jar" includes="bias/extension/HTMLPage/** bias/res/HTMLPage/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="HTMLPage" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="0.6.1" />
+				<attribute name="Bias-Add-On-Description" value="WYSIWYG HTML Page Composer" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
-	
+
 	<!-- ================================= 
           target: Test_Extension_HTMLPage
          ================================= -->
-		<target name="Test_Extension_HTMLPage" depends="Build_Extension_HTMLPage">
-		<delete file="build/addons/HTMLPage.ext.jar"/>
-		<copy file="tmp/ext/HTMLPage.jar" tofile="build/addons/HTMLPage.ext.jar"/>
-		<antcall target="BuildAndRunApp"/>
+	<target name="Test_Extension_HTMLPage" depends="Build_Extension_HTMLPage">
+		<delete file="build/addons/HTMLPage.ext.jar" />
+		<copy file="build/HTMLPage.jar" tofile="build/addons/HTMLPage.ext.jar" />
+		<antcall target="BuildAndRunApp" />
 	</target>
 
 	<!-- ================================= 
           target: Build_Extension_PlainText
          ================================= -->
-	<target name="Build_Extension_PlainText" description="PlainText Add-On" depends="prepare_ext_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/extension/PlainText/** bias/res/PlainText/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/ext/PlainText.jar" 
-			includes="*/**" />
-		<jar basedir="tmp" destfile="build/PlainText.jar" includes="ext/**">
+	<target name="Build_Extension_PlainText" description="PlainText Add-On">
+		<jar basedir="bin" destfile="build/PlainText.jar" includes="bias/extension/PlainText/** bias/res/PlainText/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="PlainText" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="0.9.1" />
+				<attribute name="Bias-Add-On-Description" value="Plain Text Editor" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Test_Extension_PlainText
          ================================= -->
 	<target name="Test_Extension_PlainText" depends="Build_Extension_PlainText">
-		<delete file="build/addons/PlainText.ext.jar"/>
-		<copy file="tmp/ext/PlainText.jar" tofile="build/addons/PlainText.ext.jar"/>
-		<antcall target="BuildAndRunApp"/>
+		<delete file="build/addons/PlainText.ext.jar" />
+		<copy file="build/PlainText.jar" tofile="build/addons/PlainText.ext.jar" />
+		<antcall target="BuildAndRunApp" />
 	</target>
 
 	<!-- ================================= 
           target: Build_Extension_ToDoList
          ================================= -->
-	<target name="Build_Extension_ToDoList" description="ToDoList Add-On" depends="prepare_ext_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/extension/ToDoList/** bias/res/ToDoList/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/ext/ToDoList.jar" 
-			includes="*/**" />
-		<jar basedir="tmp" destfile="build/ToDoList.jar" includes="ext/**">
+	<target name="Build_Extension_ToDoList" description="ToDoList Add-On">
+		<jar basedir="bin" destfile="build/ToDoList.jar" includes="bias/extension/ToDoList/** bias/res/ToDoList/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="ToDoList" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="0.8.9" />
+				<attribute name="Bias-Add-On-Description" value="ToDo List" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
-	
+
 	<!-- ================================= 
           target: Test_Extension_ToDoList
          ================================= -->
 	<target name="Test_Extension_ToDoList" depends="Build_Extension_ToDoList">
-		<delete file="build/addons/ToDoList.ext.jar"/>
-		<copy file="tmp/ext/ToDoList.jar" tofile="build/addons/ToDoList.ext.jar"/>
-		<antcall target="BuildAndRunApp"/>
+		<delete file="build/addons/ToDoList.ext.jar" />
+		<copy file="build/ToDoList.jar" tofile="build/addons/ToDoList.ext.jar" />
+		<antcall target="BuildAndRunApp" />
 	</target>
 
 	<!-- ================================= 
           target: Build_Extension_SimpleSearch
          ================================= -->
-	<target name="Build_Extension_SimpleSearch" description="SimpleSearch Add-On" depends="prepare_ext_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/extension/SimpleSearch/** bias/res/SimpleSearch/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/ext/SimpleSearch.jar" 
-			includes="*/**" />
-		<jar basedir="tmp" destfile="build/SimpleSearch.jar" includes="ext/**">
+	<target name="Build_Extension_SimpleSearch" description="SimpleSearch Add-On">
+		<jar basedir="bin" destfile="build/SimpleSearch.jar" includes="bias/extension/SimpleSearch/** bias/res/SimpleSearch/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SimpleSearch" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="0.7.7" />
+				<attribute name="Bias-Add-On-Description" value="Search Tool" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
-	
+
 	<!-- ================================= 
           target: Test_Extension_SimpleSearch
          ================================= -->
 	<target name="Test_Extension_SimpleSearch" depends="Build_Extension_SimpleSearch">
-		<delete file="build/addons/SimpleSearch.ext.jar"/>
-		<copy file="tmp/ext/SimpleSearch.jar" tofile="build/addons/SimpleSearch.ext.jar"/>
-		<antcall target="BuildAndRunApp"/>
+		<delete file="build/addons/SimpleSearch.ext.jar" />
+		<copy file="build/SimpleSearch.jar" tofile="build/addons/SimpleSearch.ext.jar" />
+		<antcall target="BuildAndRunApp" />
 	</target>
 
 	<!-- ================================= 
           target: Build_Extension_SimpleStats
          ================================= -->
-	<target name="Build_Extension_SimpleStats" description="SimpleStats Add-On" depends="prepare_ext_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/extension/SimpleStats/** bias/res/SimpleStats/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/ext/SimpleStats.jar" 
-			includes="*/**" />
-		<jar basedir="tmp" destfile="build/SimpleStats.jar" includes="ext/**">
+	<target name="Build_Extension_SimpleStats" description="SimpleStats Add-On">
+		<jar basedir="bin" destfile="build/SimpleStats.jar" includes="bias/extension/SimpleStats/** bias/res/SimpleStats/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SimpleStats" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="0.3.9" />
+				<attribute name="Bias-Add-On-Description" value="Statistics Tool" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Test_Extension_SimpleStats
          ================================= -->
 	<target name="Test_Extension_SimpleStats" depends="Build_Extension_SimpleStats">
-		<delete file="build/addons/SimpleStats.ext.jar"/>
-		<copy file="tmp/ext/SimpleStats.jar" tofile="build/addons/SimpleStats.ext.jar"/>
-		<antcall target="BuildAndRunApp"/>
+		<delete file="build/addons/SimpleStats.ext.jar" />
+		<copy file="build/SimpleStats.jar" tofile="build/addons/SimpleStats.ext.jar" />
+		<antcall target="BuildAndRunApp" />
 	</target>
 
 	<!-- ================================= 
           target: Build_Extension_MainEntry
          ================================= -->
-	<target name="Build_Extension_MainEntry" description="MainEntry Add-On" depends="prepare_ext_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/extension/MainEntry/** bias/res/MainEntry/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/ext/MainEntry.jar" 
-			includes="*/**" />
-		<jar basedir="tmp" destfile="build/MainEntry.jar" includes="ext/**">
+	<target name="Build_Extension_MainEntry" description="MainEntry Add-On">
+		<jar basedir="bin" destfile="build/MainEntry.jar" includes="bias/extension/MainEntry/** bias/res/MainEntry/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="MainEntry" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="0.3.1" />
+				<attribute name="Bias-Add-On-Description" value="Handle selected entry as main" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Test_Extension_MainEntry
          ================================= -->
 	<target name="Test_Extension_MainEntry" depends="Build_Extension_MainEntry">
-		<delete file="build/addons/MainEntry.ext.jar"/>
-		<copy file="tmp/ext/MainEntry.jar" tofile="build/addons/MainEntry.ext.jar"/>
-		<antcall target="BuildAndRunApp"/>
+		<delete file="build/addons/MainEntry.ext.jar" />
+		<copy file="build/MainEntry.jar" tofile="build/addons/MainEntry.ext.jar" />
+		<antcall target="BuildAndRunApp" />
 	</target>
 
 	<!-- ================================= 
           target: Build_LAF_JGLooksLAF             
          ================================= -->
-	<target name="Build_LAF_JGLooksLAF" description="JGoodies Looks Look-And-Feel" depends="prepare_laf_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/laf/BiasJGLooksLAF/** bias/res/BiasJGLooksLAF/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasJGLooksLAF.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${lafLibsDir}">
-				<include name="looks.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/BiasJGLooksLAF.jar" includes="laf/** lib/**">
+	<target name="Build_LAF_JGLooksLAF" description="JGoodies Looks Look-And-Feel">
+		<jar basedir="bin" destfile="build/BiasJGLooksLAF.jar" includes="bias/laf/BiasJGLooksLAF/** bias/res/BiasJGLooksLAF/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasJGLooksLAF" />
+				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
+				<attribute name="Bias-Add-On-Version" value="0.3.1" />
+				<attribute name="Bias-Add-On-Description" value="Bias JGoodies Looks Look-And-Feel" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Build_LAF_PgsLAF             
          ================================= -->
-	<target name="Build_LAF_PgsLAF" description="Pgs Look-And-Feel" depends="prepare_laf_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/laf/BiasPgsLAF/** bias/res/BiasPgsLAF/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasPgsLAF.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${lafLibsDir}">
-				<include name="PgsLookAndFeel-jide.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/BiasPgsLAF.jar" includes="laf/** lib/**">
+	<target name="Build_LAF_PgsLAF" description="Pgs Look-And-Feel">
+		<jar basedir="bin" destfile="build/BiasPgsLAF.jar" includes="bias/laf/BiasPgsLAF/** bias/res/BiasPgsLAF/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasPgsLAF" />
+				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
+				<attribute name="Bias-Add-On-Version" value="0.1.1" />
+				<attribute name="Bias-Add-On-Description" value="Bias Pgs Look-And-Feel" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Build_LAF_LipstikLAF             
          ================================= -->
-	<target name="Build_LAF_LipstikLAF" description="Lipstik Look-And-Feel" depends="prepare_laf_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/laf/BiasLipstikLAF/** bias/res/BiasLipstikLAF/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasLipstikLAF.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${lafLibsDir}">
-				<include name="lipstikLF.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/BiasLipstikLAF.jar" includes="laf/** lib/**">
+	<target name="Build_LAF_LipstikLAF" description="Lipstik Look-And-Feel">
+		<jar basedir="bin" destfile="build/BiasLipstikLAF.jar" includes="bias/laf/BiasLipstikLAF/** bias/res/BiasLipstikLAF/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasLipstikLAF" />
+				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
+				<attribute name="Bias-Add-On-Version" value="0.1.1" />
+				<attribute name="Bias-Add-On-Description" value="Bias Lipstik Look-And-Feel" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Build_LAF_SquarenessLAF             
          ================================= -->
-	<target name="Build_LAF_SquarenessLAF" description="Squareness Look-And-Feel" depends="prepare_laf_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/laf/BiasSquarenessLAF/** bias/res/BiasSquarenessLAF/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasSquarenessLAF.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${lafLibsDir}">
-				<include name="squareness.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/BiasSquarenessLAF.jar" includes="laf/** lib/**">
+	<target name="Build_LAF_SquarenessLAF" description="Squareness Look-And-Feel">
+		<jar basedir="bin" destfile="build/BiasSquarenessLAF.jar" includes="bias/laf/BiasSquarenessLAF/** bias/res/BiasSquarenessLAF/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasSquarenessLAF" />
+				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
+				<attribute name="Bias-Add-On-Version" value="0.1.1" />
+				<attribute name="Bias-Add-On-Description" value="Bias Squareness Look-And-Feel" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Build_LAF_TinyLAF             
          ================================= -->
-	<target name="Build_LAF_TinyLAF" description="Tiny Look-And-Feel" depends="prepare_laf_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/laf/BiasTinyLAF/** bias/res/BiasTinyLAF/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasTinyLAF.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${lafLibsDir}">
-				<include name="tinylaf.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/BiasTinyLAF.jar" includes="laf/** lib/**">
+	<target name="Build_LAF_TinyLAF" description="Tiny Look-And-Feel">
+		<jar basedir="bin" destfile="build/BiasTinyLAF.jar" includes="bias/laf/BiasTinyLAF/** bias/res/BiasTinyLAF/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasTinyLAF" />
+				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
+				<attribute name="Bias-Add-On-Version" value="0.1.1" />
+				<attribute name="Bias-Add-On-Description" value="Bias Tiny Look-And-Feel" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Build_LAF_FHLAF             
          ================================= -->
-	<target name="Build_LAF_FHLAF" description="FH Look-And-Feel" depends="prepare_laf_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/laf/BiasFHLAF/** bias/res/BiasFHLAF/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasFHLAF.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${lafLibsDir}">
-				<include name="fhlaf.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/BiasFHLAF.jar" includes="laf/** lib/**">
+	<target name="Build_LAF_FHLAF" description="FH Look-And-Feel">
+		<jar basedir="bin" destfile="build/BiasFHLAF.jar" includes="bias/laf/BiasFHLAF/** bias/res/BiasFHLAF/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasFHLAF" />
+				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
+				<attribute name="Bias-Add-On-Version" value="0.1.1" />
+				<attribute name="Bias-Add-On-Description" value="Bias FH Look-And-Feel" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Build_LAF_LiquidLAF             
          ================================= -->
-	<target name="Build_LAF_LiquidLAF" description="Liquid Look-And-Feel" depends="prepare_laf_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/laf/BiasLiquidLAF/** bias/res/BiasLiquidLAF/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasLiquidLAF.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${lafLibsDir}">
-				<include name="liquidlnf.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/BiasLiquidLAF.jar" includes="laf/** lib/**">
+	<target name="Build_LAF_LiquidLAF" description="Liquid Look-And-Feel">
+		<jar basedir="bin" destfile="build/BiasLiquidLAF.jar" includes="bias/laf/BiasLiquidLAF/** bias/res/BiasLiquidLAF/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasLiquidLAF" />
+				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
+				<attribute name="Bias-Add-On-Version" value="0.1.1" />
+				<attribute name="Bias-Add-On-Description" value="Bias Liquid Look-And-Feel" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Build_LAF_SyntheticaLAF             
          ================================= -->
-	<target name="Build_LAF_SyntheticaLAF" description="Synthetica Look-And-Feel" depends="prepare_laf_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/laf/BiasSyntheticaLAF/** bias/res/BiasSyntheticaLAF/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasSyntheticaLAF.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${lafLibsDir}">
-				<include name="synthetica.jar" />
-				<include name="syntheticaBlackMoon.jar" />
-				<include name="syntheticaSilverMoon.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/BiasSyntheticaLAF.jar" includes="laf/** lib/**">
+	<target name="Build_LAF_SyntheticaLAF" description="Synthetica Look-And-Feel">
+		<jar basedir="bin" destfile="build/BiasSyntheticaLAF.jar" includes="bias/laf/BiasSyntheticaLAF/** bias/res/BiasSyntheticaLAF/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasSyntheticaLAF" />
+				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
+				<attribute name="Bias-Add-On-Version" value="0.1.1" />
+				<attribute name="Bias-Add-On-Description" value="Bias Synthetica Look-And-Feel" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Build_LAF_InfoNodeLAF             
          ================================= -->
-	<target name="Build_LAF_InfoNodeLAF" description="InfoNode Look-And-Feel" depends="prepare_laf_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/laf/BiasInfoNodeLAF/** bias/res/BiasInfoNodeLAF/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasInfoNodeLAF.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${lafLibsDir}">
-				<include name="ilf-gpl.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/BiasInfoNodeLAF.jar" includes="laf/** lib/**">
+	<target name="Build_LAF_InfoNodeLAF" description="InfoNode Look-And-Feel">
+		<jar basedir="bin" destfile="build/BiasInfoNodeLAF.jar" includes="bias/laf/BiasInfoNodeLAF/** bias/res/BiasInfoNodeLAF/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasInfoNodeLAF" />
+				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
+				<attribute name="Bias-Add-On-Version" value="0.1.1" />
+				<attribute name="Bias-Add-On-Description" value="Bias InfoNode Look-And-Feel" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Build_LAF_TonicSlimLAF             
          ================================= -->
-	<target name="Build_LAF_TonicSlimLAF" description="Tonic Slim Look-And-Feel" depends="prepare_laf_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/laf/BiasTonicSlimLAF/** bias/res/BiasTonicSlimLAF/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasTonicSlimLAF.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${lafLibsDir}">
-				<include name="toniclf_slim.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/BiasTonicSlimLAF.jar" includes="laf/** lib/**">
+	<target name="Build_LAF_TonicSlimLAF" description="Tonic Slim Look-And-Feel">
+		<jar basedir="bin" destfile="build/BiasTonicSlimLAF.jar" includes="bias/laf/BiasTonicSlimLAF/** bias/res/BiasTonicSlimLAF/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasTonicSlimLAF" />
+				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
+				<attribute name="Bias-Add-On-Version" value="0.1.3" />
+				<attribute name="Bias-Add-On-Description" value="Bias Tonic Slim Look-And-Feel" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
+		</jar>
 	</target>
 
 	<!-- ================================= 
           target: Build_LAF_SubstanceLAF             
          ================================= -->
-	<target name="Build_LAF_SubstanceLAF" description="Substance Look-And-Feel" depends="prepare_laf_build">
-		<copy todir="tmp/tmp">
-			<fileset dir="bin" includes="bias/laf/BiasSubstanceLAF/** bias/res/BiasSubstanceLAF/**" />
-		</copy>
-		<jar basedir="tmp/tmp" destfile="tmp/laf/BiasSubstanceLAF.jar" 
-			includes="*/**" />
-		<copy todir="tmp/lib">
-			<fileset dir="${lafLibsDir}">
-				<include name="substance.jar" />
-			</fileset>
-		</copy>
-		<jar basedir="tmp" destfile="build/BiasSubstanceLAF.jar" includes="laf/** lib/**">
+	<target name="Build_LAF_SubstanceLAF" description="Substance Look-And-Feel">
+		<jar basedir="bin" destfile="build/BiasSubstanceLAF.jar" includes="bias/laf/BiasSubstanceLAF/** bias/res/BiasSubstanceLAF/**">
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="BiasSubstanceLAF" />
+				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
+				<attribute name="Bias-Add-On-Version" value="0.1.2" />
+				<attribute name="Bias-Add-On-Description" value="Bias Substance Look-And-Feel" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
-		</jar>	
-	</target>
-
-	<!-- ================================= 
-          target: Prepare Extension Build
-    	 ================================= -->
-	<target name="prepare_ext_build">
-		<deltree dir="tmp"/>
-		<mkdir dir="tmp/tmp"/>
-		<mkdir dir="tmp/ext"/>
-	</target>
-
-	<!-- ================================= 
-          target: Prepare LAF Build
-    	 ================================= -->
-	<target name="prepare_laf_build">
-		<deltree dir="tmp"/>
-		<mkdir dir="tmp/tmp"/>
-		<mkdir dir="tmp/laf"/>
-		<mkdir dir="tmp/lib"/>
+		</jar>
 	</target>
 
 </project>

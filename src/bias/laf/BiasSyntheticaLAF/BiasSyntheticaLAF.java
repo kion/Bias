@@ -5,7 +5,6 @@ package bias.laf.BiasSyntheticaLAF;
 
 import javax.swing.UIManager;
 
-import bias.annotation.AddOnAnnotation;
 import bias.laf.LookAndFeel;
 import de.javasoft.plaf.synthetica.SyntheticaBlackMoonLookAndFeel;
 import de.javasoft.plaf.synthetica.SyntheticaLookAndFeel;
@@ -14,13 +13,13 @@ import de.javasoft.plaf.synthetica.SyntheticaLookAndFeel;
  * @author kion
  */
 
-@AddOnAnnotation(
-        version="0.1.1",
-        author="R. Kasianenko",
-        description = "Bias Synthetica Look-&-Feel",
-        details = "<i>BiasSyntheticaLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +
-                  "It uses <a href=\"http://www.javasoft.de/jsf/public/products/synthetica\">Synthetica Look-&-Feel</a> for Java/Swing applications<br>" +
-                  "provided by <a href=\"http://www.javasoft.de/\">JAVASOFT Software Engineering</a>.")
+//@AddOnAnnotation(
+//        version="0.1.1",
+//        author="R. Kasianenko",
+//        description = "Bias Synthetica Look-&-Feel",
+//        details = "<i>BiasSyntheticaLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +
+//                  "It uses <a href=\"http://www.javasoft.de/jsf/public/products/synthetica\">Synthetica Look-&-Feel</a> for Java/Swing applications<br>" +
+//                  "provided by <a href=\"http://www.javasoft.de/\">JAVASOFT Software Engineering</a>.")
 public class BiasSyntheticaLAF extends LookAndFeel {
 
     /* (non-Javadoc)

@@ -9,7 +9,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import bias.Constants;
-import bias.annotation.AddOnAnnotation;
+import bias.Constants.ADDON_TYPE;
+import bias.core.AddOnInfo;
 import bias.core.BackEnd;
 import bias.core.DataEntry;
 
@@ -21,6 +22,10 @@ public class ExtensionFactory {
     
     private static Map<String, Class<? extends EntryExtension>> entryTypes = null;
     private static Map<ToolExtension, String> toolTypes = null;
+    
+    private ExtensionFactory() {
+        // hidden default constructor
+    }
 
     @SuppressWarnings("unchecked")
     private static Extension newExtension(Class<? extends Extension> clazz, UUID id, byte[] data, byte[] settings) throws Throwable {
@@ -44,19 +49,19 @@ public class ExtensionFactory {
     }
     
 	public static Extension newExtension(Class<? extends Extension> clazz) throws Throwable {
-        byte[] defSettings = BackEnd.getInstance().getExtensionSettings(clazz.getName());
+        byte[] defSettings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), ADDON_TYPE.Extension);
         Extension extension = newExtension(clazz, null, new byte[]{}, defSettings);
         return extension;
     }
     
     public static ToolExtension newToolExtension(Class<? extends ToolExtension> clazz, byte[] data) throws Throwable {
-        byte[] settings = BackEnd.getInstance().getExtensionSettings(clazz.getName());
+        byte[] settings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), ADDON_TYPE.Extension);
         return (ToolExtension) newExtension(clazz, null, data, settings);
     }
     
     @SuppressWarnings("unchecked")
     public static EntryExtension newEntryExtension(DataEntry dataEntry) throws Throwable {
-        String type = Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+        String type = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                         + dataEntry.getType() + Constants.PACKAGE_PATH_SEPARATOR + dataEntry.getType();
         Class<EntryExtension> entryClass = (Class<EntryExtension>) Class.forName(type);
         EntryExtension extension = (EntryExtension) newExtension(entryClass, dataEntry.getId(), dataEntry.getData(), dataEntry.getSettings());
@@ -71,22 +76,20 @@ public class ExtensionFactory {
     public static Map<String, Class<? extends EntryExtension>> getAnnotatedEntryExtensionClasses() throws Throwable {
         if (entryTypes == null) {
             entryTypes = new LinkedHashMap<String, Class<? extends EntryExtension>>();
-            for (String extension : BackEnd.getInstance().getExtensions()) {
-                Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
-                // extension instantiation test
-                if (EntryExtension.class.isAssignableFrom(extClass)) {
-                    AddOnAnnotation extAnn = (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
-                    String annotationStr;
-                    if (extAnn != null) {
-                        annotationStr = extClass.getSimpleName() 
-                                        + " [ " + extAnn.description() + " ]";
-                    } else {
-                        annotationStr = extension.substring(
-                                extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR) + 1, extension.length()) 
-                                        + " [ Extension Info Is Missing ]";
+            for (AddOnInfo extension : BackEnd.getInstance().getAddOns(ADDON_TYPE.Extension)) {
+                try {
+                    String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
+                                            + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
+                    Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
+                    // extension instantiation test
+                    if (EntryExtension.class.isAssignableFrom(extClass)) {
+                        // extension is ok, add it to the list
+                        String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
+                        entryTypes.put(annotationStr, (Class<? extends EntryExtension>) extClass);
                     }
-                    // extension is ok, add it to the list
-                    entryTypes.put(annotationStr, (Class<? extends EntryExtension>) extClass);
+                } catch (Throwable t) {
+                    // ignore broken extensions
+                    t.printStackTrace(System.err);
                 }
             }
         }
@@ -94,27 +97,20 @@ public class ExtensionFactory {
     }
     
     @SuppressWarnings("unchecked")
-    public static Map<ToolExtension, String> getAnnotatedToolExtensions() {
+    public static Map<ToolExtension, String> getAnnotatedToolExtensions() throws Throwable {
         if (toolTypes == null) {
             toolTypes = new LinkedHashMap<ToolExtension, String>();
-            for (String extension : BackEnd.getInstance().getExtensions()) {
+            for (AddOnInfo extension : BackEnd.getInstance().getAddOns(ADDON_TYPE.Extension)) {
                 try {
-                    Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
+                    String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
+                                            + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
+                    Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
                     if (ToolExtension.class.isAssignableFrom(extClass)) {
                         // extension instantiation test
-                        Extension ext = newToolExtension((Class<ToolExtension>) Class.forName(extension), BackEnd.getInstance().getToolData(extension));
-                        AddOnAnnotation extAnn = (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
-                        String annotationStr;
-                        if (extAnn != null) {
-                            annotationStr = extClass.getSimpleName() 
-                                            + " [ " + extAnn.description() + " ]";
-                        } else {
-                            annotationStr = extension.substring(
-                                    extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR) + 1, extension.length()) 
-                                            + " [ Extension Info Is Missing ]";
-                        }
+                        ToolExtension ext = newToolExtension((Class<ToolExtension>) Class.forName(fullExtName), BackEnd.getInstance().getToolData(extension.getName()));
                         // extension is ok, add it to the list
-                        toolTypes.put((ToolExtension) ext, annotationStr);
+                        String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
+                        toolTypes.put(ext, annotationStr);
                     }
                 } catch (Throwable t) {
                     // ignore, broken extensions just won't be returned
@@ -123,36 +119,5 @@ public class ExtensionFactory {
         }
         return toolTypes;
     }
-    
-//    @SuppressWarnings("unchecked")
-//    public Map<String, Class<? extends ToolExtension>> getAnnotatedToolExtensions() {
-//        Map<String, Class<? extends ToolExtension>> types = new LinkedHashMap<String, Class<? extends ToolExtension>>();
-//        for (String extension : BackEnd.getInstance().getExtensions()) {
-//            try {
-//                Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
-//                // extension instantiation test
-//                Extension ext = newExtension(extClass);
-//                if (ext instanceof ToolExtension) {
-//                    AddOnAnnotation extAnn = 
-//                        (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
-//                    String annotationStr;
-//                    if (extAnn != null) {
-//                        annotationStr = extClass.getSimpleName() 
-//                                        + " [ " + extAnn.description() + " ]";
-//                    } else {
-//                        annotationStr = extension.substring(
-//                                extension.lastIndexOf(Constants.PACKAGE_PATH_SEPARATOR) + 1, extension.length()) 
-//                                        + " [ Extension Info Is Missing ]";
-//                    }
-//                    // extension is ok, add it to the list
-//                    types.put(annotationStr, (Class<? extends ToolExtension>) extClass);
-//                }
-//            } catch (Throwable t) {
-//                // ignore, broken tools just won't be accessible
-//                t.printStackTrace(System.err);
-//            }
-//        }
-//        return types;
-//    }
     
 }

@@ -7,7 +7,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
-import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -29,10 +28,15 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -69,6 +73,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -78,6 +83,8 @@ import javax.swing.JToolBar;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.RowFilter;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.CaretEvent;
@@ -93,20 +100,26 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 
 import bias.Constants;
+import bias.Launcher;
 import bias.Preferences;
 import bias.Splash;
+import bias.Constants.ADDON_TYPE;
 import bias.Preferences.PreferenceValidator;
-import bias.annotation.AddOnAnnotation;
 import bias.annotation.PreferenceAnnotation;
 import bias.annotation.PreferenceEnableAnnotation;
 import bias.annotation.PreferenceProtectAnnotation;
 import bias.annotation.PreferenceValidationAnnotation;
+import bias.core.AddOnInfo;
 import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
@@ -124,15 +137,23 @@ import bias.extension.MissingExtensionInformer;
 import bias.extension.ToolExtension;
 import bias.extension.ToolRepresentation;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
-import bias.laf.ControlIcons;
 import bias.laf.LookAndFeel;
+import bias.laf.UIIcons;
+import bias.online.xmlb.ObjectFactory;
+import bias.online.xmlb.OnlineResource;
+import bias.online.xmlb.Repository;
+import bias.online.xmlb.ResourceType;
 import bias.transfer.Transferrer;
 import bias.transfer.Transferrer.TRANSFER_TYPE;
 import bias.utils.AppManager;
 import bias.utils.ArchUtils;
+import bias.utils.Downloader;
 import bias.utils.FSUtils;
+import bias.utils.FormatUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
+import bias.utils.VersionComparator;
+import bias.utils.Downloader.DownloadListener;
 
 
 /**
@@ -153,6 +174,8 @@ public class FrontEnd extends JFrame {
 
     private static final ImageIcon ICON_CLOSE = new ImageIcon(FrontEnd.class.getResource("/bias/res/close.png"));
 
+    private static final URL SPLASH_IMAGE_PROCESS = FrontEnd.class.getResource("/bias/res/process.gif");
+
     private static final String RESTART_MESSAGE = "Changes will take effect after Bias restart";
     
     private static enum DATA_OPERATION_TYPE {
@@ -166,16 +189,6 @@ public class FrontEnd extends JFrame {
             new Placement(JTabbedPane.RIGHT),
             new Placement(JTabbedPane.BOTTOM)
         };
-
-    private static final String STATUS_MESSAGE_PREFIX = "<html>&nbsp;";
-    
-    private static final String STATUS_MESSAGE_HTML_COLOR_NORMAL = "<font color=\"#000000\">";
-    
-    private static final String STATUS_MESSAGE_HTML_COLOR_HIGHLIGHTED = "<font color=\"#00A000\">";
-    
-    private static final String STATUS_MESSAGE_SUFFIX = "</font></html>";
-
-    private static final String ADDON_ANN_FIELD_VALUE_NA = "N/A";
     
     private static final JLabel recursiveExportInfoLabel = new JLabel(
             "<html><b><i><font color=\"blue\">" +
@@ -200,12 +213,14 @@ public class FrontEnd extends JFrame {
     
     private static FrontEnd instance;
     
+    private static Map<String, ImageIcon> icons;
+    
     private static Map<Class<? extends ToolExtension>, ToolExtension> tools;
 
     private static Map<Class<? extends ToolExtension>, JPanel> indicatorAreas = new HashMap<Class<? extends ToolExtension>, JPanel>();
 
     // use default control icons initially
-    private static ControlIcons controlIcons = new ControlIcons();
+    private static UIIcons uiIcons = new UIIcons();
 
     private static Properties config;
     
@@ -658,52 +673,6 @@ public class FrontEnd extends JFrame {
         this.setSize(wwValue, whValue);
     }
     
-    @SuppressWarnings("unchecked")
-    private static void activateLAF() {
-        String laf = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
-        if (laf != null) {
-            try {
-                String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                Class<LookAndFeel> lafClass = (Class<LookAndFeel>) Class.forName(lafFullClassName);
-                LookAndFeel lafInstance = lafClass.newInstance();
-                byte[] lafSettings = BackEnd.getInstance().getLAFSettings(lafFullClassName);
-                lafInstance.activate(lafSettings);
-                // use control icons defined by LAF if available
-                if (lafInstance.getControlIcons() != null) {
-                    controlIcons = lafInstance.getControlIcons();
-                }
-                if (activeLAF == null) {
-                    if (laf != null) {
-                        activeLAF = laf;
-                    } else {
-                        activeLAF = DEFAULT_LOOK_AND_FEEL;
-                    }
-                }
-            } catch (Throwable t) {
-                activeLAF = DEFAULT_LOOK_AND_FEEL;
-                System.err.println(
-                        "Current Look-&-Feel '" + laf + "' is broken (failed to initialize)!" + Constants.NEW_LINE +
-                        "It will be uninstalled." + Constants.NEW_LINE + "Error details: " + Constants.NEW_LINE);
-                t.printStackTrace(System.err);
-                try {
-                    String lafFullClassName = Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
-                                                + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                    BackEnd.getInstance().uninstallLAF(lafFullClassName);
-                    config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
-                    System.err.println(
-                            "Broken Look-&-Feel '" + laf + "' has been uninstalled ;)" + Constants.NEW_LINE +
-                            RESTART_MESSAGE);
-                } catch (Throwable t2) {
-                    System.err.println("Broken Look-&-Feel '" + laf + "' failed to uninstall :(" + Constants.NEW_LINE 
-                            + "Error details: " + Constants.NEW_LINE);
-                    t2.printStackTrace(System.err);
-                }
-            }
-        } else {
-            activeLAF = DEFAULT_LOOK_AND_FEEL;
-        }
-    }
-    
     /**
      * This method initializes this
      * 
@@ -753,7 +722,42 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private boolean setActiveLAF(String laf) throws Exception {
+    @SuppressWarnings("unchecked")
+    private static void activateLAF() {
+        String laf = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+        if (laf != null) {
+            try {
+                String lafFullClassName = Constants.LAF_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
+                Class<LookAndFeel> lafClass = (Class<LookAndFeel>) Class.forName(lafFullClassName);
+                LookAndFeel lafInstance = lafClass.newInstance();
+                byte[] lafSettings = BackEnd.getInstance().getAddOnSettings(lafFullClassName, ADDON_TYPE.LookAndFeel);
+                lafInstance.activate(lafSettings);
+                // use control icons defined by LAF if available
+                if (lafInstance.getUIIcons() != null) {
+                    uiIcons = lafInstance.getUIIcons();
+                }
+                if (activeLAF == null) {
+                    if (laf != null) {
+                        activeLAF = laf;
+                    } else {
+                        activeLAF = DEFAULT_LOOK_AND_FEEL;
+                    }
+                }
+            } catch (Throwable t) {
+                activeLAF = DEFAULT_LOOK_AND_FEEL;
+                config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+                System.err.println(
+                        "Current Look-&-Feel '" + laf + "' failed to initialize!" + Constants.NEW_LINE +
+                        "(Preferences will be auto-modified to use default Look-&-Feel)" + Constants.NEW_LINE + 
+                        "Error details: " + Constants.NEW_LINE);
+                t.printStackTrace(System.err);
+            }
+        } else {
+            activeLAF = DEFAULT_LOOK_AND_FEEL;
+        }
+    }
+    
+    private boolean setActiveLAF(String laf) throws Throwable {
         boolean lafChanged = false;
         String currentLAF = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
         if (laf != null) {
@@ -773,16 +777,16 @@ public class FrontEnd extends JFrame {
     }
     
     @SuppressWarnings("unchecked")
-    private boolean configureLAF(String laf) throws Exception {
+    private boolean configureLAF(String laf) throws Throwable {
         boolean lafChanged = false;
         if (laf != null) {
             Class<LookAndFeel> lafClass = (Class<LookAndFeel>) Class.forName(laf);
             LookAndFeel lafInstance = lafClass.newInstance();
-            byte[] lafSettings = BackEnd.getInstance().getLAFSettings(laf);
+            byte[] lafSettings = BackEnd.getInstance().getAddOnSettings(laf, ADDON_TYPE.LookAndFeel);
             byte[] settings = lafInstance.configure(lafSettings);
             // store if differs from stored version
             if (!PropertiesUtils.deserializeProperties(settings).equals(PropertiesUtils.deserializeProperties(lafSettings))) {
-                BackEnd.getInstance().storeLAFSettings(laf, settings);
+                BackEnd.getInstance().storeAddOnSettings(laf, ADDON_TYPE.LookAndFeel, settings);
             }
             // find out if differs from initial version
             byte[] initialSettings = initialLAFSettings.get(laf);
@@ -798,8 +802,8 @@ public class FrontEnd extends JFrame {
     @SuppressWarnings("unchecked")
     private void configureExtension(String extension, boolean showFirstTimeUsageMessage) throws Exception {
         if (extension != null) {
+            String extName = extension.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             if (showFirstTimeUsageMessage) {
-                String extName = extension.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
                 displayMessage(
                         "This is first time you use '" + extName + "' extension." + Constants.NEW_LINE +
                         "If extension is configurable, you can adjust its default settings...");
@@ -807,7 +811,7 @@ public class FrontEnd extends JFrame {
             try {
                 Class<? extends Extension> extensionClass = (Class<? extends Extension>) Class.forName(extension);
                 Extension extensionInstance = null;
-                byte[] extSettings = BackEnd.getInstance().getExtensionSettings(extension);
+                byte[] extSettings = BackEnd.getInstance().getAddOnSettings(extension, ADDON_TYPE.Extension);
                 byte[] settings = null;
                 if (ToolExtension.class.isAssignableFrom(extensionClass)) {
                     extensionInstance = tools.get((Class<? extends ToolExtension>) Class.forName(extension));
@@ -823,7 +827,7 @@ public class FrontEnd extends JFrame {
                     settings = new byte[]{};
                 }
                 if (!Arrays.equals(extSettings, settings)) {
-                    BackEnd.getInstance().storeExtensionSettings(extension, settings);
+                    BackEnd.getInstance().storeAddOnSettings(extension, ADDON_TYPE.Extension, settings);
                     if (extensionInstance instanceof ToolExtension) {
                         getJPanelIndicators().setVisible(false);
                         JPanel panel = indicatorAreas.get(extensionClass);
@@ -852,13 +856,15 @@ public class FrontEnd extends JFrame {
                 }
             } catch (Throwable t) {
                 displayErrorMessage(
-                        "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize just configured settings!" + Constants.NEW_LINE +
-                        "Settings that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
-                        "This the most likely is an extension's bug." + Constants.NEW_LINE +
-                        "You can either:" + Constants.NEW_LINE +
-                            "* check for new version of extension (the bug may be fixed in new version)" + Constants.NEW_LINE +
-                            "* uninstall extension to avoid further instability and data loss" + Constants.NEW_LINE + 
-                            "* refer to extension's author for further help", t);
+                        "<html>Extension <i>" + extName + "</i> failed to serialize settings!<br/>" +
+                        "Settings that have failed to serialize will be lost! :(<br/>" + 
+                        "This the most likely is an extension's bug or 3rd-party library dependency problem.<br/>" +
+                        "You can either:<br/>" +
+                            "<ul><li>check for new version of extension (the bug may be fixed in new version)</li>" +
+                            "<li>check whether all 3rd-party libraries extension depends on are installed</li>" +
+                            "<li>uninstall extension to avoid further instability and data loss</li>" + 
+                            "<li>contact extension's author for further help</li>" +
+                            "</ul></html>", t);
             }
         }
     }
@@ -870,7 +876,12 @@ public class FrontEnd extends JFrame {
     }
     
     private static void representTools() {
-        Map<ToolExtension, String> extensions = ExtensionFactory.getAnnotatedToolExtensions();
+        Map<ToolExtension, String> extensions = null;
+        try {
+            extensions = ExtensionFactory.getAnnotatedToolExtensions();
+        } catch (Throwable t) {
+            displayErrorMessage("Failed to initialize tools! ", t);
+        }
         if (extensions != null) {
             instance.getJToolBar3().removeAll();
             tools = new LinkedHashMap<Class<? extends ToolExtension>, ToolExtension>();
@@ -1045,7 +1056,7 @@ public class FrontEnd extends JFrame {
         if (tools != null) {
             for (ToolExtension tool : tools.values()) {
                 toolsData.put(tool.getClass().getName(), tool.serializeData());
-                BackEnd.getInstance().storeExtensionSettings(tool.getClass().getName(), tool.serializeSettings());
+                BackEnd.getInstance().storeAddOnSettings(tool.getClass().getName(), ADDON_TYPE.Extension, tool.serializeSettings());
             }
         }
         return toolsData;
@@ -1106,25 +1117,29 @@ public class FrontEnd extends JFrame {
                         serializedData = extension.serializeData();
                     } catch (Throwable t) {
                         displayErrorMessage(
-                                "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize data!" + Constants.NEW_LINE +
-                                "Data that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
-                                "This the most likely is an extension's bug." + Constants.NEW_LINE +
-                                "You can either:" + Constants.NEW_LINE +
-                                    "* check for new version of extension (the bug may be fixed in new version)" + Constants.NEW_LINE +
-                                    "* uninstall extension to avoid further instability and data loss" + Constants.NEW_LINE + 
-                                    "* refer to extension's author for further help", t);
+                                "<html>Extension <i>" + extension.getClass().getSimpleName() + "</i> failed to serialize data!<br/>" +
+                                "Data that have failed to serialize will be lost! :(<br/>" + 
+                                "This the most likely is an extension's bug or 3rd-party library dependency problem.<br/>" +
+                                "You can either:<br/>" +
+                                    "<ul><li>check for new version of extension (the bug may be fixed in new version)</li>" +
+                                    "<li>check whether all 3rd-party libraries extension depends on are installed</li>" +
+                                    "<li>uninstall extension to avoid further instability and data loss</li>" + 
+                                    "<li>contact extension's author for further help</li>" +
+                                    "</ul></html>", t);
                     }
                     try {
                         serializedSettings = extension.serializeSettings();
                     } catch (Throwable t) {
                         displayErrorMessage(
-                                "Extension '" + extension.getClass().getSimpleName() + "' failed to serialize settings!" + Constants.NEW_LINE +
-                                "Settings that are failed to serialize will be lost! :(" + Constants.NEW_LINE + 
-                                "This the most likely is an extension's bug." + Constants.NEW_LINE +
-                                "You can either:" + Constants.NEW_LINE +
-                                    "* check for new version of extension (the bug may be fixed in new version)" + Constants.NEW_LINE +
-                                    "* uninstall extension to avoid further instability and data loss" + Constants.NEW_LINE + 
-                                    "* refer to extension's author for further help", t);
+                                "<html>Extension <i>" + extension.getClass().getSimpleName() + "</i> failed to serialize settings!<br/>" +
+                                "Settings that have failed to serialize will be lost! :(<br/>" + 
+                                "This the most likely is an extension's bug or 3rd-party library dependency problem.<br/>" +
+                                "You can either:<br/>" +
+                                    "<ul><li>check for new version of extension (the bug may be fixed in new version)</li>" +
+                                    "<li>check whether all 3rd-party libraries extension depends on are installed</li>" +
+                                    "<li>uninstall extension to avoid further instability and data loss</li>" + 
+                                    "<li>contact extension's author for further help</li>" +
+                                    "</ul></html>", t);
                     }
                 }
                 DataEntry dataEntry;
@@ -1524,7 +1539,7 @@ public class FrontEnd extends JFrame {
 
     public static void displayErrorMessage(String message, Throwable t) {
         Splash.hideSplash();
-        JOptionPane.showMessageDialog(instance, message + getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(instance, message, "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace(System.err);
     }
 
@@ -1540,10 +1555,10 @@ public class FrontEnd extends JFrame {
 
     private void displayAddOnsScreenErrorMessage(String message, Throwable t) {
         Splash.hideSplash();
-        JOptionPane.showMessageDialog(dialog, message + getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(dialog, message, "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace(System.err);
     }
-
+    
     private void displayAddOnsScreenErrorMessage(String message) {
         Splash.hideSplash();
         JOptionPane.showMessageDialog(dialog, message, "Error", JOptionPane.ERROR_MESSAGE);
@@ -1567,13 +1582,11 @@ public class FrontEnd extends JFrame {
         tabPane.addMouseMotionListener(tabMoveListener);
     }
 
-    // TODO [P1] does this work properly ?...
-    
     private static String getFailureDetails(Throwable t) {
         StringBuffer msg = new StringBuffer();
         while (t != null) {
             if (t.getMessage() != null) {
-                msg.append(Constants.BLANK_STR + t.getMessage());
+                msg.append(Constants.NEW_LINE + t.getMessage());
             }
             t = t.getCause();
         }
@@ -1715,21 +1728,29 @@ public class FrontEnd extends JFrame {
         return statusBarMessagesList;
     }
     
+    public void displayStatusBarErrorMessage(final String message) {
+        displayStatusBarMessage(message, true);
+    }
+    
     public void displayStatusBarMessage(final String message) {
+        displayStatusBarMessage(message, false);
+    }
+    
+    private void displayStatusBarMessage(final String message, final boolean isError) {
         new Thread(new Runnable(){
             public void run() {
                 final String timestamp = dateFormat.format(new Date()) + " # ";
-                getJLabelStatusBarMsg().setText(STATUS_MESSAGE_PREFIX + timestamp + STATUS_MESSAGE_HTML_COLOR_HIGHLIGHTED + message + STATUS_MESSAGE_SUFFIX);
+                getJLabelStatusBarMsg().setText(Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_NORMAL) + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                 ((DefaultListModel) getStatusBarMessagesList().getModel()).addElement(timestamp + message);
                 if (getJPanel2().isVisible()) {
                     autoscrollList(getStatusBarMessagesList());
                 }
                 ActionListener al = new ActionListener(){
                     public void actionPerformed(ActionEvent ae){
-                        getJLabelStatusBarMsg().setText(STATUS_MESSAGE_PREFIX + timestamp + STATUS_MESSAGE_HTML_COLOR_NORMAL + message + STATUS_MESSAGE_SUFFIX);
+                        getJLabelStatusBarMsg().setText(Constants.HTML_PREFIX + "&nbsp;" + timestamp + Constants.HTML_COLOR_NORMAL + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                     }
                 };
-                Timer timer = new Timer(1000,al);
+                Timer timer = new Timer(500, al);
                 timer.setRepeats(false);
                 timer.start();
             }
@@ -2258,7 +2279,7 @@ public class FrontEnd extends JFrame {
         public AddRootCategoryAction() {
             putValue(Action.NAME, "addRootCategory");
             putValue(Action.SHORT_DESCRIPTION, "add root category");
-            putValue(Action.SMALL_ICON, controlIcons.getIconRootCategory());
+            putValue(Action.SMALL_ICON, uiIcons.getIconRootCategory());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -2313,7 +2334,7 @@ public class FrontEnd extends JFrame {
         public AddRootEntryAction() {
             putValue(Action.NAME, "addRootEntry");
             putValue(Action.SHORT_DESCRIPTION, "add root entry");
-            putValue(Action.SMALL_ICON, controlIcons.getIconRootEntry());
+            putValue(Action.SMALL_ICON, uiIcons.getIconRootEntry());
         }
 
         public void actionPerformed(ActionEvent evt) {
@@ -2365,7 +2386,7 @@ public class FrontEnd extends JFrame {
             String typeDescription = (String) entryTypeComboBox.getSelectedItem();
             lastAddedEntryType = typeDescription;
             Class<? extends EntryExtension> type = extensions.get(typeDescription);
-            byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
+            byte[] defSettings = BackEnd.getInstance().getAddOnSettings(type.getName(), ADDON_TYPE.Extension);
             if (defSettings == null) {
                 // extension's first time usage
                 configureExtension(type.getName(), true);
@@ -2391,7 +2412,7 @@ public class FrontEnd extends JFrame {
         public ChangePasswordAction() {
             putValue(Action.NAME, "changePassword");
             putValue(Action.SHORT_DESCRIPTION, "change password");
-            putValue(Action.SMALL_ICON, controlIcons.getIconChangePassword());
+            putValue(Action.SMALL_ICON, uiIcons.getIconChangePassword());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -2443,7 +2464,7 @@ public class FrontEnd extends JFrame {
         public AddEntryAction() {
             putValue(Action.NAME, "addEntry");
             putValue(Action.SHORT_DESCRIPTION, "add entry");
-            putValue(Action.SMALL_ICON, controlIcons.getIconEntry());
+            putValue(Action.SMALL_ICON, uiIcons.getIconEntry());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -2484,7 +2505,7 @@ public class FrontEnd extends JFrame {
                         String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                         lastAddedEntryType = typeDescription;
                         Class<? extends EntryExtension> type = extensions.get(typeDescription);
-                        byte[] defSettings = BackEnd.getInstance().getExtensionSettings(type.getName());
+                        byte[] defSettings = BackEnd.getInstance().getAddOnSettings(type.getName(), ADDON_TYPE.Extension);
                         if (defSettings == null) {
                             // extension's first time usage
                             configureExtension(type.getName(), true);
@@ -2519,7 +2540,7 @@ public class FrontEnd extends JFrame {
         public AdjustCategoryAction() {
             putValue(Action.NAME, "adjustCategory");
             putValue(Action.SHORT_DESCRIPTION, "adjust active category");
-            putValue(Action.SMALL_ICON, controlIcons.getIconAdjustCategory());
+            putValue(Action.SMALL_ICON, uiIcons.getIconAdjustCategory());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -2552,7 +2573,7 @@ public class FrontEnd extends JFrame {
         public AdjustEntryAction() {
             putValue(Action.NAME, "adjustEntry");
             putValue(Action.SHORT_DESCRIPTION, "adjust active entry");
-            putValue(Action.SMALL_ICON, controlIcons.getIconAdjustEntry());
+            putValue(Action.SMALL_ICON, uiIcons.getIconAdjustEntry());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -2595,7 +2616,7 @@ public class FrontEnd extends JFrame {
         public DeleteAction() {
             putValue(Action.NAME, "delete");
             putValue(Action.SHORT_DESCRIPTION, "delete active entry/category");
-            putValue(Action.SMALL_ICON, controlIcons.getIconDelete());
+            putValue(Action.SMALL_ICON, uiIcons.getIconDelete());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -2647,7 +2668,7 @@ public class FrontEnd extends JFrame {
         public ImportAction() {
             putValue(Action.NAME, "import");
             putValue(Action.SHORT_DESCRIPTION, "import...");
-            putValue(Action.SMALL_ICON, controlIcons.getIconImport());
+            putValue(Action.SMALL_ICON, uiIcons.getIconImport());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -3039,7 +3060,7 @@ public class FrontEnd extends JFrame {
         public ExportAction() {
             putValue(Action.NAME, "export");
             putValue(Action.SHORT_DESCRIPTION, "export...");
-            putValue(Action.SMALL_ICON, controlIcons.getIconExport());
+            putValue(Action.SMALL_ICON, uiIcons.getIconExport());
         }
 
         public void actionPerformed(ActionEvent e) {
@@ -3617,7 +3638,7 @@ public class FrontEnd extends JFrame {
         public AddCategoryAction() {
             putValue(Action.NAME, "addCategory");
             putValue(Action.SHORT_DESCRIPTION, "add category");
-            putValue(Action.SMALL_ICON, controlIcons.getIconCategory());
+            putValue(Action.SMALL_ICON, uiIcons.getIconCategory());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -3673,7 +3694,7 @@ public class FrontEnd extends JFrame {
         public SaveAction() {
             putValue(Action.NAME, "save");
             putValue(Action.SHORT_DESCRIPTION, "save");
-            putValue(Action.SMALL_ICON, controlIcons.getIconSave());
+            putValue(Action.SMALL_ICON, uiIcons.getIconSave());
         }
 
         public void actionPerformed(ActionEvent evt) {
@@ -3692,7 +3713,7 @@ public class FrontEnd extends JFrame {
         public ExitAction() {
             putValue(Action.NAME, "exit");
             putValue(Action.SHORT_DESCRIPTION, "exit");
-            putValue(Action.SMALL_ICON, controlIcons.getIconExit());
+            putValue(Action.SMALL_ICON, uiIcons.getIconExit());
         }
 
         public void actionPerformed(ActionEvent evt) {
@@ -3707,7 +3728,7 @@ public class FrontEnd extends JFrame {
         public BackToFirstAction() {
             putValue(Action.NAME, "backToFirst");
             putValue(Action.SHORT_DESCRIPTION, "back to first");
-            putValue(Action.SMALL_ICON, controlIcons.getIconBackToFirst());
+            putValue(Action.SMALL_ICON, uiIcons.getIconBackToFirst());
             setEnabled(false);
         }
 
@@ -3725,7 +3746,7 @@ public class FrontEnd extends JFrame {
         public BackAction() {
             putValue(Action.NAME, "back");
             putValue(Action.SHORT_DESCRIPTION, "back");
-            putValue(Action.SMALL_ICON, controlIcons.getIconBack());
+            putValue(Action.SMALL_ICON, uiIcons.getIconBack());
             setEnabled(false);
         }
 
@@ -3745,7 +3766,7 @@ public class FrontEnd extends JFrame {
         public ForwardAction() {
             putValue(Action.NAME, "forward");
             putValue(Action.SHORT_DESCRIPTION, "forward");
-            putValue(Action.SMALL_ICON, controlIcons.getIconForward());
+            putValue(Action.SMALL_ICON, uiIcons.getIconForward());
             setEnabled(false);
         }
 
@@ -3765,7 +3786,7 @@ public class FrontEnd extends JFrame {
         public ForwardToLastAction() {
             putValue(Action.NAME, "forwardToLast");
             putValue(Action.SHORT_DESCRIPTION, "forward to last");
-            putValue(Action.SMALL_ICON, controlIcons.getIconForwardToLast());
+            putValue(Action.SMALL_ICON, uiIcons.getIconForwardToLast());
             setEnabled(false);
         }
 
@@ -3783,7 +3804,7 @@ public class FrontEnd extends JFrame {
         public PreferencesAction() {
             putValue(Action.NAME, "preferences");
             putValue(Action.SHORT_DESCRIPTION, "preferences");
-            putValue(Action.SMALL_ICON, controlIcons.getIconPreferences());
+            putValue(Action.SMALL_ICON, uiIcons.getIconPreferences());
         }
 
         boolean prefsErr;
@@ -3847,7 +3868,19 @@ public class FrontEnd extends JFrame {
                             } else if ("boolean".equals(type)) {
                                 prefPanel = new JPanel(new GridLayout(1, 1));
                                 prefControl = new JCheckBox(prefAnn.title());
+                                ((JCheckBox) prefControl).setToolTipText(prefAnn.description());
                                 ((JCheckBox) prefControl).setSelected(field.getBoolean(Preferences.getInstance()));
+                            } else if ("int".equals(type)) {
+                                prefPanel = new JPanel(new GridLayout(1, 2));
+                                JLabel prefTitle = new JLabel(prefAnn.title() + Constants.BLANK_STR);
+                                prefTitle.setToolTipText(prefAnn.description());
+                                prefPanel.add(prefTitle);
+                                SpinnerNumberModel sm = new SpinnerNumberModel();
+                                sm.setMinimum(0);
+                                sm.setStepSize(1);
+                                sm.setValue(field.getInt(Preferences.getInstance()));
+                                prefControl = new JSpinner(sm);
+                                prefPanel.add(prefControl);
                             }
                             if (prefPanel != null && prefControl != null) {
                                 prefEntries.put(prefControl, field);
@@ -3882,6 +3915,8 @@ public class FrontEnd extends JFrame {
                                     pref.getValue().setBoolean(Preferences.getInstance(), ((JCheckBox) pref.getKey()).isSelected());
                                 } else if (pref.getKey() instanceof JComboBox) {
                                     pref.getValue().set(Preferences.getInstance(), ((JComboBox) pref.getKey()).getSelectedItem());
+                                } else if (pref.getKey() instanceof JSpinner) {
+                                    pref.getValue().set(Preferences.getInstance(), ((JSpinner) pref.getKey()).getValue());
                                 }
                             }
                             byte[] after = Preferences.getInstance().serialize();
@@ -3972,6 +4007,8 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private boolean modified;
+    
     // TODO [P2] memory-usage optimization needed (instantiate extensions used in addons-management dialog only once)
     private ManageAddOnsAction manageAddOnsAction = new ManageAddOnsAction();
     private class ManageAddOnsAction extends AbstractAction {
@@ -3980,18 +4017,26 @@ public class FrontEnd extends JFrame {
         public ManageAddOnsAction() {
             putValue(Action.NAME, "manageAddOns");
             putValue(Action.SHORT_DESCRIPTION, "manage add-ons");
-            putValue(Action.SMALL_ICON, controlIcons.getIconAddOns());
+            putValue(Action.SMALL_ICON, uiIcons.getIconAddOns());
         }
 
-        private boolean modified;
-        
-        @SuppressWarnings("unchecked")
         public void actionPerformed(ActionEvent e) {
-
+            modified = false;
+            initAddOnsManagementDialog();
+            dialog.setVisible(true);
+            if (modified) {
+                displayMessage(RESTART_MESSAGE);
+                displayStatusBarMessage("add-ons configuration changed");
+            }
+        }
+        
+    };
+    
+    @SuppressWarnings("unchecked")
+    private void initAddOnsManagementDialog() {
+        if (dialog == null) {
             try {
                 // extensions
-                boolean brokenFixed = false;
-                JLabel extLabel = new JLabel("Extensions Management");
                 final DefaultTableModel extModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
@@ -4006,50 +4051,37 @@ public class FrontEnd extends JFrame {
                 extModel.addColumn("Version");
                 extModel.addColumn("Author");
                 extModel.addColumn("Description");
-                final Map<String, String> extDetails = new HashMap<String, String>();
-                for (String extension : BackEnd.getInstance().getExtensions()) {
+                extModel.addColumn("Status");
+                for (AddOnInfo extension : BackEnd.getInstance().getAddOns(ADDON_TYPE.Extension)) {
+                    String status;
                     try {
-                        Class<Extension> extClass = (Class<Extension>) Class.forName(extension);
+                        String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
+                                                + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
+                        // extension class load test
+                        Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
                         // extension instantiation test
                         ExtensionFactory.newExtension(extClass);
-                        // extension is ok, add it to the list
-                        AddOnAnnotation extAnn = 
-                            (AddOnAnnotation) extClass.getAnnotation(AddOnAnnotation.class);
-                        if (extAnn != null) {
-                            extModel.addRow(new Object[]{
-                                    extClass.getSimpleName(),
-                                    extAnn.version(),
-                                    extAnn.author(),
-                                    extAnn.description()});
-                            String detailsInfo = extAnn.details();
-                            if (!Validator.isNullOrBlank(detailsInfo)) {
-                                extDetails.put(extClass.getSimpleName(), detailsInfo);
-                            }
-                        } else {
-                            extModel.addRow(new Object[]{
-                                    extClass.getSimpleName(),
-                                    ADDON_ANN_FIELD_VALUE_NA,
-                                    ADDON_ANN_FIELD_VALUE_NA,
-                                    ADDON_ANN_FIELD_VALUE_NA});
-                        }
+                        status = Constants.ADDON_STATUS_OK;
                     } catch (Throwable t) {
-                        // broken extension found, inform user about that...
-                        String extensionName = extension.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                        displayAddOnsScreenErrorMessage("Extension [ " + extensionName + " ] is broken and will be uninstalled!", t);
-                        // ... and try uninstall broken extension...
-                        try {
-                            BackEnd.getInstance().uninstallExtension(extension);
-                            displayAddOnsScreenMessage("Broken extension [ " + extensionName + " ] has been uninstalled");
-                            brokenFixed = true;
-                        } catch (Exception ex2) {
-                            // ... if unsuccessfully - inform user about that, do nothing else
-                            displayAddOnsScreenErrorMessage("Error occured while uninstalling broken extension [ " + extensionName + " ]!" + Constants.NEW_LINE + ex2);
-                        }
+                        // extension is broken
+                        System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
+                        t.printStackTrace(System.err);
+                        status = Constants.ADDON_STATUS_BROKEN;
                     }
+                    extModel.addRow(new Object[]{
+                            extension.getName(),
+                            extension.getVersion(),
+                            extension.getAuthor() != null ? extension.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                            extension.getDescription() != null ? extension.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                            status
+                    });
                 }
-                for (Entry<String, String> extensionEntry : BackEnd.getInstance().getNewExtensions().entrySet()) {
-                    String extension = extensionEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                    extModel.addRow(new Object[]{extension, null, null, extensionEntry.getValue()});
+                Map<String, String> newExts = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Extension);
+                if (newExts != null) {
+                    for (Entry<String, String> extensionEntry : newExts.entrySet()) {
+                        String extension = extensionEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                        extModel.addRow(new Object[]{extension, null, null, extensionEntry.getValue()});
+                    }
                 }
                 JButton extDetailsButt = new JButton("Extension's details");
                 extDetailsButt.addActionListener(new ActionListener(){
@@ -4062,16 +4094,17 @@ public class FrontEnd extends JFrame {
                                             "Detailed information about this extension can not be shown yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
-                                    String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
-                                    String detailsInfo = extDetails.get(extension);
-                                    if (detailsInfo != null) {
-                                        JOptionPane.showMessageDialog(dialog, getDetailsPane(detailsInfo), extension + " :: Extension's details", JOptionPane.INFORMATION_MESSAGE);
-                                    } else {
-                                        displayAddOnsScreenMessage("No detailed information provided with this extension.");
-                                    }
+                                    // TODO [P1] implement
+//                                    String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
+//                                    String detailsInfo = 
+//                                    if (detailsInfo != null) {
+//                                        JOptionPane.showMessageDialog(dialog, getDetailsPane(detailsInfo), extension + " :: Extension's details", JOptionPane.INFORMATION_MESSAGE);
+//                                    } else {
+//                                        displayAddOnsScreenMessage("Detailed information is either not provided with this extension or can not be displayed currently.");
+//                                    }
                                 }
-                            } catch (Exception ex) {
-                                displayAddOnsScreenErrorMessage(ex);
+                            } catch (Throwable t) {
+                                displayAddOnsScreenErrorMessage("Failed to display Extensions's details!", t);
                             }
                         } else {
                             displayAddOnsScreenMessage("Please, choose only one extension from the list");
@@ -4091,7 +4124,7 @@ public class FrontEnd extends JFrame {
                                 } else {
                                     String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
                                     String extFullClassName = 
-                                        Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                        Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                 + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
                                     configureExtension(extFullClassName, false);
                                 }
@@ -4107,25 +4140,36 @@ public class FrontEnd extends JFrame {
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extensionFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, dialog);
+                            Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
                                         for (File file : extensionFileChooser.getSelectedFiles()) {
-                                            String installedExt = BackEnd.getInstance().installExtension(file);
-                                            String comment = BackEnd.getInstance().getNewExtensions().get(installedExt);
-                                            installedExt = installedExt.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                            int idx = findDataRowIndex(extModel, 0, installedExt);
+                                            AddOnInfo installedExt = BackEnd.getInstance().installAddOn(file, ADDON_TYPE.Extension);
+                                            String comment = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Extension).get(installedExt.getName());
+                                            int idx = findDataRowIndex(extModel, 0, installedExt.getName());
                                             if (idx != -1) {
                                                 extModel.removeRow(idx);
-                                                extModel.insertRow(idx, new Object[]{installedExt, null, null, comment});
+                                                extModel.insertRow(idx, new Object[]{
+                                                        installedExt.getName(),
+                                                        installedExt.getVersion(),
+                                                        installedExt.getAuthor() != null ? installedExt.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                                                        installedExt.getDescription() != null ? installedExt.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                                                        comment
+                                                });
                                             } else {
-                                                extModel.addRow(new Object[]{installedExt, null, null, comment});
+                                                extModel.addRow(new Object[]{
+                                                        installedExt.getName(),
+                                                        installedExt.getVersion(),
+                                                        installedExt.getAuthor() != null ? installedExt.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                                                        installedExt.getDescription() != null ? installedExt.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                                                        comment
+                                                });
                                             }
                                             modified = true;
                                         }
                                     } catch (Throwable t) {
-                                        displayAddOnsScreenErrorMessage(t);
+                                        displayAddOnsScreenErrorMessage("Failed to install add-on(s)! " + getFailureDetails(t), t);
                                     } finally {
                                         Splash.hideSplash();
                                     }
@@ -4145,9 +4189,9 @@ public class FrontEnd extends JFrame {
                                     while ((idx = extList.getSelectedRow()) != -1) {
                                         String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
                                         String extFullClassName = 
-                                            Constants.EXTENSION_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                            Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                     + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-                                        BackEnd.getInstance().uninstallExtension(extFullClassName);
+                                        BackEnd.getInstance().uninstallAddOn(extFullClassName, ADDON_TYPE.Extension);
                                         idx = extSorter.convertRowIndexToModel(idx);
                                         extModel.removeRow(idx);
                                         modified = true;
@@ -4161,7 +4205,6 @@ public class FrontEnd extends JFrame {
                 });
 
                 // look-&-feels
-                JLabel lafLabel = new JLabel("Look-&-Feels Management");
                 final DefaultTableModel lafModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
@@ -4198,51 +4241,38 @@ public class FrontEnd extends JFrame {
                 lafModel.addColumn("Version");
                 lafModel.addColumn("Author");
                 lafModel.addColumn("Description");
+                lafModel.addColumn("Status");
                 lafModel.addRow(new Object[]{DEFAULT_LOOK_AND_FEEL,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Look-&-Feel"});
-                final Map<String, String> lafDetails = new HashMap<String, String>();
-                for (String laf : BackEnd.getInstance().getLAFs()) {
+                for (AddOnInfo laf : BackEnd.getInstance().getAddOns(ADDON_TYPE.LookAndFeel)) {
+                    String status;
                     try {
-                        Class<?> lafClass = Class.forName(laf);
-                        // laf instantiation test
+                        String fullLAFName = Constants.LAF_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + laf.getName() 
+                                                + Constants.PACKAGE_PATH_SEPARATOR + laf.getName();
+                        // extension class load test
+                        Class<LookAndFeel> lafClass = (Class<LookAndFeel>) Class.forName(fullLAFName);
+                        // extension instantiation test
                         lafClass.newInstance();
-                        // laf is ok, add it to the list
-                        AddOnAnnotation lafAnn = 
-                            (AddOnAnnotation) lafClass.getAnnotation(AddOnAnnotation.class);
-                        if (lafAnn != null) {
-                            lafModel.addRow(new Object[]{
-                                    lafClass.getSimpleName(),
-                                    lafAnn.version(),
-                                    lafAnn.author(),
-                                    lafAnn.description()});
-                            String detailsInfo = lafAnn.details();
-                            if (!Validator.isNullOrBlank(detailsInfo)) {
-                                lafDetails.put(lafClass.getSimpleName(), detailsInfo);
-                            }
-                        } else {
-                            lafModel.addRow(new Object[]{
-                                    lafClass.getSimpleName(),
-                                    ADDON_ANN_FIELD_VALUE_NA,
-                                    ADDON_ANN_FIELD_VALUE_NA,
-                                    ADDON_ANN_FIELD_VALUE_NA});
-                        }
+                        status = Constants.ADDON_STATUS_OK;
                     } catch (Throwable t) {
-                        // broken laf found, inform user about that...
-                        String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                        displayAddOnsScreenErrorMessage("Look-&-Feel [ " + lafName + " ] is broken and will be uninstalled!", t);
-                        // ... and try uninstall broken laf...
-                        try {
-                            BackEnd.getInstance().uninstallLAF(laf);
-                            displayAddOnsScreenMessage("Broken Look-&-Feel [ " + lafName + " ] has been uninstalled");
-                            brokenFixed = true;
-                        } catch (Exception ex2) {
-                            // ... if unsuccessfully - inform user about that, do nothing else
-                            displayAddOnsScreenErrorMessage("Error occured while uninstalling broken Look-&-Feel [ " + lafName + " ]!" + Constants.NEW_LINE + ex2);
-                        }
+                        // extension is broken
+                        System.err.println("Extension [ " + laf.getName() + " ] failed to initialize!");
+                        t.printStackTrace(System.err);
+                        status = Constants.ADDON_STATUS_BROKEN;
                     }
+                    lafModel.addRow(new Object[]{
+                            laf.getName(),
+                            laf.getVersion(),
+                            laf.getAuthor() != null ? laf.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                            laf.getDescription() != null ? laf.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                            status
+                    });
                 }
-                for (Entry<String, String> lafEntry : BackEnd.getInstance().getNewLAFs().entrySet()) {
-                    String laf = lafEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                    lafModel.addRow(new Object[]{laf, null, null, lafEntry.getValue()});
+                Map<String, String> newLAFs = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.LookAndFeel);
+                if (newLAFs != null) {
+                    for (Entry<String, String> lafEntry : newLAFs.entrySet()) {
+                        String laf = lafEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+                        lafModel.addRow(new Object[]{laf, null, null, lafEntry.getValue()});
+                    }
                 }
                 JButton lafDetailsButt = new JButton("Look-&-Feel's details");
                 lafDetailsButt.addActionListener(new ActionListener(){
@@ -4259,19 +4289,20 @@ public class FrontEnd extends JFrame {
                                                 "Detailed information about this look-&-feel can not be shown yet." + Constants.NEW_LINE +
                                                 "Restart Bias first.");
                                     } else {
-                                        String detailsInfo = lafDetails.get(laf);
-                                        if (detailsInfo != null) {
-                                            JOptionPane.showMessageDialog(dialog, getDetailsPane(detailsInfo), laf + " :: Look-&-Feel's details", JOptionPane.INFORMATION_MESSAGE);
-                                        } else {
-                                            displayAddOnsScreenMessage("No detailed information provided with this look-&-feel.");
-                                        }
+                                        // TODO [P1] implement
+//                                        String detailsInfo = 
+//                                        if (detailsInfo != null) {
+//                                            JOptionPane.showMessageDialog(dialog, getDetailsPane(detailsInfo), laf + " :: Look-&-Feel's details", JOptionPane.INFORMATION_MESSAGE);
+//                                        } else {
+//                                            displayAddOnsScreenMessage("Detailed information is either not provided with this Look-&-Feel or can not be displayed currently.");
+//                                        }
                                     }
                                 }
-                            } catch (Exception ex) {
-                                displayAddOnsScreenErrorMessage(ex);
+                            } catch (Throwable t) {
+                                displayAddOnsScreenErrorMessage("Failed to display Look-&-Feel's details!", t);
                             }
                         } else {
-                            displayAddOnsScreenMessage("Please, choose only one extension from the list");
+                            displayAddOnsScreenMessage("Please, choose only one Look-&-Feel from the list");
                         }
                     }
                 });
@@ -4284,8 +4315,8 @@ public class FrontEnd extends JFrame {
                                 try {
                                     modified = setActiveLAF(null);
                                     lafList.repaint();
-                                } catch (Exception t) {
-                                    displayAddOnsScreenErrorMessage(t);
+                                } catch (Throwable t) {
+                                    displayAddOnsScreenErrorMessage("Failed to (re)activate Look-&-Feel!", t);
                                 }
                             } else {
                                 String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
@@ -4296,12 +4327,12 @@ public class FrontEnd extends JFrame {
                                 } else {
                                     try {
                                         String fullLAFClassName = 
-                                            Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                            Constants.LAF_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                     + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
                                         modified = setActiveLAF(fullLAFClassName);
                                         lafList.repaint();
-                                    } catch (Exception t) {
-                                        displayAddOnsScreenErrorMessage(t);
+                                    } catch (Throwable t) {
+                                        displayAddOnsScreenErrorMessage("Failed to (re)activate Look-&-Feel!", t);
                                     }
                                 }
                             }
@@ -4314,25 +4345,36 @@ public class FrontEnd extends JFrame {
                 lafInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, dialog);
+                            Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
                                         for (File file : lafFileChooser.getSelectedFiles()) {
-                                            String installedLAF = BackEnd.getInstance().installLAF(file);
-                                            String comment = BackEnd.getInstance().getNewLAFs().get(installedLAF);
-                                            installedLAF = installedLAF.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                                            int idx = findDataRowIndex(lafModel, 0, installedLAF);
+                                            AddOnInfo installedLAF = BackEnd.getInstance().installAddOn(file, ADDON_TYPE.LookAndFeel);
+                                            String comment = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.LookAndFeel).get(installedLAF.getName());
+                                            int idx = findDataRowIndex(lafModel, 0, installedLAF.getName());
                                             if (idx != -1) {
                                                 lafModel.removeRow(idx);
-                                                lafModel.addRow(new Object[]{installedLAF, null, null, comment});
+                                                lafModel.insertRow(idx, new Object[]{
+                                                        installedLAF.getName(),
+                                                        installedLAF.getVersion(),
+                                                        installedLAF.getAuthor() != null ? installedLAF.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                                                        installedLAF.getDescription() != null ? installedLAF.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                                                        comment
+                                                });
                                             } else {
-                                                lafModel.addRow(new Object[]{installedLAF, null, null, comment});
+                                                lafModel.addRow(new Object[]{
+                                                        installedLAF.getName(),
+                                                        installedLAF.getVersion(),
+                                                        installedLAF.getAuthor() != null ? installedLAF.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                                                        installedLAF.getDescription() != null ? installedLAF.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                                                        comment
+                                                });
                                             }
                                             modified = true;
                                         }
-                                    } catch (Exception ex) {
-                                        displayAddOnsScreenErrorMessage(ex);
+                                    } catch (Throwable t) {
+                                        displayAddOnsScreenErrorMessage("Failed to install add-on(s)! " + getFailureDetails(t), t);
                                     } finally {
                                         Splash.hideSplash();
                                     }
@@ -4354,9 +4396,9 @@ public class FrontEnd extends JFrame {
                                         String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
                                         if (!DEFAULT_LOOK_AND_FEEL.equals(laf)) {
                                             String fullLAFClassName = 
-                                                Constants.LAF_DIR_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                Constants.LAF_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                         + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                                            BackEnd.getInstance().uninstallLAF(fullLAFClassName);
+                                            BackEnd.getInstance().uninstallAddOn(fullLAFClassName, ADDON_TYPE.LookAndFeel);
                                             idx = lafSorter.convertRowIndexToModel(idx);
                                             lafModel.removeRow(idx);
                                             // if look-&-feel that has been uninstalled was active one...
@@ -4379,11 +4421,34 @@ public class FrontEnd extends JFrame {
                 });
                 
                 // icons
-                JLabel icLabel = new JLabel("Icons Management");
+                final DefaultTableModel icSetModel = new DefaultTableModel() {
+                    private static final long serialVersionUID = 1L;
+                    public boolean isCellEditable(int rowIndex, int mColIndex) {
+                        return false;
+                    }
+                };
+                final JTable icSetList = new JTable(icSetModel);
+                final TableRowSorter<TableModel> icSetSorter = new TableRowSorter<TableModel>(icSetModel);
+                icSetSorter.setSortsOnUpdates(true);
+                icSetList.setRowSorter(icSetSorter);
+                icSetModel.addColumn("Name");
+                icSetModel.addColumn("Version");
+                icSetModel.addColumn("Author");
+                icSetModel.addColumn("Description");
+                for (AddOnInfo aoi : BackEnd.getInstance().getIconSets()) {
+                    icSetModel.addRow(new Object[]{
+                            aoi.getName(),
+                            aoi.getVersion(),
+                            aoi.getAuthor(),
+                            aoi.getDescription()
+                    });
+                }
+                icons = new HashMap<String, ImageIcon>();
                 final DefaultListModel icModel = new DefaultListModel();
                 final JList icList = new JList(icModel);
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                     icModel.addElement(icon);
+                    icons.put(icon.getDescription(), icon);
                 }
                 JScrollPane jsp = new JScrollPane(icList);
                 jsp.setPreferredSize(new Dimension(200,200));
@@ -4392,7 +4457,7 @@ public class FrontEnd extends JFrame {
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(Splash.SPLASH_IMAGE_INSTALL, dialog);
+                            Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
@@ -4402,18 +4467,31 @@ public class FrontEnd extends JFrame {
                                             if (!icons.isEmpty()) {
                                                 for (ImageIcon icon : icons) {
                                                     icModel.addElement(icon);
+                                                    FrontEnd.icons.put(icon.getDescription(), icon);
+                                                }
+                                                Collection<AddOnInfo> iconSets = BackEnd.getInstance().getIconSets();
+                                                while (icSetModel.getRowCount() > 0) {
+                                                    icSetModel.removeRow(0);
+                                                }
+                                                for (AddOnInfo isi : iconSets) {
+                                                    icSetModel.addRow(new Object[]{
+                                                            isi.getName(),
+                                                            isi.getVersion(),
+                                                            isi.getAuthor(),
+                                                            isi.getDescription()
+                                                    });
                                                 }
                                                 added = true;
                                             }
                                         }
                                         if (added) {
-                                            displayAddOnsScreenMessage("Icon(s) have been successfully installed!");
                                             icList.repaint();
+                                            displayAddOnsScreenMessage("Icon(s) successfully installed!");
                                         } else {
                                             displayAddOnsScreenErrorMessage("Nothing to install!");
                                         }
-                                    } catch (Exception ex) {
-                                        displayAddOnsScreenErrorMessage(ex);
+                                    } catch (Throwable t) {
+                                        displayAddOnsScreenErrorMessage("Failed to install icon(s)!", t);
                                     } finally {
                                         Splash.hideSplash();
                                     }
@@ -4423,19 +4501,316 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton removeIconButt = new JButton("Remove");
+                JButton removeIconButt = new JButton("Remove selected icon(s)");
                 removeIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
                             if (icList.getSelectedValues().length > 0) {
                                 for (Object icon : icList.getSelectedValues()) {
-                                    BackEnd.getInstance().removeIcon((ImageIcon)icon);
+                                    BackEnd.getInstance().removeIcon(((ImageIcon) icon).getDescription());
                                     icModel.removeElement(icon);
                                 }
                                 displayAddOnsScreenMessage("Icon(s) have been successfully removed!");
                             }
-                        } catch (Exception ex) {
-                            displayAddOnsScreenErrorMessage(ex);
+                        } catch (Throwable t) {
+                            displayAddOnsScreenErrorMessage("Failed to remove icon(s)! " + getFailureDetails(t), t);
+                        }
+                    }
+                });
+                JButton removeIconSetButt = new JButton("Uninstall selected IconSet(s)");
+                removeIconSetButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        StringBuffer sb = new StringBuffer();
+                        while (icSetList.getSelectedRow() != -1) {
+                            String icSet = (String) icSetList.getValueAt(icSetList.getSelectedRow(), 0);
+                            try {
+                                Collection<String> removedIds = BackEnd.getInstance().removeIconSet(icSet);
+                                for (String removedId : removedIds) {
+                                    icModel.removeElement(icons.get(removedId));
+                                }
+                                int idx = icSetList.convertRowIndexToModel(icSetList.getSelectedRow());
+                                icSetModel.removeRow(idx);
+                                sb.append(icSet + Constants.NEW_LINE);
+                            } catch (Throwable t) {
+                                displayAddOnsScreenErrorMessage("Failed to remove IconSet '" + icSet + "'! " + getFailureDetails(t), t);
+                            }
+                        }
+                        if (!Validator.isNullOrBlank(sb)) {
+                            icList.repaint();
+                            displayAddOnsScreenMessage("Following IconSets have been successfully removed: " + Constants.NEW_LINE + sb.toString());
+                        }
+                    }
+                });
+
+                // online list of available addons
+                final DefaultTableModel onlineModel = new DefaultTableModel() {
+                    private static final long serialVersionUID = 1L;
+                    @Override
+                    public boolean isCellEditable(int rowIndex, int mColIndex) {
+                        return mColIndex == 0 ? true : false;
+                    }
+                    @Override
+                    public Class<?> getColumnClass(int columnIndex) {
+                        if (columnIndex == 0) {
+                            return Boolean.class;
+                        } else {
+                            return super.getColumnClass(columnIndex);
+                        }
+                    }
+                };
+                final JTable onlineList = new JTable(onlineModel);
+                final TableRowSorter<TableModel> onlineSorter = new TableRowSorter<TableModel>(onlineModel);
+                onlineSorter.setSortsOnUpdates(true);
+                onlineList.setRowSorter(onlineSorter);
+                onlineModel.addColumn("D & I/U");
+                onlineModel.addColumn("Type");
+                onlineModel.addColumn("Name");
+                onlineModel.addColumn("Version");
+                onlineModel.addColumn("Author");
+                onlineModel.addColumn("Description");
+                onlineModel.addColumn("Size");
+                final JProgressBar onlineSingleProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
+                onlineSingleProgressBar.setStringPainted(true);
+                onlineSingleProgressBar.setMinimum(0);
+                onlineSingleProgressBar.setString(Constants.EMPTY_STR);
+                final JProgressBar onlineTotalProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
+                onlineTotalProgressBar.setStringPainted(true);
+                onlineTotalProgressBar.setMinimum(0);
+                onlineTotalProgressBar.setString(Constants.EMPTY_STR);
+                final JPanel onlineProgressPanel = new JPanel(new GridLayout(2,1));
+                onlineProgressPanel.add(onlineSingleProgressBar);
+                onlineProgressPanel.add(onlineTotalProgressBar);
+                JButton onlineRefreshButt = new JButton("Refresh");
+                onlineRefreshButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        while (onlineModel.getRowCount() > 0) {
+                            onlineModel.removeRow(0);
+                        }
+                        try {
+                            URL addonsListURL = new URL(getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
+                            final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
+                            Downloader d = new Downloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
+                            d.setDownloadListener(new DownloadListener(){
+                                @Override
+                                public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
+                                    try {
+                                        for (OnlineResource resource : ((Repository) getUnmarshaller().unmarshal(file)).getOnlineResource()) {
+                                            if (resource.getType() != null 
+                                                    && !Validator.isNullOrBlank(resource.getName()) 
+                                                    && resource.getFileSize() != null
+                                                    && resource.getVersion() != null 
+                                                    && resource.getVersion().matches(VersionComparator.VERSION_PATTERN)) {
+                                                getAvailableOnlineResources().put(resource.getName(), resource);
+                                                onlineModel.addRow(new Object[]{
+                                                        Boolean.FALSE,
+                                                        resource.getType().value(), 
+                                                        resource.getName(), 
+                                                        resource.getVersion(), 
+                                                        resource.getAuthor() != null ? resource.getAuthor() : Constants.ADDON_FIELD_VALUE_NA, 
+                                                        resource.getDescription() != null ? resource.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                                                        FormatUtils.formatByteSize(resource.getFileSize()) });
+                                            }
+                                        }
+                                    } catch (Throwable t) {
+                                        displayAddOnsScreenErrorMessage("Failed to parse downloaded list of available addons!", t);
+                                    }
+                                }
+                                @Override
+                                public void onFailure(URL url, File file, Throwable failure) {
+                                    displayAddOnsScreenErrorMessage("Failed to retrieve online list of available addons!", failure);
+                                }
+                            });
+                            d.start();
+                        } catch (MalformedURLException ex) {
+                            displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                        }
+                    }
+                });
+                JButton onlineDetailsButt = new JButton("Addon's details");
+                onlineDetailsButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        int idx = onlineList.getSelectedRow();
+                        if (idx != -1) {
+                            String addOnName = (String) onlineList.getValueAt(idx, 2);
+                            try {
+                                final OnlineResource resource = getAvailableOnlineResources().get(addOnName);
+                                String fileName = resource.getName() + (resource.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + resource.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_DETAILS_FILENAME_SUFFIX;
+                                final URL addOnURL = new URL(getRepositoryBaseURL() + fileName);
+                                Thread loadDetailsThread = new Thread(new Runnable(){
+                                    public void run() {
+                                        boolean loaded = false;
+                                        InputStream is = null;
+                                        ByteArrayOutputStream baos = null;
+                                        try {
+                                            is = addOnURL.openStream();
+                                            baos = new ByteArrayOutputStream();
+                                            byte[] buffer = new byte[1024];
+                                            int readBytesNum;
+                                            while ((readBytesNum = is.read(buffer)) != -1) {
+                                                baos.write(buffer, 0, readBytesNum);
+                                            }
+                                            loaded = true;
+                                        } catch (Throwable t) {
+                                            displayAddOnsScreenErrorMessage("Failed to load addon's details page! " + getFailureDetails(t), t);
+                                        } finally {
+                                                try {
+                                                    if (is != null) is.close();
+                                                    if (baos != null) baos.close();
+                                                } catch (IOException e) {
+                                                    // ignore
+                                                }
+                                            if (loaded) {
+                                                JLabel onlineDetailsOpenInBrowserButt = new LinkLabel("Open this page in browser", addOnURL.toString());
+                                                try {
+                                                    JOptionPane.showMessageDialog(
+                                                            dialog,
+                                                            new Component[] { getDetailsPane(new String(baos.toByteArray()), getRepositoryBaseURL()), onlineDetailsOpenInBrowserButt }, 
+                                                            resource.getName() + " :: Addon's details", 
+                                                            JOptionPane.INFORMATION_MESSAGE);
+                                                } catch (MalformedURLException ex) {
+                                                    displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                                loadDetailsThread.start();
+                            } catch (MalformedURLException ex) {
+                                displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                            }
+                        }
+                    }
+                });
+                JButton onlineInstallButt = new JButton("Download & Install/Update");
+                onlineInstallButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            final Map<URL, OnlineResource> urlResourceMap = new HashMap<URL, OnlineResource>();
+                            final Map<URL, File> urlFileMap = new HashMap<URL, File>();
+                            long tSize = 0;
+                            for (int i = 0; i < onlineList.getRowCount(); i++) {
+                                if ((Boolean) onlineList.getValueAt(i, 0)) {
+                                    OnlineResource res = getAvailableOnlineResources().get((String) onlineList.getValueAt(i, 2));
+                                    String fileName = res.getName() + (res.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + res.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_FILENAME_SUFFIX;
+                                    final URL url = new URL(getRepositoryBaseURL() + fileName);
+                                    final File file = new File(Constants.TMP_DIR, fileName);
+                                    urlFileMap.put(url, file);
+                                    urlResourceMap.put(url, res);
+                                    tSize += res.getFileSize();
+                                }
+                            }
+                            final Long totalSize = new Long(tSize);
+                            if (!urlFileMap.isEmpty()) {
+                                Downloader d = new Downloader(urlFileMap, Preferences.getInstance().preferredTimeOut);
+                                d.setDownloadListener(new DownloadListener(){
+                                    private StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
+                                    private JLabel l = new JLabel();
+                                    @Override
+                                    public void onFinish(long downloadedBytesNum, long elapsedTime) {
+                                        sb.append("</ul>" + Constants.HTML_SUFFIX);
+                                        l.setText(sb.toString());
+                                        JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(l));
+                                    }
+                                    @Override
+                                    public void onStart(URL url, File file) {
+                                        OnlineResource res = urlResourceMap.get(url);
+                                        if (res.getFileSize() != null) {
+                                            onlineSingleProgressBar.setMaximum(res.getFileSize().intValue());
+                                        }
+                                    };
+                                    @Override
+                                    public void onSingleProgress(URL url, File file, long downloadedBytesNum, long elapsedTime) {
+                                        OnlineResource res = urlResourceMap.get(url);
+                                        onlineSingleProgressBar.setValue((int) downloadedBytesNum);
+                                        onlineSingleProgressBar.setString(res.getName() + Constants.BLANK_STR + res.getVersion() 
+                                                + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(res.getFileSize()) + ")");
+                                    };
+                                    @Override
+                                    public void onTotalProgress(int itemNum, long downloadedBytesNum, long elapsedTime) {
+                                        onlineTotalProgressBar.setValue((int) downloadedBytesNum);
+                                        double estimationCoef = ((double) totalSize) / ((double) downloadedBytesNum);
+                                        long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
+                                        onlineTotalProgressBar.setString(itemNum + " / " + urlFileMap.size() 
+                                                + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(totalSize) + ")"
+                                                + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                                + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
+                                    };
+                                    @Override
+                                    public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
+                                        OnlineResource res = urlResourceMap.get(url);
+                                        try {
+                                            if (res.getType() == ResourceType.ICON_SET) {
+                                                Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
+                                                if (!icons.isEmpty()) {
+                                                    for (ImageIcon icon : icons) {
+                                                        icModel.addElement(icon);
+                                                        FrontEnd.icons.put(icon.getDescription(), icon);
+                                                    }
+                                                    Collection<AddOnInfo> iconSets = BackEnd.getInstance().getIconSets();
+                                                    while (icSetModel.getRowCount() > 0) {
+                                                        icSetModel.removeRow(0);
+                                                    }
+                                                    for (AddOnInfo isi : iconSets) {
+                                                        icSetModel.addRow(new Object[]{
+                                                                isi.getName(),
+                                                                isi.getVersion(),
+                                                                isi.getAuthor(),
+                                                                isi.getDescription()
+                                                        });
+                                                    }
+                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_NORMAL + "IconSet '" + res.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                    icList.repaint();
+                                                } else {
+                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + res.getName() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                }
+                                            } else if (res.getType() == ResourceType.CORE_UPDATE) {
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_NORMAL + "CoreUpdate '" + res.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                FSUtils.duplicateFile(file, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME));
+                                                modified = true;
+                                            } else {
+                                                ADDON_TYPE addOnType = ADDON_TYPE.valueOf(res.getType().value());
+                                                AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
+                                                String comment = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn.getName());
+                                                DefaultTableModel model = addOnType == ADDON_TYPE.Extension ? extModel : lafModel;
+                                                int idx = findDataRowIndex(model, 0, installedAddOn.getName());
+                                                if (idx != -1) {
+                                                    model.removeRow(idx);
+                                                    model.insertRow(idx, new Object[]{
+                                                            installedAddOn.getName(),
+                                                            installedAddOn.getVersion(),
+                                                            installedAddOn.getAuthor() != null ? installedAddOn.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                                                            installedAddOn.getDescription() != null ? installedAddOn.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                                                            comment
+                                                    });
+                                                } else {
+                                                    model.addRow(new Object[]{
+                                                            installedAddOn.getName(),
+                                                            installedAddOn.getVersion(),
+                                                            installedAddOn.getAuthor() != null ? installedAddOn.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                                                            installedAddOn.getDescription() != null ? installedAddOn.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                                                            comment
+                                                    });
+                                                }
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_NORMAL + addOnType.name() + " '" + res.getName() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                modified = true;
+                                            }
+                                        } catch (Throwable t) {
+                                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install Add-On '" + res.getName() + "' from downloaded file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                            t.printStackTrace(System.err);
+                                        }
+                                    }
+                                    @Override
+                                    public void onFailure(URL url, File file, Throwable failure) {
+                                        OnlineResource res = urlResourceMap.get(url);
+                                        sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "'" + res.getName() + "' - failed to retrieve installation file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                        failure.printStackTrace(System.err);
+                                    }
+                                });
+                                onlineTotalProgressBar.setMaximum(totalSize.intValue());
+                                d.start();
+                            }    
+                        } catch (MalformedURLException ex) {
+                            displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
                         }
                     }
                 });
@@ -4449,7 +4824,6 @@ public class FrontEnd extends JFrame {
                 extControlsPanel.add(extInstButt);
                 extControlsPanel.add(extUninstButt);
                 JPanel extTopPanel = new JPanel(new BorderLayout());
-                extTopPanel.add(extLabel, BorderLayout.NORTH);
                 extTopPanel.add(new JLabel("Filter:"), BorderLayout.CENTER);
                 final JTextField extFilterText = new JTextField();
                 extFilterText.addCaretListener(new CaretListener(){
@@ -4463,7 +4837,7 @@ public class FrontEnd extends JFrame {
                 extPanel.add(new JScrollPane(extList), BorderLayout.CENTER);
                 extPanel.add(extControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Extensions", controlIcons.getIconExtensions(), extPanel);
+                addOnsPane.addTab("Extensions", uiIcons.getIconExtensions(), extPanel);
                 
                 JPanel lafControlsPanel = new JPanel(new GridLayout(1,4));
                 lafControlsPanel.add(lafDetailsButt);
@@ -4471,7 +4845,6 @@ public class FrontEnd extends JFrame {
                 lafControlsPanel.add(lafInstButt);
                 lafControlsPanel.add(lafUninstButt);
                 JPanel lafTopPanel = new JPanel(new BorderLayout());
-                lafTopPanel.add(lafLabel, BorderLayout.NORTH);
                 lafTopPanel.add(new JLabel("Filter:"), BorderLayout.CENTER);
                 final JTextField lafFilterText = new JTextField();
                 lafFilterText.addCaretListener(new CaretListener(){
@@ -4485,19 +4858,31 @@ public class FrontEnd extends JFrame {
                 lafPanel.add(new JScrollPane(lafList), BorderLayout.CENTER);
                 lafPanel.add(lafControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Look-&-Feels", controlIcons.getIconLAFs(), lafPanel);
+                addOnsPane.addTab("Look-&-Feels", uiIcons.getIconLAFs(), lafPanel);
                 
-                JPanel icControlsPanel = new JPanel(new GridLayout(1,2));
+                JPanel icControlsPanel = new JPanel(new GridLayout(1,3));
                 icControlsPanel.add(addIconButt);
                 icControlsPanel.add(removeIconButt);
+                icControlsPanel.add(removeIconSetButt);
                 JPanel icPanel = new JPanel(new BorderLayout());
-                icPanel.add(icLabel, BorderLayout.NORTH);
-                icPanel.add(new JScrollPane(jsp), BorderLayout.CENTER);
+                icPanel.add(new JScrollPane(icSetList), BorderLayout.CENTER);
+                icPanel.add(jsp, BorderLayout.EAST);
                 icPanel.add(icControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Icons", controlIcons.getIconIcons(), icPanel);
+                addOnsPane.addTab("Icons", uiIcons.getIconIcons(), icPanel);
                 
-                if (BackEnd.getInstance().unusedAddOnsFound()) {
+                JPanel onlineControlsPanel = new JPanel(new GridLayout(1,3));
+                onlineControlsPanel.add(onlineRefreshButt);
+                onlineControlsPanel.add(onlineDetailsButt);
+                onlineControlsPanel.add(onlineInstallButt);
+                JPanel onlinePanel = new JPanel(new BorderLayout());
+                onlinePanel.add(new JScrollPane(onlineList), BorderLayout.NORTH);
+                onlinePanel.add(onlineProgressPanel, BorderLayout.CENTER);
+                onlinePanel.add(onlineControlsPanel, BorderLayout.SOUTH);
+                
+                addOnsPane.addTab("Online", uiIcons.getIconOnline(), onlinePanel);
+                
+                if (!Launcher.getUninstalledAddOnsList().isEmpty() && !cleanedUp) {
                     JPanel advPanel = new JPanel(new BorderLayout());
                     JPanel cleanPanel = new JPanel(new GridLayout(2,1));
                     final JButton cleanButt = new JButton("Clean unused data and config files!");
@@ -4517,33 +4902,55 @@ public class FrontEnd extends JFrame {
                             BackEnd.getInstance().removeUnusedAddOnDataAndConfigFiles();
                             cleanButt.setText("Done!");
                             cleanButt.setEnabled(false);
+                            cleanedUp = true;
                         }
                     });
                     cleanPanel.add(cleanButt);
                     cleanPanel.add(cleanLabel);
                     advPanel.add(cleanPanel, BorderLayout.NORTH);
-                    addOnsPane.addTab("Advanced", controlIcons.getIconPreferences(), advPanel);
+                    addOnsPane.addTab("Advanced", uiIcons.getIconPreferences(), advPanel);
                 }
-                
-                modified = false;
                 JOptionPane op = new JOptionPane();
                 op.setMessage(addOnsPane);
                 op.setMessageType(JOptionPane.INFORMATION_MESSAGE);
                 dialog = op.createDialog(FrontEnd.this, "Manage Add-Ons");
-                dialog.setVisible(true);
-
-                if (modified || brokenFixed) {
-                    displayMessage(RESTART_MESSAGE);
-                    displayStatusBarMessage("add-ons configuration changed");
-                }
                 
             } catch (Throwable t) {
-                displayErrorMessage("Failed to display add-ons configuration screen!", t);
+                displayErrorMessage("Failed to initialize add-ons configuration screen!", t);
             }
-        	
         }
-        
-    };
+    }
+    
+    private static boolean cleanedUp = false;
+    
+    // TODO [P1] should update-site URL be configurable (?)
+    //           should there be more than one such URL (?)
+    private static URL baseURL;
+    
+    private static URL getRepositoryBaseURL() throws MalformedURLException {
+        if (baseURL == null) {
+            baseURL = new URL("http://localhost/apache2-default/tmp/");
+        }
+        return baseURL;
+    }
+    
+    private static Map<String, OnlineResource> availableOnlineResources;
+    
+    private static Map<String, OnlineResource> getAvailableOnlineResources() {
+        if (availableOnlineResources == null) {
+            availableOnlineResources = new HashMap<String, OnlineResource>();
+        }
+        return availableOnlineResources;
+    }
+    
+    private static Unmarshaller unmarshaller;
+
+    private static Unmarshaller getUnmarshaller() throws JAXBException {
+        if (unmarshaller == null) {
+            unmarshaller = JAXBContext.newInstance(ObjectFactory.class.getPackage().getName()).createUnmarshaller();
+        }
+        return unmarshaller;
+    }
     
     private int findDataRowIndex(DefaultTableModel model, int colIdx, String data) {
         for (int i = 0; i < model.getRowCount(); i++) {
@@ -4554,11 +4961,12 @@ public class FrontEnd extends JFrame {
         return -1;
     }
     
-    private JScrollPane getDetailsPane(String detailsInfo) {
+    private JScrollPane getDetailsPane(String detailsInfo, URL baseURL) {
         if (detailsPane == null) {
             detailsTextPane = new JTextPane();
             detailsTextPane.setEditable(false);
             detailsTextPane.setEditorKit(new CustomHTMLEditorKit());
+            ((HTMLDocument) detailsTextPane.getDocument()).setBase(baseURL);
             detailsTextPane.addHyperlinkListener(new HyperlinkListener() {
                 public void hyperlinkUpdate(HyperlinkEvent e) {
                     if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
@@ -4583,49 +4991,16 @@ public class FrontEnd extends JFrame {
         public AboutAction() {
             putValue(Action.NAME, "about");
             putValue(Action.SHORT_DESCRIPTION, "about...");
-            putValue(Action.SMALL_ICON, controlIcons.getIconAbout());
+            putValue(Action.SMALL_ICON, uiIcons.getIconAbout());
         }
 
         public void actionPerformed(ActionEvent evt) {
-            JLabel title1Label = new JLabel("Bias Personal Information Manager, version 1.0.0");
-            JLabel link1Label = new JLabel("<html><u><font color=blue>http://bias.sourceforge.net/");
+            JLabel title1Label = new JLabel("Bias Personal Information Manager, version 0.9.7");
+            JLabel link1Label = new LinkLabel("http://bias.sourceforge.net/");
             JLabel title2Label = new JLabel("(c) Roman Kasianenko, 2007");
-        	JLabel link2Label = new JLabel("<html><u><font color=blue>http://kion.name/");
+        	JLabel link2Label = new LinkLabel("http://kion.name/");
             JLabel title3Label = new JLabel("EtweeSoft (Software Development Organization)");
-            JLabel link3Label = new JLabel("<html><u><font color=blue>http://etweesoft.org/");
-        	link1Label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        	link1Label.addMouseListener(new MouseAdapter(){
-				@Override
-				public void mouseClicked(MouseEvent e) {
-					try {
-						AppManager.getInstance().handleAddress("http://bias.sourceforge.net/");
-					} catch (Exception ex) {
-						// do nothing
-					}
-				}
-        	});
-        	link2Label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        	link2Label.addMouseListener(new MouseAdapter(){
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    try {
-                        AppManager.getInstance().handleAddress("http://kion.name/");
-                    } catch (Exception ex) {
-                        // do nothing
-                    }
-                }
-            });
-            link3Label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            link3Label.addMouseListener(new MouseAdapter(){
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    try {
-                        AppManager.getInstance().handleAddress("http://etweesoft.org/");
-                    } catch (Exception ex) {
-                        // do nothing
-                    }
-                }
-            });
+            JLabel link3Label = new LinkLabel("http://etweesoft.org/");
             JOptionPane.showMessageDialog(
                     FrontEnd.this, 
                     new Component[]{
@@ -4635,5 +5010,5 @@ public class FrontEnd extends JFrame {
                             });
         }
     };
-
+    
 }
