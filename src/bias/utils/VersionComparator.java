@@ -10,7 +10,8 @@ import java.util.Comparator;
  */
 public class VersionComparator implements Comparator<String> {
     
-    public static final String VERSION_PATTERN = "^\\d+\\.\\d+\\.\\d+$";
+    public static final String VERSION_PATTERN = "^\\d+\\.\\d+(\\.\\d+)*+$";
+    private static final String VERSION_SEPARATOR = "\\.";
     
     public static VersionComparator instance;
     
@@ -30,17 +31,31 @@ public class VersionComparator implements Comparator<String> {
         } else if (!versionA.matches(VERSION_PATTERN) || !versionB.matches(VERSION_PATTERN)) {
             throw new IllegalArgumentException("Invalid arguments (both arguments should match version pattern)!");
         }
-        String[] versA = versionA.split("\\.");
-        String[] versB = versionB.split("\\.");
-        for (int i = 0; i < 3; i++) {
-            int a = Integer.valueOf(versA[i]);
-            int b = Integer.valueOf(versB[i]);
+        String[] versA = versionA.split(VERSION_SEPARATOR);
+        String[] versB = versionB.split(VERSION_SEPARATOR);
+        int len = versA.length >= versB.length ? versA.length : versB.length;
+        for (int i = 0; i < len; i++) {
+            if (i > versA.length - 1) {
+                return -1;
+            } else if (i > versB.length - 1) {
+                return 1;
+            }
+            float a;
+            float b;
+            if (versA[i].startsWith("0")) {
+                a = Float.valueOf("0." + versA[i]);
+            } else {
+                a = Float.valueOf(versA[i]);
+            }
+            if (versB[i].startsWith("0")) {
+                b = Float.valueOf("0." + versB[i]);
+            } else {
+                b = Float.valueOf(versB[i]);
+            }
             if (a < b) {
                 return -1; 
             } else if (a > b) {
                 return 1;
-            } else if (i == 2) {
-                return 0;
             }
         }
         return 0;
