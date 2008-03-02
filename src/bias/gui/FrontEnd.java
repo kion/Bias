@@ -1740,7 +1740,7 @@ public class FrontEnd extends JFrame {
         new Thread(new Runnable(){
             public void run() {
                 final String timestamp = dateFormat.format(new Date()) + " # ";
-                getJLabelStatusBarMsg().setText(Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_NORMAL) + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                getJLabelStatusBarMsg().setText(Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_OK) + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                 ((DefaultListModel) getStatusBarMessagesList().getModel()).addElement(timestamp + message);
                 if (getJPanel2().isVisible()) {
                     autoscrollList(getStatusBarMessagesList());
@@ -4032,6 +4032,15 @@ public class FrontEnd extends JFrame {
         
     };
     
+    private Object[] getAddOnInfoRow(AddOnInfo addOnInfo, String status) {
+        return new Object[] {
+                addOnInfo.getName(),
+                addOnInfo.getVersion(),
+                addOnInfo.getAuthor() != null ? addOnInfo.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                addOnInfo.getDescription() != null ? addOnInfo.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                status };
+    }
+    
     @SuppressWarnings("unchecked")
     private void initAddOnsManagementDialog() {
         if (dialog == null) {
@@ -4068,20 +4077,7 @@ public class FrontEnd extends JFrame {
                         t.printStackTrace(System.err);
                         status = Constants.ADDON_STATUS_BROKEN;
                     }
-                    extModel.addRow(new Object[]{
-                            extension.getName(),
-                            extension.getVersion(),
-                            extension.getAuthor() != null ? extension.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
-                            extension.getDescription() != null ? extension.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                            status
-                    });
-                }
-                Map<String, String> newExts = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Extension);
-                if (newExts != null) {
-                    for (Entry<String, String> extensionEntry : newExts.entrySet()) {
-                        String extension = extensionEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                        extModel.addRow(new Object[]{extension, null, null, extensionEntry.getValue()});
-                    }
+                    extModel.addRow(getAddOnInfoRow(extension, status));
                 }
                 JButton extDetailsButt = new JButton("Extension's details");
                 extDetailsButt.addActionListener(new ActionListener(){
@@ -4146,25 +4142,13 @@ public class FrontEnd extends JFrame {
                                     try {
                                         for (File file : extensionFileChooser.getSelectedFiles()) {
                                             AddOnInfo installedExt = BackEnd.getInstance().installAddOn(file, ADDON_TYPE.Extension);
-                                            String comment = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Extension).get(installedExt.getName());
+                                            String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Extension).get(installedExt);
                                             int idx = findDataRowIndex(extModel, 0, installedExt.getName());
                                             if (idx != -1) {
                                                 extModel.removeRow(idx);
-                                                extModel.insertRow(idx, new Object[]{
-                                                        installedExt.getName(),
-                                                        installedExt.getVersion(),
-                                                        installedExt.getAuthor() != null ? installedExt.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
-                                                        installedExt.getDescription() != null ? installedExt.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                                                        comment
-                                                });
+                                                extModel.insertRow(idx, getAddOnInfoRow(installedExt, status));
                                             } else {
-                                                extModel.addRow(new Object[]{
-                                                        installedExt.getName(),
-                                                        installedExt.getVersion(),
-                                                        installedExt.getAuthor() != null ? installedExt.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
-                                                        installedExt.getDescription() != null ? installedExt.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                                                        comment
-                                                });
+                                                extModel.addRow(getAddOnInfoRow(installedExt, status));
                                             }
                                             modified = true;
                                         }
@@ -4259,20 +4243,7 @@ public class FrontEnd extends JFrame {
                         t.printStackTrace(System.err);
                         status = Constants.ADDON_STATUS_BROKEN;
                     }
-                    lafModel.addRow(new Object[]{
-                            laf.getName(),
-                            laf.getVersion(),
-                            laf.getAuthor() != null ? laf.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
-                            laf.getDescription() != null ? laf.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                            status
-                    });
-                }
-                Map<String, String> newLAFs = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.LookAndFeel);
-                if (newLAFs != null) {
-                    for (Entry<String, String> lafEntry : newLAFs.entrySet()) {
-                        String laf = lafEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                        lafModel.addRow(new Object[]{laf, null, null, lafEntry.getValue()});
-                    }
+                    lafModel.addRow(getAddOnInfoRow(laf, status));
                 }
                 JButton lafDetailsButt = new JButton("Look-&-Feel's details");
                 lafDetailsButt.addActionListener(new ActionListener(){
@@ -4351,25 +4322,13 @@ public class FrontEnd extends JFrame {
                                     try {
                                         for (File file : lafFileChooser.getSelectedFiles()) {
                                             AddOnInfo installedLAF = BackEnd.getInstance().installAddOn(file, ADDON_TYPE.LookAndFeel);
-                                            String comment = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.LookAndFeel).get(installedLAF.getName());
+                                            String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.LookAndFeel).get(installedLAF);
                                             int idx = findDataRowIndex(lafModel, 0, installedLAF.getName());
                                             if (idx != -1) {
                                                 lafModel.removeRow(idx);
-                                                lafModel.insertRow(idx, new Object[]{
-                                                        installedLAF.getName(),
-                                                        installedLAF.getVersion(),
-                                                        installedLAF.getAuthor() != null ? installedLAF.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
-                                                        installedLAF.getDescription() != null ? installedLAF.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                                                        comment
-                                                });
+                                                lafModel.insertRow(idx, getAddOnInfoRow(installedLAF, status));
                                             } else {
-                                                lafModel.addRow(new Object[]{
-                                                        installedLAF.getName(),
-                                                        installedLAF.getVersion(),
-                                                        installedLAF.getAuthor() != null ? installedLAF.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
-                                                        installedLAF.getDescription() != null ? installedLAF.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                                                        comment
-                                                });
+                                                lafModel.addRow(getAddOnInfoRow(installedLAF, status));
                                             }
                                             modified = true;
                                         }
@@ -4435,13 +4394,8 @@ public class FrontEnd extends JFrame {
                 icSetModel.addColumn("Version");
                 icSetModel.addColumn("Author");
                 icSetModel.addColumn("Description");
-                for (AddOnInfo aoi : BackEnd.getInstance().getIconSets()) {
-                    icSetModel.addRow(new Object[]{
-                            aoi.getName(),
-                            aoi.getVersion(),
-                            aoi.getAuthor(),
-                            aoi.getDescription()
-                    });
+                for (AddOnInfo iconSetInfo : BackEnd.getInstance().getIconSets()) {
+                    icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
                 }
                 icons = new HashMap<String, ImageIcon>();
                 final DefaultListModel icModel = new DefaultListModel();
@@ -4473,13 +4427,8 @@ public class FrontEnd extends JFrame {
                                                 while (icSetModel.getRowCount() > 0) {
                                                     icSetModel.removeRow(0);
                                                 }
-                                                for (AddOnInfo isi : iconSets) {
-                                                    icSetModel.addRow(new Object[]{
-                                                            isi.getName(),
-                                                            isi.getVersion(),
-                                                            isi.getAuthor(),
-                                                            isi.getDescription()
-                                                    });
+                                                for (AddOnInfo iconSetInfo : iconSets) {
+                                                    icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
                                                 }
                                                 added = true;
                                             }
@@ -4750,48 +4699,31 @@ public class FrontEnd extends JFrame {
                                                     while (icSetModel.getRowCount() > 0) {
                                                         icSetModel.removeRow(0);
                                                     }
-                                                    for (AddOnInfo isi : iconSets) {
-                                                        icSetModel.addRow(new Object[]{
-                                                                isi.getName(),
-                                                                isi.getVersion(),
-                                                                isi.getAuthor(),
-                                                                isi.getDescription()
-                                                        });
+                                                    for (AddOnInfo iconSetInfo : iconSets) {
+                                                        icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
                                                     }
-                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_NORMAL + "IconSet '" + res.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + res.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                     icList.repaint();
                                                 } else {
                                                     sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + res.getName() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 }
                                             } else if (res.getType() == ResourceType.CORE_UPDATE) {
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_NORMAL + "CoreUpdate '" + res.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "CoreUpdate '" + res.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 FSUtils.duplicateFile(file, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME));
                                                 modified = true;
                                             } else {
                                                 ADDON_TYPE addOnType = ADDON_TYPE.valueOf(res.getType().value());
                                                 AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
-                                                String comment = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn.getName());
+                                                String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
                                                 DefaultTableModel model = addOnType == ADDON_TYPE.Extension ? extModel : lafModel;
                                                 int idx = findDataRowIndex(model, 0, installedAddOn.getName());
                                                 if (idx != -1) {
                                                     model.removeRow(idx);
-                                                    model.insertRow(idx, new Object[]{
-                                                            installedAddOn.getName(),
-                                                            installedAddOn.getVersion(),
-                                                            installedAddOn.getAuthor() != null ? installedAddOn.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
-                                                            installedAddOn.getDescription() != null ? installedAddOn.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                                                            comment
-                                                    });
+                                                    model.insertRow(idx, getAddOnInfoRow(installedAddOn, status));
                                                 } else {
-                                                    model.addRow(new Object[]{
-                                                            installedAddOn.getName(),
-                                                            installedAddOn.getVersion(),
-                                                            installedAddOn.getAuthor() != null ? installedAddOn.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
-                                                            installedAddOn.getDescription() != null ? installedAddOn.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                                                            comment
-                                                    });
+                                                    model.addRow(getAddOnInfoRow(installedAddOn, status));
                                                 }
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_NORMAL + addOnType.name() + " '" + res.getName() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.name() + " '" + res.getName() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 modified = true;
                                             }
                                         } catch (Throwable t) {

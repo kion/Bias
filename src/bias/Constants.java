@@ -57,16 +57,17 @@ public class Constants {
     public static final String HTML_PREFIX = "<html>";
     public static final String HTML_COLOR_NORMAL = "<font color=\"#000000\">";
     public static final String HTML_COLOR_HIGHLIGHT_LINK = "<font color=\"blue\">";
-    public static final String HTML_COLOR_HIGHLIGHT_NORMAL = "<font color=\"#00A000\">";
+    public static final String HTML_COLOR_HIGHLIGHT_OK = "<font color=\"#00A000\">";
+    public static final String HTML_COLOR_HIGHLIGHT_INFO = "<font color=\"#BC6A28\">";
     public static final String HTML_COLOR_HIGHLIGHT_ERROR = "<font color=\"#FA0000\">";
     public static final String HTML_COLOR_SUFFIX = "</font>";
     public static final String HTML_SUFFIX = "</html>";
     public static final String ADDON_FIELD_VALUE_NA = "N/A";
 
-    public static final String ADDON_STATUS_IMPORTED = "Imported  [restart needed]";
-    public static final String ADDON_STATUS_INSTALLED = "Installed [restart needed]";
-    public static final String ADDON_STATUS_UPDATED = "Updated [restart needed]";
-    public static final String ADDON_STATUS_OK = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_NORMAL + "[OK]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
+    public static final String ADDON_STATUS_IMPORTED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "Imported  [restart needed]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
+    public static final String ADDON_STATUS_INSTALLED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "Installed [restart needed]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
+    public static final String ADDON_STATUS_UPDATED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "Updated [restart needed]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
+    public static final String ADDON_STATUS_OK = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_OK + "[OK]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     public static final String ADDON_STATUS_BROKEN = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + "[BROKEN]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     
     public static final String UNICODE_ENCODING = "UTF-8";

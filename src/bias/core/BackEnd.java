@@ -80,7 +80,7 @@ public class BackEnd {
 
     private static Collection<AddOnInfo> loadedAddOns;
 
-    private static Map<ADDON_TYPE, Map<String, String>> newAddOns = new LinkedHashMap<ADDON_TYPE, Map<String, String>>();
+    private static Map<ADDON_TYPE, Map<AddOnInfo, String>> newAddOns = new LinkedHashMap<ADDON_TYPE, Map<AddOnInfo, String>>();
 
     private static Collection<String> uninstallAddOnsList = new ArrayList<String>();
     
@@ -1073,7 +1073,7 @@ public class BackEnd {
         }
     }
     
-    public Map<String, String> getNewAddOns(ADDON_TYPE addOnType) {
+    public Map<AddOnInfo, String> getNewAddOns(ADDON_TYPE addOnType) {
         return newAddOns.get(addOnType);
     }
     
@@ -1202,10 +1202,10 @@ public class BackEnd {
                 addOnInfo = new AddOnInfo(addOnName, addOnVersion, addOnAuthor, addOnDescription);
                 
                 boolean update = false;
-                String comment = Constants.ADDON_STATUS_INSTALLED;
-                if (getAddOns(addOnType).contains(addOnInfo) || loadedAddOns.contains(addOnName)) {
+                String status = Constants.ADDON_STATUS_INSTALLED;
+                if (getAddOns(addOnType).contains(addOnInfo) || loadedAddOns.contains(addOnInfo)) {
                     update = true;
-                    comment = Constants.ADDON_STATUS_UPDATED;
+                    status = Constants.ADDON_STATUS_UPDATED;
                 }
                 String fileSuffix = addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.LAF_JAR_FILE_SUFFIX;
                 File installedAddOnFile = new File(Constants.ADDONS_DIR, addOnName + fileSuffix);
@@ -1216,12 +1216,14 @@ public class BackEnd {
                     FSUtils.duplicateFile(addOnFile, installedAddOnFile);
                 }
                 storeAddOnInfo(addOnInfo, addOnType);
-                Map<String, String> m = newAddOns.get(addOnType);
-                if (m == null) {
-                    m = new LinkedHashMap<String, String>();
-                    newAddOns.put(addOnType, m);
+                Map<AddOnInfo, String> addons = newAddOns.get(addOnType);
+                if (addons == null) {
+                    addons = new LinkedHashMap<AddOnInfo, String>();
+                    newAddOns.put(addOnType, addons);
                 }
-                m.put(addOnName, comment);
+                addons.put(addOnInfo, status);
+                uninstallAddOnsList.remove(addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.LAF_JAR_FILE_SUFFIX));
+                storeUninstallConfiguration();
             }
         } else {
             throw new Exception("Invalid add-on pack!");
