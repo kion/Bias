@@ -14,8 +14,11 @@ import bias.utils.FSUtils;
  */
 public class Constants {
     
+    private static final String DIRNAME_ADDON_INFO = "ADDON-INFO";
+    
     public static final File ROOT_DIR = Launcher.getRootDir();
     public static final File ADDONS_DIR = new File(ROOT_DIR, "addons");
+    public static final File ADDON_INFO_DIR = new File(ADDONS_DIR, DIRNAME_ADDON_INFO);
     public static final File LIBS_DIR = new File(ROOT_DIR, "libs");
     public static final File CONFIG_DIR = new File(ROOT_DIR, "conf");
     public static final File DATA_DIR = new File(ROOT_DIR, "data");
@@ -83,6 +86,7 @@ public class Constants {
     public static final String PATH_PREFIX_PATTERN = "^.*/";
     public static final String PATH_SEPARATOR = "/";
 
+    public static final String ADDON_INFO_LOCAL_FILE_NAME = "index.html";
     public static final String ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME = "repository.xml";
     public static final String ADDON_FILENAME_VERSION_SEPARATOR = "_";
     public static final String ADDON_FILENAME_SUFFIX = ".jar";
@@ -95,6 +99,7 @@ public class Constants {
 
     public static final String JAR_FILE_PATTERN = "(?i).+\\.jar$";
     public static final String JAR_FILE_PATTERN_DESCRIPTION = "Java Archive (JAR) file";
+    public static final String JAR_FILE_ADDON_INFO_DIR_PATH = "META-INF/ADDON-INFO/";
 
     public static final String ZIP_FILE_PATTERN = "(?i).+\\.zip$";
     public static final String ZIP_FILE_PATTERN_DESCRIPTION = "ZIP archive file";

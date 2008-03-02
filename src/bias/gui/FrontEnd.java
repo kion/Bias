@@ -336,6 +336,37 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton3 = null;
 
+    private static boolean cleanedUp = false;
+    
+    // TODO [P1] should update-site URL be configurable (?)
+    //           should there be more than one such URL (?)
+    private static URL repositoryBaseURL;
+    
+    private static URL getRepositoryBaseURL() throws MalformedURLException {
+        if (repositoryBaseURL == null) {
+            repositoryBaseURL = new URL("http://localhost/apache2-default/tmp/");
+        }
+        return repositoryBaseURL;
+    }
+    
+    private static Map<String, OnlineResource> availableOnlineResources;
+    
+    private static Map<String, OnlineResource> getAvailableOnlineResources() {
+        if (availableOnlineResources == null) {
+            availableOnlineResources = new HashMap<String, OnlineResource>();
+        }
+        return availableOnlineResources;
+    }
+    
+    private static Unmarshaller unmarshaller;
+
+    private static Unmarshaller getUnmarshaller() throws JAXBException {
+        if (unmarshaller == null) {
+            unmarshaller = JAXBContext.newInstance(ObjectFactory.class.getPackage().getName()).createUnmarshaller();
+        }
+        return unmarshaller;
+    }
+    
     // TODO [P1] add more event types for listeners registration
     
     private static Map<Class<? extends StartUpEventListener>, StartUpEventListener> startUpEventListeners;
@@ -4090,14 +4121,19 @@ public class FrontEnd extends JFrame {
                                             "Detailed information about this extension can not be shown yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
-                                    // TODO [P1] implement
-//                                    String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
-//                                    String detailsInfo = 
-//                                    if (detailsInfo != null) {
-//                                        JOptionPane.showMessageDialog(dialog, getDetailsPane(detailsInfo), extension + " :: Extension's details", JOptionPane.INFORMATION_MESSAGE);
-//                                    } else {
-//                                        displayAddOnsScreenMessage("Detailed information is either not provided with this extension or can not be displayed currently.");
-//                                    }
+                                    String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
+                                    try {
+                                        File addOnInfoFile = new File(new File(Constants.ADDON_INFO_DIR, extension), Constants.ADDON_INFO_LOCAL_FILE_NAME);
+                                        if (addOnInfoFile.exists()) {
+                                            URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
+                                            URL addOnURL = addOnInfoFile.toURI().toURL();
+                                            loadAndDisplayAddOnDetails(baseURL, addOnURL, extension);
+                                        } else {
+                                            displayAddOnsScreenMessage("Detailed information is not provided with this extension.");
+                                        }
+                                    } catch (MalformedURLException ex) {
+                                        displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                    }
                                 }
                             } catch (Throwable t) {
                                 displayAddOnsScreenErrorMessage("Failed to display Extensions's details!", t);
@@ -4585,45 +4621,11 @@ public class FrontEnd extends JFrame {
                                 final OnlineResource resource = getAvailableOnlineResources().get(addOnName);
                                 String fileName = resource.getName() + (resource.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + resource.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_DETAILS_FILENAME_SUFFIX;
                                 final URL addOnURL = new URL(getRepositoryBaseURL() + fileName);
-                                Thread loadDetailsThread = new Thread(new Runnable(){
-                                    public void run() {
-                                        boolean loaded = false;
-                                        InputStream is = null;
-                                        ByteArrayOutputStream baos = null;
-                                        try {
-                                            is = addOnURL.openStream();
-                                            baos = new ByteArrayOutputStream();
-                                            byte[] buffer = new byte[1024];
-                                            int readBytesNum;
-                                            while ((readBytesNum = is.read(buffer)) != -1) {
-                                                baos.write(buffer, 0, readBytesNum);
-                                            }
-                                            loaded = true;
-                                        } catch (Throwable t) {
-                                            displayAddOnsScreenErrorMessage("Failed to load addon's details page! " + getFailureDetails(t), t);
-                                        } finally {
-                                                try {
-                                                    if (is != null) is.close();
-                                                    if (baos != null) baos.close();
-                                                } catch (IOException e) {
-                                                    // ignore
-                                                }
-                                            if (loaded) {
-                                                JLabel onlineDetailsOpenInBrowserButt = new LinkLabel("Open this page in browser", addOnURL.toString());
-                                                try {
-                                                    JOptionPane.showMessageDialog(
-                                                            dialog,
-                                                            new Component[] { getDetailsPane(new String(baos.toByteArray()), getRepositoryBaseURL()), onlineDetailsOpenInBrowserButt }, 
-                                                            resource.getName() + " :: Addon's details", 
-                                                            JOptionPane.INFORMATION_MESSAGE);
-                                                } catch (MalformedURLException ex) {
-                                                    displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
-                                                }
-                                            }
-                                        }
-                                    }
-                                });
-                                loadDetailsThread.start();
+                                try {
+                                    loadAndDisplayAddOnDetails(getRepositoryBaseURL(), addOnURL, resource.getName());
+                                } catch (MalformedURLException ex) {
+                                    displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                }
                             } catch (MalformedURLException ex) {
                                 displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
                             }
@@ -4853,35 +4855,43 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private static boolean cleanedUp = false;
-    
-    // TODO [P1] should update-site URL be configurable (?)
-    //           should there be more than one such URL (?)
-    private static URL baseURL;
-    
-    private static URL getRepositoryBaseURL() throws MalformedURLException {
-        if (baseURL == null) {
-            baseURL = new URL("http://localhost/apache2-default/tmp/");
-        }
-        return baseURL;
-    }
-    
-    private static Map<String, OnlineResource> availableOnlineResources;
-    
-    private static Map<String, OnlineResource> getAvailableOnlineResources() {
-        if (availableOnlineResources == null) {
-            availableOnlineResources = new HashMap<String, OnlineResource>();
-        }
-        return availableOnlineResources;
-    }
-    
-    private static Unmarshaller unmarshaller;
-
-    private static Unmarshaller getUnmarshaller() throws JAXBException {
-        if (unmarshaller == null) {
-            unmarshaller = JAXBContext.newInstance(ObjectFactory.class.getPackage().getName()).createUnmarshaller();
-        }
-        return unmarshaller;
+    private void loadAndDisplayAddOnDetails(final URL baseURL, final URL addOnURL, final String addOnName) {
+        Thread loadDetailsThread = new Thread(new Runnable(){
+            public void run() {
+                boolean loaded = false;
+                InputStream is = null;
+                ByteArrayOutputStream baos = null;
+                try {
+                    is = addOnURL.openStream();
+                    baos = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[1024];
+                    int readBytesNum;
+                    while ((readBytesNum = is.read(buffer)) != -1) {
+                        baos.write(buffer, 0, readBytesNum);
+                    }
+                    loaded = true;
+                } catch (Throwable t) {
+                    displayAddOnsScreenErrorMessage("Failed to load details page! " + getFailureDetails(t), t);
+                } finally {
+                        try {
+                            if (is != null) is.close();
+                            if (baos != null) baos.close();
+                        } catch (IOException e) {
+                            // ignore
+                        }
+                    if (loaded) {
+                        JOptionPane op = new JOptionPane();
+                        op.setMessage(getDetailsPane(new String(baos.toByteArray()), baseURL));
+                        op.setMessageType(JOptionPane.INFORMATION_MESSAGE);
+                        final Dialog d = op.createDialog(getActiveWindow(), addOnName + " :: Details");
+                        d.setLocation(getActiveWindow().getLocation());
+                        d.setSize(getActiveWindow().getSize());
+                        d.setVisible(true);
+                    }
+                }
+            }
+        });
+        loadDetailsThread.start();
     }
     
     private int findDataRowIndex(DefaultTableModel model, int colIdx, String data) {
@@ -4898,7 +4908,6 @@ public class FrontEnd extends JFrame {
             detailsTextPane = new JTextPane();
             detailsTextPane.setEditable(false);
             detailsTextPane.setEditorKit(new CustomHTMLEditorKit());
-            ((HTMLDocument) detailsTextPane.getDocument()).setBase(baseURL);
             detailsTextPane.addHyperlinkListener(new HyperlinkListener() {
                 public void hyperlinkUpdate(HyperlinkEvent e) {
                     if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
@@ -4912,6 +4921,7 @@ public class FrontEnd extends JFrame {
             });
             detailsPane = new JScrollPane(detailsTextPane);
         }
+        ((HTMLDocument) detailsTextPane.getDocument()).setBase(baseURL);
         detailsTextPane.setText(detailsInfo);
         return detailsPane;
     }

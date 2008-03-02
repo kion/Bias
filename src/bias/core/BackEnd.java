@@ -1157,7 +1157,51 @@ public class BackEnd {
             FSUtils.writeFile(addOnConfigFile, encrypt(settings));
         }
     }
-
+    
+    private void extractAddOnInfo(JarInputStream in, String addOnName) throws Throwable {
+        try {
+            if (!Constants.ADDON_INFO_DIR.exists()) {
+                Constants.ADDON_INFO_DIR.mkdir();
+            }
+            File destination = new File(Constants.ADDON_INFO_DIR, addOnName);
+            if (destination.exists()) {
+                FSUtils.delete(destination);
+            }
+            destination.mkdir();
+            JarEntry je;
+            while ((je = in.getNextJarEntry()) != null) {
+                String name = je.getName();
+                if (!name.equals(Constants.JAR_FILE_ADDON_INFO_DIR_PATH) && name.startsWith(Constants.JAR_FILE_ADDON_INFO_DIR_PATH)) {
+                    if (name.endsWith(Constants.PATH_SEPARATOR)) {
+                        name = name.substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length() - 1);
+                        if (!Validator.isNullOrBlank(name)) {
+                            File dir = new File(destination, name);
+                            dir.mkdir();
+                        }
+                    } else {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        int b;
+                        while ((b = in.read()) != -1) {
+                            baos.write(b);
+                        }
+                        baos.close();
+                        name = je.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length() - 1);
+                        name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
+                        File file = new File(destination, name);
+                        File dir = file.getParentFile();
+                        if (!dir.exists()) {
+                            dir.mkdirs();
+                        }
+                        file.createNewFile();
+                        FSUtils.writeFile(file, baos.toByteArray());
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            throw new Throwable("Failure while trying to extract add-on info!", t);
+        }
+    }
+    
     public AddOnInfo installAddOn(File addOnFile, ADDON_TYPE addOnType) throws Throwable {
         AddOnInfo addOnInfo = null;
         if (addOnFile != null && addOnFile.exists() && !addOnFile.isDirectory()) {
@@ -1198,6 +1242,7 @@ public class BackEnd {
                 }
                 String addOnAuthor = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_AUTHOR);
                 String addOnDescription = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION);
+                extractAddOnInfo(in, addOnName);
                 in.close();
                 addOnInfo = new AddOnInfo(addOnName, addOnVersion, addOnAuthor, addOnDescription);
                 
@@ -1613,6 +1658,10 @@ public class BackEnd {
                     FSUtils.delete(new File(Constants.CONFIG_DIR, id.toString() + Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX));
                 }
             }
+        }
+        // empty not anymore needed directories
+        if (Constants.ADDON_INFO_DIR.exists() && Constants.ADDON_INFO_DIR.list().length == 0) {
+            Constants.ADDON_INFO_DIR.delete();
         }
     }
     
