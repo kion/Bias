@@ -338,13 +338,13 @@ public class FrontEnd extends JFrame {
 
     private static boolean cleanedUp = false;
     
-    // TODO [P1] should update-site URL be configurable (?)
-    //           should there be more than one such URL (?)
+    // TODO [P2] instead of one online-repository, it should be possible to have any number of them (extendible by user)
+    
     private static URL repositoryBaseURL;
     
     private static URL getRepositoryBaseURL() throws MalformedURLException {
         if (repositoryBaseURL == null) {
-            repositoryBaseURL = new URL("http://localhost/apache2-default/tmp/");
+            repositoryBaseURL = new URL("http://localhost/apache2-default/tmp/"); // FIXME
         }
         return repositoryBaseURL;
     }
