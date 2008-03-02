@@ -13,6 +13,7 @@
 		<xs:attribute name="version" type="xs:string"/>
 		<xs:attribute name="author" type="xs:string"/>
 		<xs:attribute name="description" type="xs:string"/>
+		<xs:attribute name="url" type="xs:anyURI"/>
 		<xs:attribute name="file-size" type="xs:long"/>
 	</xs:complexType>
 	<xs:simpleType name="resource-type">
@@ -21,6 +22,7 @@
 			<xs:enumeration value="Extension"/>
 			<xs:enumeration value="LookAndFeel"/>
 			<xs:enumeration value="IconSet"/>
+			<xs:enumeration value="Library"/>
 		</xs:restriction>
 	</xs:simpleType>
 </xs:schema>

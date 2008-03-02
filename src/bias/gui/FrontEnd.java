@@ -4296,13 +4296,18 @@ public class FrontEnd extends JFrame {
                                                 "Detailed information about this look-&-feel can not be shown yet." + Constants.NEW_LINE +
                                                 "Restart Bias first.");
                                     } else {
-                                        // TODO [P1] implement
-//                                        String detailsInfo = 
-//                                        if (detailsInfo != null) {
-//                                            JOptionPane.showMessageDialog(dialog, getDetailsPane(detailsInfo), laf + " :: Look-&-Feel's details", JOptionPane.INFORMATION_MESSAGE);
-//                                        } else {
-//                                            displayAddOnsScreenMessage("Detailed information is either not provided with this Look-&-Feel or can not be displayed currently.");
-//                                        }
+                                        try {
+                                            File addOnInfoFile = new File(new File(Constants.ADDON_INFO_DIR, laf), Constants.ADDON_INFO_LOCAL_FILE_NAME);
+                                            if (addOnInfoFile.exists()) {
+                                                URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
+                                                URL addOnURL = addOnInfoFile.toURI().toURL();
+                                                loadAndDisplayAddOnDetails(baseURL, addOnURL, laf);
+                                            } else {
+                                                displayAddOnsScreenMessage("Detailed information is not provided with this Look-&-Feel.");
+                                            }
+                                        } catch (MalformedURLException ex) {
+                                            displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                        }
                                     }
                                 }
                             } catch (Throwable t) {
@@ -4643,8 +4648,13 @@ public class FrontEnd extends JFrame {
                                 if ((Boolean) onlineList.getValueAt(i, 0)) {
                                     OnlineResource res = getAvailableOnlineResources().get((String) onlineList.getValueAt(i, 2));
                                     String fileName = res.getName() + (res.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + res.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_FILENAME_SUFFIX;
-                                    final URL url = new URL(getRepositoryBaseURL() + fileName);
-                                    final File file = new File(Constants.TMP_DIR, fileName);
+                                    URL url;
+                                    if (!Validator.isNullOrBlank(res.getUrl())) {
+                                        url = new URL(res.getUrl());
+                                    } else {
+                                        url = new URL(getRepositoryBaseURL() + fileName);
+                                    }
+                                    File file = new File(Constants.TMP_DIR, fileName);
                                     urlFileMap.put(url, file);
                                     urlResourceMap.put(url, res);
                                     tSize += res.getFileSize();
@@ -4709,9 +4719,13 @@ public class FrontEnd extends JFrame {
                                                 } else {
                                                     sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + res.getName() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 }
+                                            } else if (res.getType() == ResourceType.LIBRARY) {
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + res.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                BackEnd.getInstance().installLibrary(file);
+                                                modified = true;
                                             } else if (res.getType() == ResourceType.CORE_UPDATE) {
                                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "CoreUpdate '" + res.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                                FSUtils.duplicateFile(file, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME));
+                                                BackEnd.getInstance().installAppCoreUpdate(file);
                                                 modified = true;
                                             } else {
                                                 ADDON_TYPE addOnType = ADDON_TYPE.valueOf(res.getType().value());
@@ -4729,7 +4743,7 @@ public class FrontEnd extends JFrame {
                                                 modified = true;
                                             }
                                         } catch (Throwable t) {
-                                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install Add-On '" + res.getName() + "' from downloaded file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install " + res.getType() + " '" + res.getName() + "' from downloaded file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                             t.printStackTrace(System.err);
                                         }
                                     }

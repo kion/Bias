@@ -1047,6 +1047,14 @@ public class BackEnd {
         return ids;
     }
     
+    public void installAppCoreUpdate(File appCoreUpdateFile) throws Throwable {
+        FSUtils.duplicateFile(appCoreUpdateFile, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME));
+    }
+    
+    public void installLibrary(File libFile) throws Throwable {
+        FSUtils.duplicateFile(libFile, new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + libFile.getName()));
+    }
+    
     private void loadDataEntrySettings(DataEntry dataEntry) throws Exception {
         if (dataEntry != null) {
             byte[] settings = null;
