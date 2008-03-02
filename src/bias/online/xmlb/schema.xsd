@@ -3,12 +3,12 @@
 	<xs:element name="repository">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="online-resource" type="bias:online-resource" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="package" type="bias:package" minOccurs="0" maxOccurs="unbounded"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
-	<xs:complexType name="online-resource">
-		<xs:attribute name="type" type="bias:resource-type"/>
+	<xs:complexType name="package">
+		<xs:attribute name="type" type="bias:package-type"/>
 		<xs:attribute name="name" type="xs:string"/>
 		<xs:attribute name="version" type="xs:string"/>
 		<xs:attribute name="author" type="xs:string"/>
@@ -16,7 +16,7 @@
 		<xs:attribute name="url" type="xs:anyURI"/>
 		<xs:attribute name="file-size" type="xs:long"/>
 	</xs:complexType>
-	<xs:simpleType name="resource-type">
+	<xs:simpleType name="package-type">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="CoreUpdate"/>
 			<xs:enumeration value="Extension"/>

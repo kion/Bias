@@ -3,6 +3,10 @@
  */
 package bias.core;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * @author kion
  */
@@ -15,6 +19,8 @@ public class AddOnInfo {
     private String author;
 
     private String description;
+    
+    private Collection<String> dependencies;
 
     public AddOnInfo() {
         // default empty constructor
@@ -59,6 +65,18 @@ public class AddOnInfo {
         this.description = description;
     }
     
+    public Collection<String> getDependencies() {
+        if (dependencies != null) return Collections.unmodifiableCollection(dependencies);
+        return null;
+    }
+
+    public void addDependency(String dependency) {
+        if (dependencies == null) {
+            dependencies = new ArrayList<String>();
+        }
+        dependencies.add(dependency);
+    }
+
     /* (non-Javadoc)
      * @see java.lang.Object#equals(java.lang.Object)
      */

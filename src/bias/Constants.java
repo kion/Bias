@@ -54,7 +54,8 @@ public class Constants {
     public static enum ADDON_TYPE {
         Extension,
         LookAndFeel,
-        IconSet
+        IconSet,
+        Library
     }
     
     public static final String HTML_PREFIX = "<html>";
@@ -133,6 +134,7 @@ public class Constants {
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
     public static final String ADDON_EXTENSION_INFO_FILE_SUFFIX = ".ext.info";
     public static final String ADDON_LAF_INFO_FILE_SUFFIX = ".laf.info";
+    public static final String ADDON_LIB_INFO_FILE_SUFFIX = ".lib.info";
     public static final String ADDON_ICONSET_INFO_FILE_SUFFIX = ".iconset.info";
     public static final String ICONSET_REGISTRY_FILE_SUFFIX = ".iconset.reg";
     public static final String UPDATE_FILE_PREFIX = "update_";
@@ -143,6 +145,7 @@ public class Constants {
     public static final String ATTRIBUTE_ADD_ON_VERSION = "Bias-Add-On-Version";
     public static final String ATTRIBUTE_ADD_ON_AUTHOR = "Bias-Add-On-Author";
     public static final String ATTRIBUTE_ADD_ON_DESCRIPTION = "Bias-Add-On-Description";
+    public static final String ATTRIBUTE_ADD_ON_DEPENDENCIES = "Bias-Add-On-Dependencies";
 
     public static final String DATA_TREE_ROOT_NODE_CAPTION = "ALL DATA";
     public static final String OPTION_TRANSFER_TYPE = "TRANSFER_TYPE";

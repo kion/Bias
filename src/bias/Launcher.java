@@ -7,8 +7,6 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Collection;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -24,9 +22,7 @@ public class Launcher {
     private static final String FILE_PROTOCOL_PREFIX = "file:";
     private static final String CLASS_FILE_SUFFIX = ".class";
     private static final String UNINSTALL_CONFIG_FILE = "uninstall.conf";
-    private static final String EMPTY_STR = "";
     private static final String PROPERTY_VALUES_SEPARATOR = ",";
-    private static final String FILE_SUFFIX_PATTERN = "\\..*$";
     private static final String APP_MAIN_CLASS = "bias.Bias";
     
     public static final URL SPLASH_IMAGE_LOAD = Launcher.class.getResource("/bias/res/load.gif");
@@ -83,12 +79,6 @@ public class Launcher {
         }
     }
 
-    private static Collection<String> uninstalledAddOnsList = new ArrayList<String>();
-    
-    public static Collection<String> getUninstalledAddOnsList() {
-        return uninstalledAddOnsList;
-    }
-
     private static void init() throws Throwable {
         // uninstall
         File uninstallConfigFile = new File(configDir, UNINSTALL_CONFIG_FILE);
@@ -100,7 +90,6 @@ public class Launcher {
                     FSUtils.delete(uninstallAddOnFile);
                     File uninstallUpdateAddOnFile = new File(addonsDir, UPDATE_FILE_PREFIX + cpEntry);
                     FSUtils.delete(uninstallUpdateAddOnFile);
-                    uninstalledAddOnsList.add(cpEntry.replaceFirst(FILE_SUFFIX_PATTERN, EMPTY_STR));
                 }
             }
         }

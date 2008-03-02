@@ -110,7 +110,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import bias.Constants;
-import bias.Launcher;
 import bias.Preferences;
 import bias.Splash;
 import bias.Constants.ADDON_TYPE;
@@ -140,9 +139,8 @@ import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
 import bias.laf.LookAndFeel;
 import bias.laf.UIIcons;
 import bias.online.xmlb.ObjectFactory;
-import bias.online.xmlb.OnlineResource;
+import bias.online.xmlb.PackageType;
 import bias.online.xmlb.Repository;
-import bias.online.xmlb.ResourceType;
 import bias.transfer.Transferrer;
 import bias.transfer.Transferrer.TRANSFER_TYPE;
 import bias.utils.AppManager;
@@ -349,13 +347,13 @@ public class FrontEnd extends JFrame {
         return repositoryBaseURL;
     }
     
-    private static Map<String, OnlineResource> availableOnlineResources;
+    private static Map<String, bias.online.xmlb.Package> availableOnlinePackages;
     
-    private static Map<String, OnlineResource> getAvailableOnlineResources() {
-        if (availableOnlineResources == null) {
-            availableOnlineResources = new HashMap<String, OnlineResource>();
+    private static Map<String, bias.online.xmlb.Package> getAvailableOnlinePackages() {
+        if (availableOnlinePackages == null) {
+            availableOnlinePackages = new HashMap<String, bias.online.xmlb.Package>();
         }
-        return availableOnlineResources;
+        return availableOnlinePackages;
     }
     
     private static Unmarshaller unmarshaller;
@@ -4040,7 +4038,6 @@ public class FrontEnd extends JFrame {
     
     private boolean modified;
     
-    // TODO [P2] memory-usage optimization needed (instantiate extensions used in addons-management dialog only once)
     private ManageAddOnsAction manageAddOnsAction = new ManageAddOnsAction();
     private class ManageAddOnsAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
@@ -4062,6 +4059,15 @@ public class FrontEnd extends JFrame {
         }
         
     };
+    
+    private Object[] getInstallAddOnInfoRow(AddOnInfo addOnInfo) {
+        return new Object[] {
+                Boolean.TRUE,
+                addOnInfo.getName(),
+                addOnInfo.getVersion(),
+                addOnInfo.getAuthor() != null ? addOnInfo.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                addOnInfo.getDescription() != null ? addOnInfo.getDescription() : Constants.ADDON_FIELD_VALUE_NA };
+    }
     
     private Object[] getAddOnInfoRow(AddOnInfo addOnInfo, String status) {
         return new Object[] {
@@ -4172,11 +4178,30 @@ public class FrontEnd extends JFrame {
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extensionFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
+                                        Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+                                        Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
                                         for (File file : extensionFileChooser.getSelectedFiles()) {
+                                            AddOnInfo installedExt = BackEnd.getInstance().getAddOnInfoAndDependencies(file, ADDON_TYPE.Extension);
+                                            proposedAddOnsToInstall.put(installedExt, file);
+                                        }
+                                        Splash.hideSplash();
+                                        Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
+                                        proposedAddOnsToInstall.keySet().retainAll(confirmedAddOnsToInstall);
+                                        Collection<String> deps = new ArrayList<String>();
+                                        for (AddOnInfo info : proposedAddOnsToInstall.keySet()) {
+                                            if (!Validator.isNullOrBlank(info.getDependencies())) {
+                                                deps.addAll(info.getDependencies());
+                                            }
+                                        }
+                                        if (!deps.isEmpty()) {
+                                            // TODO [P1] resolve dependencies (optionally?)
+                                            System.out.println(deps);
+                                        }
+                                        Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+                                        for (File file : proposedAddOnsToInstall.values()) {
                                             AddOnInfo installedExt = BackEnd.getInstance().installAddOn(file, ADDON_TYPE.Extension);
                                             String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Extension).get(installedExt);
                                             int idx = findDataRowIndex(extModel, 0, installedExt.getName());
@@ -4357,11 +4382,30 @@ public class FrontEnd extends JFrame {
                 lafInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (lafFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
+                                        Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+                                        Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
                                         for (File file : lafFileChooser.getSelectedFiles()) {
+                                            AddOnInfo installedLAF = BackEnd.getInstance().getAddOnInfoAndDependencies(file, ADDON_TYPE.LookAndFeel);
+                                            proposedAddOnsToInstall.put(installedLAF, file);
+                                        }
+                                        Splash.hideSplash();
+                                        Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
+                                        proposedAddOnsToInstall.keySet().retainAll(confirmedAddOnsToInstall);
+                                        Collection<String> deps = new ArrayList<String>();
+                                        for (AddOnInfo info : proposedAddOnsToInstall.keySet()) {
+                                            if (!Validator.isNullOrBlank(info.getDependencies())) {
+                                                deps.addAll(info.getDependencies());
+                                            }
+                                        }
+                                        if (!deps.isEmpty()) {
+                                            // TODO [P1] resolve dependencies (optionally?)
+                                            System.out.println(deps);
+                                        }
+                                        Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+                                        for (File file : proposedAddOnsToInstall.values()) {
                                             AddOnInfo installedLAF = BackEnd.getInstance().installAddOn(file, ADDON_TYPE.LookAndFeel);
                                             String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.LookAndFeel).get(installedLAF);
                                             int idx = findDataRowIndex(lafModel, 0, installedLAF.getName());
@@ -4584,21 +4628,21 @@ public class FrontEnd extends JFrame {
                                 @Override
                                 public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
                                     try {
-                                        for (OnlineResource resource : ((Repository) getUnmarshaller().unmarshal(file)).getOnlineResource()) {
-                                            if (resource.getType() != null 
-                                                    && !Validator.isNullOrBlank(resource.getName()) 
-                                                    && resource.getFileSize() != null
-                                                    && resource.getVersion() != null 
-                                                    && resource.getVersion().matches(VersionComparator.VERSION_PATTERN)) {
-                                                getAvailableOnlineResources().put(resource.getName(), resource);
+                                        for (bias.online.xmlb.Package pack : ((Repository) getUnmarshaller().unmarshal(file)).getPackage()) {
+                                            if (pack.getType() != null 
+                                                    && !Validator.isNullOrBlank(pack.getName()) 
+                                                    && pack.getFileSize() != null
+                                                    && pack.getVersion() != null 
+                                                    && pack.getVersion().matches(VersionComparator.VERSION_PATTERN)) {
+                                                getAvailableOnlinePackages().put(pack.getName(), pack);
                                                 onlineModel.addRow(new Object[]{
                                                         Boolean.FALSE,
-                                                        resource.getType().value(), 
-                                                        resource.getName(), 
-                                                        resource.getVersion(), 
-                                                        resource.getAuthor() != null ? resource.getAuthor() : Constants.ADDON_FIELD_VALUE_NA, 
-                                                        resource.getDescription() != null ? resource.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                                                        FormatUtils.formatByteSize(resource.getFileSize()) });
+                                                        pack.getType().value(), 
+                                                        pack.getName(), 
+                                                        pack.getVersion(), 
+                                                        pack.getAuthor() != null ? pack.getAuthor() : Constants.ADDON_FIELD_VALUE_NA, 
+                                                        pack.getDescription() != null ? pack.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                                                        FormatUtils.formatByteSize(pack.getFileSize()) });
                                             }
                                         }
                                     } catch (Throwable t) {
@@ -4623,11 +4667,11 @@ public class FrontEnd extends JFrame {
                         if (idx != -1) {
                             String addOnName = (String) onlineList.getValueAt(idx, 2);
                             try {
-                                final OnlineResource resource = getAvailableOnlineResources().get(addOnName);
-                                String fileName = resource.getName() + (resource.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + resource.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_DETAILS_FILENAME_SUFFIX;
+                                final bias.online.xmlb.Package pack = getAvailableOnlinePackages().get(addOnName);
+                                String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_DETAILS_FILENAME_SUFFIX;
                                 final URL addOnURL = new URL(getRepositoryBaseURL() + fileName);
                                 try {
-                                    loadAndDisplayAddOnDetails(getRepositoryBaseURL(), addOnURL, resource.getName());
+                                    loadAndDisplayAddOnDetails(getRepositoryBaseURL(), addOnURL, pack.getName());
                                 } catch (MalformedURLException ex) {
                                     displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
                                 }
@@ -4641,23 +4685,23 @@ public class FrontEnd extends JFrame {
                 onlineInstallButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            final Map<URL, OnlineResource> urlResourceMap = new HashMap<URL, OnlineResource>();
+                            final Map<URL, bias.online.xmlb.Package> urlPackageMap = new HashMap<URL, bias.online.xmlb.Package>();
                             final Map<URL, File> urlFileMap = new HashMap<URL, File>();
                             long tSize = 0;
                             for (int i = 0; i < onlineList.getRowCount(); i++) {
                                 if ((Boolean) onlineList.getValueAt(i, 0)) {
-                                    OnlineResource res = getAvailableOnlineResources().get((String) onlineList.getValueAt(i, 2));
-                                    String fileName = res.getName() + (res.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + res.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_FILENAME_SUFFIX;
+                                    bias.online.xmlb.Package pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(i, 2));
+                                    String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_FILENAME_SUFFIX;
                                     URL url;
-                                    if (!Validator.isNullOrBlank(res.getUrl())) {
-                                        url = new URL(res.getUrl());
+                                    if (!Validator.isNullOrBlank(pack.getUrl())) {
+                                        url = new URL(pack.getUrl());
                                     } else {
                                         url = new URL(getRepositoryBaseURL() + fileName);
                                     }
                                     File file = new File(Constants.TMP_DIR, fileName);
                                     urlFileMap.put(url, file);
-                                    urlResourceMap.put(url, res);
-                                    tSize += res.getFileSize();
+                                    urlPackageMap.put(url, pack);
+                                    tSize += pack.getFileSize();
                                 }
                             }
                             final Long totalSize = new Long(tSize);
@@ -4674,17 +4718,17 @@ public class FrontEnd extends JFrame {
                                     }
                                     @Override
                                     public void onStart(URL url, File file) {
-                                        OnlineResource res = urlResourceMap.get(url);
-                                        if (res.getFileSize() != null) {
-                                            onlineSingleProgressBar.setMaximum(res.getFileSize().intValue());
+                                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
+                                        if (pack.getFileSize() != null) {
+                                            onlineSingleProgressBar.setMaximum(pack.getFileSize().intValue());
                                         }
                                     };
                                     @Override
                                     public void onSingleProgress(URL url, File file, long downloadedBytesNum, long elapsedTime) {
-                                        OnlineResource res = urlResourceMap.get(url);
+                                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
                                         onlineSingleProgressBar.setValue((int) downloadedBytesNum);
-                                        onlineSingleProgressBar.setString(res.getName() + Constants.BLANK_STR + res.getVersion() 
-                                                + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(res.getFileSize()) + ")");
+                                        onlineSingleProgressBar.setString(pack.getName() + Constants.BLANK_STR + pack.getVersion() 
+                                                + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(pack.getFileSize()) + ")");
                                     };
                                     @Override
                                     public void onTotalProgress(int itemNum, long downloadedBytesNum, long elapsedTime) {
@@ -4698,9 +4742,9 @@ public class FrontEnd extends JFrame {
                                     };
                                     @Override
                                     public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
-                                        OnlineResource res = urlResourceMap.get(url);
+                                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
                                         try {
-                                            if (res.getType() == ResourceType.ICON_SET) {
+                                            if (pack.getType() == PackageType.ICON_SET) {
                                                 Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
                                                 if (!icons.isEmpty()) {
                                                     for (ImageIcon icon : icons) {
@@ -4714,21 +4758,26 @@ public class FrontEnd extends JFrame {
                                                     for (AddOnInfo iconSetInfo : iconSets) {
                                                         icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
                                                     }
-                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + res.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + pack.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                     icList.repaint();
                                                 } else {
-                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + res.getName() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + pack.getName() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 }
-                                            } else if (res.getType() == ResourceType.LIBRARY) {
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + res.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                                BackEnd.getInstance().installLibrary(file);
+                                            } else if (pack.getType() == PackageType.LIBRARY) {
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                AddOnInfo libInfo = new AddOnInfo();
+                                                libInfo.setName(pack.getName());
+                                                libInfo.setVersion(pack.getVersion());
+                                                libInfo.setDescription(pack.getDescription());
+                                                libInfo.setAuthor(pack.getAuthor());
+                                                BackEnd.getInstance().installLibrary(file, libInfo);
                                                 modified = true;
-                                            } else if (res.getType() == ResourceType.CORE_UPDATE) {
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "CoreUpdate '" + res.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                            } else if (pack.getType() == PackageType.CORE_UPDATE) {
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "CoreUpdate '" + pack.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 BackEnd.getInstance().installAppCoreUpdate(file);
                                                 modified = true;
                                             } else {
-                                                ADDON_TYPE addOnType = ADDON_TYPE.valueOf(res.getType().value());
+                                                ADDON_TYPE addOnType = ADDON_TYPE.valueOf(pack.getType().value());
                                                 AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
                                                 String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
                                                 DefaultTableModel model = addOnType == ADDON_TYPE.Extension ? extModel : lafModel;
@@ -4739,18 +4788,18 @@ public class FrontEnd extends JFrame {
                                                 } else {
                                                     model.addRow(getAddOnInfoRow(installedAddOn, status));
                                                 }
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.name() + " '" + res.getName() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.name() + " '" + pack.getName() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 modified = true;
                                             }
                                         } catch (Throwable t) {
-                                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install " + res.getType() + " '" + res.getName() + "' from downloaded file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install " + pack.getType() + " '" + pack.getName() + "' from downloaded file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                             t.printStackTrace(System.err);
                                         }
                                     }
                                     @Override
                                     public void onFailure(URL url, File file, Throwable failure) {
-                                        OnlineResource res = urlResourceMap.get(url);
-                                        sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "'" + res.getName() + "' - failed to retrieve installation file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
+                                        sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "'" + pack.getName() + "' - failed to retrieve installation file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                         failure.printStackTrace(System.err);
                                     }
                                 });
@@ -4830,34 +4879,42 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Online", uiIcons.getIconOnline(), onlinePanel);
                 
-                if (!Launcher.getUninstalledAddOnsList().isEmpty() && !cleanedUp) {
-                    JPanel advPanel = new JPanel(new BorderLayout());
-                    JPanel cleanPanel = new JPanel(new GridLayout(2,1));
+                JPanel advPanel = new JPanel(new BorderLayout());
+
+                JTable libsList = getLibsList(BackEnd.getInstance().getAddOns(ADDON_TYPE.Library));
+                JPanel libsPanel = new JPanel(new BorderLayout());
+                libsPanel.add(new JLabel("Registered libraries:"), BorderLayout.NORTH);
+                libsPanel.add(new JScrollPane(libsList), BorderLayout.CENTER);
+                advPanel.add(libsPanel, BorderLayout.CENTER);
+                
+                if (BackEnd.getInstance().unusedAddOnDataAndConfigFilesFound() && !cleanedUp) {
+                    JPanel cleanPanel = new JPanel(new BorderLayout());
                     final JButton cleanButt = new JButton("Clean unused data and config files!");
                     JLabel cleanLabel = new JLabel(
                             "<html>" +
                             "<body>" +
                             "<div color=\"red\">" +
-                            "NOTE: This will remove all unused data and configuration files<br>" +
-                            "that were used by extensions/LAFs that are not currently installed.<br>" +
-                            "Do that only if you don't plan to install these extensions/LAFs again<br>" +
-                            "or want to reset their data/settings." +
+                            "NOTE: This will remove all unused data and configuration files that were used by extensions/LAFs that are not currently loaded<br>" +
+                            "(Do that only if you don't plan to install these extensions/LAFs again or want to reset their data/settings)" +
                             "</div>" +
                             "</body>" +
                             "</html>");
                     cleanButt.addActionListener(new ActionListener(){
                         public void actionPerformed(ActionEvent e) {
                             BackEnd.getInstance().removeUnusedAddOnDataAndConfigFiles();
-                            cleanButt.setText("Done!");
+                            cleanButt.setText("Clean unused data and config files! [Done]");
                             cleanButt.setEnabled(false);
                             cleanedUp = true;
                         }
                     });
-                    cleanPanel.add(cleanButt);
-                    cleanPanel.add(cleanLabel);
-                    advPanel.add(cleanPanel, BorderLayout.NORTH);
-                    addOnsPane.addTab("Advanced", uiIcons.getIconPreferences(), advPanel);
+                    cleanPanel.add(cleanButt, BorderLayout.NORTH);
+                    cleanPanel.add(cleanLabel, BorderLayout.CENTER);
+                    advPanel.add(cleanPanel, BorderLayout.SOUTH);
                 }
+                // TODO [P1] place clean-unused-libs feature implementation somewhere here...
+                
+                addOnsPane.addTab("Advanced", uiIcons.getIconPreferences(), advPanel);
+                
                 JOptionPane op = new JOptionPane();
                 op.setMessage(addOnsPane);
                 op.setMessageType(JOptionPane.INFORMATION_MESSAGE);
@@ -4869,6 +4926,70 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private Collection<AddOnInfo> confirmAddOnsInstallation(Collection<AddOnInfo> addOnInfos) {
+        Map<String, AddOnInfo> proposedAddOnsToInstall = new HashMap<String, AddOnInfo>();
+        Collection<AddOnInfo> addOnsToInstall = new ArrayList<AddOnInfo>();
+        final DefaultTableModel addOnModel = new DefaultTableModel() {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public boolean isCellEditable(int rowIndex, int mColIndex) {
+                return mColIndex == 0 ? true : false;
+            }
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 0) {
+                    return Boolean.class;
+                } else {
+                    return super.getColumnClass(columnIndex);
+                }
+            }
+        };
+        final JTable addOnList = new JTable(addOnModel);
+        final TableRowSorter<TableModel> addOnSorter = new TableRowSorter<TableModel>(addOnModel);
+        addOnSorter.setSortsOnUpdates(true);
+        addOnList.setRowSorter(addOnSorter);
+        addOnModel.addColumn("Install/Update");
+        addOnModel.addColumn("Name");
+        addOnModel.addColumn("Version");
+        addOnModel.addColumn("Author");
+        addOnModel.addColumn("Description");
+        for (AddOnInfo addOnInfo : addOnInfos) {
+            addOnModel.addRow(getInstallAddOnInfoRow(addOnInfo));
+            proposedAddOnsToInstall.put(addOnInfo.getName(), addOnInfo);
+        }
+        int opt = JOptionPane.showConfirmDialog(getActiveWindow(), new JScrollPane(addOnList), "Add-On(s) Installation Confirmation", JOptionPane.OK_CANCEL_OPTION);
+        if (opt == JOptionPane.OK_OPTION) {
+            for (int i = 0; i < addOnList.getRowCount(); i++) {
+                if ((Boolean) addOnList.getValueAt(i, 0)) {
+                    addOnsToInstall.add(proposedAddOnsToInstall.get(addOnList.getValueAt(i, 1)));
+                }
+            }
+        }
+        return addOnsToInstall;
+    }
+    
+    private JTable getLibsList(Collection<AddOnInfo> addOnInfos) {
+        final DefaultTableModel addOnModel = new DefaultTableModel() {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public boolean isCellEditable(int rowIndex, int mColIndex) {
+                return false;
+            }
+        };
+        final JTable addOnList = new JTable(addOnModel);
+        final TableRowSorter<TableModel> addOnSorter = new TableRowSorter<TableModel>(addOnModel);
+        addOnSorter.setSortsOnUpdates(true);
+        addOnList.setRowSorter(addOnSorter);
+        addOnModel.addColumn("Name");
+        addOnModel.addColumn("Version");
+        addOnModel.addColumn("Author");
+        addOnModel.addColumn("Description");
+        for (AddOnInfo addOnInfo : addOnInfos) {
+            addOnModel.addRow(getAddOnInfoRow(addOnInfo, null));
+        }
+        return addOnList;
+    }
+
     private void loadAndDisplayAddOnDetails(final URL baseURL, final URL addOnURL, final String addOnName) {
         Thread loadDetailsThread = new Thread(new Runnable(){
             public void run() {

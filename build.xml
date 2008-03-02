@@ -78,6 +78,7 @@
 				<attribute name="Bias-Add-On-Version" value="0.1.1" />
 				<attribute name="Bias-Add-On-Description" value="Financial Flows Management and Statistics" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="JFreechart, JCommon, JCalendar" />
 			</manifest>
 		</jar>
 	</target>
@@ -420,6 +421,7 @@
 				<attribute name="Bias-Add-On-Version" value="0.1.2" />
 				<attribute name="Bias-Add-On-Description" value="Bias Substance Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="Substance" />
 			</manifest>
 		</jar>
 	</target>
