@@ -18,7 +18,7 @@
 	</xs:complexType>
 	<xs:simpleType name="package-type">
 		<xs:restriction base="xs:string">
-			<xs:enumeration value="CoreUpdate"/>
+			<xs:enumeration value="AppCore"/>
 			<xs:enumeration value="Extension"/>
 			<xs:enumeration value="LookAndFeel"/>
 			<xs:enumeration value="IconSet"/>

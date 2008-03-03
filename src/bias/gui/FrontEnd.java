@@ -4758,13 +4758,13 @@ public class FrontEnd extends JFrame {
                                                     for (AddOnInfo iconSetInfo : iconSets) {
                                                         icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
                                                     }
-                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + pack.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                     icList.repaint();
                                                 } else {
-                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + pack.getName() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 }
                                             } else if (pack.getType() == PackageType.LIBRARY) {
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 AddOnInfo libInfo = new AddOnInfo();
                                                 libInfo.setName(pack.getName());
                                                 libInfo.setVersion(pack.getVersion());
@@ -4772,8 +4772,8 @@ public class FrontEnd extends JFrame {
                                                 libInfo.setAuthor(pack.getAuthor());
                                                 BackEnd.getInstance().installLibrary(file, libInfo);
                                                 modified = true;
-                                            } else if (pack.getType() == PackageType.CORE_UPDATE) {
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "CoreUpdate '" + pack.getName() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                            } else if (pack.getType() == PackageType.APP_CORE) {
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "AppCore '" + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 BackEnd.getInstance().installAppCoreUpdate(file);
                                                 modified = true;
                                             } else {
@@ -4788,11 +4788,11 @@ public class FrontEnd extends JFrame {
                                                 } else {
                                                     model.addRow(getAddOnInfoRow(installedAddOn, status));
                                                 }
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.name() + " '" + pack.getName() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.name() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 modified = true;
                                             }
                                         } catch (Throwable t) {
-                                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install " + pack.getType() + " '" + pack.getName() + "' from downloaded file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install " + pack.getType() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' from downloaded file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                             t.printStackTrace(System.err);
                                         }
                                     }
