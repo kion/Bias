@@ -1155,14 +1155,10 @@ public class BackEnd {
     
     private void extractAddOnInfo(JarInputStream in, String addOnName) throws Throwable {
         try {
-            if (!Constants.ADDON_INFO_DIR.exists()) {
-                Constants.ADDON_INFO_DIR.mkdir();
-            }
             File destination = new File(Constants.ADDON_INFO_DIR, addOnName);
             if (destination.exists()) {
                 FSUtils.delete(destination);
             }
-            destination.mkdir();
             JarEntry je;
             while ((je = in.getNextJarEntry()) != null) {
                 String name = je.getName();
