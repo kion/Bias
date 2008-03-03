@@ -1014,7 +1014,11 @@ public class BackEnd {
     }
     
     public void installLibrary(File libFile, AddOnInfo libInfo) throws Throwable {
-        FSUtils.duplicateFile(libFile, new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + libInfo.getName() + Constants.ADDON_FILENAME_SUFFIX));
+        File installedLibFile = new File(Constants.LIBS_DIR, libInfo.getName() + Constants.ADDON_FILENAME_SUFFIX);
+        if (installedLibFile.exists()) {
+            installedLibFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + libInfo.getName() + Constants.ADDON_FILENAME_SUFFIX);
+        }
+        FSUtils.duplicateFile(libFile, installedLibFile);
         storeAddOnInfo(libInfo, ADDON_TYPE.Library);
     }
     

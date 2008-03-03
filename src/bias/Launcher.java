@@ -104,16 +104,18 @@ public class Launcher {
         }
         addClassPathURL(FILE_PROTOCOL_PREFIX + appCoreFile.getAbsolutePath());
         // update addons and libs if updates found and add them to classpath
-        for (File addonFile : addonsDir.listFiles()) {
-            File updateFile = new File(addonsDir, UPDATE_FILE_PREFIX + addonFile.getName());
-            if (updateFile.exists()) {
-                FSUtils.duplicateFile(updateFile, addonFile);
-                FSUtils.delete(updateFile);
+        File[] dirs = new File[] { addonsDir, libsDir };
+        for (File dir : dirs) {
+            if (dir.exists() && dir.isDirectory()) {
+                for (File file : dir.listFiles()) {
+                    if (file.getName().startsWith(UPDATE_FILE_PREFIX)) {
+                        File updatedFile = new File(dir, file.getName().substring(UPDATE_FILE_PREFIX.length()));
+                        FSUtils.duplicateFile(file, updatedFile);
+                        FSUtils.delete(file);
+                    }
+                    addClassPathURL(FILE_PROTOCOL_PREFIX + file.getAbsolutePath());
+                }
             }
-            addClassPathURL(FILE_PROTOCOL_PREFIX + addonFile.getAbsolutePath());
-        }
-        for (File libFile : libsDir.listFiles()) {
-            addClassPathURL(FILE_PROTOCOL_PREFIX + libFile.getAbsolutePath());
         }
     }
 
