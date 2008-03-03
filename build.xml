@@ -11,7 +11,7 @@
 	<description>
     	Bias OpenSource Personal Information Manager Project
     </description>
-	
+
 	<!-- ================================= 
           properties              
          ================================= -->
@@ -58,7 +58,9 @@
           target: Build_Extension_FilePack
          ================================= -->
 	<target name="Build_Extension_FilePack" description="FilePack Add-On">
+		<delete dir="build" includes="FilePack*.jar" />
 		<jar basedir="bin" destfile="build/FilePack_${FilePack_Version}.jar" includes="bias/extension/FilePack/** bias/res/FilePack/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/FilePack_${FilePack_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="FilePack" />
 				<attribute name="Bias-Add-On-Type" value="Extension" />
@@ -70,19 +72,12 @@
 	</target>
 
 	<!-- ================================= 
-          target: Test_Extension_FilePack
-         ================================= -->
-	<target name="Test_Extension_FilePack" depends="Build_Extension_FilePack">
-		<delete file="build/addons/FilePack.ext.jar" />
-		<copy file="build/FilePack.jar" tofile="build/addons/FilePack.ext.jar" />
-		<antcall target="BuildAndRunApp" />
-	</target>
-
-	<!-- ================================= 
           target: Build_Extension_FinancialFlows
          ================================= -->
 	<target name="Build_Extension_FinancialFlows" description="FinancialFlows Add-On">
+		<delete dir="build" includes="FinancialFlows*.jar" />
 		<jar basedir="bin" destfile="build/FinancialFlows_${FinancialFlows_Version}.jar" includes="bias/extension/FinancialFlows/** bias/res/FinancialFlows/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/FinancialFlows_${FinancialFlows_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="FinancialFlows" />
 				<attribute name="Bias-Add-On-Type" value="Extension" />
@@ -95,19 +90,12 @@
 	</target>
 
 	<!-- ================================= 
-          target: Test_Extension_FinancialFlows
-         ================================= -->
-	<target name="Test_Extension_FinancialFlows" depends="Build_Extension_FinancialFlows">
-		<delete file="build/addons/FinancialFlows.ext.jar" />
-		<copy file="build/FinancialFlows.jar" tofile="build/addons/FinancialFlows.ext.jar" />
-		<antcall target="BuildAndRunApp" />
-	</target>
-
-	<!-- ================================= 
           target: Build_Extension_Graffiti              
          ================================= -->
 	<target name="Build_Extension_Graffiti" description="Graffiti Add-On">
+		<delete dir="build" includes="Graffiti*.jar" />
 		<jar basedir="bin" destfile="build/Graffiti_${Graffiti_Version}.jar" includes="bias/extension/Graffiti/** bias/res/Graffiti/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/Graffiti_${Graffiti_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="Graffiti" />
 				<attribute name="Bias-Add-On-Type" value="Extension" />
@@ -119,19 +107,12 @@
 	</target>
 
 	<!-- ================================= 
-          target: Test_Extension_Graffiti
-         ================================= -->
-	<target name="Test_Extension_Graffiti" depends="Build_Extension_Graffiti">
-		<delete file="build/addons/Graffiti.ext.jar" />
-		<copy file="build/Graffiti.jar" tofile="build/addons/Graffiti.ext.jar" />
-		<antcall target="BuildAndRunApp" />
-	</target>
-
-	<!-- ================================= 
           target: Build_Extension_HTMLPage              
          ================================= -->
 	<target name="Build_Extension_HTMLPage" description="HTMLPage Add-On">
+		<delete dir="build" includes="HTMLPage*.jar" />
 		<jar basedir="bin" destfile="build/HTMLPage_${HTMLPage_Version}.jar" includes="bias/extension/HTMLPage/** bias/res/HTMLPage/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/HTMLPage_${HTMLPage_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="HTMLPage" />
 				<attribute name="Bias-Add-On-Type" value="Extension" />
@@ -143,19 +124,12 @@
 	</target>
 
 	<!-- ================================= 
-          target: Test_Extension_HTMLPage
-         ================================= -->
-	<target name="Test_Extension_HTMLPage" depends="Build_Extension_HTMLPage">
-		<delete file="build/addons/HTMLPage.ext.jar" />
-		<copy file="build/HTMLPage.jar" tofile="build/addons/HTMLPage.ext.jar" />
-		<antcall target="BuildAndRunApp" />
-	</target>
-
-	<!-- ================================= 
           target: Build_Extension_PlainText
          ================================= -->
 	<target name="Build_Extension_PlainText" description="PlainText Add-On">
+		<delete dir="build" includes="PlainText*.jar" />
 		<jar basedir="bin" destfile="build/PlainText_${PlainText_Version}.jar" includes="bias/extension/PlainText/** bias/res/PlainText/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/PlainText_${PlainText_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="PlainText" />
 				<attribute name="Bias-Add-On-Type" value="Extension" />
@@ -167,19 +141,12 @@
 	</target>
 
 	<!-- ================================= 
-          target: Test_Extension_PlainText
-         ================================= -->
-	<target name="Test_Extension_PlainText" depends="Build_Extension_PlainText">
-		<delete file="build/addons/PlainText.ext.jar" />
-		<copy file="build/PlainText.jar" tofile="build/addons/PlainText.ext.jar" />
-		<antcall target="BuildAndRunApp" />
-	</target>
-
-	<!-- ================================= 
           target: Build_Extension_ToDoList
          ================================= -->
 	<target name="Build_Extension_ToDoList" description="ToDoList Add-On">
+		<delete dir="build" includes="ToDoList*.jar" />
 		<jar basedir="bin" destfile="build/ToDoList_${ToDoList_Version}.jar" includes="bias/extension/ToDoList/** bias/res/ToDoList/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/ToDoList_${ToDoList_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="ToDoList" />
 				<attribute name="Bias-Add-On-Type" value="Extension" />
@@ -191,19 +158,12 @@
 	</target>
 
 	<!-- ================================= 
-          target: Test_Extension_ToDoList
-         ================================= -->
-	<target name="Test_Extension_ToDoList" depends="Build_Extension_ToDoList">
-		<delete file="build/addons/ToDoList.ext.jar" />
-		<copy file="build/ToDoList.jar" tofile="build/addons/ToDoList.ext.jar" />
-		<antcall target="BuildAndRunApp" />
-	</target>
-
-	<!-- ================================= 
           target: Build_Extension_SimpleSearch
          ================================= -->
 	<target name="Build_Extension_SimpleSearch" description="SimpleSearch Add-On">
+		<delete dir="build" includes="SimpleSearch*.jar" />
 		<jar basedir="bin" destfile="build/SimpleSearch_${SimpleSearch_Version}.jar" includes="bias/extension/SimpleSearch/** bias/res/SimpleSearch/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/SimpleSearch_${SimpleSearch_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SimpleSearch" />
 				<attribute name="Bias-Add-On-Type" value="Extension" />
@@ -215,19 +175,12 @@
 	</target>
 
 	<!-- ================================= 
-          target: Test_Extension_SimpleSearch
-         ================================= -->
-	<target name="Test_Extension_SimpleSearch" depends="Build_Extension_SimpleSearch">
-		<delete file="build/addons/SimpleSearch.ext.jar" />
-		<copy file="build/SimpleSearch.jar" tofile="build/addons/SimpleSearch.ext.jar" />
-		<antcall target="BuildAndRunApp" />
-	</target>
-
-	<!-- ================================= 
           target: Build_Extension_SimpleStats
          ================================= -->
 	<target name="Build_Extension_SimpleStats" description="SimpleStats Add-On">
+		<delete dir="build" includes="SimpleStats*.jar" />
 		<jar basedir="bin" destfile="build/SimpleStats_${SimpleStats_Version}.jar" includes="bias/extension/SimpleStats/** bias/res/SimpleStats/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/SimpleStats_${SimpleStats_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SimpleStats" />
 				<attribute name="Bias-Add-On-Type" value="Extension" />
@@ -239,19 +192,12 @@
 	</target>
 
 	<!-- ================================= 
-          target: Test_Extension_SimpleStats
-         ================================= -->
-	<target name="Test_Extension_SimpleStats" depends="Build_Extension_SimpleStats">
-		<delete file="build/addons/SimpleStats.ext.jar" />
-		<copy file="build/SimpleStats.jar" tofile="build/addons/SimpleStats.ext.jar" />
-		<antcall target="BuildAndRunApp" />
-	</target>
-
-	<!-- ================================= 
           target: Build_Extension_MainEntry
          ================================= -->
 	<target name="Build_Extension_MainEntry" description="MainEntry Add-On">
+		<delete dir="build" includes="MainEntry*.jar" />
 		<jar basedir="bin" destfile="build/MainEntry_${MainEntry_Version}.jar" includes="bias/extension/MainEntry/** bias/res/MainEntry/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/MainEntry_${MainEntry_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="MainEntry" />
 				<attribute name="Bias-Add-On-Type" value="Extension" />
@@ -263,19 +209,12 @@
 	</target>
 
 	<!-- ================================= 
-          target: Test_Extension_MainEntry
-         ================================= -->
-	<target name="Test_Extension_MainEntry" depends="Build_Extension_MainEntry">
-		<delete file="build/addons/MainEntry.ext.jar" />
-		<copy file="build/MainEntry.jar" tofile="build/addons/MainEntry.ext.jar" />
-		<antcall target="BuildAndRunApp" />
-	</target>
-
-	<!-- ================================= 
           target: Build_Skin_JGLooksSkin             
          ================================= -->
 	<target name="Build_Skin_JGLooksSkin" description="JGoodies Looks Skin">
+		<delete dir="build" includes="JGLooksSkin*.jar" />
 		<jar basedir="bin" destfile="build/JGLooksSkin_${JGLooksSkin_Version}.jar" includes="bias/skin/JGLooksSkin/** bias/res/JGLooksSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/JGLooksSkin_${JGLooksSkin_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="JGLooksSkin" />
 				<attribute name="Bias-Add-On-Type" value="Skin" />
@@ -291,7 +230,9 @@
           target: Build_Skin_PgsSkin             
          ================================= -->
 	<target name="Build_Skin_PgsSkin" description="Pgs Skin">
+		<delete dir="build" includes="PgsSkin*.jar" />
 		<jar basedir="bin" destfile="build/PgsSkin_${PgsSkin_Version}.jar" includes="bias/skin/PgsSkin/** bias/res/PgsSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/PgsSkin_${PgsSkin_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="PgsSkin" />
 				<attribute name="Bias-Add-On-Type" value="Skin" />
@@ -307,7 +248,9 @@
           target: Build_Skin_LipstikSkin             
          ================================= -->
 	<target name="Build_Skin_LipstikSkin" description="Lipstik Skin">
+		<delete dir="build" includes="LipstikSkin*.jar" />
 		<jar basedir="bin" destfile="build/LipstikSkin_${LipstikSkin_Version}.jar" includes="bias/skin/LipstikSkin/** bias/res/LipstikSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/LipstikSkin_${LipstikSkin_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="LipstikSkin" />
 				<attribute name="Bias-Add-On-Type" value="Skin" />
@@ -323,7 +266,9 @@
           target: Build_Skin_SquarenessSkin             
          ================================= -->
 	<target name="Build_Skin_SquarenessSkin" description="Squareness Skin">
+		<delete dir="build" includes="SquarenessSkin*.jar" />
 		<jar basedir="bin" destfile="build/SquarenessSkin_${SquarenessSkin_Version}.jar" includes="bias/skin/SquarenessSkin/** bias/res/SquarenessSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/SquarenessSkin_${SquarenessSkin_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SquarenessSkin" />
 				<attribute name="Bias-Add-On-Type" value="Skin" />
@@ -339,7 +284,9 @@
           target: Build_Skin_TinySkin             
          ================================= -->
 	<target name="Build_Skin_TinySkin" description="Tiny Skin">
+		<delete dir="build" includes="TinySkin*.jar" />
 		<jar basedir="bin" destfile="build/TinySkin_${TinySkin_Version}.jar" includes="bias/skin/TinySkin/** bias/res/TinySkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/TinySkin_${TinySkin_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="TinySkin" />
 				<attribute name="Bias-Add-On-Type" value="Skin" />
@@ -355,7 +302,9 @@
           target: Build_Skin_FHSkin             
          ================================= -->
 	<target name="Build_Skin_FHSkin" description="FH Skin">
+		<delete dir="build" includes="FHSkin*.jar" />
 		<jar basedir="bin" destfile="build/FHSkin_${FHSkin_Version}.jar" includes="bias/skin/FHSkin/** bias/res/FHSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/FHSkin_${FHSkin_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="FHSkin" />
 				<attribute name="Bias-Add-On-Type" value="Skin" />
@@ -371,7 +320,9 @@
           target: Build_Skin_LiquidSkin             
          ================================= -->
 	<target name="Build_Skin_LiquidSkin" description="Liquid Skin">
+		<delete dir="build" includes="LiquidSkin*.jar" />
 		<jar basedir="bin" destfile="build/LiquidSkin_${LiquidSkin_Version}.jar" includes="bias/skin/LiquidSkin/** bias/res/LiquidSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/LiquidSkin_${LiquidSkin_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="LiquidSkin" />
 				<attribute name="Bias-Add-On-Type" value="Skin" />
@@ -387,7 +338,9 @@
           target: Build_Skin_SyntheticaSkin             
          ================================= -->
 	<target name="Build_Skin_SyntheticaSkin" description="Synthetica Skin">
+		<delete dir="build" includes="SyntheticaSkin*.jar" />
 		<jar basedir="bin" destfile="build/SyntheticaSkin_${SyntheticaSkin_Version}.jar" includes="bias/skin/SyntheticaSkin/** bias/res/SyntheticaSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/SyntheticaSkin_${SyntheticaSkin_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SyntheticaSkin" />
 				<attribute name="Bias-Add-On-Type" value="Skin" />
@@ -403,7 +356,9 @@
           target: Build_Skin_InfoNodeSkin             
          ================================= -->
 	<target name="Build_Skin_InfoNodeSkin" description="InfoNode Skin">
+		<delete dir="build" includes="InfoNodeSkin*.jar" />
 		<jar basedir="bin" destfile="build/InfoNodeSkin_${InfoNodeSkin_Version}.jar" includes="bias/skin/InfoNodeSkin/** bias/res/InfoNodeSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/InfoNodeSkin_${InfoNodeSkin_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="InfoNodeSkin" />
 				<attribute name="Bias-Add-On-Type" value="Skin" />
@@ -419,7 +374,9 @@
           target: Build_Skin_TonicSlimSkin             
          ================================= -->
 	<target name="Build_Skin_TonicSlimSkin" description="Tonic Slim Skin">
+		<delete dir="build" includes="TonicSlimSkin*.jar" />
 		<jar basedir="bin" destfile="build/TonicSlimSkin_${TonicSlimSkin_Version}.jar" includes="bias/skin/TonicSlimSkin/** bias/res/TonicSlimSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/TonicSlimSkin_${TonicSlimSkin_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="TonicSlimSkin" />
 				<attribute name="Bias-Add-On-Type" value="Skin" />
@@ -435,7 +392,9 @@
           target: Build_Skin_SubstanceSkin             
          ================================= -->
 	<target name="Build_Skin_SubstanceSkin" description="Substance Skin">
+		<delete dir="build" includes="SubstanceSkin*.jar" />
 		<jar basedir="bin" destfile="build/SubstanceSkin_${SubstanceSkin_Version}.jar" includes="bias/skin/SubstanceSkin/** bias/res/SubstanceSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/SubstanceSkin_${SubstanceSkin_Version}.html" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SubstanceSkin" />
 				<attribute name="Bias-Add-On-Type" value="Skin" />

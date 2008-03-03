@@ -4117,7 +4117,7 @@ public class FrontEnd extends JFrame {
                     }
                     extModel.addRow(getAddOnInfoRow(extension, status));
                 }
-                JButton extDetailsButt = new JButton("Extension's details");
+                JButton extDetailsButt = new JButton("Extension details");
                 extDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (extList.getSelectedRowCount() == 1) {
@@ -4130,11 +4130,13 @@ public class FrontEnd extends JFrame {
                                 } else {
                                     String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
                                     try {
-                                        File addOnInfoFile = new File(new File(Constants.ADDON_INFO_DIR, extension), Constants.ADDON_INFO_LOCAL_FILE_NAME);
+                                        File addOnInfoFile = new File(
+                                                new File(Constants.ADDON_INFO_DIR, extension), 
+                                                extension + Constants.ADDON_FILENAME_VERSION_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
                                         if (addOnInfoFile.exists()) {
                                             URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                             URL addOnURL = addOnInfoFile.toURI().toURL();
-                                            loadAndDisplayAddOnDetails(baseURL, addOnURL, extension);
+                                            loadAndDisplayPackageDetails(baseURL, addOnURL, extension);
                                         } else {
                                             displayAddOnsScreenMessage("Detailed information is not provided with this extension.");
                                         }
@@ -4143,7 +4145,7 @@ public class FrontEnd extends JFrame {
                                     }
                                 }
                             } catch (Throwable t) {
-                                displayAddOnsScreenErrorMessage("Failed to display Extensions's details!", t);
+                                displayAddOnsScreenErrorMessage("Failed to display Extensions details!", t);
                             }
                         } else {
                             displayAddOnsScreenMessage("Please, choose only one extension from the list");
@@ -4307,14 +4309,14 @@ public class FrontEnd extends JFrame {
                     }
                     skinModel.addRow(getAddOnInfoRow(skin, status));
                 }
-                JButton skinDetailsButt = new JButton("Skin's details");
+                JButton skinDetailsButt = new JButton("Skin details");
                 skinDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (skinList.getSelectedRowCount() == 1) {
                             try {
                                 String skin = (String) skinList.getValueAt(skinList.getSelectedRow(), 0);
                                 if (DEFAULT_SKIN.equals(skin)) {
-                                    displayAddOnsScreenMessage("This is a default native Java's cross-platform Skin.");
+                                    displayAddOnsScreenMessage("This is a default native Java cross-platform Skin.");
                                 } else {
                                     String version = (String) skinList.getValueAt(skinList.getSelectedRow(), 1);
                                     if (Validator.isNullOrBlank(version)) {
@@ -4323,11 +4325,13 @@ public class FrontEnd extends JFrame {
                                                 "Restart Bias first.");
                                     } else {
                                         try {
-                                            File addOnInfoFile = new File(new File(Constants.ADDON_INFO_DIR, skin), Constants.ADDON_INFO_LOCAL_FILE_NAME);
+                                            File addOnInfoFile = new File(
+                                                    new File(Constants.ADDON_INFO_DIR, skin), 
+                                                    skin + Constants.ADDON_FILENAME_VERSION_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
                                             if (addOnInfoFile.exists()) {
                                                 URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                                 URL addOnURL = addOnInfoFile.toURI().toURL();
-                                                loadAndDisplayAddOnDetails(baseURL, addOnURL, skin);
+                                                loadAndDisplayPackageDetails(baseURL, addOnURL, skin);
                                             } else {
                                                 displayAddOnsScreenMessage("Detailed information is not provided with this Skin.");
                                             }
@@ -4337,7 +4341,7 @@ public class FrontEnd extends JFrame {
                                     }
                                 }
                             } catch (Throwable t) {
-                                displayAddOnsScreenErrorMessage("Failed to display Skin's details!", t);
+                                displayAddOnsScreenErrorMessage("Failed to display Skin details!", t);
                             }
                         } else {
                             displayAddOnsScreenMessage("Please, choose only one Skin from the list");
@@ -4663,7 +4667,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton onlineDetailsButt = new JButton("Addon's details");
+                JButton onlineDetailsButt = new JButton("Package details");
                 onlineDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = onlineList.getSelectedRow();
@@ -4674,7 +4678,7 @@ public class FrontEnd extends JFrame {
                                 String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_DETAILS_FILENAME_SUFFIX;
                                 final URL addOnURL = new URL(getRepositoryBaseURL() + fileName);
                                 try {
-                                    loadAndDisplayAddOnDetails(getRepositoryBaseURL(), addOnURL, pack.getName());
+                                    loadAndDisplayPackageDetails(getRepositoryBaseURL(), addOnURL, pack.getName());
                                 } catch (MalformedURLException ex) {
                                     displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
                                 }
@@ -5020,7 +5024,7 @@ public class FrontEnd extends JFrame {
         return addOnList;
     }
 
-    private void loadAndDisplayAddOnDetails(final URL baseURL, final URL addOnURL, final String addOnName) {
+    private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final String addOnName) {
         Thread loadDetailsThread = new Thread(new Runnable(){
             public void run() {
                 boolean loaded = false;
@@ -5036,7 +5040,7 @@ public class FrontEnd extends JFrame {
                     }
                     loaded = true;
                 } catch (Throwable t) {
-                    displayAddOnsScreenErrorMessage("Failed to load details page! " + getFailureDetails(t), t);
+                    displayAddOnsScreenErrorMessage("Failed to load package details page! " + getFailureDetails(t), t);
                 } finally {
                         try {
                             if (is != null) is.close();

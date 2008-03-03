@@ -88,7 +88,6 @@ public class Constants {
     public static final String PATH_PREFIX_PATTERN = "^.*/";
     public static final String PATH_SEPARATOR = "/";
 
-    public static final String ADDON_INFO_LOCAL_FILE_NAME = "index.html";
     public static final String ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME = "repository.xml";
     public static final String ADDON_FILENAME_VERSION_SEPARATOR = "_";
     public static final String JAR_FILE_SUFFIX = ".jar";
