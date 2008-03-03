@@ -136,11 +136,11 @@ import bias.extension.MissingExtensionInformer;
 import bias.extension.ToolExtension;
 import bias.extension.ToolRepresentation;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
-import bias.laf.LookAndFeel;
-import bias.laf.UIIcons;
 import bias.online.xmlb.ObjectFactory;
 import bias.online.xmlb.PackageType;
 import bias.online.xmlb.Repository;
+import bias.skin.Skin;
+import bias.skin.UIIcons;
 import bias.transfer.Transferrer;
 import bias.transfer.Transferrer.TRANSFER_TYPE;
 import bias.utils.AppManager;
@@ -163,7 +163,7 @@ public class FrontEnd extends JFrame {
 
     private static final long serialVersionUID = 1L;
     
-    private static final String DEFAULT_LOOK_AND_FEEL = "DefaultLAF";
+    private static final String DEFAULT_SKIN = "DefaultSkin";
 
     /**
      * Application icon
@@ -205,7 +205,7 @@ public class FrontEnd extends JFrame {
     
     private static AddOnFilesChooser extensionFileChooser = new AddOnFilesChooser();
 
-    private static AddOnFilesChooser lafFileChooser = new AddOnFilesChooser();
+    private static AddOnFilesChooser skinFileChooser = new AddOnFilesChooser();
 
     private static IconsFileChooser iconsFileChooser = new IconsFileChooser();
     
@@ -222,9 +222,9 @@ public class FrontEnd extends JFrame {
 
     private static Properties config;
     
-    private static String activeLAF = null;
+    private static String activeSkin = null;
     
-    private static Map<String, byte[]> initialLAFSettings = new HashMap<String, byte[]>();
+    private static Map<String, byte[]> initialSkinSettings = new HashMap<String, byte[]>();
     
     private static Map<String, DataEntry> dataEntries = new HashMap<String, DataEntry>();
 
@@ -493,7 +493,7 @@ public class FrontEnd extends JFrame {
     private static FrontEnd getInstance() {
         if (instance == null) {
             preInit();
-            activateLAF();
+            activateSkin();
             instance = new FrontEnd();
             instance.applyPreferences();
             representTools();
@@ -752,80 +752,80 @@ public class FrontEnd extends JFrame {
     }
     
     @SuppressWarnings("unchecked")
-    private static void activateLAF() {
-        String laf = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
-        if (laf != null) {
+    private static void activateSkin() {
+        String skin = config.getProperty(Constants.PROPERTY_SKIN);
+        if (skin != null) {
             try {
-                String lafFullClassName = Constants.LAF_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                Class<LookAndFeel> lafClass = (Class<LookAndFeel>) Class.forName(lafFullClassName);
-                LookAndFeel lafInstance = lafClass.newInstance();
-                byte[] lafSettings = BackEnd.getInstance().getAddOnSettings(lafFullClassName, ADDON_TYPE.LookAndFeel);
-                lafInstance.activate(lafSettings);
-                // use control icons defined by LAF if available
-                if (lafInstance.getUIIcons() != null) {
-                    uiIcons = lafInstance.getUIIcons();
+                String skinFullClassName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
+                Class<Skin> skinClass = (Class<Skin>) Class.forName(skinFullClassName);
+                Skin skinInstance = skinClass.newInstance();
+                byte[] skinSettings = BackEnd.getInstance().getAddOnSettings(skinFullClassName, ADDON_TYPE.Skin);
+                skinInstance.activate(skinSettings);
+                // use control icons defined by Skin if available
+                if (skinInstance.getUIIcons() != null) {
+                    uiIcons = skinInstance.getUIIcons();
                 }
-                if (activeLAF == null) {
-                    if (laf != null) {
-                        activeLAF = laf;
+                if (activeSkin == null) {
+                    if (skin != null) {
+                        activeSkin = skin;
                     } else {
-                        activeLAF = DEFAULT_LOOK_AND_FEEL;
+                        activeSkin = DEFAULT_SKIN;
                     }
                 }
             } catch (Throwable t) {
-                activeLAF = DEFAULT_LOOK_AND_FEEL;
-                config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+                activeSkin = DEFAULT_SKIN;
+                config.remove(Constants.PROPERTY_SKIN);
                 System.err.println(
-                        "Current Look-&-Feel '" + laf + "' failed to initialize!" + Constants.NEW_LINE +
-                        "(Preferences will be auto-modified to use default Look-&-Feel)" + Constants.NEW_LINE + 
+                        "Current Skin '" + skin + "' failed to initialize!" + Constants.NEW_LINE +
+                        "(Preferences will be auto-modified to use default Skin)" + Constants.NEW_LINE + 
                         "Error details: " + Constants.NEW_LINE);
                 t.printStackTrace(System.err);
             }
         } else {
-            activeLAF = DEFAULT_LOOK_AND_FEEL;
+            activeSkin = DEFAULT_SKIN;
         }
     }
     
-    private boolean setActiveLAF(String laf) throws Throwable {
-        boolean lafChanged = false;
-        String currentLAF = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
-        if (laf != null) {
-            String lafName = laf.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            if (!lafName.equals(currentLAF)) {
-                config.put(Constants.PROPERTY_LOOK_AND_FEEL, lafName);
-                configureLAF(laf);
-                lafChanged = true;
+    private boolean setActiveSkin(String skin) throws Throwable {
+        boolean skinChanged = false;
+        String currentSkin = config.getProperty(Constants.PROPERTY_SKIN);
+        if (skin != null) {
+            String skinName = skin.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
+            if (!skinName.equals(currentSkin)) {
+                config.put(Constants.PROPERTY_SKIN, skinName);
+                configureSkin(skin);
+                skinChanged = true;
             } else {
-                lafChanged = configureLAF(laf);
+                skinChanged = configureSkin(skin);
             }
-        } else if (currentLAF != null) {
-            config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
-            lafChanged = true;
+        } else if (currentSkin != null) {
+            config.remove(Constants.PROPERTY_SKIN);
+            skinChanged = true;
         }
-        return lafChanged;
+        return skinChanged;
     }
     
     @SuppressWarnings("unchecked")
-    private boolean configureLAF(String laf) throws Throwable {
-        boolean lafChanged = false;
-        if (laf != null) {
-            Class<LookAndFeel> lafClass = (Class<LookAndFeel>) Class.forName(laf);
-            LookAndFeel lafInstance = lafClass.newInstance();
-            byte[] lafSettings = BackEnd.getInstance().getAddOnSettings(laf, ADDON_TYPE.LookAndFeel);
-            byte[] settings = lafInstance.configure(lafSettings);
+    private boolean configureSkin(String skin) throws Throwable {
+        boolean skinChanged = false;
+        if (skin != null) {
+            Class<Skin> skinClass = (Class<Skin>) Class.forName(skin);
+            Skin skinInstance = skinClass.newInstance();
+            byte[] skinSettings = BackEnd.getInstance().getAddOnSettings(skin, ADDON_TYPE.Skin);
+            byte[] settings = skinInstance.configure(skinSettings);
             // store if differs from stored version
-            if (!PropertiesUtils.deserializeProperties(settings).equals(PropertiesUtils.deserializeProperties(lafSettings))) {
-                BackEnd.getInstance().storeAddOnSettings(laf, ADDON_TYPE.LookAndFeel, settings);
+            if (!PropertiesUtils.deserializeProperties(settings).equals(PropertiesUtils.deserializeProperties(skinSettings))) {
+                BackEnd.getInstance().storeAddOnSettings(skin, ADDON_TYPE.Skin, settings);
             }
             // find out if differs from initial version
-            byte[] initialSettings = initialLAFSettings.get(laf);
+            byte[] initialSettings = initialSkinSettings.get(skin);
             if (initialSettings == null) {
-                initialLAFSettings.put(laf, settings);
+                initialSkinSettings.put(skin, settings);
                 initialSettings = settings;
             }
-            lafChanged = !PropertiesUtils.deserializeProperties(settings).equals(PropertiesUtils.deserializeProperties(initialSettings));
+            skinChanged = !PropertiesUtils.deserializeProperties(settings).equals(PropertiesUtils.deserializeProperties(initialSettings));
         }
-        return lafChanged;
+        return skinChanged;
     }
     
     @SuppressWarnings("unchecked")
@@ -4249,29 +4249,29 @@ public class FrontEnd extends JFrame {
                     }
                 });
 
-                // look-&-feels
-                final DefaultTableModel lafModel = new DefaultTableModel() {
+                // skins
+                final DefaultTableModel skinModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
                         return false;
                     }
                 };
-                final JTable lafList = new JTable(lafModel) {
+                final JTable skinList = new JTable(skinModel) {
                     private static final long serialVersionUID = 1L;
                     @Override
                     public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
                         Component c = super.prepareRenderer(renderer, row, column);
-                        String currLAFName = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
-                        if (currLAFName == null) {
-                            currLAFName = DEFAULT_LOOK_AND_FEEL;
+                        String currSkinName = config.getProperty(Constants.PROPERTY_SKIN);
+                        if (currSkinName == null) {
+                            currSkinName = DEFAULT_SKIN;
                         }
                         String name = (String) getModel().getValueAt(row, 0);
-                        if (name.equals(activeLAF)) {
+                        if (name.equals(activeSkin)) {
                             c.setForeground(Color.BLUE);
                             Font f = super.getFont();
                             f = new Font(f.getName(), Font.BOLD, f.getSize());
                             c.setFont(f);
-                        } else if (!activeLAF.equals(currLAFName) && name.equals(currLAFName)) {
+                        } else if (!activeSkin.equals(currSkinName) && name.equals(currSkinName)) {
                             c.setForeground(Color.BLUE);
                         } else {
                             c.setForeground(super.getForeground());
@@ -4279,56 +4279,56 @@ public class FrontEnd extends JFrame {
                         return c;
                     }
                 };
-                final TableRowSorter<TableModel> lafSorter = new TableRowSorter<TableModel>(lafModel);
-                lafSorter.setSortsOnUpdates(true);
-                lafList.setRowSorter(lafSorter);
-                lafModel.addColumn("Name");
-                lafModel.addColumn("Version");
-                lafModel.addColumn("Author");
-                lafModel.addColumn("Description");
-                lafModel.addColumn("Status");
-                lafModel.addRow(new Object[]{DEFAULT_LOOK_AND_FEEL,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Look-&-Feel"});
-                for (AddOnInfo laf : BackEnd.getInstance().getAddOns(ADDON_TYPE.LookAndFeel)) {
+                final TableRowSorter<TableModel> skinSorter = new TableRowSorter<TableModel>(skinModel);
+                skinSorter.setSortsOnUpdates(true);
+                skinList.setRowSorter(skinSorter);
+                skinModel.addColumn("Name");
+                skinModel.addColumn("Version");
+                skinModel.addColumn("Author");
+                skinModel.addColumn("Description");
+                skinModel.addColumn("Status");
+                skinModel.addRow(new Object[]{DEFAULT_SKIN,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Skin"});
+                for (AddOnInfo skin : BackEnd.getInstance().getAddOns(ADDON_TYPE.Skin)) {
                     String status;
                     try {
-                        String fullLAFName = Constants.LAF_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + laf.getName() 
-                                                + Constants.PACKAGE_PATH_SEPARATOR + laf.getName();
+                        String fullSkinName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin.getName() 
+                                                + Constants.PACKAGE_PATH_SEPARATOR + skin.getName();
                         // extension class load test
-                        Class<LookAndFeel> lafClass = (Class<LookAndFeel>) Class.forName(fullLAFName);
+                        Class<Skin> skinClass = (Class<Skin>) Class.forName(fullSkinName);
                         // extension instantiation test
-                        lafClass.newInstance();
+                        skinClass.newInstance();
                         status = Constants.ADDON_STATUS_OK;
                     } catch (Throwable t) {
                         // extension is broken
-                        System.err.println("Extension [ " + laf.getName() + " ] failed to initialize!");
+                        System.err.println("Extension [ " + skin.getName() + " ] failed to initialize!");
                         t.printStackTrace(System.err);
                         status = Constants.ADDON_STATUS_BROKEN;
                     }
-                    lafModel.addRow(getAddOnInfoRow(laf, status));
+                    skinModel.addRow(getAddOnInfoRow(skin, status));
                 }
-                JButton lafDetailsButt = new JButton("Look-&-Feel's details");
-                lafDetailsButt.addActionListener(new ActionListener(){
+                JButton skinDetailsButt = new JButton("Skin's details");
+                skinDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (lafList.getSelectedRowCount() == 1) {
+                        if (skinList.getSelectedRowCount() == 1) {
                             try {
-                                String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
-                                if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
-                                    displayAddOnsScreenMessage("This is a default native Java's cross-platform Look-&-Feel.");
+                                String skin = (String) skinList.getValueAt(skinList.getSelectedRow(), 0);
+                                if (DEFAULT_SKIN.equals(skin)) {
+                                    displayAddOnsScreenMessage("This is a default native Java's cross-platform Skin.");
                                 } else {
-                                    String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
+                                    String version = (String) skinList.getValueAt(skinList.getSelectedRow(), 1);
                                     if (Validator.isNullOrBlank(version)) {
                                         displayAddOnsScreenMessage(
-                                                "Detailed information about this look-&-feel can not be shown yet." + Constants.NEW_LINE +
+                                                "Detailed information about this skin can not be shown yet." + Constants.NEW_LINE +
                                                 "Restart Bias first.");
                                     } else {
                                         try {
-                                            File addOnInfoFile = new File(new File(Constants.ADDON_INFO_DIR, laf), Constants.ADDON_INFO_LOCAL_FILE_NAME);
+                                            File addOnInfoFile = new File(new File(Constants.ADDON_INFO_DIR, skin), Constants.ADDON_INFO_LOCAL_FILE_NAME);
                                             if (addOnInfoFile.exists()) {
                                                 URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                                 URL addOnURL = addOnInfoFile.toURI().toURL();
-                                                loadAndDisplayAddOnDetails(baseURL, addOnURL, laf);
+                                                loadAndDisplayAddOnDetails(baseURL, addOnURL, skin);
                                             } else {
-                                                displayAddOnsScreenMessage("Detailed information is not provided with this Look-&-Feel.");
+                                                displayAddOnsScreenMessage("Detailed information is not provided with this Skin.");
                                             }
                                         } catch (MalformedURLException ex) {
                                             displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
@@ -4336,60 +4336,60 @@ public class FrontEnd extends JFrame {
                                     }
                                 }
                             } catch (Throwable t) {
-                                displayAddOnsScreenErrorMessage("Failed to display Look-&-Feel's details!", t);
+                                displayAddOnsScreenErrorMessage("Failed to display Skin's details!", t);
                             }
                         } else {
-                            displayAddOnsScreenMessage("Please, choose only one Look-&-Feel from the list");
+                            displayAddOnsScreenMessage("Please, choose only one Skin from the list");
                         }
                     }
                 });
-                JButton lafActivateButt = new JButton("(Re)Activate Look-&-Feel");
-                lafActivateButt.addActionListener(new ActionListener(){
+                JButton skinActivateButt = new JButton("(Re)Activate Skin");
+                skinActivateButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (lafList.getSelectedRowCount() == 1) {
-                            String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
-                            if (DEFAULT_LOOK_AND_FEEL.equals(laf)) {
+                        if (skinList.getSelectedRowCount() == 1) {
+                            String skin = (String) skinList.getValueAt(skinList.getSelectedRow(), 0);
+                            if (DEFAULT_SKIN.equals(skin)) {
                                 try {
-                                    modified = setActiveLAF(null);
-                                    lafList.repaint();
+                                    modified = setActiveSkin(null);
+                                    skinList.repaint();
                                 } catch (Throwable t) {
-                                    displayAddOnsScreenErrorMessage("Failed to (re)activate Look-&-Feel!", t);
+                                    displayAddOnsScreenErrorMessage("Failed to (re)activate Skin!", t);
                                 }
                             } else {
-                                String version = (String) lafList.getValueAt(lafList.getSelectedRow(), 1);
+                                String version = (String) skinList.getValueAt(skinList.getSelectedRow(), 1);
                                 if (Validator.isNullOrBlank(version)) {
                                     displayAddOnsScreenMessage(
-                                            "This Look-&-Feel can not be activated yet." + Constants.NEW_LINE +
+                                            "This Skin can not be activated yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
                                     try {
-                                        String fullLAFClassName = 
-                                            Constants.LAF_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
-                                                                    + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                                        modified = setActiveLAF(fullLAFClassName);
-                                        lafList.repaint();
+                                        String fullSkinClassName = 
+                                            Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                                    + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
+                                        modified = setActiveSkin(fullSkinClassName);
+                                        skinList.repaint();
                                     } catch (Throwable t) {
-                                        displayAddOnsScreenErrorMessage("Failed to (re)activate Look-&-Feel!", t);
+                                        displayAddOnsScreenErrorMessage("Failed to (re)activate Skin!", t);
                                     }
                                 }
                             }
                         } else {
-                            displayAddOnsScreenMessage("Please, choose only one look-&-feel from the list");
+                            displayAddOnsScreenMessage("Please, choose only one skin from the list");
                         }    
                     }
                 });
-                JButton lafInstButt = new JButton("Install/Update...");
-                lafInstButt.addActionListener(new ActionListener(){
+                JButton skinInstButt = new JButton("Install/Update...");
+                skinInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (lafFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
+                        if (skinFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
                                         Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
                                         Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
-                                        for (File file : lafFileChooser.getSelectedFiles()) {
-                                            AddOnInfo installedLAF = BackEnd.getInstance().getAddOnInfoAndDependencies(file, ADDON_TYPE.LookAndFeel);
-                                            proposedAddOnsToInstall.put(installedLAF, file);
+                                        for (File file : skinFileChooser.getSelectedFiles()) {
+                                            AddOnInfo installedSkin = BackEnd.getInstance().getAddOnInfoAndDependencies(file, ADDON_TYPE.Skin);
+                                            proposedAddOnsToInstall.put(installedSkin, file);
                                         }
                                         Splash.hideSplash();
                                         Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
@@ -4406,14 +4406,14 @@ public class FrontEnd extends JFrame {
                                         }
                                         Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
                                         for (File file : proposedAddOnsToInstall.values()) {
-                                            AddOnInfo installedLAF = BackEnd.getInstance().installAddOn(file, ADDON_TYPE.LookAndFeel);
-                                            String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.LookAndFeel).get(installedLAF);
-                                            int idx = findDataRowIndex(lafModel, 0, installedLAF.getName());
+                                            AddOnInfo installedSkin = BackEnd.getInstance().installAddOn(file, ADDON_TYPE.Skin);
+                                            String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Skin).get(installedSkin);
+                                            int idx = findDataRowIndex(skinModel, 0, installedSkin.getName());
                                             if (idx != -1) {
-                                                lafModel.removeRow(idx);
-                                                lafModel.insertRow(idx, getAddOnInfoRow(installedLAF, status));
+                                                skinModel.removeRow(idx);
+                                                skinModel.insertRow(idx, getAddOnInfoRow(installedSkin, status));
                                             } else {
-                                                lafModel.addRow(getAddOnInfoRow(installedLAF, status));
+                                                skinModel.addRow(getAddOnInfoRow(installedSkin, status));
                                             }
                                             modified = true;
                                         }
@@ -4428,31 +4428,31 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton lafUninstButt = new JButton("Uninstall");
-                lafUninstButt.addActionListener(new ActionListener(){
+                JButton skinUninstButt = new JButton("Uninstall");
+                skinUninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            if (lafList.getSelectedRowCount() > 0) {
+                            if (skinList.getSelectedRowCount() > 0) {
                                 if (confirmedUninstall()) {
-                                    String currentLAF = config.getProperty(Constants.PROPERTY_LOOK_AND_FEEL);
+                                    String currentSkin = config.getProperty(Constants.PROPERTY_SKIN);
                                     int idx;
-                                    while ((idx = lafList.getSelectedRow()) != -1) {
-                                        String laf = (String) lafList.getValueAt(lafList.getSelectedRow(), 0);
-                                        if (!DEFAULT_LOOK_AND_FEEL.equals(laf)) {
-                                            String fullLAFClassName = 
-                                                Constants.LAF_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
-                                                                        + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-                                            BackEnd.getInstance().uninstallAddOn(fullLAFClassName, ADDON_TYPE.LookAndFeel);
-                                            idx = lafSorter.convertRowIndexToModel(idx);
-                                            lafModel.removeRow(idx);
-                                            // if look-&-feel that has been uninstalled was active one...
-                                            if (laf.equals(currentLAF)) {
+                                    while ((idx = skinList.getSelectedRow()) != -1) {
+                                        String skin = (String) skinList.getValueAt(skinList.getSelectedRow(), 0);
+                                        if (!DEFAULT_SKIN.equals(skin)) {
+                                            String fullSkinClassName = 
+                                                Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                                        + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
+                                            BackEnd.getInstance().uninstallAddOn(fullSkinClassName, ADDON_TYPE.Skin);
+                                            idx = skinSorter.convertRowIndexToModel(idx);
+                                            skinModel.removeRow(idx);
+                                            // if skin that has been uninstalled was active one...
+                                            if (skin.equals(currentSkin)) {
                                                 //... unset it (default one will be used)
-                                                config.remove(Constants.PROPERTY_LOOK_AND_FEEL);
+                                                config.remove(Constants.PROPERTY_SKIN);
                                             }
                                             modified = true;
                                         } else {
-                                            displayAddOnsScreenErrorMessage("Default Look-&-Feel can not be uninstalled!");
+                                            displayAddOnsScreenErrorMessage("Default Skin can not be uninstalled!");
                                             break;
                                         }
                                     }
@@ -4780,7 +4780,7 @@ public class FrontEnd extends JFrame {
                                                 ADDON_TYPE addOnType = ADDON_TYPE.valueOf(pack.getType().value());
                                                 AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
                                                 String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
-                                                DefaultTableModel model = addOnType == ADDON_TYPE.Extension ? extModel : lafModel;
+                                                DefaultTableModel model = addOnType == ADDON_TYPE.Extension ? extModel : skinModel;
                                                 int idx = findDataRowIndex(model, 0, installedAddOn.getName());
                                                 if (idx != -1) {
                                                     model.removeRow(idx);
@@ -4836,26 +4836,26 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Extensions", uiIcons.getIconExtensions(), extPanel);
                 
-                JPanel lafControlsPanel = new JPanel(new GridLayout(1,4));
-                lafControlsPanel.add(lafDetailsButt);
-                lafControlsPanel.add(lafActivateButt);
-                lafControlsPanel.add(lafInstButt);
-                lafControlsPanel.add(lafUninstButt);
-                JPanel lafTopPanel = new JPanel(new BorderLayout());
-                lafTopPanel.add(new JLabel("Filter:"), BorderLayout.CENTER);
-                final JTextField lafFilterText = new JTextField();
-                lafFilterText.addCaretListener(new CaretListener(){
+                JPanel skinControlsPanel = new JPanel(new GridLayout(1,4));
+                skinControlsPanel.add(skinDetailsButt);
+                skinControlsPanel.add(skinActivateButt);
+                skinControlsPanel.add(skinInstButt);
+                skinControlsPanel.add(skinUninstButt);
+                JPanel skinTopPanel = new JPanel(new BorderLayout());
+                skinTopPanel.add(new JLabel("Filter:"), BorderLayout.CENTER);
+                final JTextField skinFilterText = new JTextField();
+                skinFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
-                        lafSorter.setRowFilter(RowFilter.regexFilter(lafFilterText.getText()));
+                        skinSorter.setRowFilter(RowFilter.regexFilter(skinFilterText.getText()));
                     }
                 });
-                lafTopPanel.add(lafFilterText, BorderLayout.SOUTH);
-                JPanel lafPanel = new JPanel(new BorderLayout());
-                lafPanel.add(lafTopPanel, BorderLayout.NORTH);
-                lafPanel.add(new JScrollPane(lafList), BorderLayout.CENTER);
-                lafPanel.add(lafControlsPanel, BorderLayout.SOUTH);
+                skinTopPanel.add(skinFilterText, BorderLayout.SOUTH);
+                JPanel skinPanel = new JPanel(new BorderLayout());
+                skinPanel.add(skinTopPanel, BorderLayout.NORTH);
+                skinPanel.add(new JScrollPane(skinList), BorderLayout.CENTER);
+                skinPanel.add(skinControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Look-&-Feels", uiIcons.getIconLAFs(), lafPanel);
+                addOnsPane.addTab("Skins", uiIcons.getIconSkins(), skinPanel);
                 
                 JPanel icControlsPanel = new JPanel(new GridLayout(1,3));
                 icControlsPanel.add(addIconButt);
@@ -4894,8 +4894,8 @@ public class FrontEnd extends JFrame {
                             "<html>" +
                             "<body>" +
                             "<div color=\"red\">" +
-                            "NOTE: This will remove all unused data and configuration files that were used by extensions/LAFs that are not currently loaded<br>" +
-                            "(Do that only if you don't plan to install these extensions/LAFs again or want to reset their data/settings)" +
+                            "NOTE: This will remove all unused data and configuration files that were used by extensions/skins that are not currently loaded<br>" +
+                            "(Do that only if you don't plan to install these extensions/skins again or want to reset their data/settings)" +
                             "</div>" +
                             "</body>" +
                             "</html>");

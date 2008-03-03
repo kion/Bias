@@ -44,14 +44,14 @@
 				<attribute name="Main-Class" value="bias.Launcher" />
 			</manifest>
 		</jar>
-		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/online/** bias/event/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/** bias/transfer/**" excludes="bias/Launcher** bias/res/load.gif" />
+		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/online/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/res/*.* bias/utils/** bias/transfer/**" excludes="bias/Launcher** bias/res/load.gif" />
 	</target>
 
 	<!-- ================================= 
           target: Build_AppCore_Package
          ================================= -->
 	<target name="Build_AppCore_Package" description="AppCore Package">
-		<jar basedir="bin" destfile="build/AppCore_${AppCore_Version}.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/online/** bias/event/** bias/extension/*.* bias/gui/** bias/laf/*.* bias/res/*.* bias/utils/** bias/transfer/**" excludes="bias/Launcher** bias/res/load.gif" />
+		<jar basedir="bin" destfile="build/AppCore_${AppCore_Version}.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/online/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/res/*.* bias/utils/** bias/transfer/**" excludes="bias/Launcher** bias/res/load.gif" />
 	</target>
 
 	<!-- ================================= 
@@ -272,165 +272,165 @@
 	</target>
 
 	<!-- ================================= 
-          target: Build_LAF_JGLooksLAF             
+          target: Build_Skin_JGLooksSkin             
          ================================= -->
-	<target name="Build_LAF_JGLooksLAF" description="JGoodies Looks Look-And-Feel">
-		<jar basedir="bin" destfile="build/JGLooksLAF_${JGLooksLAF_Version}.jar" includes="bias/laf/JGLooksLAF/** bias/res/JGLooksLAF/**">
+	<target name="Build_Skin_JGLooksSkin" description="JGoodies Looks Skin">
+		<jar basedir="bin" destfile="build/JGLooksSkin_${JGLooksSkin_Version}.jar" includes="bias/skin/JGLooksSkin/** bias/res/JGLooksSkin/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="JGLooksLAF" />
-				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${JGLooksLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="JGoodies Looks Look-And-Feel" />
+				<attribute name="Bias-Add-On-Name" value="JGLooksSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${JGLooksSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="JGoodies Looks Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
 	</target>
 
 	<!-- ================================= 
-          target: Build_LAF_PgsLAF             
+          target: Build_Skin_PgsSkin             
          ================================= -->
-	<target name="Build_LAF_PgsLAF" description="Pgs Look-And-Feel">
-		<jar basedir="bin" destfile="build/PgsLAF_${PgsLAF_Version}.jar" includes="bias/laf/PgsLAF/** bias/res/PgsLAF/**">
+	<target name="Build_Skin_PgsSkin" description="Pgs Skin">
+		<jar basedir="bin" destfile="build/PgsSkin_${PgsSkin_Version}.jar" includes="bias/skin/PgsSkin/** bias/res/PgsSkin/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="PgsLAF" />
-				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${PgsLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Pgs Look-And-Feel" />
+				<attribute name="Bias-Add-On-Name" value="PgsSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${PgsSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Pgs Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
 	</target>
 
 	<!-- ================================= 
-          target: Build_LAF_LipstikLAF             
+          target: Build_Skin_LipstikSkin             
          ================================= -->
-	<target name="Build_LAF_LipstikLAF" description="Lipstik Look-And-Feel">
-		<jar basedir="bin" destfile="build/LipstikLAF_${LipstikLAF_Version}.jar" includes="bias/laf/LipstikLAF/** bias/res/LipstikLAF/**">
+	<target name="Build_Skin_LipstikSkin" description="Lipstik Skin">
+		<jar basedir="bin" destfile="build/LipstikSkin_${LipstikSkin_Version}.jar" includes="bias/skin/LipstikSkin/** bias/res/LipstikSkin/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="LipstikLAF" />
-				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${LipstikLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Lipstik Look-And-Feel" />
+				<attribute name="Bias-Add-On-Name" value="LipstikSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${LipstikSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Lipstik Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
 	</target>
 
 	<!-- ================================= 
-          target: Build_LAF_SquarenessLAF             
+          target: Build_Skin_SquarenessSkin             
          ================================= -->
-	<target name="Build_LAF_SquarenessLAF" description="Squareness Look-And-Feel">
-		<jar basedir="bin" destfile="build/SquarenessLAF_${SquarenessLAF_Version}.jar" includes="bias/laf/SquarenessLAF/** bias/res/SquarenessLAF/**">
+	<target name="Build_Skin_SquarenessSkin" description="Squareness Skin">
+		<jar basedir="bin" destfile="build/SquarenessSkin_${SquarenessSkin_Version}.jar" includes="bias/skin/SquarenessSkin/** bias/res/SquarenessSkin/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="SquarenessLAF" />
-				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${SquarenessLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Squareness Look-And-Feel" />
+				<attribute name="Bias-Add-On-Name" value="SquarenessSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${SquarenessSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Squareness Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
 	</target>
 
 	<!-- ================================= 
-          target: Build_LAF_TinyLAF             
+          target: Build_Skin_TinySkin             
          ================================= -->
-	<target name="Build_LAF_TinyLAF" description="Tiny Look-And-Feel">
-		<jar basedir="bin" destfile="build/TinyLAF_${TinyLAF_Version}.jar" includes="bias/laf/TinyLAF/** bias/res/TinyLAF/**">
+	<target name="Build_Skin_TinySkin" description="Tiny Skin">
+		<jar basedir="bin" destfile="build/TinySkin_${TinySkin_Version}.jar" includes="bias/skin/TinySkin/** bias/res/TinySkin/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="TinyLAF" />
-				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${TinyLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Tiny Look-And-Feel" />
+				<attribute name="Bias-Add-On-Name" value="TinySkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${TinySkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Tiny Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
 	</target>
 
 	<!-- ================================= 
-          target: Build_LAF_FHLAF             
+          target: Build_Skin_FHSkin             
          ================================= -->
-	<target name="Build_LAF_FHLAF" description="FH Look-And-Feel">
-		<jar basedir="bin" destfile="build/FHLAF_${FHLAF_Version}.jar" includes="bias/laf/FHLAF/** bias/res/FHLAF/**">
+	<target name="Build_Skin_FHSkin" description="FH Skin">
+		<jar basedir="bin" destfile="build/FHSkin_${FHSkin_Version}.jar" includes="bias/skin/FHSkin/** bias/res/FHSkin/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="FHLAF" />
-				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${FHLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="FH Look-And-Feel" />
+				<attribute name="Bias-Add-On-Name" value="FHSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${FHSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="FH Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
 	</target>
 
 	<!-- ================================= 
-          target: Build_LAF_LiquidLAF             
+          target: Build_Skin_LiquidSkin             
          ================================= -->
-	<target name="Build_LAF_LiquidLAF" description="Liquid Look-And-Feel">
-		<jar basedir="bin" destfile="build/LiquidLAF_${LiquidLAF_Version}.jar" includes="bias/laf/LiquidLAF/** bias/res/LiquidLAF/**">
+	<target name="Build_Skin_LiquidSkin" description="Liquid Skin">
+		<jar basedir="bin" destfile="build/LiquidSkin_${LiquidSkin_Version}.jar" includes="bias/skin/LiquidSkin/** bias/res/LiquidSkin/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="LiquidLAF" />
-				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${LiquidLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Liquid Look-And-Feel" />
+				<attribute name="Bias-Add-On-Name" value="LiquidSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${LiquidSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Liquid Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
 	</target>
 
 	<!-- ================================= 
-          target: Build_LAF_SyntheticaLAF             
+          target: Build_Skin_SyntheticaSkin             
          ================================= -->
-	<target name="Build_LAF_SyntheticaLAF" description="Synthetica Look-And-Feel">
-		<jar basedir="bin" destfile="build/SyntheticaLAF_${SyntheticaLAF_Version}.jar" includes="bias/laf/SyntheticaLAF/** bias/res/SyntheticaLAF/**">
+	<target name="Build_Skin_SyntheticaSkin" description="Synthetica Skin">
+		<jar basedir="bin" destfile="build/SyntheticaSkin_${SyntheticaSkin_Version}.jar" includes="bias/skin/SyntheticaSkin/** bias/res/SyntheticaSkin/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="SyntheticaLAF" />
-				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${SyntheticaLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Synthetica Look-And-Feel" />
+				<attribute name="Bias-Add-On-Name" value="SyntheticaSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${SyntheticaSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Synthetica Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
 	</target>
 
 	<!-- ================================= 
-          target: Build_LAF_InfoNodeLAF             
+          target: Build_Skin_InfoNodeSkin             
          ================================= -->
-	<target name="Build_LAF_InfoNodeLAF" description="InfoNode Look-And-Feel">
-		<jar basedir="bin" destfile="build/InfoNodeLAF_${InfoNodeLAF_Version}.jar" includes="bias/laf/InfoNodeLAF/** bias/res/InfoNodeLAF/**">
+	<target name="Build_Skin_InfoNodeSkin" description="InfoNode Skin">
+		<jar basedir="bin" destfile="build/InfoNodeSkin_${InfoNodeSkin_Version}.jar" includes="bias/skin/InfoNodeSkin/** bias/res/InfoNodeSkin/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="InfoNodeLAF" />
-				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${InfoNodeLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="InfoNode Look-And-Feel" />
+				<attribute name="Bias-Add-On-Name" value="InfoNodeSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${InfoNodeSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="InfoNode Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
 	</target>
 
 	<!-- ================================= 
-          target: Build_LAF_TonicSlimLAF             
+          target: Build_Skin_TonicSlimSkin             
          ================================= -->
-	<target name="Build_LAF_TonicSlimLAF" description="Tonic Slim Look-And-Feel">
-		<jar basedir="bin" destfile="build/TonicSlimLAF_${TonicSlimLAF_Version}.jar" includes="bias/laf/TonicSlimLAF/** bias/res/TonicSlimLAF/**">
+	<target name="Build_Skin_TonicSlimSkin" description="Tonic Slim Skin">
+		<jar basedir="bin" destfile="build/TonicSlimSkin_${TonicSlimSkin_Version}.jar" includes="bias/skin/TonicSlimSkin/** bias/res/TonicSlimSkin/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="TonicSlimLAF" />
-				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${TonicSlimLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Tonic Slim Look-And-Feel" />
+				<attribute name="Bias-Add-On-Name" value="TonicSlimSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${TonicSlimSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Tonic Slim Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
 	</target>
 
 	<!-- ================================= 
-          target: Build_LAF_SubstanceLAF             
+          target: Build_Skin_SubstanceSkin             
          ================================= -->
-	<target name="Build_LAF_SubstanceLAF" description="Substance Look-And-Feel">
-		<jar basedir="bin" destfile="build/SubstanceLAF_${SubstanceLAF_Version}.jar" includes="bias/laf/SubstanceLAF/** bias/res/SubstanceLAF/**">
+	<target name="Build_Skin_SubstanceSkin" description="Substance Skin">
+		<jar basedir="bin" destfile="build/SubstanceSkin_${SubstanceSkin_Version}.jar" includes="bias/skin/SubstanceSkin/** bias/res/SubstanceSkin/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="SubstanceLAF" />
-				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${SubstanceLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Substance Look-And-Feel" />
+				<attribute name="Bias-Add-On-Name" value="SubstanceSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${SubstanceSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Substance Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 				<attribute name="Bias-Add-On-Dependencies" value="Substance" />
 			</manifest>

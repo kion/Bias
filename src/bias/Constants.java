@@ -6,7 +6,7 @@ package bias;
 import java.io.File;
 
 import bias.extension.Extension;
-import bias.laf.LookAndFeel;
+import bias.skin.Skin;
 import bias.utils.FSUtils;
 
 /**
@@ -53,7 +53,7 @@ public class Constants {
     
     public static enum ADDON_TYPE {
         Extension,
-        LookAndFeel,
+        Skin,
         IconSet,
         Library
     }
@@ -115,25 +115,19 @@ public class Constants {
     public static final String DATA_FILE_SUFFIX = ".data";
     public static final String TOOL_DATA_FILE_SUFFIX = ".tooldata";
     public static final String FILE_SUFFIX_PATTERN = "\\..*$";
-    public static final String EXTENSION_DIR_PATTERN = "^ext/";
-    public static final String LAF_DIR_PATTERN = "^laf/";
-    public static final String EXTENSION_JAR_FILE_PATH_PATTERN = "(?i)" + EXTENSION_DIR_PATTERN + "[^/]+\\.jar$";
-    public static final String EXTENSION_JAR_FILE_PATTERN = "(?i)" + ".+\\.ext\\.jar$";
-    public static final String LAF_JAR_FILE_PATH_PATTERN = "(?i)" + LAF_DIR_PATTERN + "[^/]+\\.jar$";
-    public static final String LAF_JAR_FILE_PATTERN = "(?i)" + ".+\\.laf\\.jar$";
     public static final String EXTENSION_JAR_FILE_SUFFIX = ".ext.jar";
-    public static final String LAF_JAR_FILE_SUFFIX = ".laf.jar";
+    public static final String SKIN_JAR_FILE_SUFFIX = ".skin.jar";
     public static final String IMPORT_CONFIG_FILE_SUFFIX = ".import.properties";
     public static final String EXPORT_CONFIG_FILE_SUFFIX = ".export.properties";
     public static final String EXTENSION_PACKAGE_NAME = Extension.class.getPackage().getName();
-    public static final String LAF_PACKAGE_NAME = LookAndFeel.class.getPackage().getName();
+    public static final String SKIN_PACKAGE_NAME = Skin.class.getPackage().getName();
     public static final String ICON_FORMAT = "PNG";
     public static final String ICON_FILE_SUFFIX = ".png";
     public static final String EXTENSION_CONFIG_FILE_SUFFIX = ".ext.conf";
-    public static final String LAF_CONFIG_FILE_SUFFIX = ".laf.conf";
+    public static final String SKIN_CONFIG_FILE_SUFFIX = ".skin.conf";
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
     public static final String ADDON_EXTENSION_INFO_FILE_SUFFIX = ".ext.info";
-    public static final String ADDON_LAF_INFO_FILE_SUFFIX = ".laf.info";
+    public static final String ADDON_SKIN_INFO_FILE_SUFFIX = ".skin.info";
     public static final String ADDON_LIB_INFO_FILE_SUFFIX = ".lib.info";
     public static final String ADDON_ICONSET_INFO_FILE_SUFFIX = ".iconset.info";
     public static final String ICONSET_REGISTRY_FILE_SUFFIX = ".iconset.reg";
@@ -178,7 +172,7 @@ public class Constants {
     public static final String TRANSFER_OPTION_USERNAME = "USERNAME";
     public static final String TRANSFER_OPTION_PASSWORD = "TRANSFER_PASSWORD";
     
-    public static final String PROPERTY_LOOK_AND_FEEL = "LOOK_AND_FEEL";
+    public static final String PROPERTY_SKIN = "SKIN";
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";
     public static final String PROPERTY_WINDOW_WIDTH = "WINDOW_WIDTH";

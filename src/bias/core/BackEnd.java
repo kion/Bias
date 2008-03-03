@@ -123,7 +123,7 @@ public class BackEnd {
     
     private static final FilenameFilter FILE_FILTER_ADDON_INFO = new FilenameFilter(){
         public boolean accept(File dir, String name) {
-            return name.endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX) || name.endsWith(Constants.ADDON_LAF_INFO_FILE_SUFFIX) || name.endsWith(Constants.ADDON_ICONSET_INFO_FILE_SUFFIX);
+            return name.endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX) || name.endsWith(Constants.ADDON_SKIN_INFO_FILE_SUFFIX) || name.endsWith(Constants.ADDON_ICONSET_INFO_FILE_SUFFIX);
         }
     };
     
@@ -145,9 +145,9 @@ public class BackEnd {
         }
     };
     
-    private static final FilenameFilter FILE_FILTER_LAF_INFO = new FilenameFilter(){
+    private static final FilenameFilter FILE_FILTER_SKIN_INFO = new FilenameFilter(){
         public boolean accept(File dir, String name) {
-            return name.endsWith(Constants.ADDON_LAF_INFO_FILE_SUFFIX);
+            return name.endsWith(Constants.ADDON_SKIN_INFO_FILE_SUFFIX);
         }
     };
     
@@ -177,7 +177,7 @@ public class BackEnd {
     
     private static final FilenameFilter FILE_FILTER_ADDON_CONFIG = new FilenameFilter(){
         public boolean accept(File dir, String name) {
-            return name.endsWith(Constants.EXTENSION_CONFIG_FILE_SUFFIX) || name.endsWith(Constants.LAF_CONFIG_FILE_SUFFIX);
+            return name.endsWith(Constants.EXTENSION_CONFIG_FILE_SUFFIX) || name.endsWith(Constants.SKIN_CONFIG_FILE_SUFFIX);
         }
     };
     
@@ -526,53 +526,10 @@ public class BackEnd {
                 }
             }
         }
-        // TODO [P1] core should be optionally updated
-        // TODO [P1] existing addons should be optionally updated
-        // classpath and addons/libs files
+        // addon/lib files
         if (importAddOns) {
-//            File classPathConfigFile = new File(configDir, Constants.CLASSPATH_CONFIG_FILE);
-//            if (classPathConfigFile.exists()) {
-//                // read classpath entries
-//                byte[] cpData = FSUtils.readFile(classPathConfigFile);
-//                if (cpData != null) {
-//                    for (String cpEntry : new String(cpData).split(Constants.CLASSPATH_SEPARATOR)) {
-//                        if (!classPathEntries.contains(cpEntry)) {
-//                            String[] addonFilePath = cpEntry.split(Constants.PATH_SEPARATOR);
-//                            if (addonFilePath.length == 2) {
-//                                File dir = new File(importDir, addonFilePath[0]);
-//                                File addonFile = new File(dir, addonFilePath[1]);
-//                                if (addonFile.exists()) {
-//                                    File localDir = new File(Constants.ROOT_DIR, addonFilePath[0]);
-//                                    File localAddOnFile = new File(localDir, addonFilePath[1]);
-//                                    if (localDir.exists() && !localAddOnFile.exists()) {
-//                                        FSUtils.duplicateFile(addonFile, localAddOnFile);
-//                                        classPathEntries.add(cpEntry);
-//                                        if (!cpEntry.startsWith(Constants.LIBS_DIR.getName())) {
-//                                            if (cpEntry.matches(Constants.EXTENSION_JAR_FILE_PATTERN)) {
-//                                                String extension = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-//                                                extension = extension.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-//                                                extension = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-//                                                            + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-//                                                if (!newAddOns.keySet().contains(extension)) {
-//                                                    newAddOns.put(extension, Constants.COMMENT_ADDON_IMPORTED);
-//                                                }
-//                                            } else if (cpEntry.matches(Constants.LAF_JAR_FILE_PATTERN)) {
-//                                                String laf = cpEntry.replaceFirst(Constants.PATH_PREFIX_PATTERN, Constants.EMPTY_STR);
-//                                                laf = laf.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-//                                                laf = Constants.LAF_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-//                                                            + laf + Constants.PACKAGE_PATH_SEPARATOR + laf;
-//                                                if (!newAddOns.keySet().contains(laf)) {
-//                                                    newAddOns.put(laf, Constants.COMMENT_ADDON_IMPORTED);
-//                                                }
-//                                            }
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
+            // TODO [P1] core should be optionally updated
+            // TODO [P1] existing addons should be optionally updated
         }
         // parse metadata file
         DataCategory importedData = parseMetadata(metadata, importedIdentifiedData, existingIDs, overwriteDataEntries);
@@ -1097,8 +1054,8 @@ public class BackEnd {
         case Extension:
             suffix = Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX;
             break;
-        case LookAndFeel:
-            suffix = Constants.ADDON_LAF_INFO_FILE_SUFFIX;
+        case Skin:
+            suffix = Constants.ADDON_SKIN_INFO_FILE_SUFFIX;
             break;
         case IconSet:
             suffix = Constants.ADDON_ICONSET_INFO_FILE_SUFFIX;
@@ -1137,8 +1094,8 @@ public class BackEnd {
             case Extension:
                 ff = FILE_FILTER_EXTENSION_INFO;
                 break;
-            case LookAndFeel:
-                ff = FILE_FILTER_LAF_INFO;
+            case Skin:
+                ff = FILE_FILTER_SKIN_INFO;
                 break;
             case IconSet:
                 ff = FILE_FILTER_ICONSET_INFO;
@@ -1160,7 +1117,7 @@ public class BackEnd {
             addOnName = addOnName.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             File addOnConfigFile = new File(
                     Constants.CONFIG_DIR, 
-                    addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.LAF_CONFIG_FILE_SUFFIX));
+                    addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.SKIN_CONFIG_FILE_SUFFIX));
             if (addOnConfigFile.exists()) {
                 settings = decrypt(FSUtils.readFile(addOnConfigFile));
             }
@@ -1173,7 +1130,7 @@ public class BackEnd {
             addOnName = addOnName.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             File addOnConfigFile = new File(
                     Constants.CONFIG_DIR, 
-                    addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.LAF_CONFIG_FILE_SUFFIX));
+                    addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.SKIN_CONFIG_FILE_SUFFIX));
             FSUtils.writeFile(addOnConfigFile, encrypt(settings));
         }
     }
@@ -1293,7 +1250,7 @@ public class BackEnd {
             update = true;
             status = Constants.ADDON_STATUS_UPDATED;
         }
-        String fileSuffix = addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.LAF_JAR_FILE_SUFFIX;
+        String fileSuffix = addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.SKIN_JAR_FILE_SUFFIX;
         File installedAddOnFile = new File(Constants.ADDONS_DIR, addOnInfo.getName() + fileSuffix);
         if (update) {
             File updateAddOnFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + addOnInfo.getName() + fileSuffix);
@@ -1308,7 +1265,7 @@ public class BackEnd {
             newAddOns.put(addOnType, addons);
         }
         addons.put(addOnInfo, status);
-        uninstallAddOnsList.remove(addOnInfo.getName() + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.LAF_JAR_FILE_SUFFIX));
+        uninstallAddOnsList.remove(addOnInfo.getName() + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.SKIN_JAR_FILE_SUFFIX));
         storeUninstallConfiguration();
         return addOnInfo;
     }
@@ -1316,15 +1273,15 @@ public class BackEnd {
     public void uninstallAddOn(String addOnName, ADDON_TYPE addOnType) throws Exception {
         String fullName = addOnName;
         addOnName = addOnName.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-        uninstallAddOnsList.add(addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.LAF_JAR_FILE_SUFFIX));
+        uninstallAddOnsList.add(addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.SKIN_JAR_FILE_SUFFIX));
         storeUninstallConfiguration();
         String suffix = null;
         switch (addOnType) {
         case Extension:
             suffix = Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX;
             break;
-        case LookAndFeel:
-            suffix = Constants.ADDON_LAF_INFO_FILE_SUFFIX;
+        case Skin:
+            suffix = Constants.ADDON_SKIN_INFO_FILE_SUFFIX;
             break;
         case IconSet:
             suffix = Constants.ADDON_ICONSET_INFO_FILE_SUFFIX;

@@ -20,7 +20,7 @@
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="AppCore"/>
 			<xs:enumeration value="Extension"/>
-			<xs:enumeration value="LookAndFeel"/>
+			<xs:enumeration value="Skin"/>
 			<xs:enumeration value="IconSet"/>
 			<xs:enumeration value="Library"/>
 		</xs:restriction>
