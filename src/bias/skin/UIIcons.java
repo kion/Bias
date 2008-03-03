@@ -13,7 +13,7 @@ public class UIIcons {
     /**
      * Default control icons
      */
-    // FIXME [P1] find some nice and single-styled default icons, current ones look bad, more so, they are from different icon-sets
+    // TODO [P1] find some nice and single-styled default icons, current ones look bad, more so, they are from different icon-sets
     public static final ImageIcon ICON_ABOUT = new ImageIcon(UIIcons.class.getResource("/bias/res/about.png"));
     public static final ImageIcon ICON_IMPORT = new ImageIcon(UIIcons.class.getResource("/bias/res/import.png"));
     public static final ImageIcon ICON_EXPORT = new ImageIcon(UIIcons.class.getResource("/bias/res/export.png"));
