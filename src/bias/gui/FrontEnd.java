@@ -4593,6 +4593,8 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 };
+                JTable libsList = getLibsList(BackEnd.getInstance().getAddOns(ADDON_TYPE.Library));
+                final DefaultTableModel libModel = (DefaultTableModel) libsList.getModel();
                 final JTable onlineList = new JTable(onlineModel);
                 final TableRowSorter<TableModel> onlineSorter = new TableRowSorter<TableModel>(onlineModel);
                 onlineSorter.setSortsOnUpdates(true);
@@ -4696,7 +4698,7 @@ public class FrontEnd extends JFrame {
                                     if (!Validator.isNullOrBlank(pack.getDependency())) {
                                         deps.addAll(pack.getDependency());
                                     }
-                                    String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_FILENAME_SUFFIX;
+                                    String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
                                     URL url;
                                     if (!Validator.isNullOrBlank(pack.getUrl())) {
                                         url = new URL(pack.getUrl());
@@ -4773,17 +4775,25 @@ public class FrontEnd extends JFrame {
                                                     sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 }
                                             } else if (pack.getType() == PackageType.LIBRARY) {
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 AddOnInfo libInfo = new AddOnInfo();
                                                 libInfo.setName(pack.getName());
                                                 libInfo.setVersion(pack.getVersion());
                                                 libInfo.setDescription(pack.getDescription());
                                                 libInfo.setAuthor(pack.getAuthor());
                                                 BackEnd.getInstance().installLibrary(file, libInfo);
+                                                String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Library).get(libInfo);
+                                                int idx = findDataRowIndex(libModel, 0, libInfo.getName());
+                                                if (idx != -1) {
+                                                    libModel.removeRow(idx);
+                                                    libModel.insertRow(idx, getAddOnInfoRow(libInfo, status));
+                                                } else {
+                                                    libModel.addRow(getAddOnInfoRow(libInfo, status));
+                                                }
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 modified = true;
                                             } else if (pack.getType() == PackageType.APP_CORE) {
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "AppCore '" + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 BackEnd.getInstance().installAppCoreUpdate(file);
+                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "AppCore '" + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                                 modified = true;
                                             } else {
                                                 ADDON_TYPE addOnType = ADDON_TYPE.valueOf(pack.getType().value());
@@ -4890,7 +4900,6 @@ public class FrontEnd extends JFrame {
                 
                 JPanel advPanel = new JPanel(new BorderLayout());
 
-                JTable libsList = getLibsList(BackEnd.getInstance().getAddOns(ADDON_TYPE.Library));
                 JPanel libsPanel = new JPanel(new BorderLayout());
                 libsPanel.add(new JLabel("Registered libraries:"), BorderLayout.NORTH);
                 libsPanel.add(new JScrollPane(libsList), BorderLayout.CENTER);
@@ -4993,8 +5002,20 @@ public class FrontEnd extends JFrame {
         addOnModel.addColumn("Version");
         addOnModel.addColumn("Author");
         addOnModel.addColumn("Description");
+        addOnModel.addColumn("Status");
         for (AddOnInfo addOnInfo : addOnInfos) {
-            addOnModel.addRow(getAddOnInfoRow(addOnInfo, null));
+            String status;
+            Map<AddOnInfo, String> libStatuses = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Library);
+            if (libStatuses != null) {
+                status = libStatuses.get(addOnInfo);
+            } else {
+                if (new File(Constants.LIBS_DIR, addOnInfo.getName() + Constants.JAR_FILE_SUFFIX).exists()) {
+                    status = Constants.ADDON_STATUS_OK;
+                } else {
+                    status = Constants.ADDON_STATUS_MISSING;
+                }
+            }
+            addOnModel.addRow(getAddOnInfoRow(addOnInfo, status));
         }
         return addOnList;
     }

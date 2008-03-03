@@ -1014,12 +1014,26 @@ public class BackEnd {
     }
     
     public void installLibrary(File libFile, AddOnInfo libInfo) throws Throwable {
-        File installedLibFile = new File(Constants.LIBS_DIR, libInfo.getName() + Constants.ADDON_FILENAME_SUFFIX);
+        String status;
+        File installedLibFile = new File(Constants.LIBS_DIR, libInfo.getName() + Constants.JAR_FILE_SUFFIX);
         if (installedLibFile.exists()) {
-            installedLibFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + libInfo.getName() + Constants.ADDON_FILENAME_SUFFIX);
+            installedLibFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + libInfo.getName() + Constants.JAR_FILE_SUFFIX);
+            status = Constants.ADDON_STATUS_UPDATED;
+        } else {
+            status = Constants.ADDON_STATUS_INSTALLED;
         }
         FSUtils.duplicateFile(libFile, installedLibFile);
         storeAddOnInfo(libInfo, ADDON_TYPE.Library);
+        Map<AddOnInfo, String> addons = newAddOns.get(ADDON_TYPE.Library);
+        if (addons == null) {
+            addons = new LinkedHashMap<AddOnInfo, String>();
+            newAddOns.put(ADDON_TYPE.Library, addons);
+        }
+        addons.put(libInfo, status);
+        if (uninstallAddOnsList.contains(libInfo.getName() + Constants.JAR_FILE_SUFFIX)) {
+            uninstallAddOnsList.remove(libInfo.getName() + Constants.JAR_FILE_SUFFIX);
+            storeUninstallConfiguration();
+        }
     }
     
     private void loadDataEntrySettings(DataEntry dataEntry) throws Exception {
@@ -1277,8 +1291,10 @@ public class BackEnd {
             newAddOns.put(addOnType, addons);
         }
         addons.put(addOnInfo, status);
-        uninstallAddOnsList.remove(addOnInfo.getName() + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.SKIN_JAR_FILE_SUFFIX));
-        storeUninstallConfiguration();
+        if (uninstallAddOnsList.contains(addOnInfo.getName() + fileSuffix)) {
+            uninstallAddOnsList.remove(addOnInfo.getName() + fileSuffix);
+            storeUninstallConfiguration();
+        }
         return addOnInfo;
     }
     

@@ -73,6 +73,7 @@ public class Constants {
     public static final String ADDON_STATUS_UPDATED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "Updated [restart needed]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     public static final String ADDON_STATUS_OK = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_OK + "[OK]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     public static final String ADDON_STATUS_BROKEN = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + "[BROKEN]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
+    public static final String ADDON_STATUS_MISSING = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + "[MISSING]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     
     public static final String UNICODE_ENCODING = "UTF-8";
     
@@ -90,7 +91,7 @@ public class Constants {
     public static final String ADDON_INFO_LOCAL_FILE_NAME = "index.html";
     public static final String ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME = "repository.xml";
     public static final String ADDON_FILENAME_VERSION_SEPARATOR = "_";
-    public static final String ADDON_FILENAME_SUFFIX = ".jar";
+    public static final String JAR_FILE_SUFFIX = ".jar";
     public static final String ADDON_DETAILS_FILENAME_SUFFIX = ".html";
     
     public static final String PROPERTY_VALUES_SEPARATOR = ",";
