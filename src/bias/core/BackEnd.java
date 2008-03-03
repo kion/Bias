@@ -1164,10 +1164,10 @@ public class BackEnd {
                 String name = je.getName();
                 if (!name.equals(Constants.JAR_FILE_ADDON_INFO_DIR_PATH) && name.startsWith(Constants.JAR_FILE_ADDON_INFO_DIR_PATH)) {
                     if (name.endsWith(Constants.PATH_SEPARATOR)) {
-                        name = name.substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length() - 1);
+                        name = name.substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
                         if (!Validator.isNullOrBlank(name)) {
                             File dir = new File(destination, name);
-                            dir.mkdir();
+                            dir.mkdirs();
                         }
                     } else {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -1176,7 +1176,7 @@ public class BackEnd {
                             baos.write(b);
                         }
                         baos.close();
-                        name = je.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length() - 1);
+                        name = je.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
                         name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
                         File file = new File(destination, name);
                         File dir = file.getParentFile();
@@ -1384,19 +1384,25 @@ public class BackEnd {
     private void storeIconSet(AddOnInfo iconSetInfo, Collection<String> iconIds) throws Throwable {
         if (iconSetInfo.getName() != null && iconSetInfo.getVersion() != null) {
             storeAddOnInfo(iconSetInfo, ADDON_TYPE.IconSet);
-            StringBuffer iconIdsList = new StringBuffer();
-            File iconSetRegFile = new File(Constants.CONFIG_DIR, iconSetInfo.getName() + Constants.ICONSET_REGISTRY_FILE_SUFFIX);
-            if (!iconSetRegFile.exists()) {
-                iconSetRegFile.createNewFile();
-            } else {
-                iconIdsList.append(new String(FSUtils.readFile(iconSetRegFile)));
-                iconIdsList.append(Constants.NEW_LINE);
+            if (!iconIds.isEmpty()) {
+                StringBuffer iconIdsList = new StringBuffer();
+                File iconSetRegFile = new File(Constants.CONFIG_DIR, iconSetInfo.getName() + Constants.ICONSET_REGISTRY_FILE_SUFFIX);
+                if (!iconSetRegFile.exists()) {
+                    iconSetRegFile.createNewFile();
+                } else {
+                    iconIdsList.append(new String(FSUtils.readFile(iconSetRegFile)));
+                    iconIdsList.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                }
+                Iterator<String> it = iconIds.iterator();
+                while (it.hasNext()) {
+                    String iconId = it.next();
+                    iconIdsList.append(iconId);
+                    if (it.hasNext()) {
+                        iconIdsList.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                    }
+                }
+                FSUtils.writeFile(iconSetRegFile, iconIdsList.toString().getBytes());
             }
-            for (String iconId : iconIds) {
-                iconIdsList.append(iconId);
-                iconIdsList.append(Constants.NEW_LINE);
-            }
-            FSUtils.writeFile(iconSetRegFile, iconIdsList.toString().getBytes());
         }
     }
     
@@ -1404,7 +1410,7 @@ public class BackEnd {
         Collection<String> removedIds = new ArrayList<String>();
         File iconSetRegFile = new File(Constants.CONFIG_DIR, iconSetName + Constants.ICONSET_REGISTRY_FILE_SUFFIX);
         if (iconSetRegFile.exists()) {
-            String[] iconIdsList = new String(FSUtils.readFile(iconSetRegFile)).split(Constants.NEW_LINE);
+            String[] iconIdsList = new String(FSUtils.readFile(iconSetRegFile)).split(Constants.PROPERTY_VALUES_SEPARATOR);
             for (String iconId : iconIdsList) {
                 removeIcon(iconId);
                 removedIds.add(iconId);
@@ -1439,17 +1445,48 @@ public class BackEnd {
                     String iconSetDescription = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION);
                     aoi = new AddOnInfo(iconSetName, iconSetVersion, iconSetAuthor, iconSetDescription);
                 }
+                File destination = new File(Constants.ADDON_INFO_DIR, aoi.getName());
+                if (destination.exists()) {
+                    FSUtils.delete(destination);
+                }
                 JarEntry entry;                     
                 while ((entry = in.getNextJarEntry()) != null) {
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
-                    int b;
-                    while ((b = in.read()) != -1) {
-                        out.write(b);
-                    }
-                    out.close();
-                    ImageIcon icon = addIcon(entry.getName(), new ByteArrayInputStream(out.toByteArray()));
-                    if (icon != null) {
-                        icons.put(icon, icon.getDescription());
+                    String name = entry.getName();
+                    if (!name.equals(Constants.JAR_FILE_ADDON_INFO_DIR_PATH) && name.startsWith(Constants.JAR_FILE_ADDON_INFO_DIR_PATH)) {
+                        if (name.endsWith(Constants.PATH_SEPARATOR)) {
+                            name = name.substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
+                            if (!Validator.isNullOrBlank(name)) {
+                                File dir = new File(destination, name);
+                                dir.mkdirs();
+                            }
+                        } else {
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            int b;
+                            while ((b = in.read()) != -1) {
+                                baos.write(b);
+                            }
+                            baos.close();
+                            name = entry.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
+                            name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
+                            File f = new File(destination, name);
+                            File dir = f.getParentFile();
+                            if (!dir.exists()) {
+                                dir.mkdirs();
+                            }
+                            f.createNewFile();
+                            FSUtils.writeFile(f, baos.toByteArray());
+                        }
+                    } else {
+                        ByteArrayOutputStream out = new ByteArrayOutputStream();
+                        int b;
+                        while ((b = in.read()) != -1) {
+                            out.write(b);
+                        }
+                        out.close();
+                        ImageIcon icon = addIcon(entry.getName(), new ByteArrayInputStream(out.toByteArray()));
+                        if (icon != null) {
+                            icons.put(icon, icon.getDescription());
+                        }
                     }
                 }
                 in.close();
@@ -1463,7 +1500,7 @@ public class BackEnd {
                 }
             }
         } else {
-            throw new Exception("Invalid icon file/pack!");
+            throw new Exception("Invalid icon(set) file/package!");
         }
         return icons.keySet();
     }
@@ -1493,7 +1530,7 @@ public class BackEnd {
         return icon;
     }
 
-    public void removeIcon(String id) throws Exception {
+    public void removeIcon(String id) {
         File iconFile = new File(Constants.ICONS_DIR, id + Constants.ICON_FILE_SUFFIX);
         FSUtils.delete(iconFile);
         icons.remove(UUID.fromString(id));

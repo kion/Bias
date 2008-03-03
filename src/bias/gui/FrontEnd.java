@@ -4123,26 +4123,20 @@ public class FrontEnd extends JFrame {
                         if (extList.getSelectedRowCount() == 1) {
                             try {
                                 String version = (String) extList.getValueAt(extList.getSelectedRow(), 1);
-                                if (Validator.isNullOrBlank(version)) {
-                                    displayAddOnsScreenMessage(
-                                            "Detailed information about this extension can not be shown yet." + Constants.NEW_LINE +
-                                            "Restart Bias first.");
-                                } else {
-                                    String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
-                                    try {
-                                        File addOnInfoFile = new File(
-                                                new File(Constants.ADDON_INFO_DIR, extension), 
-                                                extension + Constants.ADDON_FILENAME_VERSION_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
-                                        if (addOnInfoFile.exists()) {
-                                            URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
-                                            URL addOnURL = addOnInfoFile.toURI().toURL();
-                                            loadAndDisplayPackageDetails(baseURL, addOnURL, extension);
-                                        } else {
-                                            displayAddOnsScreenMessage("Detailed information is not provided with this extension.");
-                                        }
-                                    } catch (MalformedURLException ex) {
-                                        displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
+                                try {
+                                    File addOnInfoFile = new File(
+                                            new File(Constants.ADDON_INFO_DIR, extension), 
+                                            extension + Constants.ADDON_FILENAME_VERSION_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
+                                    if (addOnInfoFile.exists()) {
+                                        URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
+                                        URL addOnURL = addOnInfoFile.toURI().toURL();
+                                        loadAndDisplayPackageDetails(baseURL, addOnURL, extension);
+                                    } else {
+                                        displayAddOnsScreenMessage("Detailed information is not provided with this extension.");
                                     }
+                                } catch (MalformedURLException ex) {
+                                    displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
                                 }
                             } catch (Throwable t) {
                                 displayAddOnsScreenErrorMessage("Failed to display Extensions details!", t);
@@ -4157,10 +4151,11 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         if (extList.getSelectedRowCount() == 1) {
                             try {
-                                String version = (String) extList.getValueAt(extList.getSelectedRow(), 1);
-                                if (Validator.isNullOrBlank(version)) {
+                                String ext = (String) extList.getValueAt(extList.getSelectedRow(), 0);
+                                Map<AddOnInfo, String> newExts = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Extension);
+                                if (newExts != null && newExts.containsKey(new AddOnInfo(ext, null, null, null))) {
                                     displayAddOnsScreenMessage(
-                                            "This Extension can not be configured yet." + Constants.NEW_LINE +
+                                            "This Extension can not be (re)configured yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
                                     String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
@@ -4319,25 +4314,19 @@ public class FrontEnd extends JFrame {
                                     displayAddOnsScreenMessage("This is a default native Java cross-platform Skin.");
                                 } else {
                                     String version = (String) skinList.getValueAt(skinList.getSelectedRow(), 1);
-                                    if (Validator.isNullOrBlank(version)) {
-                                        displayAddOnsScreenMessage(
-                                                "Detailed information about this skin can not be shown yet." + Constants.NEW_LINE +
-                                                "Restart Bias first.");
-                                    } else {
-                                        try {
-                                            File addOnInfoFile = new File(
-                                                    new File(Constants.ADDON_INFO_DIR, skin), 
-                                                    skin + Constants.ADDON_FILENAME_VERSION_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
-                                            if (addOnInfoFile.exists()) {
-                                                URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
-                                                URL addOnURL = addOnInfoFile.toURI().toURL();
-                                                loadAndDisplayPackageDetails(baseURL, addOnURL, skin);
-                                            } else {
-                                                displayAddOnsScreenMessage("Detailed information is not provided with this Skin.");
-                                            }
-                                        } catch (MalformedURLException ex) {
-                                            displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                    try {
+                                        File addOnInfoFile = new File(
+                                                new File(Constants.ADDON_INFO_DIR, skin), 
+                                                skin + Constants.ADDON_FILENAME_VERSION_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
+                                        if (addOnInfoFile.exists()) {
+                                            URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
+                                            URL addOnURL = addOnInfoFile.toURI().toURL();
+                                            loadAndDisplayPackageDetails(baseURL, addOnURL, skin);
+                                        } else {
+                                            displayAddOnsScreenMessage("Detailed information is not provided with this Skin.");
                                         }
+                                    } catch (MalformedURLException ex) {
+                                        displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
                                     }
                                 }
                             } catch (Throwable t) {
@@ -4361,10 +4350,10 @@ public class FrontEnd extends JFrame {
                                     displayAddOnsScreenErrorMessage("Failed to (re)activate Skin!", t);
                                 }
                             } else {
-                                String version = (String) skinList.getValueAt(skinList.getSelectedRow(), 1);
-                                if (Validator.isNullOrBlank(version)) {
+                                Map<AddOnInfo, String> newSkins = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Skin);
+                                if (newSkins != null && newSkins.containsKey(new AddOnInfo(skin, null, null, null))) {
                                     displayAddOnsScreenMessage(
-                                            "This Skin can not be activated yet." + Constants.NEW_LINE +
+                                            "This Skin can not be (re)activated yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
                                     try {
@@ -4497,7 +4486,36 @@ public class FrontEnd extends JFrame {
                 JScrollPane jsp = new JScrollPane(icList);
                 jsp.setPreferredSize(new Dimension(200,200));
                 jsp.setMinimumSize(new Dimension(200,200));
-                JButton addIconButt = new JButton("Add...");
+                JButton icSetDetailsButt = new JButton("IconSet details");
+                icSetDetailsButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        if (icSetList.getSelectedRowCount() == 1) {
+                            try {
+                                String ic = (String) icSetList.getValueAt(icSetList.getSelectedRow(), 0);
+                                String version = (String) icSetList.getValueAt(icSetList.getSelectedRow(), 1);
+                                try {
+                                    File addOnInfoFile = new File(
+                                            new File(Constants.ADDON_INFO_DIR, ic), 
+                                            ic + Constants.ADDON_FILENAME_VERSION_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
+                                    if (addOnInfoFile.exists()) {
+                                        URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
+                                        URL addOnURL = addOnInfoFile.toURI().toURL();
+                                        loadAndDisplayPackageDetails(baseURL, addOnURL, ic);
+                                    } else {
+                                        displayAddOnsScreenMessage("Detailed information is not provided with this IconSet.");
+                                    }
+                                } catch (MalformedURLException ex) {
+                                    displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                }
+                            } catch (Throwable t) {
+                                displayAddOnsScreenErrorMessage("Failed to display IconSet details!", t);
+                            }
+                        } else {
+                            displayAddOnsScreenMessage("Please, choose only one IconSet from the list.");
+                        }
+                    }
+                });
+                JButton addIconButt = new JButton("Add/Install...");
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
@@ -4530,7 +4548,7 @@ public class FrontEnd extends JFrame {
                                             displayAddOnsScreenErrorMessage("Nothing to install!");
                                         }
                                     } catch (Throwable t) {
-                                        displayAddOnsScreenErrorMessage("Failed to install icon(s)!", t);
+                                        displayAddOnsScreenErrorMessage("Failed to install icon(s)! " + getFailureDetails(t), t);
                                     } finally {
                                         Splash.hideSplash();
                                     }
@@ -4880,7 +4898,8 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Skins", uiIcons.getIconSkins(), skinPanel);
                 
-                JPanel icControlsPanel = new JPanel(new GridLayout(1,3));
+                JPanel icControlsPanel = new JPanel(new GridLayout(1,4));
+                icControlsPanel.add(icSetDetailsButt);
                 icControlsPanel.add(addIconButt);
                 icControlsPanel.add(removeIconButt);
                 icControlsPanel.add(removeIconSetButt);
