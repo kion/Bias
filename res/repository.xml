@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<bias:repository xmlns:bias="http://bias.sourceforge.net">
+	<package type="AppCore" name="AppCore" version="0.9.7" author="R. Kasianenko" description="Bias Application Core" file-size="100000" />
+	<package type="Extension" name="HTMLPage" version="0.6.1" author="R. Kasianenko" description="WYSIWYG HTML page editor" file-size="100000" />
+	<package type="Extension" name="ToDoList" version="0.7.5" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="100000" />
+	<package type="Extension" name="Graffiti" version="0.2.3" author="R. Kasianenko" description="Basic paint editor" file-size="100000" />
+	<package type="Extension" name="PlainText" version="0.9.1" author="R. Kasianenko" description="Simple plain text editor" file-size="100000" />
+	<package type="Extension" name="FilePack" version="0.3.1" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="100000" />
+	<package type="Extension" name="MainEntry" version="0.3.5" author="R. Kasianenko" description="Keep certain entry as main" file-size="100000" />
+	<package type="Extension" name="FinancialFlows" version="0.2.7" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="100000">
+		<dependency type="Library" name="JFreeChart" version="1.0.9"/>
+		<dependency type="Library" name="JCommon" version="1.0.12"/>
+		<dependency type="Library" name="JCalendar" version="1.3.2"/>
+	</package>
+	<package type="Extension" name="SimpleSearch" version="0.7.7" author="R. Kasianenko" description="Search through entries" file-size="100000" />
+	<package type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="100000" />
+	<package type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Look-&amp;-Feel" file-size="100000">
+		<dependency type="Library" name="Looks"/>
+	</package>
+	<package type="Skin" name="FHSkin" version="0.1.1" author="R. Kasianenko" description="FHSkin Look-&amp;-Feel" file-size="100000">
+		<dependency type="Library" name="FHLAF"/>
+	</package>
+	<package type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNodeSkin Look-&amp;-Feel" file-size="100000">
+		<dependency type="Library" name="InfoNodeLAF"/>
+	</package>
+	<package type="Skin" name="LipstikSkin" version="0.1.1" author="R. Kasianenko" description="LipstikSkin Look-&amp;-Feel" file-size="100000">
+		<dependency type="Library" name="LipstikLAF"/>
+	</package>
+	<package type="Skin" name="LiquidSkin" version="0.1.1" author="R. Kasianenko" description="LiquidSkin Look-&amp;-Feel" file-size="100000">
+		<dependency type="Library" name="LiquidLAF"/>
+	</package>
+	<package type="Skin" name="PgsSkin" version="0.1.1" author="R. Kasianenko" description="PgsSkin Look-&amp;-Feel" file-size="100000">
+		<dependency type="Library" name="PgsLAF"/>
+	</package>
+	<package type="Skin" name="SquarenessSkin" version="0.1.1" author="R. Kasianenko" description="SquarenessSkin Look-&amp;-Feel" file-size="100000">
+		<dependency type="Library" name="SquarenessLAF"/>
+	</package>
+	<package type="Skin" name="SubstanceSkin" version="0.1.2" author="R. Kasianenko" description="SubstanceSkin Look-&amp;-Feel" file-size="100000">
+		<dependency type="Library" name="SubstanceLAF"/>
+	</package>
+	<package type="Skin" name="SyntheticaSkin" version="0.1.1" author="R. Kasianenko" description="SyntheticaSkin Look-&amp;-Feel" file-size="100000">
+		<dependency type="Library" name="SyntheticaLAF"/>
+		<dependency type="Library" name="SyntheticaBlackMoonTheme"/>
+	</package>
+	<package type="Skin" name="TinySkin" version="0.1.1" author="R. Kasianenko" description="TinySkin Look-&amp;-Feel" file-size="100000">
+		<dependency type="Library" name="TinyLAF"/>
+	</package>
+	<package type="Skin" name="TonicSlimSkin" version="0.1.3" author="R. Kasianenko" description="TonicSlimSkin Look-&amp;-Feel" file-size="100000">
+		<dependency type="Library" name="TonicSlimLAF"/>
+	</package>
+	<package type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="100000" />
+	<package type="Library" name="JFreeChart" version="1.0.9" author="Object Refinery Limited and Contributors" description="JFreeChart is a free 100% Java chart library that makes it easy for developers to display professional quality charts in their applications." file-size="100000" />
+	<package type="Library" name="JCommon" version="1.0.12" author="Object Refinery Limited and Contributors" description="The library contains the common classes, which provide some global utility functionality for both GUI and non-GUI applications." file-size="100000" />
+	<package type="Library" name="JCalendar" version="1.3.2" author="Kai Toedter" description="JCalendar is a Java date chooser bean for graphically picking a date." file-size="100000" />
+	<package type="Library" name="Looks" version="2.1.4" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
+	<package type="Library" name="PgsLAF" version="1.0.1" author="pago" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
+	<package type="Library" name="Substance" version="4.2.02" author="Kirill Grouchnikov and contributors" description="Substance Look-And-Feel Provider Library" file-size="100000" />
+	<package type="Library" name="LipstikLF" version="1.0" author="Michal Buczko" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
+	<package type="Library" name="Squareness" version="2.3.0" author="Robert F. Beeger" description="Minimalistic and flat looking Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
+	<package type="Library" name="TinyLAF" version="1.3.04" author="Hans Bickel" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
+	<package type="Library" name="FHLAF" version="1.02" author="Stefan Harsan Fárr" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
+	<package type="Library" name="LiquidLnF" version="2.9.1" author="evickroy" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
+	<package type="Library" name="Synthetica" version="2.2.0" author="JAVASOFT Software Engineering" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
+	<package type="Library" name="SyntheticaBlackMoonTheme" version="2.2.0" author="JAVASOFT Software Engineering" description="BlackMoon theme for Synthetica Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
+	<package type="Library" name="InfoNodeLF" version="1.4.0" author="NNL Technology AB" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
+	<package type="Library" name="TonicLFSlim" version="1.0.5" author="DIGITPROP" description="Slim version of Tonic Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
+</bias:repository>
