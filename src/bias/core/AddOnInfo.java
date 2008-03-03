@@ -20,7 +20,7 @@ public class AddOnInfo {
 
     private String description;
     
-    private Collection<String> dependencies;
+    private Collection<Dependency> dependencies;
 
     public AddOnInfo() {
         // default empty constructor
@@ -65,14 +65,14 @@ public class AddOnInfo {
         this.description = description;
     }
     
-    public Collection<String> getDependencies() {
+    public Collection<Dependency> getDependencies() {
         if (dependencies != null) return Collections.unmodifiableCollection(dependencies);
         return null;
     }
 
-    public void addDependency(String dependency) {
+    public void addDependency(Dependency dependency) {
         if (dependencies == null) {
-            dependencies = new ArrayList<String>();
+            dependencies = new ArrayList<Dependency>();
         }
         dependencies.add(dependency);
     }

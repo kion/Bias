@@ -1228,7 +1228,15 @@ public class BackEnd {
                 if (!Validator.isNullOrBlank(addOnDependencies)) {
                     String[] deps = addOnDependencies.split(Constants.PROPERTY_VALUES_SEPARATOR);
                     for (String dep : deps) {
-                        addOnInfo.addDependency(dep.trim());
+                        String[] depInfo = dep.trim().split(Constants.ADDON_FILENAME_VERSION_SEPARATOR);
+                        if (depInfo.length != 2 && depInfo.length != 3) {
+                            throw new Exception(
+                                    "Invalid Add-On-Package: " + Constants.NEW_LINE +
+                                    Constants.ATTRIBUTE_ADD_ON_DEPENDENCIES 
+                                    + " attribute in MANIFEST.MF file has invalid value!" + Constants.NEW_LINE
+                                    + "[At least dependency type and name should be specified (version is optional)]");
+                        }
+                        addOnInfo.addDependency(new Dependency(ADDON_TYPE.valueOf(depInfo[0]), depInfo[1], (depInfo.length == 3 ? depInfo[2] : null)));
                     }
                 }
                 if (extractAddOnInfo) {

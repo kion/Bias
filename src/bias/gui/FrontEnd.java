@@ -122,6 +122,7 @@ import bias.core.AddOnInfo;
 import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
+import bias.core.Dependency;
 import bias.core.Recognizable;
 import bias.event.AfterSaveEventListener;
 import bias.event.BeforeExitEventListener;
@@ -4190,7 +4191,7 @@ public class FrontEnd extends JFrame {
                                         Splash.hideSplash();
                                         Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
                                         proposedAddOnsToInstall.keySet().retainAll(confirmedAddOnsToInstall);
-                                        Collection<String> deps = new ArrayList<String>();
+                                        Collection<Dependency> deps = new ArrayList<Dependency>();
                                         for (AddOnInfo info : proposedAddOnsToInstall.keySet()) {
                                             if (!Validator.isNullOrBlank(info.getDependencies())) {
                                                 deps.addAll(info.getDependencies());
@@ -4394,7 +4395,7 @@ public class FrontEnd extends JFrame {
                                         Splash.hideSplash();
                                         Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
                                         proposedAddOnsToInstall.keySet().retainAll(confirmedAddOnsToInstall);
-                                        Collection<String> deps = new ArrayList<String>();
+                                        Collection<Dependency> deps = new ArrayList<Dependency>();
                                         for (AddOnInfo info : proposedAddOnsToInstall.keySet()) {
                                             if (!Validator.isNullOrBlank(info.getDependencies())) {
                                                 deps.addAll(info.getDependencies());
@@ -4688,9 +4689,13 @@ public class FrontEnd extends JFrame {
                             final Map<URL, bias.online.xmlb.Package> urlPackageMap = new HashMap<URL, bias.online.xmlb.Package>();
                             final Map<URL, File> urlFileMap = new HashMap<URL, File>();
                             long tSize = 0;
+                            Collection<bias.online.xmlb.Dependency> deps = new ArrayList<bias.online.xmlb.Dependency>();
                             for (int i = 0; i < onlineList.getRowCount(); i++) {
                                 if ((Boolean) onlineList.getValueAt(i, 0)) {
                                     bias.online.xmlb.Package pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(i, 2));
+                                    if (!Validator.isNullOrBlank(pack.getDependency())) {
+                                        deps.addAll(pack.getDependency());
+                                    }
                                     String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_FILENAME_SUFFIX;
                                     URL url;
                                     if (!Validator.isNullOrBlank(pack.getUrl())) {
@@ -4703,6 +4708,10 @@ public class FrontEnd extends JFrame {
                                     urlPackageMap.put(url, pack);
                                     tSize += pack.getFileSize();
                                 }
+                            }
+                            if (!deps.isEmpty()) {
+                                // TODO [P1] resolve dependencies (optionally?)
+                                System.out.println(deps);
                             }
                             final Long totalSize = new Long(tSize);
                             if (!urlFileMap.isEmpty()) {

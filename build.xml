@@ -89,7 +89,7 @@
 				<attribute name="Bias-Add-On-Version" value="${FinancialFlows_Version}" />
 				<attribute name="Bias-Add-On-Description" value="Financial Flows Management and Statistics" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
-				<attribute name="Bias-Add-On-Dependencies" value="JFreechart, JCommon, JCalendar" />
+				<attribute name="Bias-Add-On-Dependencies" value="${FinancialFlows_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
@@ -282,6 +282,7 @@
 				<attribute name="Bias-Add-On-Version" value="${JGLooksSkin_Version}" />
 				<attribute name="Bias-Add-On-Description" value="JGoodies Looks Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${JGLooksSkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
@@ -297,6 +298,7 @@
 				<attribute name="Bias-Add-On-Version" value="${PgsSkin_Version}" />
 				<attribute name="Bias-Add-On-Description" value="Pgs Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${PgsSkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
@@ -312,6 +314,7 @@
 				<attribute name="Bias-Add-On-Version" value="${LipstikSkin_Version}" />
 				<attribute name="Bias-Add-On-Description" value="Lipstik Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${LipstikSkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
@@ -327,6 +330,7 @@
 				<attribute name="Bias-Add-On-Version" value="${SquarenessSkin_Version}" />
 				<attribute name="Bias-Add-On-Description" value="Squareness Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${SquarenessSkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
@@ -342,6 +346,7 @@
 				<attribute name="Bias-Add-On-Version" value="${TinySkin_Version}" />
 				<attribute name="Bias-Add-On-Description" value="Tiny Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${TinySkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
@@ -357,6 +362,7 @@
 				<attribute name="Bias-Add-On-Version" value="${FHSkin_Version}" />
 				<attribute name="Bias-Add-On-Description" value="FH Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${FHSkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
@@ -372,6 +378,7 @@
 				<attribute name="Bias-Add-On-Version" value="${LiquidSkin_Version}" />
 				<attribute name="Bias-Add-On-Description" value="Liquid Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${LiquidSkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
@@ -387,6 +394,7 @@
 				<attribute name="Bias-Add-On-Version" value="${SyntheticaSkin_Version}" />
 				<attribute name="Bias-Add-On-Description" value="Synthetica Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${SyntheticaSkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
@@ -402,6 +410,7 @@
 				<attribute name="Bias-Add-On-Version" value="${InfoNodeSkin_Version}" />
 				<attribute name="Bias-Add-On-Description" value="InfoNode Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${InfoNodeSkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
@@ -417,6 +426,7 @@
 				<attribute name="Bias-Add-On-Version" value="${TonicSlimSkin_Version}" />
 				<attribute name="Bias-Add-On-Description" value="Tonic Slim Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${TonicSlimSkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
@@ -432,7 +442,7 @@
 				<attribute name="Bias-Add-On-Version" value="${SubstanceSkin_Version}" />
 				<attribute name="Bias-Add-On-Description" value="Substance Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
-				<attribute name="Bias-Add-On-Dependencies" value="Substance" />
+				<attribute name="Bias-Add-On-Dependencies" value="${SubstanceSkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
