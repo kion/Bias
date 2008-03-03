@@ -275,12 +275,12 @@
           target: Build_LAF_JGLooksLAF             
          ================================= -->
 	<target name="Build_LAF_JGLooksLAF" description="JGoodies Looks Look-And-Feel">
-		<jar basedir="bin" destfile="build/BiasJGLooksLAF_${BiasJGLooksLAF_Version}.jar" includes="bias/laf/BiasJGLooksLAF/** bias/res/BiasJGLooksLAF/**">
+		<jar basedir="bin" destfile="build/JGLooksLAF_${JGLooksLAF_Version}.jar" includes="bias/laf/JGLooksLAF/** bias/res/JGLooksLAF/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="BiasJGLooksLAF" />
+				<attribute name="Bias-Add-On-Name" value="JGLooksLAF" />
 				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${BiasJGLooksLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Bias JGoodies Looks Look-And-Feel" />
+				<attribute name="Bias-Add-On-Version" value="${JGLooksLAF_Version}" />
+				<attribute name="Bias-Add-On-Description" value="JGoodies Looks Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
@@ -290,12 +290,12 @@
           target: Build_LAF_PgsLAF             
          ================================= -->
 	<target name="Build_LAF_PgsLAF" description="Pgs Look-And-Feel">
-		<jar basedir="bin" destfile="build/BiasPgsLAF_${BiasPgsLAF_Version}.jar" includes="bias/laf/BiasPgsLAF/** bias/res/BiasPgsLAF/**">
+		<jar basedir="bin" destfile="build/PgsLAF_${PgsLAF_Version}.jar" includes="bias/laf/PgsLAF/** bias/res/PgsLAF/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="BiasPgsLAF" />
+				<attribute name="Bias-Add-On-Name" value="PgsLAF" />
 				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${BiasPgsLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Bias Pgs Look-And-Feel" />
+				<attribute name="Bias-Add-On-Version" value="${PgsLAF_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Pgs Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
@@ -305,12 +305,12 @@
           target: Build_LAF_LipstikLAF             
          ================================= -->
 	<target name="Build_LAF_LipstikLAF" description="Lipstik Look-And-Feel">
-		<jar basedir="bin" destfile="build/BiasLipstikLAF_${BiasLipstikLAF_Version}.jar" includes="bias/laf/BiasLipstikLAF/** bias/res/BiasLipstikLAF/**">
+		<jar basedir="bin" destfile="build/LipstikLAF_${LipstikLAF_Version}.jar" includes="bias/laf/LipstikLAF/** bias/res/LipstikLAF/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="BiasLipstikLAF" />
+				<attribute name="Bias-Add-On-Name" value="LipstikLAF" />
 				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${BiasLipstikLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Bias Lipstik Look-And-Feel" />
+				<attribute name="Bias-Add-On-Version" value="${LipstikLAF_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Lipstik Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
@@ -320,12 +320,12 @@
           target: Build_LAF_SquarenessLAF             
          ================================= -->
 	<target name="Build_LAF_SquarenessLAF" description="Squareness Look-And-Feel">
-		<jar basedir="bin" destfile="build/BiasSquarenessLAF_${BiasSquarenessLAF_Version}.jar" includes="bias/laf/BiasSquarenessLAF/** bias/res/BiasSquarenessLAF/**">
+		<jar basedir="bin" destfile="build/SquarenessLAF_${SquarenessLAF_Version}.jar" includes="bias/laf/SquarenessLAF/** bias/res/SquarenessLAF/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="BiasSquarenessLAF" />
+				<attribute name="Bias-Add-On-Name" value="SquarenessLAF" />
 				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${BiasSquarenessLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Bias Squareness Look-And-Feel" />
+				<attribute name="Bias-Add-On-Version" value="${SquarenessLAF_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Squareness Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
@@ -335,12 +335,12 @@
           target: Build_LAF_TinyLAF             
          ================================= -->
 	<target name="Build_LAF_TinyLAF" description="Tiny Look-And-Feel">
-		<jar basedir="bin" destfile="build/BiasTinyLAF_${BiasTinyLAF_Version}.jar" includes="bias/laf/BiasTinyLAF/** bias/res/BiasTinyLAF/**">
+		<jar basedir="bin" destfile="build/TinyLAF_${TinyLAF_Version}.jar" includes="bias/laf/TinyLAF/** bias/res/TinyLAF/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="BiasTinyLAF" />
+				<attribute name="Bias-Add-On-Name" value="TinyLAF" />
 				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${BiasTinyLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Bias Tiny Look-And-Feel" />
+				<attribute name="Bias-Add-On-Version" value="${TinyLAF_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Tiny Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
@@ -350,12 +350,12 @@
           target: Build_LAF_FHLAF             
          ================================= -->
 	<target name="Build_LAF_FHLAF" description="FH Look-And-Feel">
-		<jar basedir="bin" destfile="build/BiasFHLAF_${BiasFHLAF_Version}.jar" includes="bias/laf/BiasFHLAF/** bias/res/BiasFHLAF/**">
+		<jar basedir="bin" destfile="build/FHLAF_${FHLAF_Version}.jar" includes="bias/laf/FHLAF/** bias/res/FHLAF/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="BiasFHLAF" />
+				<attribute name="Bias-Add-On-Name" value="FHLAF" />
 				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${BiasFHLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Bias FH Look-And-Feel" />
+				<attribute name="Bias-Add-On-Version" value="${FHLAF_Version}" />
+				<attribute name="Bias-Add-On-Description" value="FH Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
@@ -365,12 +365,12 @@
           target: Build_LAF_LiquidLAF             
          ================================= -->
 	<target name="Build_LAF_LiquidLAF" description="Liquid Look-And-Feel">
-		<jar basedir="bin" destfile="build/BiasLiquidLAF_${BiasLiquidLAF_Version}.jar" includes="bias/laf/BiasLiquidLAF/** bias/res/BiasLiquidLAF/**">
+		<jar basedir="bin" destfile="build/LiquidLAF_${LiquidLAF_Version}.jar" includes="bias/laf/LiquidLAF/** bias/res/LiquidLAF/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="BiasLiquidLAF" />
+				<attribute name="Bias-Add-On-Name" value="LiquidLAF" />
 				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${BiasLiquidLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Bias Liquid Look-And-Feel" />
+				<attribute name="Bias-Add-On-Version" value="${LiquidLAF_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Liquid Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
@@ -380,12 +380,12 @@
           target: Build_LAF_SyntheticaLAF             
          ================================= -->
 	<target name="Build_LAF_SyntheticaLAF" description="Synthetica Look-And-Feel">
-		<jar basedir="bin" destfile="build/BiasSyntheticaLAF_${BiasSyntheticaLAF_Version}.jar" includes="bias/laf/BiasSyntheticaLAF/** bias/res/BiasSyntheticaLAF/**">
+		<jar basedir="bin" destfile="build/SyntheticaLAF_${SyntheticaLAF_Version}.jar" includes="bias/laf/SyntheticaLAF/** bias/res/SyntheticaLAF/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="BiasSyntheticaLAF" />
+				<attribute name="Bias-Add-On-Name" value="SyntheticaLAF" />
 				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${BiasSyntheticaLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Bias Synthetica Look-And-Feel" />
+				<attribute name="Bias-Add-On-Version" value="${SyntheticaLAF_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Synthetica Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
@@ -395,12 +395,12 @@
           target: Build_LAF_InfoNodeLAF             
          ================================= -->
 	<target name="Build_LAF_InfoNodeLAF" description="InfoNode Look-And-Feel">
-		<jar basedir="bin" destfile="build/BiasInfoNodeLAF_${BiasInfoNodeLAF_Version}.jar" includes="bias/laf/BiasInfoNodeLAF/** bias/res/BiasInfoNodeLAF/**">
+		<jar basedir="bin" destfile="build/InfoNodeLAF_${InfoNodeLAF_Version}.jar" includes="bias/laf/InfoNodeLAF/** bias/res/InfoNodeLAF/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="BiasInfoNodeLAF" />
+				<attribute name="Bias-Add-On-Name" value="InfoNodeLAF" />
 				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${BiasInfoNodeLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Bias InfoNode Look-And-Feel" />
+				<attribute name="Bias-Add-On-Version" value="${InfoNodeLAF_Version}" />
+				<attribute name="Bias-Add-On-Description" value="InfoNode Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
@@ -410,12 +410,12 @@
           target: Build_LAF_TonicSlimLAF             
          ================================= -->
 	<target name="Build_LAF_TonicSlimLAF" description="Tonic Slim Look-And-Feel">
-		<jar basedir="bin" destfile="build/BiasTonicSlimLAF_${BiasTonicSlimLAF_Version}.jar" includes="bias/laf/BiasTonicSlimLAF/** bias/res/BiasTonicSlimLAF/**">
+		<jar basedir="bin" destfile="build/TonicSlimLAF_${TonicSlimLAF_Version}.jar" includes="bias/laf/TonicSlimLAF/** bias/res/TonicSlimLAF/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="BiasTonicSlimLAF" />
+				<attribute name="Bias-Add-On-Name" value="TonicSlimLAF" />
 				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${BiasTonicSlimLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Bias Tonic Slim Look-And-Feel" />
+				<attribute name="Bias-Add-On-Version" value="${TonicSlimLAF_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Tonic Slim Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>
@@ -425,12 +425,12 @@
           target: Build_LAF_SubstanceLAF             
          ================================= -->
 	<target name="Build_LAF_SubstanceLAF" description="Substance Look-And-Feel">
-		<jar basedir="bin" destfile="build/BiasSubstanceLAF_${BiasSubstanceLAF_Version}.jar" includes="bias/laf/BiasSubstanceLAF/** bias/res/BiasSubstanceLAF/**">
+		<jar basedir="bin" destfile="build/SubstanceLAF_${SubstanceLAF_Version}.jar" includes="bias/laf/SubstanceLAF/** bias/res/SubstanceLAF/**">
 			<manifest>
-				<attribute name="Bias-Add-On-Name" value="BiasSubstanceLAF" />
+				<attribute name="Bias-Add-On-Name" value="SubstanceLAF" />
 				<attribute name="Bias-Add-On-Type" value="LookAndFeel" />
-				<attribute name="Bias-Add-On-Version" value="${BiasSubstanceLAF_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Bias Substance Look-And-Feel" />
+				<attribute name="Bias-Add-On-Version" value="${SubstanceLAF_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Substance Look-And-Feel" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 				<attribute name="Bias-Add-On-Dependencies" value="Substance" />
 			</manifest>
