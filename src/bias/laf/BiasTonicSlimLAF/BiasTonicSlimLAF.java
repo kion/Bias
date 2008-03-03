@@ -21,13 +21,6 @@ import com.digitprop.tonic.TonicLookAndFeel;
  * @author kion
  */
 
-//@AddOnAnnotation(
-//        version="0.1.3",
-//        author="R. Kasianenko",
-//        description = "Bias Tonic Slim Look-&-Feel",
-//        details = "<i>BiasTonicSlimLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +
-//                  "It uses slim version of <a href=\"http://www.digitprop.com/tonic/tonic.php\">Tonic Look-&-Feel</a> for Java/Swing applications<br>" +
-//                  "provided by <a href=\"http://www.digitprop.com/index.php\">DIGITPROP</a>.")
 public class BiasTonicSlimLAF extends LookAndFeel {
 
     private static final String PROPERTY_THICK_BORDERS = "THICK_BORDERS";

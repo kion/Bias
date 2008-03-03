@@ -33,14 +33,6 @@ import com.sun.image.codec.jpeg.ImageFormatException;
  * @author kion
  */
 
-//@AddOnAnnotation(
-//        version="0.2.3",
-//        author="R. Kasianenko",
-//        description = "Basic Graphics Manipulation",
-//        details = "<i>Graffiti</i> extension for Bias is a part<br>" +
-//                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
-//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
-//                  "an author of Bias application.")
 public class Graffiti extends EntryExtension {
 
     // TODO [P2] implement existing image loading

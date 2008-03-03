@@ -23,14 +23,6 @@ import bias.utils.Validator;
  * @author kion
  */
 
-//@AddOnAnnotation(
-//        version = "0.6.1", 
-//        author = "R. Kasianenko", 
-//        description = "WYSIWYG HTML Page Composer",
-//        details = "<i>HTMLPage</i> extension for Bias is a part<br>" +
-//                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
-//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
-//                  "an author of Bias application.")
 public class HTMLPage extends EntryExtension {
     private static final long serialVersionUID = 1L;
     

@@ -48,14 +48,6 @@ import bias.utils.PropertiesUtils;
  * @author kion
  */
 
-//@AddOnAnnotation(
-//        version="0.3.9",
-//        author="R. Kasianenko",
-//        description = "Statistics Tool",
-//        details = "<i>SimpleStats</i> extension for Bias is a part<br>" +
-//                  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
-//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
-//                  "an author of Bias application.")
 public class SimpleStats extends ToolExtension {
 
     private static final ImageIcon ICON = new ImageIcon(BackEnd.getInstance().getResourceURL(SimpleStats.class, "icon.png"));

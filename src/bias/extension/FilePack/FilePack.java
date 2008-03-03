@@ -52,14 +52,6 @@ import bias.utils.Validator;
  *
  */
 
-//@AddOnAnnotation(
-//        version="0.3.1",
-//        author="R. Kasianenko",
-//        description = "File Package",
-//        details = "<i>FilePack</i> extension for Bias is a part<br>" +
-//        		  "of standard \"all-inclusive-delivery-set\" of Bias application.<br>" +
-//                  "It is provided by <a href=\"http://kion.name/\">R. Kasianenko</a>,<br>" +
-//                  "an author of Bias application.")
 public class FilePack extends EntryExtension {
 	private static final long serialVersionUID = 1L;
     

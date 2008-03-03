@@ -14,12 +14,6 @@ import bias.laf.LookAndFeel;
  * @author kion
  */
 
-//@AddOnAnnotation(
-//        version="0.1.2",
-//        author="R. Kasianenko",
-//        description = "Bias Substance Look-&-Feel",
-//        details = "<i>BiasSubstanceLAF</i> add-on for Bias provided by <a href=\"http://kion.name/\">R. Kasianenko</a>, an author of Bias application.<br>" +
-//                  "It uses cross-platform <a href=\"http://substance.dev.java.net/\">Substance Look-&-Feel</a> for Java/Swing applications.")
 public class BiasSubstanceLAF extends LookAndFeel {
 
     /* (non-Javadoc)
