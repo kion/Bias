@@ -123,7 +123,11 @@ public class BackEnd {
     
     private static final FilenameFilter FILE_FILTER_ADDON_INFO = new FilenameFilter(){
         public boolean accept(File dir, String name) {
-            return name.endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX) || name.endsWith(Constants.ADDON_SKIN_INFO_FILE_SUFFIX) || name.endsWith(Constants.ADDON_ICONSET_INFO_FILE_SUFFIX);
+            return name.endsWith(
+                    Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX) 
+                    || name.endsWith(Constants.ADDON_SKIN_INFO_FILE_SUFFIX) 
+                    || name.endsWith(Constants.ADDON_ICONSET_INFO_FILE_SUFFIX)
+                    || name.endsWith(Constants.ADDON_LIB_INFO_FILE_SUFFIX);
         }
     };
     
