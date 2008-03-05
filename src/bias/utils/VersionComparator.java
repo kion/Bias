@@ -13,7 +13,7 @@ public class VersionComparator implements Comparator<String> {
     public static final String VERSION_PATTERN = "^\\d+\\.\\d+(\\.\\d+)*+$";
     private static final String VERSION_SEPARATOR = "\\.";
     
-    public static VersionComparator instance;
+    private static VersionComparator instance;
     
     public static VersionComparator getInstance() {
         if (instance == null) {
