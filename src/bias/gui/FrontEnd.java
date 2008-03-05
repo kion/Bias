@@ -4819,11 +4819,16 @@ public class FrontEnd extends JFrame {
                                 }
                                 // ... and if yes...
                                 if (depsPresent) {
+                                    // ... remember currently active tab...
+                                    final int activeTabIdx = addOnsPane.getSelectedIndex();
                                     // ... then switch to "Online" tab...
                                     addOnsPane.setSelectedIndex(3);
-                                    // ... and then download dependency-packages
+                                    // ... download dependency-packages...
                                     downloadAndInstallOnlinePackages(new Runnable(){
                                         public void run() {
+                                            // ... then switch back to the previously active tab...
+                                            addOnsPane.setSelectedIndex(activeTabIdx);
+                                            // ... and finally, install local packages...
                                             installLocalPackages(proposedAddOnsToInstall, addOnType, addOnModel);
                                         }
                                     });
@@ -4874,12 +4879,14 @@ public class FrontEnd extends JFrame {
     private boolean onlineListRefreshed = false;
     
     private void refreshOnlinePackagesList(final Runnable onFinishAction) {
+        // TODO [P1] only not-yet-installed- and update-packages should appear in the list of packages available for installation through internet
         while (onlineModel.getRowCount() > 0) {
             onlineModel.removeRow(0);
         }
         try {
             URL addonsListURL = new URL(getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
+            Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
             Downloader d = new Downloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
             d.setDownloadListener(new DownloadListener(){
                 private boolean success = true;
@@ -4907,6 +4914,7 @@ public class FrontEnd extends JFrame {
                     } catch (Throwable t) {
                         displayAddOnsScreenErrorMessage("Failed to parse downloaded list of available addons!", t);
                     } finally {
+                        Splash.hideSplash();
                         if (success && onFinishAction != null) {
                             onFinishAction.run();
                         }
@@ -4916,6 +4924,10 @@ public class FrontEnd extends JFrame {
                 public void onFailure(URL url, File file, Throwable failure) {
                     success = false;
                     displayAddOnsScreenErrorMessage("Failed to retrieve online list of available addons!", failure);
+                }
+                @Override
+                public void onFinish(long downloadedBytesNum, long elapsedTime) {
+                    Splash.hideSplash();
                 }
             });
             d.start();
@@ -4958,6 +4970,8 @@ public class FrontEnd extends JFrame {
                         if (success && onFinishAction != null) {
                             onFinishAction.run();
                         }
+                        depCounters.clear();
+                        refreshOnlinePackagesList(null);
                     }
                     @Override
                     public void onStart(URL url, File file) {
