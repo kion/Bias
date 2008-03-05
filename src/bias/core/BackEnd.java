@@ -308,7 +308,7 @@ public class BackEnd {
         // parse metadata file
         this.data = parseMetadata(metadata, identifiedData, null, false);
         // get lists of loaded addons
-        loadedAddOns = getAddOns(null);
+        loadedAddOns = getAddOns(ADDON_TYPE.Any);
     }
     
     private Collection<String> getDataExportExtensionsList() {
@@ -1110,22 +1110,23 @@ public class BackEnd {
     
     public Collection<AddOnInfo> getAddOns(ADDON_TYPE addOnType) throws Throwable {
         Collection<AddOnInfo> addOns = new HashSet<AddOnInfo>();
-        FilenameFilter ff = FILE_FILTER_ADDON_INFO;
-        if (addOnType != null) {
-            switch (addOnType) {
-            case Extension:
-                ff = FILE_FILTER_EXTENSION_INFO;
-                break;
-            case Skin:
-                ff = FILE_FILTER_SKIN_INFO;
-                break;
-            case IconSet:
-                ff = FILE_FILTER_ICONSET_INFO;
-                break;
-            case Library:
-                ff = FILE_FILTER_LIB_INFO;
-                break;
-            }
+        FilenameFilter ff = null;
+        switch (addOnType) {
+        case Any:
+            ff = FILE_FILTER_ADDON_INFO;
+            break;
+        case Extension:
+            ff = FILE_FILTER_EXTENSION_INFO;
+            break;
+        case Skin:
+            ff = FILE_FILTER_SKIN_INFO;
+            break;
+        case IconSet:
+            ff = FILE_FILTER_ICONSET_INFO;
+            break;
+        case Library:
+            ff = FILE_FILTER_LIB_INFO;
+            break;
         }
         for (File addOnInfoFile : Constants.CONFIG_DIR.listFiles(ff)) {
             addOns.add(readAddOnInfo(addOnInfoFile));

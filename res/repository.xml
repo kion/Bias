@@ -21,32 +21,32 @@
 		<dependency type="Library" name="FHLAF"/>
 	</package>
 	<package type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNodeSkin Look-&amp;-Feel" file-size="100000">
-		<dependency type="Library" name="InfoNodeLAF"/>
+		<dependency type="Library" name="InfoNodeLF"/>
 	</package>
 	<package type="Skin" name="LipstikSkin" version="0.1.1" author="R. Kasianenko" description="LipstikSkin Look-&amp;-Feel" file-size="100000">
-		<dependency type="Library" name="LipstikLAF"/>
+		<dependency type="Library" name="LipstikLF"/>
 	</package>
 	<package type="Skin" name="LiquidSkin" version="0.1.1" author="R. Kasianenko" description="LiquidSkin Look-&amp;-Feel" file-size="100000">
-		<dependency type="Library" name="LiquidLAF"/>
+		<dependency type="Library" name="LiquidLnF"/>
 	</package>
 	<package type="Skin" name="PgsSkin" version="0.1.1" author="R. Kasianenko" description="PgsSkin Look-&amp;-Feel" file-size="100000">
 		<dependency type="Library" name="PgsLAF"/>
 	</package>
 	<package type="Skin" name="SquarenessSkin" version="0.1.1" author="R. Kasianenko" description="SquarenessSkin Look-&amp;-Feel" file-size="100000">
-		<dependency type="Library" name="SquarenessLAF"/>
+		<dependency type="Library" name="Squareness"/>
 	</package>
 	<package type="Skin" name="SubstanceSkin" version="0.1.2" author="R. Kasianenko" description="SubstanceSkin Look-&amp;-Feel" file-size="100000">
-		<dependency type="Library" name="SubstanceLAF"/>
+		<dependency type="Library" name="Substance"/>
 	</package>
 	<package type="Skin" name="SyntheticaSkin" version="0.1.1" author="R. Kasianenko" description="SyntheticaSkin Look-&amp;-Feel" file-size="100000">
-		<dependency type="Library" name="SyntheticaLAF"/>
+		<dependency type="Library" name="Synthetica"/>
 		<dependency type="Library" name="SyntheticaBlackMoonTheme"/>
 	</package>
 	<package type="Skin" name="TinySkin" version="0.1.1" author="R. Kasianenko" description="TinySkin Look-&amp;-Feel" file-size="100000">
 		<dependency type="Library" name="TinyLAF"/>
 	</package>
 	<package type="Skin" name="TonicSlimSkin" version="0.1.3" author="R. Kasianenko" description="TonicSlimSkin Look-&amp;-Feel" file-size="100000">
-		<dependency type="Library" name="TonicSlimLAF"/>
+		<dependency type="Library" name="TonicLFSlim"/>
 	</package>
 	<package type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="100000" />
 	<package type="Library" name="JFreeChart" version="1.0.9" author="Object Refinery Limited and Contributors" description="JFreeChart is a free 100% Java chart library that makes it easy for developers to display professional quality charts in their applications." file-size="100000" />

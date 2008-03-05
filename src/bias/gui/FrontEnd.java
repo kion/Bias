@@ -93,6 +93,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableModel;
@@ -4063,7 +4065,7 @@ public class FrontEnd extends JFrame {
     
     private Object[] getInstallAddOnInfoRow(AddOnInfo addOnInfo) {
         return new Object[] {
-                Boolean.TRUE,
+                Boolean.FALSE,
                 addOnInfo.getName(),
                 addOnInfo.getVersion(),
                 addOnInfo.getAuthor() != null ? addOnInfo.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
@@ -4079,18 +4081,51 @@ public class FrontEnd extends JFrame {
                 status };
     }
     
+    private JTable onlineList;
+    
+    private DefaultTableModel extModel;
+    
+    private DefaultTableModel skinModel;
+
+    private DefaultTableModel libModel;
+    
+    private DefaultTableModel icSetModel;
+    
+    private DefaultListModel icModel;
+    
+    private DefaultTableModel onlineModel;
+    
+    private JProgressBar onlineSingleProgressBar;
+    
+    private JProgressBar onlineTotalProgressBar;
+    
+    private JTable extList;
+    
+    private JTable skinList;
+    
+    private JTable icSetList;
+    
+    private JList icList;
+    
+    private JTable libsList;
+    
+    private JTabbedPane addOnsPane;
+
+    private Map<String, Integer> depCounters;
+    
     @SuppressWarnings("unchecked")
     private void initAddOnsManagementDialog() {
         if (dialog == null) {
             try {
+                depCounters = new HashMap<String, Integer>();
                 // extensions
-                final DefaultTableModel extModel = new DefaultTableModel() {
+                extModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
                         return false;
                     }
                 };
-                final JTable extList = new JTable(extModel);
+                extList = new JTable(extModel);
                 final TableRowSorter<TableModel> extSorter = new TableRowSorter<TableModel>(extModel);
                 extSorter.setSortsOnUpdates(true);
                 extList.setRowSorter(extSorter);
@@ -4108,7 +4143,7 @@ public class FrontEnd extends JFrame {
                         Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
                         // extension instantiation test
                         ExtensionFactory.newExtension(extClass);
-                        status = Constants.ADDON_STATUS_OK;
+                        status = Constants.ADDON_STATUS_LOADED;
                     } catch (Throwable t) {
                         // extension is broken
                         System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
@@ -4153,7 +4188,7 @@ public class FrontEnd extends JFrame {
                             try {
                                 String ext = (String) extList.getValueAt(extList.getSelectedRow(), 0);
                                 Map<AddOnInfo, String> newExts = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Extension);
-                                if (newExts != null && newExts.containsKey(new AddOnInfo(ext, null, null, null))) {
+                                if (newExts != null && newExts.containsKey(new AddOnInfo(ext))) {
                                     displayAddOnsScreenMessage(
                                             "This Extension can not be (re)configured yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
@@ -4175,51 +4210,7 @@ public class FrontEnd extends JFrame {
                 JButton extInstButt = new JButton("Install/Update...");
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (extensionFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                            Thread installThread = new Thread(new Runnable(){
-                                public void run() {
-                                    try {
-                                        Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
-                                        Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
-                                        for (File file : extensionFileChooser.getSelectedFiles()) {
-                                            AddOnInfo installedExt = BackEnd.getInstance().getAddOnInfoAndDependencies(file, ADDON_TYPE.Extension);
-                                            proposedAddOnsToInstall.put(installedExt, file);
-                                        }
-                                        Splash.hideSplash();
-                                        Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
-                                        proposedAddOnsToInstall.keySet().retainAll(confirmedAddOnsToInstall);
-                                        Collection<Dependency> deps = new ArrayList<Dependency>();
-                                        for (AddOnInfo info : proposedAddOnsToInstall.keySet()) {
-                                            if (!Validator.isNullOrBlank(info.getDependencies())) {
-                                                deps.addAll(info.getDependencies());
-                                            }
-                                        }
-                                        if (!deps.isEmpty()) {
-                                            // TODO [P1] resolve dependencies (optionally?)
-                                            System.out.println(deps);
-                                        }
-                                        Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
-                                        for (File file : proposedAddOnsToInstall.values()) {
-                                            AddOnInfo installedExt = BackEnd.getInstance().installAddOn(file, ADDON_TYPE.Extension);
-                                            String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Extension).get(installedExt);
-                                            int idx = findDataRowIndex(extModel, 0, installedExt.getName());
-                                            if (idx != -1) {
-                                                extModel.removeRow(idx);
-                                                extModel.insertRow(idx, getAddOnInfoRow(installedExt, status));
-                                            } else {
-                                                extModel.addRow(getAddOnInfoRow(installedExt, status));
-                                            }
-                                            modified = true;
-                                        }
-                                    } catch (Throwable t) {
-                                        displayAddOnsScreenErrorMessage("Failed to install add-on(s)! " + getFailureDetails(t), t);
-                                    } finally {
-                                        Splash.hideSplash();
-                                    }
-                                }
-                            });
-                            installThread.start();
-                        }
+                        installLocalPackages(extensionFileChooser, ADDON_TYPE.Extension, extModel);
                     }
                 });
                 JButton extUninstButt = new JButton("Uninstall");
@@ -4248,13 +4239,13 @@ public class FrontEnd extends JFrame {
                 });
 
                 // skins
-                final DefaultTableModel skinModel = new DefaultTableModel() {
+                skinModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
                         return false;
                     }
                 };
-                final JTable skinList = new JTable(skinModel) {
+                skinList = new JTable(skinModel) {
                     private static final long serialVersionUID = 1L;
                     @Override
                     public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
@@ -4295,7 +4286,7 @@ public class FrontEnd extends JFrame {
                         Class<Skin> skinClass = (Class<Skin>) Class.forName(fullSkinName);
                         // extension instantiation test
                         skinClass.newInstance();
-                        status = Constants.ADDON_STATUS_OK;
+                        status = Constants.ADDON_STATUS_LOADED;
                     } catch (Throwable t) {
                         // extension is broken
                         System.err.println("Extension [ " + skin.getName() + " ] failed to initialize!");
@@ -4351,7 +4342,7 @@ public class FrontEnd extends JFrame {
                                 }
                             } else {
                                 Map<AddOnInfo, String> newSkins = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Skin);
-                                if (newSkins != null && newSkins.containsKey(new AddOnInfo(skin, null, null, null))) {
+                                if (newSkins != null && newSkins.containsKey(new AddOnInfo(skin))) {
                                     displayAddOnsScreenMessage(
                                             "This Skin can not be (re)activated yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
@@ -4375,51 +4366,7 @@ public class FrontEnd extends JFrame {
                 JButton skinInstButt = new JButton("Install/Update...");
                 skinInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (skinFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                            Thread installThread = new Thread(new Runnable(){
-                                public void run() {
-                                    try {
-                                        Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
-                                        Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
-                                        for (File file : skinFileChooser.getSelectedFiles()) {
-                                            AddOnInfo installedSkin = BackEnd.getInstance().getAddOnInfoAndDependencies(file, ADDON_TYPE.Skin);
-                                            proposedAddOnsToInstall.put(installedSkin, file);
-                                        }
-                                        Splash.hideSplash();
-                                        Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
-                                        proposedAddOnsToInstall.keySet().retainAll(confirmedAddOnsToInstall);
-                                        Collection<Dependency> deps = new ArrayList<Dependency>();
-                                        for (AddOnInfo info : proposedAddOnsToInstall.keySet()) {
-                                            if (!Validator.isNullOrBlank(info.getDependencies())) {
-                                                deps.addAll(info.getDependencies());
-                                            }
-                                        }
-                                        if (!deps.isEmpty()) {
-                                            // TODO [P1] resolve dependencies (optionally?)
-                                            System.out.println(deps);
-                                        }
-                                        Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
-                                        for (File file : proposedAddOnsToInstall.values()) {
-                                            AddOnInfo installedSkin = BackEnd.getInstance().installAddOn(file, ADDON_TYPE.Skin);
-                                            String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Skin).get(installedSkin);
-                                            int idx = findDataRowIndex(skinModel, 0, installedSkin.getName());
-                                            if (idx != -1) {
-                                                skinModel.removeRow(idx);
-                                                skinModel.insertRow(idx, getAddOnInfoRow(installedSkin, status));
-                                            } else {
-                                                skinModel.addRow(getAddOnInfoRow(installedSkin, status));
-                                            }
-                                            modified = true;
-                                        }
-                                    } catch (Throwable t) {
-                                        displayAddOnsScreenErrorMessage("Failed to install add-on(s)! " + getFailureDetails(t), t);
-                                    } finally {
-                                        Splash.hideSplash();
-                                    }
-                                }
-                            });
-                            installThread.start();
-                        }
+                        installLocalPackages(skinFileChooser, ADDON_TYPE.Skin, skinModel);
                     }
                 });
                 JButton skinUninstButt = new JButton("Uninstall");
@@ -4459,13 +4406,13 @@ public class FrontEnd extends JFrame {
                 });
                 
                 // icons
-                final DefaultTableModel icSetModel = new DefaultTableModel() {
+                icSetModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
                         return false;
                     }
                 };
-                final JTable icSetList = new JTable(icSetModel);
+                icSetList = new JTable(icSetModel);
                 final TableRowSorter<TableModel> icSetSorter = new TableRowSorter<TableModel>(icSetModel);
                 icSetSorter.setSortsOnUpdates(true);
                 icSetList.setRowSorter(icSetSorter);
@@ -4477,8 +4424,8 @@ public class FrontEnd extends JFrame {
                     icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
                 }
                 icons = new HashMap<String, ImageIcon>();
-                final DefaultListModel icModel = new DefaultListModel();
-                final JList icList = new JList(icModel);
+                icModel = new DefaultListModel();
+                icList = new JList(icModel);
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                     icModel.addElement(icon);
                     icons.put(icon.getDescription(), icon);
@@ -4600,11 +4547,11 @@ public class FrontEnd extends JFrame {
                 });
 
                 // online list of available addons
-                final DefaultTableModel onlineModel = new DefaultTableModel() {
+                onlineModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
                     @Override
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
-                        return mColIndex == 0 ? true : false;
+                        return mColIndex == 0 && (!getValueAt(rowIndex, 1).equals(PackageType.LIBRARY.value())) ? true : false;
                     }
                     @Override
                     public Class<?> getColumnClass(int columnIndex) {
@@ -4615,9 +4562,9 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 };
-                JTable libsList = getLibsList(BackEnd.getInstance().getAddOns(ADDON_TYPE.Library));
-                final DefaultTableModel libModel = (DefaultTableModel) libsList.getModel();
-                final JTable onlineList = new JTable(onlineModel);
+                onlineList = new JTable(onlineModel);
+                libsList = getLibsList(BackEnd.getInstance().getAddOns(ADDON_TYPE.Library));
+                libModel = (DefaultTableModel) libsList.getModel();
                 final TableRowSorter<TableModel> onlineSorter = new TableRowSorter<TableModel>(onlineModel);
                 onlineSorter.setSortsOnUpdates(true);
                 onlineList.setRowSorter(onlineSorter);
@@ -4628,11 +4575,58 @@ public class FrontEnd extends JFrame {
                 onlineModel.addColumn("Author");
                 onlineModel.addColumn("Description");
                 onlineModel.addColumn("Size");
-                final JProgressBar onlineSingleProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
+                TableModelListener dependencyResolver = new TableModelListener(){
+                    public void tableChanged(TableModelEvent e) {
+                        if (e.getColumn() == 0) {
+                            try {
+                                onlineModel.removeTableModelListener(this);
+                                bias.online.xmlb.Package pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(e.getFirstRow(), 2));
+                                if (pack.getDependency() != null && !pack.getDependency().isEmpty()) {
+                                    for (bias.online.xmlb.Dependency dep : pack.getDependency()) {
+                                        if (!BackEnd.getInstance().getAddOns(ADDON_TYPE.Any).contains(new AddOnInfo(dep.getName()))) {
+                                            int idx = findDataRowIndex(onlineModel, 2, dep.getName());
+                                            if (idx == -1) {
+                                                onlineList.setValueAt(Boolean.FALSE, e.getFirstRow(), e.getColumn());
+                                                throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
+                                                                        dep.getType().value() + " '" + dep.getName() + "' " + 
+                                                                        (dep.getVersion() != null ? 
+                                                                        " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
+                                                                        " is not available!");
+                                            } else {
+                                                Integer counter = depCounters.get(dep.getName());
+                                                if (counter == null) {
+                                                    counter = 0;
+                                                }
+                                                if ((Boolean) onlineList.getValueAt(e.getFirstRow(), e.getColumn())) {
+                                                    counter++;
+                                                    if (counter == 1) {
+                                                        onlineList.setValueAt(Boolean.TRUE, idx, 0);
+                                                    }
+                                                } else {
+                                                    counter--;
+                                                    if (counter == 0) {
+                                                        onlineList.setValueAt(Boolean.FALSE, idx, 0);
+                                                    }
+                                                }
+                                                depCounters.put(dep.getName(), counter);
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (Throwable t) {
+                                displayErrorMessage("Failed to handle/resolve dependencies! " + getFailureDetails(t), t);
+                            } finally {
+                                onlineModel.addTableModelListener(this);
+                            }
+                        }
+                    }
+                };
+                onlineModel.addTableModelListener(dependencyResolver);
+                onlineSingleProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
                 onlineSingleProgressBar.setStringPainted(true);
                 onlineSingleProgressBar.setMinimum(0);
                 onlineSingleProgressBar.setString(Constants.EMPTY_STR);
-                final JProgressBar onlineTotalProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
+                onlineTotalProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
                 onlineTotalProgressBar.setStringPainted(true);
                 onlineTotalProgressBar.setMinimum(0);
                 onlineTotalProgressBar.setString(Constants.EMPTY_STR);
@@ -4642,47 +4636,7 @@ public class FrontEnd extends JFrame {
                 JButton onlineRefreshButt = new JButton("Refresh");
                 onlineRefreshButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        while (onlineModel.getRowCount() > 0) {
-                            onlineModel.removeRow(0);
-                        }
-                        try {
-                            URL addonsListURL = new URL(getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
-                            final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
-                            Downloader d = new Downloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
-                            d.setDownloadListener(new DownloadListener(){
-                                @Override
-                                public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
-                                    try {
-                                        for (bias.online.xmlb.Package pack : ((Repository) getUnmarshaller().unmarshal(file)).getPackage()) {
-                                            if (pack.getType() != null 
-                                                    && !Validator.isNullOrBlank(pack.getName()) 
-                                                    && pack.getFileSize() != null
-                                                    && pack.getVersion() != null 
-                                                    && pack.getVersion().matches(VersionComparator.VERSION_PATTERN)) {
-                                                getAvailableOnlinePackages().put(pack.getName(), pack);
-                                                onlineModel.addRow(new Object[]{
-                                                        Boolean.FALSE,
-                                                        pack.getType().value(), 
-                                                        pack.getName(), 
-                                                        pack.getVersion(), 
-                                                        pack.getAuthor() != null ? pack.getAuthor() : Constants.ADDON_FIELD_VALUE_NA, 
-                                                        pack.getDescription() != null ? pack.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                                                        FormatUtils.formatByteSize(pack.getFileSize()) });
-                                            }
-                                        }
-                                    } catch (Throwable t) {
-                                        displayAddOnsScreenErrorMessage("Failed to parse downloaded list of available addons!", t);
-                                    }
-                                }
-                                @Override
-                                public void onFailure(URL url, File file, Throwable failure) {
-                                    displayAddOnsScreenErrorMessage("Failed to retrieve online list of available addons!", failure);
-                                }
-                            });
-                            d.start();
-                        } catch (MalformedURLException ex) {
-                            displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
-                        }
+                        refreshOnlinePackagesList(null);
                     }
                 });
                 JButton onlineDetailsButt = new JButton("Package details");
@@ -4709,152 +4663,12 @@ public class FrontEnd extends JFrame {
                 JButton onlineInstallButt = new JButton("Download & Install/Update");
                 onlineInstallButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        try {
-                            final Map<URL, bias.online.xmlb.Package> urlPackageMap = new HashMap<URL, bias.online.xmlb.Package>();
-                            final Map<URL, File> urlFileMap = new HashMap<URL, File>();
-                            long tSize = 0;
-                            Collection<bias.online.xmlb.Dependency> deps = new ArrayList<bias.online.xmlb.Dependency>();
-                            for (int i = 0; i < onlineList.getRowCount(); i++) {
-                                if ((Boolean) onlineList.getValueAt(i, 0)) {
-                                    bias.online.xmlb.Package pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(i, 2));
-                                    if (!Validator.isNullOrBlank(pack.getDependency())) {
-                                        deps.addAll(pack.getDependency());
-                                    }
-                                    String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
-                                    URL url;
-                                    if (!Validator.isNullOrBlank(pack.getUrl())) {
-                                        url = new URL(pack.getUrl());
-                                    } else {
-                                        url = new URL(getRepositoryBaseURL() + fileName);
-                                    }
-                                    File file = new File(Constants.TMP_DIR, fileName);
-                                    urlFileMap.put(url, file);
-                                    urlPackageMap.put(url, pack);
-                                    tSize += pack.getFileSize();
-                                }
-                            }
-                            if (!deps.isEmpty()) {
-                                // TODO [P1] resolve dependencies (optionally?)
-                                System.out.println(deps);
-                            }
-                            final Long totalSize = new Long(tSize);
-                            if (!urlFileMap.isEmpty()) {
-                                Downloader d = new Downloader(urlFileMap, Preferences.getInstance().preferredTimeOut);
-                                d.setDownloadListener(new DownloadListener(){
-                                    private StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
-                                    private JLabel l = new JLabel();
-                                    @Override
-                                    public void onFinish(long downloadedBytesNum, long elapsedTime) {
-                                        sb.append("</ul>" + Constants.HTML_SUFFIX);
-                                        l.setText(sb.toString());
-                                        JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(l));
-                                    }
-                                    @Override
-                                    public void onStart(URL url, File file) {
-                                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
-                                        if (pack.getFileSize() != null) {
-                                            onlineSingleProgressBar.setMaximum(pack.getFileSize().intValue());
-                                        }
-                                    };
-                                    @Override
-                                    public void onSingleProgress(URL url, File file, long downloadedBytesNum, long elapsedTime) {
-                                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
-                                        onlineSingleProgressBar.setValue((int) downloadedBytesNum);
-                                        onlineSingleProgressBar.setString(pack.getName() + Constants.BLANK_STR + pack.getVersion() 
-                                                + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(pack.getFileSize()) + ")");
-                                    };
-                                    @Override
-                                    public void onTotalProgress(int itemNum, long downloadedBytesNum, long elapsedTime) {
-                                        onlineTotalProgressBar.setValue((int) downloadedBytesNum);
-                                        double estimationCoef = ((double) totalSize) / ((double) downloadedBytesNum);
-                                        long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
-                                        onlineTotalProgressBar.setString(itemNum + " / " + urlFileMap.size() 
-                                                + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(totalSize) + ")"
-                                                + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
-                                                + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
-                                    };
-                                    @Override
-                                    public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
-                                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
-                                        try {
-                                            if (pack.getType() == PackageType.ICON_SET) {
-                                                Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
-                                                if (!icons.isEmpty()) {
-                                                    for (ImageIcon icon : icons) {
-                                                        icModel.addElement(icon);
-                                                        FrontEnd.icons.put(icon.getDescription(), icon);
-                                                    }
-                                                    Collection<AddOnInfo> iconSets = BackEnd.getInstance().getIconSets();
-                                                    while (icSetModel.getRowCount() > 0) {
-                                                        icSetModel.removeRow(0);
-                                                    }
-                                                    for (AddOnInfo iconSetInfo : iconSets) {
-                                                        icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
-                                                    }
-                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                                    icList.repaint();
-                                                } else {
-                                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                                }
-                                            } else if (pack.getType() == PackageType.LIBRARY) {
-                                                AddOnInfo libInfo = new AddOnInfo();
-                                                libInfo.setName(pack.getName());
-                                                libInfo.setVersion(pack.getVersion());
-                                                libInfo.setDescription(pack.getDescription());
-                                                libInfo.setAuthor(pack.getAuthor());
-                                                BackEnd.getInstance().installLibrary(file, libInfo);
-                                                String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Library).get(libInfo);
-                                                int idx = findDataRowIndex(libModel, 0, libInfo.getName());
-                                                if (idx != -1) {
-                                                    libModel.removeRow(idx);
-                                                    libModel.insertRow(idx, getAddOnInfoRow(libInfo, status));
-                                                } else {
-                                                    libModel.addRow(getAddOnInfoRow(libInfo, status));
-                                                }
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                                modified = true;
-                                            } else if (pack.getType() == PackageType.APP_CORE) {
-                                                BackEnd.getInstance().installAppCoreUpdate(file);
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "AppCore '" + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                                modified = true;
-                                            } else {
-                                                ADDON_TYPE addOnType = ADDON_TYPE.valueOf(pack.getType().value());
-                                                AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
-                                                String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
-                                                DefaultTableModel model = addOnType == ADDON_TYPE.Extension ? extModel : skinModel;
-                                                int idx = findDataRowIndex(model, 0, installedAddOn.getName());
-                                                if (idx != -1) {
-                                                    model.removeRow(idx);
-                                                    model.insertRow(idx, getAddOnInfoRow(installedAddOn, status));
-                                                } else {
-                                                    model.addRow(getAddOnInfoRow(installedAddOn, status));
-                                                }
-                                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.name() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                                modified = true;
-                                            }
-                                        } catch (Throwable t) {
-                                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install " + pack.getType() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' from downloaded file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                            t.printStackTrace(System.err);
-                                        }
-                                    }
-                                    @Override
-                                    public void onFailure(URL url, File file, Throwable failure) {
-                                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
-                                        sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "'" + pack.getName() + "' - failed to retrieve installation file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                        failure.printStackTrace(System.err);
-                                    }
-                                });
-                                onlineTotalProgressBar.setMaximum(totalSize.intValue());
-                                d.start();
-                            }    
-                        } catch (MalformedURLException ex) {
-                            displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
-                        }
+                        downloadAndInstallOnlinePackages(null);
                     }
                 });
                 
                 // dialog
-                JTabbedPane addOnsPane = new JTabbedPane();
+                addOnsPane = new JTabbedPane();
 
                 JPanel extControlsPanel = new JPanel(new GridLayout(1,4));
                 extControlsPanel.add(extDetailsButt);
@@ -4967,8 +4781,290 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private void installLocalPackages(final AddOnFilesChooser addOnFileChooser, final ADDON_TYPE addOnType, final DefaultTableModel addOnModel) {
+        if (addOnFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
+            Thread installThread = new Thread(new Runnable(){
+                public void run() {
+                    try {
+                        Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+                        final Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
+                        StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
+                        boolean error = false;
+                        for (File file : addOnFileChooser.getSelectedFiles()) {
+                            try {
+                                AddOnInfo installedAddOn = BackEnd.getInstance().getAddOnInfoAndDependencies(file, addOnType);
+                                proposedAddOnsToInstall.put(installedAddOn, file);
+                            } catch (Throwable t) {
+                                error = true;
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failure on reading add-on's info from file '" + file.getName() + "': " + getFailureDetails(t) + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                t.printStackTrace(System.err);
+                            }
+                        }
+                        Splash.hideSplash();
+                        if (error) {
+                            sb.append("</ul>" + Constants.HTML_SUFFIX);
+                            JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
+                        }
+                        if (!proposedAddOnsToInstall.isEmpty()) {
+                            Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
+                            proposedAddOnsToInstall.keySet().retainAll(confirmedAddOnsToInstall);
+                            if (!proposedAddOnsToInstall.isEmpty()) {
+                                // check if there're dependency-packages present...
+                                boolean depsPresent = false;
+                                for (Integer i : depCounters.values()) {
+                                    if (i > 0) {
+                                        depsPresent = true;
+                                        break;
+                                    }
+                                }
+                                // ... and if yes...
+                                if (depsPresent) {
+                                    // ... then switch to "Online" tab...
+                                    addOnsPane.setSelectedIndex(3);
+                                    // ... and then download dependency-packages
+                                    downloadAndInstallOnlinePackages(new Runnable(){
+                                        public void run() {
+                                            installLocalPackages(proposedAddOnsToInstall, addOnType, addOnModel);
+                                        }
+                                    });
+                                } else {
+                                    installLocalPackages(proposedAddOnsToInstall, addOnType, addOnModel);
+                                }
+                            }
+                        }
+                    } finally {
+                        Splash.hideSplash();
+                    }
+                }
+            });
+            installThread.start();
+        }
+    }
+    
+    private void installLocalPackages(Map<AddOnInfo, File> proposedAddOnsToInstall, ADDON_TYPE addOnType, DefaultTableModel addOnModel) {
+        try {
+            Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+            StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
+            for (Entry<AddOnInfo, File> addons : proposedAddOnsToInstall.entrySet()) {
+                try {
+                    AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(addons.getValue(), addOnType);
+                    String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
+                    int idx = findDataRowIndex(addOnModel, 0, installedAddOn.getName());
+                    if (idx != -1) {
+                        addOnModel.removeRow(idx);
+                        addOnModel.insertRow(idx, getAddOnInfoRow(installedAddOn, status));
+                    } else {
+                        addOnModel.addRow(getAddOnInfoRow(installedAddOn, status));
+                    }
+                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Add-On '" + installedAddOn.getName() + Constants.BLANK_STR + installedAddOn.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                    modified = true;
+                } catch (Throwable t) {
+                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install add-on '" + addons.getKey().getName() + Constants.BLANK_STR + addons.getKey().getVersion() + "' from file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                    t.printStackTrace(System.err);
+                }
+            }
+            Splash.hideSplash();
+            sb.append("</ul>" + Constants.HTML_SUFFIX);
+            JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
+        } finally {
+            Splash.hideSplash();
+        }
+    }
+    
+    private boolean onlineListRefreshed = false;
+    
+    private void refreshOnlinePackagesList(final Runnable onFinishAction) {
+        while (onlineModel.getRowCount() > 0) {
+            onlineModel.removeRow(0);
+        }
+        try {
+            URL addonsListURL = new URL(getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
+            final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
+            Downloader d = new Downloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
+            d.setDownloadListener(new DownloadListener(){
+                private boolean success = true;
+                @Override
+                public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
+                    try {
+                        for (bias.online.xmlb.Package pack : ((Repository) getUnmarshaller().unmarshal(file)).getPackage()) {
+                            if (pack.getType() != null 
+                                    && !Validator.isNullOrBlank(pack.getName()) 
+                                    && pack.getFileSize() != null
+                                    && pack.getVersion() != null 
+                                    && pack.getVersion().matches(VersionComparator.VERSION_PATTERN)) {
+                                getAvailableOnlinePackages().put(pack.getName(), pack);
+                                onlineModel.addRow(new Object[]{
+                                        Boolean.FALSE,
+                                        pack.getType().value(), 
+                                        pack.getName(), 
+                                        pack.getVersion(), 
+                                        pack.getAuthor() != null ? pack.getAuthor() : Constants.ADDON_FIELD_VALUE_NA, 
+                                        pack.getDescription() != null ? pack.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                                        FormatUtils.formatByteSize(pack.getFileSize()) });
+                            }
+                        }
+                        onlineListRefreshed = true;
+                    } catch (Throwable t) {
+                        displayAddOnsScreenErrorMessage("Failed to parse downloaded list of available addons!", t);
+                    } finally {
+                        if (success && onFinishAction != null) {
+                            onFinishAction.run();
+                        }
+                    }
+                }
+                @Override
+                public void onFailure(URL url, File file, Throwable failure) {
+                    success = false;
+                    displayAddOnsScreenErrorMessage("Failed to retrieve online list of available addons!", failure);
+                }
+            });
+            d.start();
+        } catch (MalformedURLException ex) {
+            displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+        }
+    }
+    
+    private void downloadAndInstallOnlinePackages(final Runnable onFinishAction) {
+        try {
+            final Map<URL, bias.online.xmlb.Package> urlPackageMap = new HashMap<URL, bias.online.xmlb.Package>();
+            final Map<URL, File> urlFileMap = new HashMap<URL, File>();
+            long tSize = 0;
+            for (int i = 0; i < onlineList.getRowCount(); i++) {
+                if ((Boolean) onlineList.getValueAt(i, 0)) {
+                    bias.online.xmlb.Package pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(i, 2));
+                    String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
+                    URL url;
+                    if (!Validator.isNullOrBlank(pack.getUrl())) {
+                        url = new URL(pack.getUrl());
+                    } else {
+                        url = new URL(getRepositoryBaseURL() + fileName);
+                    }
+                    File file = new File(Constants.TMP_DIR, fileName);
+                    urlFileMap.put(url, file);
+                    urlPackageMap.put(url, pack);
+                    tSize += pack.getFileSize();
+                }
+            }
+            final Long totalSize = new Long(tSize);
+            if (!urlFileMap.isEmpty()) {
+                Downloader d = new Downloader(urlFileMap, Preferences.getInstance().preferredTimeOut);
+                d.setDownloadListener(new DownloadListener(){
+                    private StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
+                    boolean success = true;
+                    @Override
+                    public void onFinish(long downloadedBytesNum, long elapsedTime) {
+                        sb.append("</ul>" + Constants.HTML_SUFFIX);
+                        JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
+                        if (success && onFinishAction != null) {
+                            onFinishAction.run();
+                        }
+                    }
+                    @Override
+                    public void onStart(URL url, File file) {
+                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
+                        if (pack.getFileSize() != null) {
+                            onlineSingleProgressBar.setMaximum(pack.getFileSize().intValue());
+                        }
+                    };
+                    @Override
+                    public void onSingleProgress(URL url, File file, long downloadedBytesNum, long elapsedTime) {
+                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
+                        onlineSingleProgressBar.setValue((int) downloadedBytesNum);
+                        onlineSingleProgressBar.setString(pack.getName() + Constants.BLANK_STR + pack.getVersion() 
+                                + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(pack.getFileSize()) + ")");
+                    };
+                    @Override
+                    public void onTotalProgress(int itemNum, long downloadedBytesNum, long elapsedTime) {
+                        onlineTotalProgressBar.setValue((int) downloadedBytesNum);
+                        double estimationCoef = ((double) totalSize) / ((double) downloadedBytesNum);
+                        long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
+                        onlineTotalProgressBar.setString(itemNum + " / " + urlFileMap.size() 
+                                + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(totalSize) + ")"
+                                + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
+                    };
+                    @Override
+                    public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
+                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
+                        try {
+                            if (pack.getType() == PackageType.ICON_SET) {
+                                Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
+                                if (!icons.isEmpty()) {
+                                    for (ImageIcon icon : icons) {
+                                        icModel.addElement(icon);
+                                        FrontEnd.icons.put(icon.getDescription(), icon);
+                                    }
+                                    Collection<AddOnInfo> iconSets = BackEnd.getInstance().getIconSets();
+                                    while (icSetModel.getRowCount() > 0) {
+                                        icSetModel.removeRow(0);
+                                    }
+                                    for (AddOnInfo iconSetInfo : iconSets) {
+                                        icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
+                                    }
+                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                    icList.repaint();
+                                } else {
+                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                }
+                            } else if (pack.getType() == PackageType.LIBRARY) {
+                                AddOnInfo libInfo = new AddOnInfo();
+                                libInfo.setName(pack.getName());
+                                libInfo.setVersion(pack.getVersion());
+                                libInfo.setDescription(pack.getDescription());
+                                libInfo.setAuthor(pack.getAuthor());
+                                BackEnd.getInstance().installLibrary(file, libInfo);
+                                String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Library).get(libInfo);
+                                int idx = findDataRowIndex(libModel, 0, libInfo.getName());
+                                if (idx != -1) {
+                                    libModel.removeRow(idx);
+                                    libModel.insertRow(idx, getAddOnInfoRow(libInfo, status));
+                                } else {
+                                    libModel.addRow(getAddOnInfoRow(libInfo, status));
+                                }
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                modified = true;
+                            } else if (pack.getType() == PackageType.APP_CORE) {
+                                BackEnd.getInstance().installAppCoreUpdate(file);
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "AppCore '" + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                modified = true;
+                            } else {
+                                ADDON_TYPE addOnType = ADDON_TYPE.valueOf(pack.getType().value());
+                                AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
+                                String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
+                                DefaultTableModel model = addOnType == ADDON_TYPE.Extension ? extModel : skinModel;
+                                int idx = findDataRowIndex(model, 0, installedAddOn.getName());
+                                if (idx != -1) {
+                                    model.removeRow(idx);
+                                    model.insertRow(idx, getAddOnInfoRow(installedAddOn, status));
+                                } else {
+                                    model.addRow(getAddOnInfoRow(installedAddOn, status));
+                                }
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.name() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                modified = true;
+                            }
+                        } catch (Throwable t) {
+                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install " + pack.getType() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' from downloaded file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                            t.printStackTrace(System.err);
+                        }
+                    }
+                    @Override
+                    public void onFailure(URL url, File file, Throwable failure) {
+                        success = false;
+                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
+                        sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "'" + pack.getName() + "' - failed to retrieve installation file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                        failure.printStackTrace(System.err);
+                    }
+                });
+                onlineTotalProgressBar.setMaximum(totalSize.intValue());
+                d.start();
+            }    
+        } catch (MalformedURLException ex) {
+            displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+        }
+    }
+    
     private Collection<AddOnInfo> confirmAddOnsInstallation(Collection<AddOnInfo> addOnInfos) {
-        Map<String, AddOnInfo> proposedAddOnsToInstall = new HashMap<String, AddOnInfo>();
+        final Map<String, AddOnInfo> proposedAddOnsToInstall = new HashMap<String, AddOnInfo>();
         Collection<AddOnInfo> addOnsToInstall = new ArrayList<AddOnInfo>();
         final DefaultTableModel addOnModel = new DefaultTableModel() {
             private static final long serialVersionUID = 1L;
@@ -4986,6 +5082,69 @@ public class FrontEnd extends JFrame {
             }
         };
         final JTable addOnList = new JTable(addOnModel);
+        
+        TableModelListener dependencyResolver = new TableModelListener(){
+            private TableModelListener self = this;
+            public void tableChanged(final TableModelEvent e) {
+                if (e.getColumn() == 0) {
+                    final AddOnInfo pack = proposedAddOnsToInstall.get(addOnList.getValueAt(e.getFirstRow(), 1));
+                    if (pack.getDependencies() != null && !pack.getDependencies().isEmpty()) {
+                        Runnable task = new Runnable() {
+                            public void run() {
+                                // ... and when done, try to resolve dependencies
+                                try {
+                                    Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+                                    addOnModel.removeTableModelListener(self);
+                                    for (Dependency dep : pack.getDependencies()) {
+                                        if (!BackEnd.getInstance().getAddOns(ADDON_TYPE.Any).contains(new AddOnInfo(dep.getName()))) {
+                                            int idx = findDataRowIndex(onlineModel, 2, dep.getName());
+                                            if (idx == -1) {
+                                                addOnModel.setValueAt(Boolean.FALSE, e.getFirstRow(), e.getColumn());
+                                                throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
+                                                                        dep.getType().name() + " '" + dep.getName() + "' " + 
+                                                                        (dep.getVersion() != null ? 
+                                                                        " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
+                                                                        " is not available!");
+                                            } else {
+                                                Integer counter = depCounters.get(dep.getName());
+                                                if (counter == null) {
+                                                    counter = 0;
+                                                }
+                                                if ((Boolean) addOnList.getValueAt(e.getFirstRow(), e.getColumn())) {
+                                                    counter++;
+                                                    if (counter == 1) {
+                                                        onlineList.setValueAt(Boolean.TRUE, idx, 0);
+                                                    }
+                                                } else {
+                                                    counter--;
+                                                    if (counter == 0) {
+                                                        onlineList.setValueAt(Boolean.FALSE, idx, 0);
+                                                    }
+                                                }
+                                                depCounters.put(dep.getName(), counter);
+                                            }
+                                        }
+                                    }
+                                } catch (Throwable t) {
+                                    displayErrorMessage("Failed to handle/resolve dependencies! " + getFailureDetails(t), t);
+                                } finally {
+                                    Splash.hideSplash();
+                                    addOnModel.addTableModelListener(self);
+                                }
+                            }
+                        };
+                        // refresh online packages list, if needed, first...
+                        if (!onlineListRefreshed) {
+                            refreshOnlinePackagesList(task);
+                        } else {
+                            task.run();
+                        }
+                    }
+                }
+            }
+        };
+        addOnModel.addTableModelListener(dependencyResolver);
+        
         final TableRowSorter<TableModel> addOnSorter = new TableRowSorter<TableModel>(addOnModel);
         addOnSorter.setSortsOnUpdates(true);
         addOnList.setRowSorter(addOnSorter);
@@ -5033,7 +5192,7 @@ public class FrontEnd extends JFrame {
                 status = libStatuses.get(addOnInfo);
             } else {
                 if (new File(Constants.LIBS_DIR, addOnInfo.getName() + Constants.JAR_FILE_SUFFIX).exists()) {
-                    status = Constants.ADDON_STATUS_OK;
+                    status = Constants.ADDON_STATUS_LOADED;
                 } else {
                     status = Constants.ADDON_STATUS_MISSING;
                 }

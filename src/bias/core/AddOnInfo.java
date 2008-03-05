@@ -26,6 +26,10 @@ public class AddOnInfo {
         // default empty constructor
     }
 
+    public AddOnInfo(String name) {
+        this.name = name;
+    }
+    
     public AddOnInfo(String name, String version, String author, String description) {
         this.name = name;
         this.version = version;
