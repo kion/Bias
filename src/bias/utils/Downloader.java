@@ -71,6 +71,7 @@ public class Downloader {
                             } else {
                                 listener.onComplete(url, file, downloadedBytesNum, elapsedTime);
                             }
+                            listener.onFinish(downloadedBytesNum, elapsedTime);
                         }
                     } catch (IOException ioe) {
                         // ignore
