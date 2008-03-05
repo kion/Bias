@@ -51,14 +51,6 @@ public class Constants {
         TMP_DIR.mkdir();
     }
     
-    public static enum ADDON_TYPE {
-        Any,
-        Extension,
-        Skin,
-        IconSet,
-        Library
-    }
-    
     public static final String HTML_PREFIX = "<html>";
     public static final String HTML_COLOR_NORMAL = "<font color=\"#000000\">";
     public static final String HTML_COLOR_HIGHLIGHT_LINK = "<font color=\"blue\">";
@@ -118,6 +110,7 @@ public class Constants {
     public static final String FILE_SUFFIX_PATTERN = "\\..*$";
     public static final String EXTENSION_JAR_FILE_SUFFIX = ".ext.jar";
     public static final String SKIN_JAR_FILE_SUFFIX = ".skin.jar";
+    public static final String LIB_JAR_FILE_SUFFIX = ".lib.jar";
     public static final String IMPORT_CONFIG_FILE_SUFFIX = ".import.properties";
     public static final String EXPORT_CONFIG_FILE_SUFFIX = ".export.properties";
     public static final String EXTENSION_PACKAGE_NAME = Extension.class.getPackage().getName();

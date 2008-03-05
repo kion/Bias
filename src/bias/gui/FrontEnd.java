@@ -114,7 +114,6 @@ import javax.xml.bind.Unmarshaller;
 import bias.Constants;
 import bias.Preferences;
 import bias.Splash;
-import bias.Constants.ADDON_TYPE;
 import bias.Preferences.PreferenceValidator;
 import bias.annotation.PreferenceAnnotation;
 import bias.annotation.PreferenceEnableAnnotation;
@@ -124,8 +123,12 @@ import bias.core.AddOnInfo;
 import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
-import bias.core.Dependency;
 import bias.core.Recognizable;
+import bias.core.pack.Dependency;
+import bias.core.pack.ObjectFactory;
+import bias.core.pack.Pack;
+import bias.core.pack.PackType;
+import bias.core.pack.Repository;
 import bias.event.AfterSaveEventListener;
 import bias.event.BeforeExitEventListener;
 import bias.event.BeforeSaveEventListener;
@@ -139,9 +142,6 @@ import bias.extension.MissingExtensionInformer;
 import bias.extension.ToolExtension;
 import bias.extension.ToolRepresentation;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
-import bias.online.xmlb.ObjectFactory;
-import bias.online.xmlb.PackageType;
-import bias.online.xmlb.Repository;
 import bias.skin.Skin;
 import bias.skin.UIIcons;
 import bias.transfer.Transferrer;
@@ -350,11 +350,11 @@ public class FrontEnd extends JFrame {
         return repositoryBaseURL;
     }
     
-    private static Map<String, bias.online.xmlb.Package> availableOnlinePackages;
+    private static Map<String, Pack> availableOnlinePackages;
     
-    private static Map<String, bias.online.xmlb.Package> getAvailableOnlinePackages() {
+    private static Map<String, Pack> getAvailableOnlinePackages() {
         if (availableOnlinePackages == null) {
-            availableOnlinePackages = new HashMap<String, bias.online.xmlb.Package>();
+            availableOnlinePackages = new HashMap<String, Pack>();
         }
         return availableOnlinePackages;
     }
@@ -762,7 +762,7 @@ public class FrontEnd extends JFrame {
                 String skinFullClassName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
                 Class<Skin> skinClass = (Class<Skin>) Class.forName(skinFullClassName);
                 Skin skinInstance = skinClass.newInstance();
-                byte[] skinSettings = BackEnd.getInstance().getAddOnSettings(skinFullClassName, ADDON_TYPE.Skin);
+                byte[] skinSettings = BackEnd.getInstance().getAddOnSettings(skinFullClassName, PackType.SKIN);
                 skinInstance.activate(skinSettings);
                 // use control icons defined by Skin if available
                 if (skinInstance.getUIIcons() != null) {
@@ -814,11 +814,11 @@ public class FrontEnd extends JFrame {
         if (skin != null) {
             Class<Skin> skinClass = (Class<Skin>) Class.forName(skin);
             Skin skinInstance = skinClass.newInstance();
-            byte[] skinSettings = BackEnd.getInstance().getAddOnSettings(skin, ADDON_TYPE.Skin);
+            byte[] skinSettings = BackEnd.getInstance().getAddOnSettings(skin, PackType.SKIN);
             byte[] settings = skinInstance.configure(skinSettings);
             // store if differs from stored version
             if (!PropertiesUtils.deserializeProperties(settings).equals(PropertiesUtils.deserializeProperties(skinSettings))) {
-                BackEnd.getInstance().storeAddOnSettings(skin, ADDON_TYPE.Skin, settings);
+                BackEnd.getInstance().storeAddOnSettings(skin, PackType.SKIN, settings);
             }
             // find out if differs from initial version
             byte[] initialSettings = initialSkinSettings.get(skin);
@@ -843,7 +843,7 @@ public class FrontEnd extends JFrame {
             try {
                 Class<? extends Extension> extensionClass = (Class<? extends Extension>) Class.forName(extension);
                 Extension extensionInstance = null;
-                byte[] extSettings = BackEnd.getInstance().getAddOnSettings(extension, ADDON_TYPE.Extension);
+                byte[] extSettings = BackEnd.getInstance().getAddOnSettings(extension, PackType.EXTENSION);
                 byte[] settings = null;
                 if (ToolExtension.class.isAssignableFrom(extensionClass)) {
                     extensionInstance = tools.get((Class<? extends ToolExtension>) Class.forName(extension));
@@ -859,7 +859,7 @@ public class FrontEnd extends JFrame {
                     settings = new byte[]{};
                 }
                 if (!Arrays.equals(extSettings, settings)) {
-                    BackEnd.getInstance().storeAddOnSettings(extension, ADDON_TYPE.Extension, settings);
+                    BackEnd.getInstance().storeAddOnSettings(extension, PackType.EXTENSION, settings);
                     if (extensionInstance instanceof ToolExtension) {
                         getJPanelIndicators().setVisible(false);
                         JPanel panel = indicatorAreas.get(extensionClass);
@@ -1088,7 +1088,7 @@ public class FrontEnd extends JFrame {
         if (tools != null) {
             for (ToolExtension tool : tools.values()) {
                 toolsData.put(tool.getClass().getName(), tool.serializeData());
-                BackEnd.getInstance().storeAddOnSettings(tool.getClass().getName(), ADDON_TYPE.Extension, tool.serializeSettings());
+                BackEnd.getInstance().storeAddOnSettings(tool.getClass().getName(), PackType.EXTENSION, tool.serializeSettings());
             }
         }
         return toolsData;
@@ -2418,7 +2418,7 @@ public class FrontEnd extends JFrame {
             String typeDescription = (String) entryTypeComboBox.getSelectedItem();
             lastAddedEntryType = typeDescription;
             Class<? extends EntryExtension> type = extensions.get(typeDescription);
-            byte[] defSettings = BackEnd.getInstance().getAddOnSettings(type.getName(), ADDON_TYPE.Extension);
+            byte[] defSettings = BackEnd.getInstance().getAddOnSettings(type.getName(), PackType.EXTENSION);
             if (defSettings == null) {
                 // extension's first time usage
                 configureExtension(type.getName(), true);
@@ -2537,7 +2537,7 @@ public class FrontEnd extends JFrame {
                         String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                         lastAddedEntryType = typeDescription;
                         Class<? extends EntryExtension> type = extensions.get(typeDescription);
-                        byte[] defSettings = BackEnd.getInstance().getAddOnSettings(type.getName(), ADDON_TYPE.Extension);
+                        byte[] defSettings = BackEnd.getInstance().getAddOnSettings(type.getName(), PackType.EXTENSION);
                         if (defSettings == null) {
                             // extension's first time usage
                             configureExtension(type.getName(), true);
@@ -4134,7 +4134,7 @@ public class FrontEnd extends JFrame {
                 extModel.addColumn("Author");
                 extModel.addColumn("Description");
                 extModel.addColumn("Status");
-                for (AddOnInfo extension : BackEnd.getInstance().getAddOns(ADDON_TYPE.Extension)) {
+                for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                     String status;
                     try {
                         String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
@@ -4187,7 +4187,7 @@ public class FrontEnd extends JFrame {
                         if (extList.getSelectedRowCount() == 1) {
                             try {
                                 String ext = (String) extList.getValueAt(extList.getSelectedRow(), 0);
-                                Map<AddOnInfo, String> newExts = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Extension);
+                                Map<AddOnInfo, String> newExts = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
                                 if (newExts != null && newExts.containsKey(new AddOnInfo(ext))) {
                                     displayAddOnsScreenMessage(
                                             "This Extension can not be (re)configured yet." + Constants.NEW_LINE +
@@ -4210,7 +4210,7 @@ public class FrontEnd extends JFrame {
                 JButton extInstButt = new JButton("Install/Update...");
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        installLocalPackages(extensionFileChooser, ADDON_TYPE.Extension, extModel);
+                        installLocalPackages(extensionFileChooser, PackType.EXTENSION, extModel);
                     }
                 });
                 JButton extUninstButt = new JButton("Uninstall");
@@ -4225,7 +4225,7 @@ public class FrontEnd extends JFrame {
                                         String extFullClassName = 
                                             Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                     + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-                                        BackEnd.getInstance().uninstallAddOn(extFullClassName, ADDON_TYPE.Extension);
+                                        BackEnd.getInstance().uninstallAddOn(extFullClassName, PackType.EXTENSION);
                                         idx = extSorter.convertRowIndexToModel(idx);
                                         extModel.removeRow(idx);
                                         modified = true;
@@ -4277,7 +4277,7 @@ public class FrontEnd extends JFrame {
                 skinModel.addColumn("Description");
                 skinModel.addColumn("Status");
                 skinModel.addRow(new Object[]{DEFAULT_SKIN,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Skin"});
-                for (AddOnInfo skin : BackEnd.getInstance().getAddOns(ADDON_TYPE.Skin)) {
+                for (AddOnInfo skin : BackEnd.getInstance().getAddOns(PackType.SKIN)) {
                     String status;
                     try {
                         String fullSkinName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin.getName() 
@@ -4341,7 +4341,7 @@ public class FrontEnd extends JFrame {
                                     displayAddOnsScreenErrorMessage("Failed to (re)activate Skin!", t);
                                 }
                             } else {
-                                Map<AddOnInfo, String> newSkins = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Skin);
+                                Map<AddOnInfo, String> newSkins = BackEnd.getInstance().getNewAddOns(PackType.SKIN);
                                 if (newSkins != null && newSkins.containsKey(new AddOnInfo(skin))) {
                                     displayAddOnsScreenMessage(
                                             "This Skin can not be (re)activated yet." + Constants.NEW_LINE +
@@ -4366,7 +4366,7 @@ public class FrontEnd extends JFrame {
                 JButton skinInstButt = new JButton("Install/Update...");
                 skinInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        installLocalPackages(skinFileChooser, ADDON_TYPE.Skin, skinModel);
+                        installLocalPackages(skinFileChooser, PackType.SKIN, skinModel);
                     }
                 });
                 JButton skinUninstButt = new JButton("Uninstall");
@@ -4383,7 +4383,7 @@ public class FrontEnd extends JFrame {
                                             String fullSkinClassName = 
                                                 Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                         + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
-                                            BackEnd.getInstance().uninstallAddOn(fullSkinClassName, ADDON_TYPE.Skin);
+                                            BackEnd.getInstance().uninstallAddOn(fullSkinClassName, PackType.SKIN);
                                             idx = skinSorter.convertRowIndexToModel(idx);
                                             skinModel.removeRow(idx);
                                             // if skin that has been uninstalled was active one...
@@ -4551,7 +4551,7 @@ public class FrontEnd extends JFrame {
                     private static final long serialVersionUID = 1L;
                     @Override
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
-                        return mColIndex == 0 && (!getValueAt(rowIndex, 1).equals(PackageType.LIBRARY.value())) ? true : false;
+                        return mColIndex == 0 && (!getValueAt(rowIndex, 1).equals(PackType.LIBRARY.value())) ? true : false;
                     }
                     @Override
                     public Class<?> getColumnClass(int columnIndex) {
@@ -4563,7 +4563,7 @@ public class FrontEnd extends JFrame {
                     }
                 };
                 onlineList = new JTable(onlineModel);
-                libsList = getLibsList(BackEnd.getInstance().getAddOns(ADDON_TYPE.Library));
+                libsList = getLibsList(BackEnd.getInstance().getAddOns(PackType.LIBRARY));
                 libModel = (DefaultTableModel) libsList.getModel();
                 final TableRowSorter<TableModel> onlineSorter = new TableRowSorter<TableModel>(onlineModel);
                 onlineSorter.setSortsOnUpdates(true);
@@ -4580,10 +4580,10 @@ public class FrontEnd extends JFrame {
                         if (e.getColumn() == 0) {
                             try {
                                 onlineModel.removeTableModelListener(this);
-                                bias.online.xmlb.Package pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(e.getFirstRow(), 2));
+                                Pack pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(e.getFirstRow(), 2));
                                 if (pack.getDependency() != null && !pack.getDependency().isEmpty()) {
-                                    for (bias.online.xmlb.Dependency dep : pack.getDependency()) {
-                                        if (!BackEnd.getInstance().getAddOns(ADDON_TYPE.Any).contains(new AddOnInfo(dep.getName()))) {
+                                    for (Dependency dep : pack.getDependency()) {
+                                        if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
                                             int idx = findDataRowIndex(onlineModel, 2, dep.getName());
                                             if (idx == -1) {
                                                 onlineList.setValueAt(Boolean.FALSE, e.getFirstRow(), e.getColumn());
@@ -4646,7 +4646,7 @@ public class FrontEnd extends JFrame {
                         if (idx != -1) {
                             String addOnName = (String) onlineList.getValueAt(idx, 2);
                             try {
-                                final bias.online.xmlb.Package pack = getAvailableOnlinePackages().get(addOnName);
+                                final Pack pack = getAvailableOnlinePackages().get(addOnName);
                                 String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_DETAILS_FILENAME_SUFFIX;
                                 final URL addOnURL = new URL(getRepositoryBaseURL() + fileName);
                                 try {
@@ -4781,7 +4781,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private void installLocalPackages(final AddOnFilesChooser addOnFileChooser, final ADDON_TYPE addOnType, final DefaultTableModel addOnModel) {
+    private void installLocalPackages(final AddOnFilesChooser addOnFileChooser, final PackType addOnType, final DefaultTableModel addOnModel) {
         if (addOnFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
             Thread installThread = new Thread(new Runnable(){
                 public void run() {
@@ -4841,7 +4841,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private void installLocalPackages(Map<AddOnInfo, File> proposedAddOnsToInstall, ADDON_TYPE addOnType, DefaultTableModel addOnModel) {
+    private void installLocalPackages(Map<AddOnInfo, File> proposedAddOnsToInstall, PackType addOnType, DefaultTableModel addOnModel) {
         try {
             Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
             StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
@@ -4886,7 +4886,7 @@ public class FrontEnd extends JFrame {
                 @Override
                 public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
                     try {
-                        for (bias.online.xmlb.Package pack : ((Repository) getUnmarshaller().unmarshal(file)).getPackage()) {
+                        for (Pack pack : ((Repository) getUnmarshaller().unmarshal(file)).getPack()) {
                             if (pack.getType() != null 
                                     && !Validator.isNullOrBlank(pack.getName()) 
                                     && pack.getFileSize() != null
@@ -4926,12 +4926,12 @@ public class FrontEnd extends JFrame {
     
     private void downloadAndInstallOnlinePackages(final Runnable onFinishAction) {
         try {
-            final Map<URL, bias.online.xmlb.Package> urlPackageMap = new HashMap<URL, bias.online.xmlb.Package>();
+            final Map<URL, Pack> urlPackageMap = new HashMap<URL, Pack>();
             final Map<URL, File> urlFileMap = new HashMap<URL, File>();
             long tSize = 0;
             for (int i = 0; i < onlineList.getRowCount(); i++) {
                 if ((Boolean) onlineList.getValueAt(i, 0)) {
-                    bias.online.xmlb.Package pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(i, 2));
+                    Pack pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(i, 2));
                     String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
                     URL url;
                     if (!Validator.isNullOrBlank(pack.getUrl())) {
@@ -4961,14 +4961,14 @@ public class FrontEnd extends JFrame {
                     }
                     @Override
                     public void onStart(URL url, File file) {
-                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
+                        Pack pack = urlPackageMap.get(url);
                         if (pack.getFileSize() != null) {
                             onlineSingleProgressBar.setMaximum(pack.getFileSize().intValue());
                         }
                     };
                     @Override
                     public void onSingleProgress(URL url, File file, long downloadedBytesNum, long elapsedTime) {
-                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
+                        Pack pack = urlPackageMap.get(url);
                         onlineSingleProgressBar.setValue((int) downloadedBytesNum);
                         onlineSingleProgressBar.setString(pack.getName() + Constants.BLANK_STR + pack.getVersion() 
                                 + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(pack.getFileSize()) + ")");
@@ -4985,9 +4985,9 @@ public class FrontEnd extends JFrame {
                     };
                     @Override
                     public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
-                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
+                        Pack pack = urlPackageMap.get(url);
                         try {
-                            if (pack.getType() == PackageType.ICON_SET) {
+                            if (pack.getType() == PackType.ICON_SET) {
                                 Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
                                 if (!icons.isEmpty()) {
                                     for (ImageIcon icon : icons) {
@@ -5006,14 +5006,14 @@ public class FrontEnd extends JFrame {
                                 } else {
                                     sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 }
-                            } else if (pack.getType() == PackageType.LIBRARY) {
+                            } else if (pack.getType() == PackType.LIBRARY) {
                                 AddOnInfo libInfo = new AddOnInfo();
                                 libInfo.setName(pack.getName());
                                 libInfo.setVersion(pack.getVersion());
                                 libInfo.setDescription(pack.getDescription());
                                 libInfo.setAuthor(pack.getAuthor());
                                 BackEnd.getInstance().installLibrary(file, libInfo);
-                                String status = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Library).get(libInfo);
+                                String status = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY).get(libInfo);
                                 int idx = findDataRowIndex(libModel, 0, libInfo.getName());
                                 if (idx != -1) {
                                     libModel.removeRow(idx);
@@ -5023,15 +5023,15 @@ public class FrontEnd extends JFrame {
                                 }
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 modified = true;
-                            } else if (pack.getType() == PackageType.APP_CORE) {
+                            } else if (pack.getType() == PackType.APP_CORE) {
                                 BackEnd.getInstance().installAppCoreUpdate(file);
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "AppCore '" + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 modified = true;
                             } else {
-                                ADDON_TYPE addOnType = ADDON_TYPE.valueOf(pack.getType().value());
+                                PackType addOnType = PackType.fromValue(pack.getType().value());
                                 AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
                                 String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
-                                DefaultTableModel model = addOnType == ADDON_TYPE.Extension ? extModel : skinModel;
+                                DefaultTableModel model = addOnType == PackType.EXTENSION ? extModel : skinModel;
                                 int idx = findDataRowIndex(model, 0, installedAddOn.getName());
                                 if (idx != -1) {
                                     model.removeRow(idx);
@@ -5039,7 +5039,7 @@ public class FrontEnd extends JFrame {
                                 } else {
                                     model.addRow(getAddOnInfoRow(installedAddOn, status));
                                 }
-                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.name() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.value() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 modified = true;
                             }
                         } catch (Throwable t) {
@@ -5050,7 +5050,7 @@ public class FrontEnd extends JFrame {
                     @Override
                     public void onFailure(URL url, File file, Throwable failure) {
                         success = false;
-                        bias.online.xmlb.Package pack = urlPackageMap.get(url);
+                        Pack pack = urlPackageMap.get(url);
                         sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "'" + pack.getName() + "' - failed to retrieve installation file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                         failure.printStackTrace(System.err);
                     }
@@ -5096,12 +5096,12 @@ public class FrontEnd extends JFrame {
                                     Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
                                     addOnModel.removeTableModelListener(self);
                                     for (Dependency dep : pack.getDependencies()) {
-                                        if (!BackEnd.getInstance().getAddOns(ADDON_TYPE.Any).contains(new AddOnInfo(dep.getName()))) {
+                                        if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
                                             int idx = findDataRowIndex(onlineModel, 2, dep.getName());
                                             if (idx == -1) {
                                                 addOnModel.setValueAt(Boolean.FALSE, e.getFirstRow(), e.getColumn());
                                                 throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
-                                                                        dep.getType().name() + " '" + dep.getName() + "' " + 
+                                                                        dep.getType().value() + " '" + dep.getName() + "' " + 
                                                                         (dep.getVersion() != null ? 
                                                                         " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
                                                                         " is not available!");
@@ -5187,7 +5187,7 @@ public class FrontEnd extends JFrame {
         addOnModel.addColumn("Status");
         for (AddOnInfo addOnInfo : addOnInfos) {
             String status;
-            Map<AddOnInfo, String> libStatuses = BackEnd.getInstance().getNewAddOns(ADDON_TYPE.Library);
+            Map<AddOnInfo, String> libStatuses = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY);
             if (libStatuses != null) {
                 status = libStatuses.get(addOnInfo);
             } else {

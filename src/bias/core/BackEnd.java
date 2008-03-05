@@ -49,7 +49,8 @@ import org.w3c.dom.NodeList;
 
 import bias.Constants;
 import bias.Preferences;
-import bias.Constants.ADDON_TYPE;
+import bias.core.pack.Dependency;
+import bias.core.pack.PackType;
 import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.ToolExtension;
@@ -79,7 +80,7 @@ public class BackEnd {
 
     private static Collection<AddOnInfo> loadedAddOns;
 
-    private static Map<ADDON_TYPE, Map<AddOnInfo, String>> newAddOns = new LinkedHashMap<ADDON_TYPE, Map<AddOnInfo, String>>();
+    private static Map<PackType, Map<AddOnInfo, String>> newAddOns = new LinkedHashMap<PackType, Map<AddOnInfo, String>>();
 
     private static Collection<String> uninstallAddOnsList = new ArrayList<String>();
     
@@ -308,7 +309,7 @@ public class BackEnd {
         // parse metadata file
         this.data = parseMetadata(metadata, identifiedData, null, false);
         // get lists of loaded addons
-        loadedAddOns = getAddOns(ADDON_TYPE.Any);
+        loadedAddOns = getAddOns(null);
     }
     
     private Collection<String> getDataExportExtensionsList() {
@@ -1017,29 +1018,6 @@ public class BackEnd {
         FSUtils.duplicateFile(appCoreUpdateFile, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME));
     }
     
-    public void installLibrary(File libFile, AddOnInfo libInfo) throws Throwable {
-        String status;
-        File installedLibFile = new File(Constants.LIBS_DIR, libInfo.getName() + Constants.JAR_FILE_SUFFIX);
-        if (installedLibFile.exists()) {
-            installedLibFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + libInfo.getName() + Constants.JAR_FILE_SUFFIX);
-            status = Constants.ADDON_STATUS_UPDATED;
-        } else {
-            status = Constants.ADDON_STATUS_INSTALLED;
-        }
-        FSUtils.duplicateFile(libFile, installedLibFile);
-        storeAddOnInfo(libInfo, ADDON_TYPE.Library);
-        Map<AddOnInfo, String> addons = newAddOns.get(ADDON_TYPE.Library);
-        if (addons == null) {
-            addons = new LinkedHashMap<AddOnInfo, String>();
-            newAddOns.put(ADDON_TYPE.Library, addons);
-        }
-        addons.put(libInfo, status);
-        if (uninstallAddOnsList.contains(libInfo.getName() + Constants.JAR_FILE_SUFFIX)) {
-            uninstallAddOnsList.remove(libInfo.getName() + Constants.JAR_FILE_SUFFIX);
-            storeUninstallConfiguration();
-        }
-    }
-    
     private void loadDataEntrySettings(DataEntry dataEntry) throws Exception {
         if (dataEntry != null) {
             byte[] settings = null;
@@ -1048,7 +1026,7 @@ public class BackEnd {
                 settings = decrypt(FSUtils.readFile(dataEntryConfigFile));
             }
             if (settings == null) {
-                settings = getAddOnSettings(dataEntry.getType(), ADDON_TYPE.Extension);
+                settings = getAddOnSettings(dataEntry.getType(), PackType.EXTENSION);
             }
             dataEntry.setSettings(settings);
         }
@@ -1056,7 +1034,7 @@ public class BackEnd {
 
     private void storeDataEntrySettings(DataEntry dataEntry) throws Exception {
         if (dataEntry != null && dataEntry.getSettings() != null) {
-            byte[] defSettings = getAddOnSettings(dataEntry.getType(), ADDON_TYPE.Extension);
+            byte[] defSettings = getAddOnSettings(dataEntry.getType(), PackType.EXTENSION);
             File deConfigFile = new File(Constants.CONFIG_DIR, dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX);
             if (!Arrays.equals(defSettings, dataEntry.getSettings())) {
                 FSUtils.writeFile(deConfigFile, encrypt(dataEntry.getSettings()));
@@ -1066,23 +1044,23 @@ public class BackEnd {
         }
     }
     
-    public Map<AddOnInfo, String> getNewAddOns(ADDON_TYPE addOnType) {
+    public Map<AddOnInfo, String> getNewAddOns(PackType addOnType) {
         return newAddOns.get(addOnType);
     }
     
-    private void storeAddOnInfo(AddOnInfo addOnInfo, ADDON_TYPE addOnType) throws Throwable {
+    private void storeAddOnInfo(AddOnInfo addOnInfo, PackType addOnType) throws Throwable {
         String suffix = null;
         switch (addOnType) {
-        case Extension:
+        case EXTENSION:
             suffix = Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX;
             break;
-        case Skin:
+        case SKIN:
             suffix = Constants.ADDON_SKIN_INFO_FILE_SUFFIX;
             break;
-        case IconSet:
+        case ICON_SET:
             suffix = Constants.ADDON_ICONSET_INFO_FILE_SUFFIX;
             break;
-        case Library:
+        case LIBRARY:
             suffix = Constants.ADDON_LIB_INFO_FILE_SUFFIX;
             break;
         }
@@ -1108,25 +1086,28 @@ public class BackEnd {
         return aoi;
     }
     
-    public Collection<AddOnInfo> getAddOns(ADDON_TYPE addOnType) throws Throwable {
+    public Collection<AddOnInfo> getAddOns() throws Throwable {
+        return getAddOns(null);
+    }
+    
+    public Collection<AddOnInfo> getAddOns(PackType addOnType) throws Throwable {
         Collection<AddOnInfo> addOns = new HashSet<AddOnInfo>();
-        FilenameFilter ff = null;
-        switch (addOnType) {
-        case Any:
-            ff = FILE_FILTER_ADDON_INFO;
-            break;
-        case Extension:
-            ff = FILE_FILTER_EXTENSION_INFO;
-            break;
-        case Skin:
-            ff = FILE_FILTER_SKIN_INFO;
-            break;
-        case IconSet:
-            ff = FILE_FILTER_ICONSET_INFO;
-            break;
-        case Library:
-            ff = FILE_FILTER_LIB_INFO;
-            break;
+        FilenameFilter ff = FILE_FILTER_ADDON_INFO;
+        if (addOnType != null) {
+            switch (addOnType) {
+            case EXTENSION:
+                ff = FILE_FILTER_EXTENSION_INFO;
+                break;
+            case SKIN:
+                ff = FILE_FILTER_SKIN_INFO;
+                break;
+            case ICON_SET:
+                ff = FILE_FILTER_ICONSET_INFO;
+                break;
+            case LIBRARY:
+                ff = FILE_FILTER_LIB_INFO;
+                break;
+            }
         }
         for (File addOnInfoFile : Constants.CONFIG_DIR.listFiles(ff)) {
             addOns.add(readAddOnInfo(addOnInfoFile));
@@ -1134,13 +1115,13 @@ public class BackEnd {
         return addOns;
     }
 
-    public byte[] getAddOnSettings(String addOnName, ADDON_TYPE addOnType) throws Exception {
+    public byte[] getAddOnSettings(String addOnName, PackType addOnType) throws Exception {
         byte[] settings = null;
         if (!Validator.isNullOrBlank(addOnName)) {
             addOnName = addOnName.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             File addOnConfigFile = new File(
                     Constants.CONFIG_DIR, 
-                    addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.SKIN_CONFIG_FILE_SUFFIX));
+                    addOnName + (addOnType == PackType.EXTENSION ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.SKIN_CONFIG_FILE_SUFFIX));
             if (addOnConfigFile.exists()) {
                 settings = decrypt(FSUtils.readFile(addOnConfigFile));
             }
@@ -1148,12 +1129,12 @@ public class BackEnd {
         return settings;
     }
 
-    public void storeAddOnSettings(String addOnName, ADDON_TYPE addOnType, byte[] settings) throws Exception {
+    public void storeAddOnSettings(String addOnName, PackType addOnType, byte[] settings) throws Exception {
         if (!Validator.isNullOrBlank(addOnName) && settings != null) {
             addOnName = addOnName.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             File addOnConfigFile = new File(
                     Constants.CONFIG_DIR, 
-                    addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.SKIN_CONFIG_FILE_SUFFIX));
+                    addOnName + (addOnType == PackType.EXTENSION ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.SKIN_CONFIG_FILE_SUFFIX));
             FSUtils.writeFile(addOnConfigFile, encrypt(settings));
         }
     }
@@ -1198,11 +1179,11 @@ public class BackEnd {
         }
     }
     
-    public AddOnInfo getAddOnInfoAndDependencies(File addOnFile, ADDON_TYPE addOnType) throws Throwable {
+    public AddOnInfo getAddOnInfoAndDependencies(File addOnFile, PackType addOnType) throws Throwable {
         return getAddOnInfoAndDependencies(addOnFile, addOnType, false);
     }
     
-    private AddOnInfo getAddOnInfoAndDependencies(File addOnFile, ADDON_TYPE addOnType, boolean extractAddOnInfo) throws Throwable {
+    private AddOnInfo getAddOnInfoAndDependencies(File addOnFile, PackType addOnType, boolean extractAddOnInfo) throws Throwable {
         AddOnInfo addOnInfo = null;
         if (addOnFile != null && addOnFile.exists() && !addOnFile.isDirectory()) {
             String name = addOnFile.getName();
@@ -1221,10 +1202,10 @@ public class BackEnd {
                             Constants.ATTRIBUTE_ADD_ON_TYPE 
                             + " attribute in MANIFEST.MF file is missing/empty!");
                 }
-                if (!addOnTypeStr.equals(addOnType.name())) {
+                if (!addOnTypeStr.equals(addOnType.value())) {
                     throw new Exception(
                             "Invalid Add-On-Package type: " + Constants.NEW_LINE +
-                            "(actual: '" + addOnTypeStr + "', expected: '" + addOnType.name() + "')!");
+                            "(actual: '" + addOnTypeStr + "', expected: '" + addOnType.value() + "')!");
                 }
                 String addOnName = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_NAME);
                 if (Validator.isNullOrBlank(addOnName)) {
@@ -1255,7 +1236,13 @@ public class BackEnd {
                                     + " attribute in MANIFEST.MF file has invalid value!" + Constants.NEW_LINE
                                     + "[At least dependency type and name should be specified (version is optional)]");
                         }
-                        addOnInfo.addDependency(new Dependency(ADDON_TYPE.valueOf(depInfo[0]), depInfo[1], (depInfo.length == 3 ? depInfo[2] : null)));
+                        Dependency d = new Dependency();
+                        d.setType(PackType.fromValue(depInfo[0]));
+                        d.setName(depInfo[1]);
+                        if (depInfo.length == 3) { 
+                            d.setVersion(depInfo[2]);
+                        }
+                        addOnInfo.addDependency(d);
                     }
                 }
                 if (extractAddOnInfo) {
@@ -1269,18 +1256,43 @@ public class BackEnd {
         return addOnInfo;
     }
     
-    public AddOnInfo installAddOn(File addOnFile, ADDON_TYPE addOnType) throws Throwable {
-        AddOnInfo addOnInfo = getAddOnInfoAndDependencies(addOnFile, addOnType, true);
+    public void installLibrary(File addOnFile, AddOnInfo libInfo) throws Throwable {
+        installAddOn(addOnFile, PackType.LIBRARY, libInfo);
+    }
+    
+    public AddOnInfo installAddOn(File addOnFile, PackType addOnType) throws Throwable {
+        return installAddOn(addOnFile, addOnType, null);
+    }
+    
+    private AddOnInfo installAddOn(File addOnFile, PackType addOnType, AddOnInfo addOnInfo) throws Throwable {
+        if (addOnInfo == null) {
+            addOnInfo = getAddOnInfoAndDependencies(addOnFile, addOnType, true);
+        }
         boolean update = false;
         String status = Constants.ADDON_STATUS_INSTALLED;
         if (getAddOns(addOnType).contains(addOnInfo) || loadedAddOns.contains(addOnInfo)) {
             update = true;
             status = Constants.ADDON_STATUS_UPDATED;
         }
-        String fileSuffix = addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.SKIN_JAR_FILE_SUFFIX;
-        File installedAddOnFile = new File(Constants.ADDONS_DIR, addOnInfo.getName() + fileSuffix);
+        File dir = null;
+        String fileSuffix = null;
+        switch (addOnType) {
+        case EXTENSION:
+            dir = Constants.ADDONS_DIR;
+            fileSuffix = Constants.EXTENSION_JAR_FILE_SUFFIX;
+            break;
+        case SKIN:
+            dir = Constants.ADDONS_DIR;
+            fileSuffix = Constants.SKIN_JAR_FILE_SUFFIX;
+            break;
+        case LIBRARY:
+            dir = Constants.LIBS_DIR;
+            fileSuffix = Constants.JAR_FILE_SUFFIX;
+            break;
+        }
+        File installedAddOnFile = new File(dir, addOnInfo.getName() + fileSuffix);
         if (update) {
-            File updateAddOnFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + addOnInfo.getName() + fileSuffix);
+            File updateAddOnFile = new File(dir, Constants.UPDATE_FILE_PREFIX + addOnInfo.getName() + fileSuffix);
             FSUtils.duplicateFile(addOnFile, updateAddOnFile);
         } else {
             FSUtils.duplicateFile(addOnFile, installedAddOnFile);
@@ -1299,24 +1311,33 @@ public class BackEnd {
         return addOnInfo;
     }
     
-    public void uninstallAddOn(String addOnName, ADDON_TYPE addOnType) throws Exception {
+    public void uninstallAddOn(String addOnName, PackType addOnType) throws Exception {
         String fullName = addOnName;
         addOnName = addOnName.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-        uninstallAddOnsList.add(addOnName + (addOnType == ADDON_TYPE.Extension ? Constants.EXTENSION_JAR_FILE_SUFFIX : Constants.SKIN_JAR_FILE_SUFFIX));
-        storeUninstallConfiguration();
-        String suffix = null;
+        String fileSuffix = null;
+        String configFileSuffix = null;
         switch (addOnType) {
-        case Extension:
-            suffix = Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX;
+        case EXTENSION:
+            fileSuffix = Constants.EXTENSION_JAR_FILE_SUFFIX;
+            configFileSuffix = Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX;
             break;
-        case Skin:
-            suffix = Constants.ADDON_SKIN_INFO_FILE_SUFFIX;
+        case SKIN:
+            fileSuffix = Constants.SKIN_JAR_FILE_SUFFIX;
+            configFileSuffix = Constants.ADDON_SKIN_INFO_FILE_SUFFIX;
             break;
-        case IconSet:
-            suffix = Constants.ADDON_ICONSET_INFO_FILE_SUFFIX;
+        case ICON_SET:
+            configFileSuffix = Constants.ADDON_ICONSET_INFO_FILE_SUFFIX;
+            break;
+        case LIBRARY:
+            fileSuffix = Constants.JAR_FILE_SUFFIX;
+            configFileSuffix = Constants.ADDON_LIB_INFO_FILE_SUFFIX;
             break;
         }
-        File addOnInfoFile = new File(Constants.CONFIG_DIR, addOnName + suffix);
+        if (fileSuffix != null) {
+            uninstallAddOnsList.add(addOnName + fileSuffix);
+            storeUninstallConfiguration();
+        }
+        File addOnInfoFile = new File(Constants.CONFIG_DIR, addOnName + configFileSuffix);
         FSUtils.delete(addOnInfoFile);
         newAddOns.remove(fullName);
     }
@@ -1388,7 +1409,7 @@ public class BackEnd {
     
     private void storeIconSet(AddOnInfo iconSetInfo, Collection<String> iconIds) throws Throwable {
         if (iconSetInfo.getName() != null && iconSetInfo.getVersion() != null) {
-            storeAddOnInfo(iconSetInfo, ADDON_TYPE.IconSet);
+            storeAddOnInfo(iconSetInfo, PackType.ICON_SET);
             if (!iconIds.isEmpty()) {
                 StringBuffer iconIdsList = new StringBuffer();
                 File iconSetRegFile = new File(Constants.CONFIG_DIR, iconSetInfo.getName() + Constants.ICONSET_REGISTRY_FILE_SUFFIX);

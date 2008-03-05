@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import bias.core.pack.Dependency;
+
 /**
  * @author kion
  */

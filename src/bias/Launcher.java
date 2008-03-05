@@ -86,9 +86,15 @@ public class Launcher {
             byte[] cpData = FSUtils.readFile(uninstallConfigFile);
             if (cpData != null) {
                 for (String cpEntry : new String(cpData).split(PROPERTY_VALUES_SEPARATOR)) {
-                    File uninstallAddOnFile = new File(addonsDir, cpEntry);
+                    File dir;
+                    if (cpEntry.endsWith(Constants.LIB_JAR_FILE_SUFFIX)) {
+                        dir = libsDir;
+                    } else {
+                        dir = addonsDir;
+                    }
+                    File uninstallAddOnFile = new File(dir, cpEntry);
                     FSUtils.delete(uninstallAddOnFile);
-                    File uninstallUpdateAddOnFile = new File(addonsDir, UPDATE_FILE_PREFIX + cpEntry);
+                    File uninstallUpdateAddOnFile = new File(dir, UPDATE_FILE_PREFIX + cpEntry);
                     FSUtils.delete(uninstallUpdateAddOnFile);
                 }
             }

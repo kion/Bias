@@ -9,10 +9,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import bias.Constants;
-import bias.Constants.ADDON_TYPE;
 import bias.core.AddOnInfo;
 import bias.core.BackEnd;
 import bias.core.DataEntry;
+import bias.core.pack.PackType;
 
 /**
  * @author kion
@@ -49,13 +49,13 @@ public class ExtensionFactory {
     }
     
 	public static Extension newExtension(Class<? extends Extension> clazz) throws Throwable {
-        byte[] defSettings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), ADDON_TYPE.Extension);
+        byte[] defSettings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), PackType.EXTENSION);
         Extension extension = newExtension(clazz, null, new byte[]{}, defSettings);
         return extension;
     }
     
     public static ToolExtension newToolExtension(Class<? extends ToolExtension> clazz, byte[] data) throws Throwable {
-        byte[] settings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), ADDON_TYPE.Extension);
+        byte[] settings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), PackType.EXTENSION);
         return (ToolExtension) newExtension(clazz, null, data, settings);
     }
     
@@ -76,7 +76,7 @@ public class ExtensionFactory {
     public static Map<String, Class<? extends EntryExtension>> getAnnotatedEntryExtensionClasses() throws Throwable {
         if (entryTypes == null) {
             entryTypes = new LinkedHashMap<String, Class<? extends EntryExtension>>();
-            for (AddOnInfo extension : BackEnd.getInstance().getAddOns(ADDON_TYPE.Extension)) {
+            for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
                     String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
                                             + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
@@ -100,7 +100,7 @@ public class ExtensionFactory {
     public static Map<ToolExtension, String> getAnnotatedToolExtensions() throws Throwable {
         if (toolTypes == null) {
             toolTypes = new LinkedHashMap<ToolExtension, String>();
-            for (AddOnInfo extension : BackEnd.getInstance().getAddOns(ADDON_TYPE.Extension)) {
+            for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
                     String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
                                             + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
