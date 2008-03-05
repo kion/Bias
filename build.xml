@@ -44,14 +44,14 @@
 				<attribute name="Main-Class" value="bias.Launcher" />
 			</manifest>
 		</jar>
-		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/online/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/res/*.* bias/utils/** bias/transfer/**" excludes="bias/Launcher** bias/res/load.gif" />
+		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/res/*.* bias/utils/** bias/transfer/**" excludes="bias/Launcher** bias/res/load.gif" />
 	</target>
 
 	<!-- ================================= 
           target: Build_AppCore_Package
          ================================= -->
 	<target name="Build_AppCore_Package" description="AppCore Package">
-		<jar basedir="bin" destfile="build/AppCore_${AppCore_Version}.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/online/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/res/*.* bias/utils/** bias/transfer/**" excludes="bias/Launcher** bias/res/load.gif" />
+		<jar basedir="bin" destfile="build/AppCore_${AppCore_Version}.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/res/*.* bias/utils/** bias/transfer/**" excludes="bias/Launcher** bias/res/load.gif" />
 	</target>
 
 	<!-- ================================= 
