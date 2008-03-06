@@ -66,6 +66,7 @@ public class Downloader {
                     int readBytesNum;
                     while (!cancel && !cancelAll && (readBytesNum = in.read(buffer)) != -1) {
                         out.write(buffer, 0, readBytesNum);
+                        Thread.sleep(250); // FIXME
                         if (listener != null) {
                             downloadedBytesNum += readBytesNum;
                             elapsedTime = System.currentTimeMillis() - startTime;
@@ -132,6 +133,7 @@ public class Downloader {
                         int readBytesNum;
                         while (!cancel && !cancelAll && (readBytesNum = in.read(buffer)) != -1) {
                             out.write(buffer, 0, readBytesNum);
+                            Thread.sleep(25); // FIXME
                             if (listener != null) {
                                 currentDownloadedBytesNum += readBytesNum;
                                 currentElapsedTime = System.currentTimeMillis() - currStartTime;

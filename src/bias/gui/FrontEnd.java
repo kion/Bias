@@ -113,7 +113,6 @@ import javax.xml.bind.Unmarshaller;
 
 import bias.Constants;
 import bias.Preferences;
-import bias.Splash;
 import bias.Preferences.PreferenceValidator;
 import bias.annotation.PreferenceAnnotation;
 import bias.annotation.PreferenceEnableAnnotation;
@@ -175,7 +174,7 @@ public class FrontEnd extends JFrame {
 
     private static final ImageIcon ICON_CLOSE = new ImageIcon(FrontEnd.class.getResource("/bias/res/close.png"));
 
-    private static final URL SPLASH_IMAGE_PROCESS = FrontEnd.class.getResource("/bias/res/process.gif");
+    private static final ImageIcon ICON_PROCESS = new ImageIcon(FrontEnd.class.getResource("/bias/res/process.gif"));
 
     private static final String RESTART_MESSAGE = "Changes will take effect after Bias restart";
     
@@ -257,6 +256,8 @@ public class FrontEnd extends JFrame {
     
     private boolean hotKeysBindingsChanged = true;
 
+    private boolean addOnsManagementDialogLocked = false;
+    
     private String lastAddedEntryType = null;
     
     private Map<String, Integer> depCounters;
@@ -295,7 +296,9 @@ public class FrontEnd extends JFrame {
     
     private JList statusBarMessagesList = null;
 
-    private JFrame dialog = null;
+    private JFrame addOnsManagementDialog = null;
+    
+    private JButton closeAddOnsManagementDialogButt;
     
     private JScrollPane detailsPane = null;
 
@@ -925,8 +928,8 @@ public class FrontEnd extends JFrame {
     
     public static Window getActiveWindow() {
         if (instance == null) return null;
-        if (instance.dialog == null) return instance;
-        return instance.dialog.isVisible() ? instance.dialog : instance;
+        if (instance.addOnsManagementDialog == null) return instance;
+        return instance.addOnsManagementDialog.isVisible() ? instance.addOnsManagementDialog : instance;
     }
     
     private static void representTools() {
@@ -1238,7 +1241,7 @@ public class FrontEnd extends JFrame {
             JButton button = new JButton("Show active downloads");
             button.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent e) {
-                    dialog.setVisible(true);
+                    addOnsManagementDialog.setVisible(true);
                     addOnsPane.setSelectedIndex(3);
                 }
             });
@@ -1605,47 +1608,21 @@ public class FrontEnd extends JFrame {
     }
     
     public static void displayErrorMessage(Throwable t) {
-        Splash.hideSplash();
-        JOptionPane.showMessageDialog(instance, getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace(System.err);
     }
 
     public static void displayErrorMessage(String message, Throwable t) {
-        Splash.hideSplash();
-        JOptionPane.showMessageDialog(instance, message, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), message, "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace(System.err);
     }
 
     public static void displayErrorMessage(String message) {
-        Splash.hideSplash();
-        JOptionPane.showMessageDialog(instance, message, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), message, "Error", JOptionPane.ERROR_MESSAGE);
     }
     
     public static void displayMessage(String message) {
-        Splash.hideSplash();
-        JOptionPane.showMessageDialog(instance, message, "Information", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    private void displayAddOnsScreenErrorMessage(String message, Throwable t) {
-        Splash.hideSplash();
-        JOptionPane.showMessageDialog(dialog, message, "Error", JOptionPane.ERROR_MESSAGE);
-        t.printStackTrace(System.err);
-    }
-    
-    private void displayAddOnsScreenErrorMessage(String message) {
-        Splash.hideSplash();
-        JOptionPane.showMessageDialog(dialog, message, "Error", JOptionPane.ERROR_MESSAGE);
-    }
-    
-    private void displayAddOnsScreenErrorMessage(Throwable t) {
-        Splash.hideSplash();
-        JOptionPane.showMessageDialog(dialog, getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
-        t.printStackTrace(System.err);
-    }
-
-    private void displayAddOnsScreenMessage(String message) {
-        Splash.hideSplash();
-        JOptionPane.showMessageDialog(dialog, message, "Information", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), message, "Information", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void addTabPaneListeners(JTabbedPane tabPane) {
@@ -4095,7 +4072,7 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent e) {
             modified = false;
             initAddOnsManagementDialog();
-            dialog.setVisible(true);
+            addOnsManagementDialog.setVisible(true);
             if (modified) {
                 displayMessage(RESTART_MESSAGE);
                 displayStatusBarMessage("add-ons configuration changed");
@@ -4137,7 +4114,7 @@ public class FrontEnd extends JFrame {
     @SuppressWarnings("unchecked")
     private void initAddOnsManagementDialog() {
         // TODO [P1] use checkboxes (instead of standard selection model handling) on exts/skins/iconsets lists to uninstall appropriate items 
-        if (dialog == null) {
+        if (addOnsManagementDialog == null) {
             try {
                 depCounters = new HashMap<String, Integer>();
                 // extensions
@@ -4190,16 +4167,16 @@ public class FrontEnd extends JFrame {
                                         URL addOnURL = addOnInfoFile.toURI().toURL();
                                         loadAndDisplayPackageDetails(baseURL, addOnURL, extension);
                                     } else {
-                                        displayAddOnsScreenMessage("Detailed information is not provided with this extension.");
+                                        displayMessage("Detailed information is not provided with this extension.");
                                     }
                                 } catch (MalformedURLException ex) {
-                                    displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                    displayErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
                                 }
                             } catch (Throwable t) {
-                                displayAddOnsScreenErrorMessage("Failed to display Extensions details!", t);
+                                displayErrorMessage("Failed to display Extensions details!", t);
                             }
                         } else {
-                            displayAddOnsScreenMessage("Please, choose only one extension from the list");
+                            displayMessage("Please, choose only one extension from the list");
                         }
                     }
                 });
@@ -4211,7 +4188,7 @@ public class FrontEnd extends JFrame {
                                 String ext = (String) extList.getValueAt(extList.getSelectedRow(), 0);
                                 Map<AddOnInfo, String> newExts = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
                                 if (newExts != null && newExts.containsKey(new AddOnInfo(ext))) {
-                                    displayAddOnsScreenMessage(
+                                    displayMessage(
                                             "This Extension can not be (re)configured yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
@@ -4222,10 +4199,10 @@ public class FrontEnd extends JFrame {
                                     configureExtension(extFullClassName, false);
                                 }
                             } catch (Exception ex) {
-                                displayAddOnsScreenErrorMessage(ex);
+                                displayErrorMessage(ex);
                             }
                         } else {
-                            displayAddOnsScreenMessage("Please, choose only one extension from the list");
+                            displayMessage("Please, choose only one extension from the list");
                         }
                     }
                 });
@@ -4255,7 +4232,7 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         } catch (Exception ex) {
-                            displayAddOnsScreenErrorMessage(ex);
+                            displayErrorMessage(ex);
                         }
                     }
                 });
@@ -4324,7 +4301,7 @@ public class FrontEnd extends JFrame {
                             try {
                                 String skin = (String) skinList.getValueAt(skinList.getSelectedRow(), 0);
                                 if (DEFAULT_SKIN.equals(skin)) {
-                                    displayAddOnsScreenMessage("This is a default native Java cross-platform Skin.");
+                                    displayMessage("This is a default native Java cross-platform Skin.");
                                 } else {
                                     String version = (String) skinList.getValueAt(skinList.getSelectedRow(), 1);
                                     try {
@@ -4336,17 +4313,17 @@ public class FrontEnd extends JFrame {
                                             URL addOnURL = addOnInfoFile.toURI().toURL();
                                             loadAndDisplayPackageDetails(baseURL, addOnURL, skin);
                                         } else {
-                                            displayAddOnsScreenMessage("Detailed information is not provided with this Skin.");
+                                            displayMessage("Detailed information is not provided with this Skin.");
                                         }
                                     } catch (MalformedURLException ex) {
-                                        displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                        displayErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
                                     }
                                 }
                             } catch (Throwable t) {
-                                displayAddOnsScreenErrorMessage("Failed to display Skin details!", t);
+                                displayErrorMessage("Failed to display Skin details!", t);
                             }
                         } else {
-                            displayAddOnsScreenMessage("Please, choose only one Skin from the list");
+                            displayMessage("Please, choose only one Skin from the list");
                         }
                     }
                 });
@@ -4360,12 +4337,12 @@ public class FrontEnd extends JFrame {
                                     modified = setActiveSkin(null);
                                     skinList.repaint();
                                 } catch (Throwable t) {
-                                    displayAddOnsScreenErrorMessage("Failed to (re)activate Skin!", t);
+                                    displayErrorMessage("Failed to (re)activate Skin!", t);
                                 }
                             } else {
                                 Map<AddOnInfo, String> newSkins = BackEnd.getInstance().getNewAddOns(PackType.SKIN);
                                 if (newSkins != null && newSkins.containsKey(new AddOnInfo(skin))) {
-                                    displayAddOnsScreenMessage(
+                                    displayMessage(
                                             "This Skin can not be (re)activated yet." + Constants.NEW_LINE +
                                             "Restart Bias first.");
                                 } else {
@@ -4376,12 +4353,12 @@ public class FrontEnd extends JFrame {
                                         modified = setActiveSkin(fullSkinClassName);
                                         skinList.repaint();
                                     } catch (Throwable t) {
-                                        displayAddOnsScreenErrorMessage("Failed to (re)activate Skin!", t);
+                                        displayErrorMessage("Failed to (re)activate Skin!", t);
                                     }
                                 }
                             }
                         } else {
-                            displayAddOnsScreenMessage("Please, choose only one skin from the list");
+                            displayMessage("Please, choose only one skin from the list");
                         }    
                     }
                 });
@@ -4415,14 +4392,14 @@ public class FrontEnd extends JFrame {
                                             }
                                             modified = true;
                                         } else {
-                                            displayAddOnsScreenErrorMessage("Default Skin can not be uninstalled!");
+                                            displayErrorMessage("Default Skin can not be uninstalled!");
                                             break;
                                         }
                                     }
                                 }
                             }
                         } catch (Exception ex) {
-                            displayAddOnsScreenErrorMessage(ex);
+                            displayErrorMessage(ex);
                         }
                     }
                 });
@@ -4471,16 +4448,16 @@ public class FrontEnd extends JFrame {
                                         URL addOnURL = addOnInfoFile.toURI().toURL();
                                         loadAndDisplayPackageDetails(baseURL, addOnURL, ic);
                                     } else {
-                                        displayAddOnsScreenMessage("Detailed information is not provided with this IconSet.");
+                                        displayMessage("Detailed information is not provided with this IconSet.");
                                     }
                                 } catch (MalformedURLException ex) {
-                                    displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                    displayErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
                                 }
                             } catch (Throwable t) {
-                                displayAddOnsScreenErrorMessage("Failed to display IconSet details!", t);
+                                displayErrorMessage("Failed to display IconSet details!", t);
                             }
                         } else {
-                            displayAddOnsScreenMessage("Please, choose only one IconSet from the list.");
+                            displayMessage("Please, choose only one IconSet from the list.");
                         }
                     }
                 });
@@ -4488,7 +4465,7 @@ public class FrontEnd extends JFrame {
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                            Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+                            lockAddOnsManagementDialog();
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
@@ -4512,14 +4489,14 @@ public class FrontEnd extends JFrame {
                                         }
                                         if (added) {
                                             icList.repaint();
-                                            displayAddOnsScreenMessage("Icon(s) successfully installed!");
+                                            displayMessage("Icon(s) successfully installed!");
                                         } else {
-                                            displayAddOnsScreenErrorMessage("Nothing to install!");
+                                            displayErrorMessage("Nothing to install!");
                                         }
                                     } catch (Throwable t) {
-                                        displayAddOnsScreenErrorMessage("Failed to install icon(s)! " + getFailureDetails(t), t);
+                                        displayErrorMessage("Failed to install icon(s)! " + getFailureDetails(t), t);
                                     } finally {
-                                        Splash.hideSplash();
+                                        unlockAddOnsManagementDialog();
                                     }
                                 }
                             });
@@ -4536,10 +4513,10 @@ public class FrontEnd extends JFrame {
                                     BackEnd.getInstance().removeIcon(((ImageIcon) icon).getDescription());
                                     icModel.removeElement(icon);
                                 }
-                                displayAddOnsScreenMessage("Icon(s) have been successfully removed!");
+                                displayMessage("Icon(s) have been successfully removed!");
                             }
                         } catch (Throwable t) {
-                            displayAddOnsScreenErrorMessage("Failed to remove icon(s)! " + getFailureDetails(t), t);
+                            displayErrorMessage("Failed to remove icon(s)! " + getFailureDetails(t), t);
                         }
                     }
                 });
@@ -4558,12 +4535,12 @@ public class FrontEnd extends JFrame {
                                 icSetModel.removeRow(idx);
                                 sb.append(icSet + Constants.NEW_LINE);
                             } catch (Throwable t) {
-                                displayAddOnsScreenErrorMessage("Failed to remove IconSet '" + icSet + "'! " + getFailureDetails(t), t);
+                                displayErrorMessage("Failed to remove IconSet '" + icSet + "'! " + getFailureDetails(t), t);
                             }
                         }
                         if (!Validator.isNullOrBlank(sb)) {
                             icList.repaint();
-                            displayAddOnsScreenMessage("Following IconSets have been successfully removed: " + Constants.NEW_LINE + sb.toString());
+                            displayMessage("Following IconSets have been successfully removed: " + Constants.NEW_LINE + sb.toString());
                         }
                     }
                 });
@@ -4677,10 +4654,10 @@ public class FrontEnd extends JFrame {
                                 try {
                                     loadAndDisplayPackageDetails(BackEnd.getInstance().getRepositoryBaseURL(), addOnURL, pack.getName());
                                 } catch (MalformedURLException ex) {
-                                    displayAddOnsScreenErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
+                                    displayErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
                                 }
                             } catch (Exception ex) {
-                                displayAddOnsScreenErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
+                                displayErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
                             }
                         }
                     }
@@ -4701,7 +4678,6 @@ public class FrontEnd extends JFrame {
                 onlineCancelInstallButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         Downloader.cancelAll();
-//                        Splash.hideSplash();
                     }
                 });
                 
@@ -4830,38 +4806,50 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Advanced", uiIcons.getIconPreferences(), advPanel);
                 
-                dialog = new JFrame("Manage Add-Ons");
-                dialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-                dialog.addWindowListener(new WindowAdapter(){
+                addOnsManagementDialog = new JFrame("Manage Add-Ons");
+                addOnsManagementDialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+                addOnsManagementDialog.addWindowListener(new WindowAdapter(){
                     @Override
                     public void windowClosing(WindowEvent e) {
-                        if (Downloader.getTotalActiveDownloadsCount() == 0) {
-                            dialog.setVisible(false);
+                        if (!addOnsManagementDialogLocked) {
+                            addOnsManagementDialog.setVisible(false);
                         }
                     }
                 });
                 JPanel p = new JPanel(new BorderLayout());
                 p.add(addOnsPane, BorderLayout.CENTER);
-                JButton okButt = new JButton("OK");
-                okButt.addActionListener(new ActionListener(){
+                closeAddOnsManagementDialogButt = new JButton("Close");
+                closeAddOnsManagementDialogButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (Downloader.getTotalActiveDownloadsCount() == 0) {
-                            dialog.setVisible(false);
+                        if (!addOnsManagementDialogLocked) {
+                            addOnsManagementDialog.setVisible(false);
                         }
                     }
                 });
-                p.add(okButt, BorderLayout.SOUTH);
-                dialog.add(p);
-                dialog.pack();
-                int x = (getToolkit().getScreenSize().width - dialog.getWidth()) / 2;
-                int y = (getToolkit().getScreenSize().height - dialog.getHeight()) / 2;
-                dialog.setLocation(x, y);
-                dialog.setVisible(true);
+                p.add(closeAddOnsManagementDialogButt, BorderLayout.SOUTH);
+                addOnsManagementDialog.add(p);
+                addOnsManagementDialog.pack();
+                int x = (getToolkit().getScreenSize().width - addOnsManagementDialog.getWidth()) / 2;
+                int y = (getToolkit().getScreenSize().height - addOnsManagementDialog.getHeight()) / 2;
+                addOnsManagementDialog.setLocation(x, y);
+                addOnsManagementDialog.setVisible(true);
                 
             } catch (Throwable t) {
                 displayErrorMessage("Failed to initialize add-ons configuration screen!", t);
             }
         }
+    }
+    
+    private void lockAddOnsManagementDialog() {
+        closeAddOnsManagementDialogButt.setText(null);
+        closeAddOnsManagementDialogButt.setIcon(ICON_PROCESS);
+        addOnsManagementDialogLocked = true;
+    }
+    
+    private void unlockAddOnsManagementDialog() {
+        closeAddOnsManagementDialogButt.setText("Close");
+        closeAddOnsManagementDialogButt.setIcon(null);
+        addOnsManagementDialogLocked = false;
     }
     
     // TODO [P1] implement auto-update feature
@@ -4892,7 +4880,7 @@ public class FrontEnd extends JFrame {
             Thread installThread = new Thread(new Runnable(){
                 public void run() {
                     try {
-                        Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+                        lockAddOnsManagementDialog();
                         final Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
                         StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
                         boolean error = false;
@@ -4906,7 +4894,7 @@ public class FrontEnd extends JFrame {
                                 t.printStackTrace(System.err);
                             }
                         }
-                        Splash.hideSplash();
+                        unlockAddOnsManagementDialog();
                         if (error) {
                             sb.append("</ul>" + Constants.HTML_SUFFIX);
                             JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
@@ -4944,7 +4932,7 @@ public class FrontEnd extends JFrame {
                             }
                         }
                     } finally {
-                        Splash.hideSplash();
+                        unlockAddOnsManagementDialog();
                     }
                 }
             });
@@ -4954,7 +4942,7 @@ public class FrontEnd extends JFrame {
     
     private void installLocalPackages(Map<AddOnInfo, File> proposedAddOnsToInstall, PackType addOnType, DefaultTableModel addOnModel) {
         try {
-            Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+            lockAddOnsManagementDialog();
             StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
             for (Entry<AddOnInfo, File> addons : proposedAddOnsToInstall.entrySet()) {
                 try {
@@ -4974,11 +4962,11 @@ public class FrontEnd extends JFrame {
                     t.printStackTrace(System.err);
                 }
             }
-            Splash.hideSplash();
+            unlockAddOnsManagementDialog();
             sb.append("</ul>" + Constants.HTML_SUFFIX);
             JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
         } finally {
-            Splash.hideSplash();
+            unlockAddOnsManagementDialog();
         }
     }
     
@@ -4991,7 +4979,7 @@ public class FrontEnd extends JFrame {
         try {
             URL addonsListURL = new URL(BackEnd.getInstance().getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
-            Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+            lockAddOnsManagementDialog();
             Downloader d = Downloader.createSingleFileDownloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
             d.setDownloadListener(new DownloadListener(){
                 @Override
@@ -5017,36 +5005,34 @@ public class FrontEnd extends JFrame {
                             }
                         }
                         onlineListRefreshed = true;
-                        Splash.hideSplash();
+                        unlockAddOnsManagementDialog();
                         if (onFinishAction != null) {
                             onFinishAction.run();
                         }
                     } catch (Throwable t) {
-                        displayAddOnsScreenErrorMessage("Failed to parse downloaded list of available addons!", t);
+                        displayErrorMessage("Failed to parse downloaded list of available addons!", t);
                     } finally {
-                        Splash.hideSplash();
+                        unlockAddOnsManagementDialog();
                     }
                 }
                 @Override
                 public void onFailure(URL url, File file, Throwable failure) {
-                    Splash.hideSplash();
-                    displayAddOnsScreenErrorMessage("Failed to retrieve online list of available addons!", failure);
+                    unlockAddOnsManagementDialog();
+                    displayErrorMessage("Failed to retrieve online list of available addons!", failure);
                 }
                 @Override
                 public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime) {
-                    Splash.hideSplash();
+                    unlockAddOnsManagementDialog();
                     JOptionPane.showMessageDialog(getActiveWindow(), "Online packages list refresh canceled by user!");
                 }
             });
             d.start();
         } catch (Exception ex) {
-            displayAddOnsScreenErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
+            displayErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
         }
     }
     
     private void downloadAndInstallOnlinePackages(final Runnable onFinishAction) {
-        // TODO [P1] dependencies should be installed as 1st-prio and only then dependent packages allowed to be installed
-        //           (to avoid broken dependencies situations)
         try {
             final Map<URL, Pack> urlPackageMap = new HashMap<URL, Pack>();
             final Map<URL, File> urlFileMap = new LinkedHashMap<URL, File>();
@@ -5090,6 +5076,7 @@ public class FrontEnd extends JFrame {
             }
             final Long totalSize = new Long(tSize);
             if (!urlFileMap.isEmpty()) {
+                lockAddOnsManagementDialog();
                 Downloader d = Downloader.createMultipleFilesDownloader(urlFileMap, Preferences.getInstance().preferredTimeOut);
                 d.setDownloadListener(new DownloadListener(){
                     private StringBuffer sb = new StringBuffer();
@@ -5191,6 +5178,7 @@ public class FrontEnd extends JFrame {
                     }
                     @Override
                     public void onFinish(long downloadedBytesNum, long elapsedTime) {
+                        unlockAddOnsManagementDialog();
                         if (!Validator.isNullOrBlank(sb)) {
                             JOptionPane.showMessageDialog(
                                     getActiveWindow(), 
@@ -5214,7 +5202,7 @@ public class FrontEnd extends JFrame {
                 d.start();
             }    
         } catch (Exception ex) {
-            displayAddOnsScreenErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
+            displayErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
         }
     }
     
@@ -5248,7 +5236,7 @@ public class FrontEnd extends JFrame {
                             public void run() {
                                 // ... and when done, try to resolve dependencies
                                 try {
-                                    Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+                                    lockAddOnsManagementDialog();
                                     addOnModel.removeTableModelListener(self);
                                     for (Dependency dep : pack.getDependencies()) {
                                         if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
@@ -5283,7 +5271,7 @@ public class FrontEnd extends JFrame {
                                 } catch (Throwable t) {
                                     displayErrorMessage("Failed to handle/resolve dependencies! " + getFailureDetails(t), t);
                                 } finally {
-                                    Splash.hideSplash();
+                                    unlockAddOnsManagementDialog();
                                     addOnModel.addTableModelListener(self);
                                 }
                             }
@@ -5356,7 +5344,7 @@ public class FrontEnd extends JFrame {
     private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final String addOnName) {
         Thread loadDetailsThread = new Thread(new Runnable(){
             public void run() {
-                Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
+                lockAddOnsManagementDialog();
                 boolean loaded = false;
                 InputStream is = null;
                 ByteArrayOutputStream baos = null;
@@ -5370,9 +5358,9 @@ public class FrontEnd extends JFrame {
                     }
                     loaded = true;
                 } catch (Throwable t) {
-                    displayAddOnsScreenErrorMessage("Failed to load package details page! " + getFailureDetails(t), t);
+                    displayErrorMessage("Failed to load package details page! " + getFailureDetails(t), t);
                 } finally {
-                    Splash.hideSplash();
+                    unlockAddOnsManagementDialog();
                         try {
                             if (is != null) is.close();
                             if (baos != null) baos.close();
