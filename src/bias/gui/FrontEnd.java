@@ -4694,7 +4694,7 @@ public class FrontEnd extends JFrame {
                 final JTextField extFilterText = new JTextField();
                 extFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
-                        extSorter.setRowFilter(RowFilter.regexFilter(extFilterText.getText()));
+                        extSorter.setRowFilter(RowFilter.regexFilter("(?i)" + extFilterText.getText()));
                     }
                 });
                 extTopPanel.add(extFilterText, BorderLayout.SOUTH);
@@ -4715,7 +4715,7 @@ public class FrontEnd extends JFrame {
                 final JTextField skinFilterText = new JTextField();
                 skinFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
-                        skinSorter.setRowFilter(RowFilter.regexFilter(skinFilterText.getText()));
+                        skinSorter.setRowFilter(RowFilter.regexFilter("(?i)" + skinFilterText.getText()));
                     }
                 });
                 skinTopPanel.add(skinFilterText, BorderLayout.SOUTH);
@@ -4736,7 +4736,7 @@ public class FrontEnd extends JFrame {
                 final JTextField icSetFilterText = new JTextField();
                 icSetFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
-                        icSetSorter.setRowFilter(RowFilter.regexFilter(icSetFilterText.getText()));
+                        icSetSorter.setRowFilter(RowFilter.regexFilter("(?i)" + icSetFilterText.getText()));
                     }
                 });
                 icTopPanel.add(icSetFilterText, BorderLayout.CENTER);
@@ -4759,7 +4759,7 @@ public class FrontEnd extends JFrame {
                 final JTextField onlineFilterText = new JTextField();
                 onlineFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
-                        onlineSorter.setRowFilter(RowFilter.regexFilter(onlineFilterText.getText()));
+                        onlineSorter.setRowFilter(RowFilter.regexFilter("(?i)" + onlineFilterText.getText()));
                     }
                 });
                 onlineTopPanel.add(onlineFilterText, BorderLayout.CENTER);
@@ -4982,13 +4982,31 @@ public class FrontEnd extends JFrame {
         try {
             final Map<URL, Pack> urlPackageMap = new HashMap<URL, Pack>();
             final Map<URL, File> urlFileMap = new LinkedHashMap<URL, File>();
+            Collection<Integer> depIndexes = new ArrayList<Integer>();
             long tSize = 0;
-//            for (String dep : depCounters.keySet()) {
-//                int idx = findDataRowIndex(onlineList.getmo, 2, dep);
-//            }
-            for (int i = 0; i < onlineList.getRowCount(); i++) {
-                if ((Boolean) onlineList.getValueAt(i, 0)) {
-                    Pack pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(i, 2));
+            for (String dep : depCounters.keySet()) {
+                int idx = findDataRowIndex(onlineModel, 2, dep);
+                if (idx != -1) {
+                    if ((Boolean) onlineModel.getValueAt(idx, 0)) {
+                        Pack pack = getAvailableOnlinePackages().get((String) onlineModel.getValueAt(idx, 2));
+                        String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
+                        URL url;
+                        if (!Validator.isNullOrBlank(pack.getUrl())) {
+                            url = new URL(pack.getUrl());
+                        } else {
+                            url = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
+                        }
+                        File file = new File(Constants.TMP_DIR, fileName);
+                        urlFileMap.put(url, file);
+                        urlPackageMap.put(url, pack);
+                        tSize += pack.getFileSize();
+                        depIndexes.add(idx);
+                    }
+                }
+            }
+            for (int i = 0; i < onlineModel.getRowCount(); i++) {
+                if ((Boolean) onlineModel.getValueAt(i, 0) && !depIndexes.contains(i)) {
+                    Pack pack = getAvailableOnlinePackages().get((String) onlineModel.getValueAt(i, 2));
                     String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
                     URL url;
                     if (!Validator.isNullOrBlank(pack.getUrl())) {

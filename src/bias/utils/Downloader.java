@@ -109,7 +109,6 @@ public class Downloader {
             public void run() {
                 synchronized (totalActiveDownloadsCount) {
                     totalActiveDownloadsCount++;
-                    System.out.println("total dls: " + totalActiveDownloadsCount);
                 }
                 long startTime = System.currentTimeMillis();
                 long downloadedBytesNum = 0;
