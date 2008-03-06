@@ -183,11 +183,6 @@ public class Preferences {
     public boolean minimizeToSysTray = false;
     
     @PreferenceAnnotation(
-            title = "Exit without confirmation",
-            description = "Defines whether exit-confirmation should be displayed on exit")
-    public boolean exitWithoutConfirmation = false;
-    
-    @PreferenceAnnotation(
             title = "Auto save on exit",
             description = "Defines whether user data have to be automatically saved on exit")
     public boolean autoSaveOnExit = false;

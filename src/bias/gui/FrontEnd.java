@@ -1252,7 +1252,7 @@ public class FrontEnd extends JFrame {
                 return;
             }
         }
-        if (Preferences.getInstance().exitWithoutConfirmation) {
+        if (!Preferences.getInstance().displayConfirmationDialogs) {
             exitWithOptionalAutoSave();
         } else {
             Component[] cs = null;
@@ -5335,6 +5335,7 @@ public class FrontEnd extends JFrame {
     private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final String addOnName) {
         Thread loadDetailsThread = new Thread(new Runnable(){
             public void run() {
+                Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
                 boolean loaded = false;
                 InputStream is = null;
                 ByteArrayOutputStream baos = null;
@@ -5350,6 +5351,7 @@ public class FrontEnd extends JFrame {
                 } catch (Throwable t) {
                     displayAddOnsScreenErrorMessage("Failed to load package details page! " + getFailureDetails(t), t);
                 } finally {
+                    Splash.hideSplash();
                         try {
                             if (is != null) is.close();
                             if (baos != null) baos.close();
