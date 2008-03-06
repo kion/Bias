@@ -150,8 +150,6 @@ public class Preferences {
     
     /* PREFERENCES DECLARATION SECTION */
     
-    // TODO [P1] add some preference(s) to control auto-update-feature
-    
     @PreferenceAnnotation(
             title = "Preferred date format:",
             description = "Defines preferred date format for dates rendering.")

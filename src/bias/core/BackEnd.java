@@ -1142,7 +1142,25 @@ public class BackEnd {
             }
         }
         for (File addOnInfoFile : Constants.CONFIG_DIR.listFiles(ff)) {
-            addOns.add(readAddOnInfo(addOnInfoFile));
+            File addOnDir = null;
+            File addOnFile = null;
+            String suffix = null;
+            if (addOnInfoFile.getName().endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX)) {
+                addOnDir = Constants.ADDONS_DIR;
+                suffix = Constants.EXTENSION_JAR_FILE_SUFFIX;
+            } else if (addOnInfoFile.getName().endsWith(Constants.ADDON_SKIN_INFO_FILE_SUFFIX)) {
+                addOnDir = Constants.ADDONS_DIR;
+                suffix = Constants.SKIN_JAR_FILE_SUFFIX;
+            } else if (addOnInfoFile.getName().endsWith(Constants.ADDON_LIB_INFO_FILE_SUFFIX)) {
+                addOnDir = Constants.LIBS_DIR;
+                suffix = Constants.LIB_JAR_FILE_SUFFIX;
+            }
+            if (addOnDir != null) {
+                addOnFile = new File(addOnDir, addOnInfoFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR) + suffix);
+            }
+            if (addOnFile == null || addOnFile.exists()) {
+                addOns.add(readAddOnInfo(addOnInfoFile));
+            }
         }
         return addOns;
     }
@@ -1319,7 +1337,7 @@ public class BackEnd {
             break;
         case LIBRARY:
             dir = Constants.LIBS_DIR;
-            fileSuffix = Constants.JAR_FILE_SUFFIX;
+            fileSuffix = Constants.LIB_JAR_FILE_SUFFIX;
             break;
         }
         File installedAddOnFile = new File(dir, addOnInfo.getName() + fileSuffix);
@@ -1361,7 +1379,7 @@ public class BackEnd {
             configFileSuffix = Constants.ADDON_ICONSET_INFO_FILE_SUFFIX;
             break;
         case LIBRARY:
-            fileSuffix = Constants.JAR_FILE_SUFFIX;
+            fileSuffix = Constants.LIB_JAR_FILE_SUFFIX;
             configFileSuffix = Constants.ADDON_LIB_INFO_FILE_SUFFIX;
             break;
         }

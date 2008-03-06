@@ -559,7 +559,6 @@ public class FrontEnd extends JFrame {
     
     private static JPanel memUsageIndicatorPanel = null;
     
-    // TODO [P2] memory usage optimization: show memory usage info only when main window is visible
     private void startMemoryUsageMonitoring() {
         new Thread(new Runnable() {
             public void run() {
@@ -1234,6 +1233,25 @@ public class FrontEnd extends JFrame {
     }
     
     private void exit() {
+        if (Downloader.getTotalActiveDownloadsCount() > 0) {
+            JLabel message = new JLabel("Some downloads are still in progress. Are you sure you want to cancel all active downloads and exit?");
+            JButton button = new JButton("Show active downloads");
+            button.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent e) {
+                    dialog.setVisible(true);
+                    addOnsPane.setSelectedIndex(3);
+                }
+            });
+            int opt = JOptionPane.showConfirmDialog(
+                    getActiveWindow(),
+                    new Component[] {message, button},
+                    "Cancel downloads confirmation", 
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+            if (opt == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
         if (Preferences.getInstance().exitWithoutConfirmation) {
             exitWithOptionalAutoSave();
         } else {
@@ -4667,10 +4685,16 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton onlineInstallButt = new JButton("Download & install");
+                JButton onlineInstallButt = new JButton("Download/install");
                 onlineInstallButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         downloadAndInstallOnlinePackages(null);
+                    }
+                });
+                JButton onlineSelectAllUpdatesButt = new JButton("Select all updates");
+                onlineSelectAllUpdatesButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        selectAllUpdates();
                     }
                 });
                 JButton onlineCancelInstallButt = new JButton("Cancel download/installation");
@@ -4679,7 +4703,6 @@ public class FrontEnd extends JFrame {
                         Downloader.cancelAll();
                     }
                 });
-                // TODO [P1] add button for performing 'install all updates' action
                 
                 // dialog
                 addOnsPane = new JTabbedPane();
@@ -4748,10 +4771,11 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Icons", uiIcons.getIconIcons(), icPanel);
                 
-                JPanel onlineControlsPanel = new JPanel(new GridLayout(1,4));
+                JPanel onlineControlsPanel = new JPanel(new GridLayout(1,5));
                 onlineControlsPanel.add(onlineRefreshButt);
                 onlineControlsPanel.add(onlineDetailsButt);
                 onlineControlsPanel.add(onlineInstallButt);
+                onlineControlsPanel.add(onlineSelectAllUpdatesButt);
                 onlineControlsPanel.add(onlineCancelInstallButt);
                 JPanel onlinePanel = new JPanel(new BorderLayout());
                 JPanel onlineTopPanel = new JPanel(new BorderLayout());
@@ -4812,6 +4836,29 @@ public class FrontEnd extends JFrame {
                 
             } catch (Throwable t) {
                 displayErrorMessage("Failed to initialize add-ons configuration screen!", t);
+            }
+        }
+    }
+    
+    // TODO [P1] implement auto-update feature
+//    private void downloadAndInstallAllUpdates() {
+//        Runnable updateTask = new Runnable(){
+//            public void run() {
+//                selectAllUpdates();
+//                downloadAndInstallOnlinePackages(null);
+//            }
+//        };
+//        if (!onlineListRefreshed) {
+//            refreshOnlinePackagesList(updateTask);
+//        } else {
+//            updateTask.run();
+//        }
+//    }
+    
+    private void selectAllUpdates() {
+        for (int i = 0; i < onlineList.getRowCount(); i++) {
+            if (onlineList.getValueAt(i, 7).equals(Constants.ADDON_STATUS_UPDATE)) {
+                onlineList.setValueAt(Boolean.TRUE, i, 0);
             }
         }
     }
@@ -5068,7 +5115,7 @@ public class FrontEnd extends JFrame {
                                     for (AddOnInfo iconSetInfo : iconSets) {
                                         icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
                                     }
-                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                     icList.repaint();
                                 } else {
                                     sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
@@ -5088,7 +5135,7 @@ public class FrontEnd extends JFrame {
                                 } else {
                                     libModel.addRow(getAddOnInfoRow(libInfo, status));
                                 }
-                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 modified = true;
                             } else if (pack.getType() == PackType.APP_CORE) {
                                 BackEnd.getInstance().installAppCoreUpdate(file);
@@ -5278,11 +5325,7 @@ public class FrontEnd extends JFrame {
             if (libStatuses != null) {
                 status = libStatuses.get(addOnInfo);
             } else {
-                if (new File(Constants.LIBS_DIR, addOnInfo.getName() + Constants.JAR_FILE_SUFFIX).exists()) {
-                    status = Constants.ADDON_STATUS_LOADED;
-                } else {
-                    status = Constants.ADDON_STATUS_MISSING;
-                }
+                status = Constants.ADDON_STATUS_LOADED;
             }
             addOnModel.addRow(getAddOnInfoRow(addOnInfo, status));
         }

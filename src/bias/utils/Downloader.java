@@ -30,7 +30,7 @@ public class Downloader {
     }
     
     private static volatile Integer totalActiveDownloadsCount = 0;
-    private static boolean cancelAll = false;
+    private static volatile boolean cancelAll = false;
     private boolean cancel = false;
     private DownloadListener listener;
     private Thread thread = null;
@@ -46,9 +46,7 @@ public class Downloader {
     private Downloader(final URL url, final File file, final int timeout) {
         thread = new Thread(new Runnable(){
             public void run() {
-                synchronized (totalActiveDownloadsCount) {
-                    totalActiveDownloadsCount++;
-                }
+                increaseTotalActiveDownloadsCount();
                 long startTime = System.currentTimeMillis();
                 long downloadedBytesNum = 0;
                 long elapsedTime = 0;
@@ -93,12 +91,7 @@ public class Downloader {
                         }    
                         listener.onFinish(downloadedBytesNum, elapsedTime);
                     }
-                    synchronized (totalActiveDownloadsCount) {
-                        totalActiveDownloadsCount--;
-                        if (totalActiveDownloadsCount == 0) {
-                            cancelAll = false;
-                        }
-                    }
+                    decreaseTotalActiveDownloadsCount();
                 }
             }
         });
@@ -107,9 +100,7 @@ public class Downloader {
     private Downloader(final Map<URL, File> urlFileMap, final int timeout) {
         thread = new Thread(new Runnable(){
             public void run() {
-                synchronized (totalActiveDownloadsCount) {
-                    totalActiveDownloadsCount++;
-                }
+                increaseTotalActiveDownloadsCount();
                 long startTime = System.currentTimeMillis();
                 long downloadedBytesNum = 0;
                 long elapsedTime = 0;
@@ -141,6 +132,7 @@ public class Downloader {
                         int readBytesNum;
                         while (!cancel && !cancelAll && (readBytesNum = in.read(buffer)) != -1) {
                             out.write(buffer, 0, readBytesNum);
+                            Thread.sleep(150); // FIXME
                             if (listener != null) {
                                 currentDownloadedBytesNum += readBytesNum;
                                 currentElapsedTime = System.currentTimeMillis() - currStartTime;
@@ -165,24 +157,14 @@ public class Downloader {
                             } else if (cancel || cancelAll) {
                                 listener.onCancel(url, file, downloadedBytesNum, elapsedTime);
                                 listener.onFinish(downloadedBytesNum, elapsedTime);
-                                synchronized (totalActiveDownloadsCount) {
-                                    totalActiveDownloadsCount--;
-                                    if (totalActiveDownloadsCount == 0) {
-                                        cancelAll = false;
-                                    }
-                                }
+                                decreaseTotalActiveDownloadsCount();
                                 break;
                             } else {
                                 listener.onComplete(url, file, downloadedBytesNum, elapsedTime);
                             }
                             if (!it.hasNext()) {
                                 listener.onFinish(downloadedBytesNum, elapsedTime);
-                                synchronized (totalActiveDownloadsCount) {
-                                    totalActiveDownloadsCount--;
-                                    if (totalActiveDownloadsCount == 0) {
-                                        cancelAll = false;
-                                    }
-                                }
+                                decreaseTotalActiveDownloadsCount();
                             }
                         }
                     }
@@ -204,6 +186,17 @@ public class Downloader {
     public static void cancelAll() {
         if (totalActiveDownloadsCount > 0) {
             cancelAll = true;
+        }
+    }
+    
+    private static synchronized void increaseTotalActiveDownloadsCount() {
+        totalActiveDownloadsCount++;
+    }
+    
+    private static synchronized void decreaseTotalActiveDownloadsCount() {
+        totalActiveDownloadsCount--;
+        if (totalActiveDownloadsCount == 0) {
+            cancelAll = false;
         }
     }
     
