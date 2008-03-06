@@ -51,6 +51,9 @@ public class Constants {
         TMP_DIR.mkdir();
     }
     
+    public static final String MAIN_REPOSITORY_KEY = "Main Repository";
+    public static final String MAIN_REPOSITORY_VALUE = "http://bias.sourceforge.net/repository/";
+    
     public static final String HTML_PREFIX = "<html>";
     public static final String HTML_COLOR_NORMAL = "<font color=\"#000000\">";
     public static final String HTML_COLOR_HIGHLIGHT_LINK = "<font color=\"blue\">";
@@ -104,6 +107,7 @@ public class Constants {
     
     public static final String GLOBAL_CONFIG_FILE = "config.properties";
     public static final String PREFERENCES_FILE = "preferences.properties";
+    public static final String REPOSITORIES_CONFIG_FILE = "repositories.properties";
     public static final String UNINSTALL_CONFIG_FILE = "uninstall.conf";
     public static final String METADATA_FILE_NAME = "metadata.xml";
     public static final String ICONS_CONFIG_FILE = "icons.conf";

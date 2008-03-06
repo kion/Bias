@@ -373,15 +373,6 @@ public class FrontEnd extends JFrame {
     
     // TODO [P2] instead of one online-repository, it should be possible to have any number of them (extendible by user)
     
-    private static URL repositoryBaseURL;
-    
-    private static URL getRepositoryBaseURL() throws MalformedURLException {
-        if (repositoryBaseURL == null) {
-            repositoryBaseURL = new URL("http://localhost/apache2-default/tmp/"); // FIXME
-        }
-        return repositoryBaseURL;
-    }
-    
     private static Map<String, Pack> availableOnlinePackages;
     
     private static Map<String, Pack> getAvailableOnlinePackages() {
@@ -4663,14 +4654,14 @@ public class FrontEnd extends JFrame {
                             try {
                                 final Pack pack = getAvailableOnlinePackages().get(addOnName);
                                 String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_DETAILS_FILENAME_SUFFIX;
-                                final URL addOnURL = new URL(getRepositoryBaseURL() + fileName);
+                                final URL addOnURL = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
                                 try {
-                                    loadAndDisplayPackageDetails(getRepositoryBaseURL(), addOnURL, pack.getName());
+                                    loadAndDisplayPackageDetails(BackEnd.getInstance().getRepositoryBaseURL(), addOnURL, pack.getName());
                                 } catch (MalformedURLException ex) {
-                                    displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                    displayAddOnsScreenErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
                                 }
-                            } catch (MalformedURLException ex) {
-                                displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                            } catch (Exception ex) {
+                                displayAddOnsScreenErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
                             }
                         }
                     }
@@ -4894,12 +4885,11 @@ public class FrontEnd extends JFrame {
     private boolean onlineListRefreshed = false;
     
     private void refreshOnlinePackagesList(final Runnable onFinishAction) {
-        // TODO [P1] only not-yet-installed- and update-packages should appear in the list of packages available for installation through internet
         while (onlineModel.getRowCount() > 0) {
             onlineModel.removeRow(0);
         }
         try {
-            URL addonsListURL = new URL(getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
+            URL addonsListURL = new URL(BackEnd.getInstance().getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
             Downloader d = new Downloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
@@ -4948,8 +4938,8 @@ public class FrontEnd extends JFrame {
                 }
             });
             d.start();
-        } catch (MalformedURLException ex) {
-            displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+        } catch (Exception ex) {
+            displayAddOnsScreenErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
         }
     }
     
@@ -4966,7 +4956,7 @@ public class FrontEnd extends JFrame {
                     if (!Validator.isNullOrBlank(pack.getUrl())) {
                         url = new URL(pack.getUrl());
                     } else {
-                        url = new URL(getRepositoryBaseURL() + fileName);
+                        url = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
                     }
                     File file = new File(Constants.TMP_DIR, fileName);
                     urlFileMap.put(url, file);
@@ -5089,8 +5079,8 @@ public class FrontEnd extends JFrame {
                 onlineTotalProgressBar.setMaximum(totalSize.intValue());
                 d.start();
             }    
-        } catch (MalformedURLException ex) {
-            displayAddOnsScreenErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+        } catch (Exception ex) {
+            displayAddOnsScreenErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
         }
     }
     

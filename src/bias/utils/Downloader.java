@@ -19,6 +19,8 @@ import java.util.Map;
  */
 public class Downloader {
     
+    // TODO [P1] total active downloads counter (to warn user about presence of active downloads on exit) (?)
+    
     public static abstract class DownloadListener {
         public void onStart(URL url, File file){};
         public void onFailure(URL url, File file, Throwable failure){};
@@ -53,7 +55,6 @@ public class Downloader {
                     int readBytesNum;
                     while ((readBytesNum = in.read(buffer)) != -1) {
                         out.write(buffer, 0, readBytesNum);
-                        Thread.sleep(15); // FIXME
                         if (listener != null) {
                             downloadedBytesNum += readBytesNum;
                             elapsedTime = System.currentTimeMillis() - startTime;
@@ -116,7 +117,6 @@ public class Downloader {
                         int readBytesNum;
                         while ((readBytesNum = in.read(buffer)) != -1) {
                             out.write(buffer, 0, readBytesNum);
-                            Thread.sleep(15); // FIXME
                             if (listener != null) {
                                 currentDownloadedBytesNum += readBytesNum;
                                 currentElapsedTime = System.currentTimeMillis() - currStartTime;

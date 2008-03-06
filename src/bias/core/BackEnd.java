@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1014,6 +1015,22 @@ public class BackEnd {
             }
         }
         return ids;
+    }
+    
+    public URL getRepositoryBaseURL() throws Exception {
+        Properties p = new Properties();
+        File reposConfigFile = new File(Constants.CONFIG_DIR, Constants.REPOSITORIES_CONFIG_FILE);
+        String urlStr = null;
+        if (reposConfigFile.exists()) {
+            p.load(new FileInputStream(reposConfigFile));
+            urlStr = p.getProperty(Constants.MAIN_REPOSITORY_KEY);
+        }
+        if (Validator.isNullOrBlank(urlStr)) {
+            urlStr = Constants.MAIN_REPOSITORY_VALUE;
+            p.setProperty(Constants.MAIN_REPOSITORY_KEY, urlStr);
+            p.store(new FileOutputStream(reposConfigFile), null);
+        }
+        return new URL(urlStr);
     }
     
     public void installAppCoreUpdate(File appCoreUpdateFile) throws Throwable {
