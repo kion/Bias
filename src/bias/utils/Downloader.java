@@ -19,6 +19,8 @@ import java.util.Map;
  */
 public class Downloader {
     
+    // TODO [P1] possibility to stop download process (or, maybe, all such processess altogether)
+    
     // TODO [P1] total active downloads counter (to warn user about presence of active downloads on exit) (?)
     
     public static abstract class DownloadListener {
