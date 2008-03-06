@@ -4118,6 +4118,7 @@ public class FrontEnd extends JFrame {
     
     @SuppressWarnings("unchecked")
     private void initAddOnsManagementDialog() {
+        // TODO [P1] use checkboxes (instead of standard selection model handling) on exts/skins/iconsets lists to uninstall appropriate items 
         if (dialog == null) {
             try {
                 depCounters = new HashMap<String, Integer>();
@@ -4730,7 +4731,17 @@ public class FrontEnd extends JFrame {
                 icControlsPanel.add(addIconButt);
                 icControlsPanel.add(removeIconButt);
                 icControlsPanel.add(removeIconSetButt);
+                JPanel icTopPanel = new JPanel(new BorderLayout());
+                icTopPanel.add(new JLabel("Filter:"), BorderLayout.NORTH);
+                final JTextField icSetFilterText = new JTextField();
+                icSetFilterText.addCaretListener(new CaretListener(){
+                    public void caretUpdate(CaretEvent e) {
+                        icSetSorter.setRowFilter(RowFilter.regexFilter(icSetFilterText.getText()));
+                    }
+                });
+                icTopPanel.add(icSetFilterText, BorderLayout.CENTER);
                 JPanel icPanel = new JPanel(new BorderLayout());
+                icPanel.add(icTopPanel, BorderLayout.NORTH);
                 icPanel.add(new JScrollPane(icSetList), BorderLayout.CENTER);
                 icPanel.add(jsp, BorderLayout.EAST);
                 icPanel.add(icControlsPanel, BorderLayout.SOUTH);
@@ -4743,7 +4754,17 @@ public class FrontEnd extends JFrame {
                 onlineControlsPanel.add(onlineInstallButt);
                 onlineControlsPanel.add(onlineCancelInstallButt);
                 JPanel onlinePanel = new JPanel(new BorderLayout());
-                onlinePanel.add(new JScrollPane(onlineList), BorderLayout.NORTH);
+                JPanel onlineTopPanel = new JPanel(new BorderLayout());
+                onlineTopPanel.add(new JLabel("Filter:"), BorderLayout.NORTH);
+                final JTextField onlineFilterText = new JTextField();
+                onlineFilterText.addCaretListener(new CaretListener(){
+                    public void caretUpdate(CaretEvent e) {
+                        onlineSorter.setRowFilter(RowFilter.regexFilter(onlineFilterText.getText()));
+                    }
+                });
+                onlineTopPanel.add(onlineFilterText, BorderLayout.CENTER);
+                onlineTopPanel.add(new JScrollPane(onlineList), BorderLayout.SOUTH);
+                onlinePanel.add(onlineTopPanel, BorderLayout.NORTH);
                 onlinePanel.add(onlineProgressPanel, BorderLayout.CENTER);
                 onlinePanel.add(onlineControlsPanel, BorderLayout.SOUTH);
                 
