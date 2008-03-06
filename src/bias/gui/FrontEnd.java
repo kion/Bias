@@ -4586,13 +4586,13 @@ public class FrontEnd extends JFrame {
                         if (e.getColumn() == 0) {
                             try {
                                 onlineModel.removeTableModelListener(this);
-                                Pack pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(e.getFirstRow(), 2));
+                                Pack pack = getAvailableOnlinePackages().get((String) onlineModel.getValueAt(e.getFirstRow(), 2));
                                 if (pack.getDependency() != null && !pack.getDependency().isEmpty()) {
                                     for (Dependency dep : pack.getDependency()) {
                                         if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
                                             int idx = findDataRowIndex(onlineModel, 2, dep.getName());
                                             if (idx == -1) {
-                                                onlineList.setValueAt(Boolean.FALSE, e.getFirstRow(), e.getColumn());
+                                                onlineModel.setValueAt(Boolean.FALSE, e.getFirstRow(), e.getColumn());
                                                 throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
                                                                         dep.getType().value() + " '" + dep.getName() + "' " + 
                                                                         (dep.getVersion() != null ? 
@@ -4603,15 +4603,15 @@ public class FrontEnd extends JFrame {
                                                 if (counter == null) {
                                                     counter = 0;
                                                 }
-                                                if ((Boolean) onlineList.getValueAt(e.getFirstRow(), e.getColumn())) {
+                                                if ((Boolean) onlineModel.getValueAt(e.getFirstRow(), e.getColumn())) {
                                                     counter++;
                                                     if (counter == 1) {
-                                                        onlineList.setValueAt(Boolean.TRUE, idx, 0);
+                                                        onlineModel.setValueAt(Boolean.TRUE, idx, 0);
                                                     }
                                                 } else {
                                                     counter--;
                                                     if (counter == 0) {
-                                                        onlineList.setValueAt(Boolean.FALSE, idx, 0);
+                                                        onlineModel.setValueAt(Boolean.FALSE, idx, 0);
                                                     }
                                                 }
                                                 depCounters.put(dep.getName(), counter);
@@ -4666,12 +4666,19 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton onlineInstallButt = new JButton("Download & Install/Update");
+                JButton onlineInstallButt = new JButton("Download & install");
                 onlineInstallButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         downloadAndInstallOnlinePackages(null);
                     }
                 });
+                JButton onlineCancelInstallButt = new JButton("Cancel download/installation");
+                onlineCancelInstallButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        Downloader.cancelAll();
+                    }
+                });
+                // TODO [P1] add button for performing 'install all updates' action
                 
                 // dialog
                 addOnsPane = new JTabbedPane();
@@ -4730,10 +4737,11 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Icons", uiIcons.getIconIcons(), icPanel);
                 
-                JPanel onlineControlsPanel = new JPanel(new GridLayout(1,3));
+                JPanel onlineControlsPanel = new JPanel(new GridLayout(1,4));
                 onlineControlsPanel.add(onlineRefreshButt);
                 onlineControlsPanel.add(onlineDetailsButt);
                 onlineControlsPanel.add(onlineInstallButt);
+                onlineControlsPanel.add(onlineCancelInstallButt);
                 JPanel onlinePanel = new JPanel(new BorderLayout());
                 onlinePanel.add(new JScrollPane(onlineList), BorderLayout.NORTH);
                 onlinePanel.add(onlineProgressPanel, BorderLayout.CENTER);
@@ -4892,9 +4900,8 @@ public class FrontEnd extends JFrame {
             URL addonsListURL = new URL(BackEnd.getInstance().getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             Splash.showSplash(SPLASH_IMAGE_PROCESS, dialog);
-            Downloader d = new Downloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
+            Downloader d = Downloader.createSingleFileDownloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
             d.setDownloadListener(new DownloadListener(){
-                private boolean success = true;
                 @Override
                 public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
                     try {
@@ -4918,19 +4925,24 @@ public class FrontEnd extends JFrame {
                             }
                         }
                         onlineListRefreshed = true;
+                        Splash.hideSplash();
+                        if (onFinishAction != null) {
+                            onFinishAction.run();
+                        }
                     } catch (Throwable t) {
                         displayAddOnsScreenErrorMessage("Failed to parse downloaded list of available addons!", t);
                     } finally {
                         Splash.hideSplash();
-                        if (success && onFinishAction != null) {
-                            onFinishAction.run();
-                        }
                     }
                 }
                 @Override
                 public void onFailure(URL url, File file, Throwable failure) {
-                    success = false;
                     displayAddOnsScreenErrorMessage("Failed to retrieve online list of available addons!", failure);
+                }
+                @Override
+                public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime) {
+                    Splash.hideSplash();
+                    JOptionPane.showMessageDialog(getActiveWindow(), "Online packages list refresh canceled by user!");
                 }
                 @Override
                 public void onFinish(long downloadedBytesNum, long elapsedTime) {
@@ -4944,10 +4956,15 @@ public class FrontEnd extends JFrame {
     }
     
     private void downloadAndInstallOnlinePackages(final Runnable onFinishAction) {
+        // TODO [P1] dependencies should be installed as 1st-prio and only then dependent packages allowed to be installed
+        //           (to avoid broken dependencies situations)
         try {
             final Map<URL, Pack> urlPackageMap = new HashMap<URL, Pack>();
-            final Map<URL, File> urlFileMap = new HashMap<URL, File>();
+            final Map<URL, File> urlFileMap = new LinkedHashMap<URL, File>();
             long tSize = 0;
+//            for (String dep : depCounters.keySet()) {
+//                int idx = findDataRowIndex(onlineList.getmo, 2, dep);
+//            }
             for (int i = 0; i < onlineList.getRowCount(); i++) {
                 if ((Boolean) onlineList.getValueAt(i, 0)) {
                     Pack pack = getAvailableOnlinePackages().get((String) onlineList.getValueAt(i, 2));
@@ -4966,20 +4983,10 @@ public class FrontEnd extends JFrame {
             }
             final Long totalSize = new Long(tSize);
             if (!urlFileMap.isEmpty()) {
-                Downloader d = new Downloader(urlFileMap, Preferences.getInstance().preferredTimeOut);
+                Downloader d = Downloader.createMultipleFilesDownloader(urlFileMap, Preferences.getInstance().preferredTimeOut);
                 d.setDownloadListener(new DownloadListener(){
-                    private StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
+                    private StringBuffer sb = new StringBuffer();
                     boolean success = true;
-                    @Override
-                    public void onFinish(long downloadedBytesNum, long elapsedTime) {
-                        sb.append("</ul>" + Constants.HTML_SUFFIX);
-                        JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
-                        if (success && onFinishAction != null) {
-                            onFinishAction.run();
-                        }
-                        depCounters.clear();
-                        refreshOnlinePackagesList(null);
-                    }
                     @Override
                     public void onStart(URL url, File file) {
                         Pack pack = urlPackageMap.get(url);
@@ -5075,6 +5082,26 @@ public class FrontEnd extends JFrame {
                         sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "'" + pack.getName() + "' - failed to retrieve installation file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                         failure.printStackTrace(System.err);
                     }
+                    @Override
+                    public void onFinish(long downloadedBytesNum, long elapsedTime) {
+                        if (!Validator.isNullOrBlank(sb)) {
+                            JOptionPane.showMessageDialog(
+                                    getActiveWindow(), 
+                                    new JScrollPane(new JLabel(Constants.HTML_PREFIX + "<ul>" + sb.toString() + "</ul>" + Constants.HTML_SUFFIX)));
+                            if (success && onFinishAction != null) {
+                                onFinishAction.run();
+                            }
+                        }
+                        depCounters.clear();
+                        refreshOnlinePackagesList(null);
+                    }
+                    @Override
+                    public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime) {
+                        success = false;
+                        Pack pack = urlPackageMap.get(url);
+                        sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Download/installation of pack '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' cancelled!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                        JOptionPane.showMessageDialog(getActiveWindow(), "Packages download/installation canceled by user!");
+                    }
                 });
                 onlineTotalProgressBar.setMaximum(totalSize.intValue());
                 d.start();
@@ -5108,7 +5135,7 @@ public class FrontEnd extends JFrame {
             private TableModelListener self = this;
             public void tableChanged(final TableModelEvent e) {
                 if (e.getColumn() == 0) {
-                    final AddOnInfo pack = proposedAddOnsToInstall.get(addOnList.getValueAt(e.getFirstRow(), 1));
+                    final AddOnInfo pack = proposedAddOnsToInstall.get(addOnModel.getValueAt(e.getFirstRow(), 1));
                     if (pack.getDependencies() != null && !pack.getDependencies().isEmpty()) {
                         Runnable task = new Runnable() {
                             public void run() {
@@ -5131,15 +5158,15 @@ public class FrontEnd extends JFrame {
                                                 if (counter == null) {
                                                     counter = 0;
                                                 }
-                                                if ((Boolean) addOnList.getValueAt(e.getFirstRow(), e.getColumn())) {
+                                                if ((Boolean) addOnModel.getValueAt(e.getFirstRow(), e.getColumn())) {
                                                     counter++;
                                                     if (counter == 1) {
-                                                        onlineList.setValueAt(Boolean.TRUE, idx, 0);
+                                                        onlineModel.setValueAt(Boolean.TRUE, idx, 0);
                                                     }
                                                 } else {
                                                     counter--;
                                                     if (counter == 0) {
-                                                        onlineList.setValueAt(Boolean.FALSE, idx, 0);
+                                                        onlineModel.setValueAt(Boolean.FALSE, idx, 0);
                                                     }
                                                 }
                                                 depCounters.put(dep.getName(), counter);

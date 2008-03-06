@@ -19,10 +19,6 @@ import java.util.Map;
  */
 public class Downloader {
     
-    // TODO [P1] possibility to stop download process (or, maybe, all such processess altogether)
-    
-    // TODO [P1] total active downloads counter (to warn user about presence of active downloads on exit) (?)
-    
     public static abstract class DownloadListener {
         public void onStart(URL url, File file){};
         public void onFailure(URL url, File file, Throwable failure){};
@@ -30,14 +26,29 @@ public class Downloader {
         public void onSingleProgress(URL url, File file, long downloadedBytesNum, long elapsedTime){};
         public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime){};
         public void onFinish(long downloadedBytesNum, long elapsedTime){};
+        public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime){};
     }
     
+    private static volatile Integer totalActiveDownloadsCount = 0;
+    private static boolean cancelAll = false;
+    private boolean cancel = false;
     private DownloadListener listener;
     private Thread thread = null;
     
-    public Downloader(final URL url, final File file, final int timeout) {
+    public static Downloader createSingleFileDownloader(final URL url, final File file, final int timeout) {
+        return new Downloader(url, file, timeout);
+    }
+
+    public static Downloader createMultipleFilesDownloader(final Map<URL, File> urlFileMap, final int timeout) {
+        return new Downloader(urlFileMap, timeout);
+    }
+    
+    private Downloader(final URL url, final File file, final int timeout) {
         thread = new Thread(new Runnable(){
             public void run() {
+                synchronized (totalActiveDownloadsCount) {
+                    totalActiveDownloadsCount++;
+                }
                 long startTime = System.currentTimeMillis();
                 long downloadedBytesNum = 0;
                 long elapsedTime = 0;
@@ -55,7 +66,7 @@ public class Downloader {
                     out = new BufferedOutputStream(new FileOutputStream(file));
                     byte[] buffer = new byte[1024];
                     int readBytesNum;
-                    while ((readBytesNum = in.read(buffer)) != -1) {
+                    while (!cancel && !cancelAll && (readBytesNum = in.read(buffer)) != -1) {
                         out.write(buffer, 0, readBytesNum);
                         if (listener != null) {
                             downloadedBytesNum += readBytesNum;
@@ -69,25 +80,37 @@ public class Downloader {
                     try {
                         if (in != null) in.close();
                         if (out != null) out.close();
-                        if (listener != null) {
-                            if (failure != null) {
-                                listener.onFailure(url, file, failure);
-                            } else {
-                                listener.onComplete(url, file, downloadedBytesNum, elapsedTime);
-                            }
-                            listener.onFinish(downloadedBytesNum, elapsedTime);
-                        }
                     } catch (IOException ioe) {
                         // ignore
+                    }
+                    if (listener != null) {
+                        if (failure != null) {
+                            listener.onFailure(url, file, failure);
+                        } else if (cancel || cancelAll) {
+                            listener.onCancel(url, file, downloadedBytesNum, elapsedTime);
+                        } else {
+                            listener.onComplete(url, file, downloadedBytesNum, elapsedTime);
+                        }    
+                        listener.onFinish(downloadedBytesNum, elapsedTime);
+                    }
+                    synchronized (totalActiveDownloadsCount) {
+                        totalActiveDownloadsCount--;
+                        if (totalActiveDownloadsCount == 0) {
+                            cancelAll = false;
+                        }
                     }
                 }
             }
         });
     }
     
-    public Downloader(final Map<URL, File> urlFileMap, final int timeout) {
+    private Downloader(final Map<URL, File> urlFileMap, final int timeout) {
         thread = new Thread(new Runnable(){
             public void run() {
+                synchronized (totalActiveDownloadsCount) {
+                    totalActiveDownloadsCount++;
+                    System.out.println("total dls: " + totalActiveDownloadsCount);
+                }
                 long startTime = System.currentTimeMillis();
                 long downloadedBytesNum = 0;
                 long elapsedTime = 0;
@@ -117,7 +140,7 @@ public class Downloader {
                         out = new BufferedOutputStream(new FileOutputStream(file));
                         byte[] buffer = new byte[1024];
                         int readBytesNum;
-                        while ((readBytesNum = in.read(buffer)) != -1) {
+                        while (!cancel && !cancelAll && (readBytesNum = in.read(buffer)) != -1) {
                             out.write(buffer, 0, readBytesNum);
                             if (listener != null) {
                                 currentDownloadedBytesNum += readBytesNum;
@@ -134,18 +157,34 @@ public class Downloader {
                         try {
                             if (in != null) in.close();
                             if (out != null) out.close();
-                            if (listener != null) {
-                                if (failure != null) {
-                                    listener.onFailure(url, file, failure);
-                                } else {
-                                    listener.onComplete(url, file, downloadedBytesNum, elapsedTime);
-                                }
-                                if (!it.hasNext()) {
-                                    listener.onFinish(downloadedBytesNum, elapsedTime);
-                                }
-                            }
                         } catch (IOException ioe) {
                             // ignore
+                        }
+                        if (listener != null) {
+                            if (failure != null) {
+                                listener.onFailure(url, file, failure);
+                            } else if (cancel || cancelAll) {
+                                listener.onCancel(url, file, downloadedBytesNum, elapsedTime);
+                                listener.onFinish(downloadedBytesNum, elapsedTime);
+                                synchronized (totalActiveDownloadsCount) {
+                                    totalActiveDownloadsCount--;
+                                    if (totalActiveDownloadsCount == 0) {
+                                        cancelAll = false;
+                                    }
+                                }
+                                break;
+                            } else {
+                                listener.onComplete(url, file, downloadedBytesNum, elapsedTime);
+                            }
+                            if (!it.hasNext()) {
+                                listener.onFinish(downloadedBytesNum, elapsedTime);
+                                synchronized (totalActiveDownloadsCount) {
+                                    totalActiveDownloadsCount--;
+                                    if (totalActiveDownloadsCount == 0) {
+                                        cancelAll = false;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -159,6 +198,20 @@ public class Downloader {
         }
     }
     
+    public void cancel() {
+        cancel = true;
+    }
+    
+    public static void cancelAll() {
+        if (totalActiveDownloadsCount > 0) {
+            cancelAll = true;
+        }
+    }
+    
+    public synchronized static int getTotalActiveDownloadsCount() {
+        return totalActiveDownloadsCount;
+    }
+
     public void setDownloadListener(DownloadListener l) {
         listener = l;
     }
