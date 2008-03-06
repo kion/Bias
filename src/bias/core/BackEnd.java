@@ -50,6 +50,7 @@ import org.w3c.dom.NodeList;
 import bias.Constants;
 import bias.Preferences;
 import bias.core.pack.Dependency;
+import bias.core.pack.Pack;
 import bias.core.pack.PackType;
 import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
@@ -58,6 +59,7 @@ import bias.utils.ArchUtils;
 import bias.utils.FSUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
+import bias.utils.VersionComparator;
 
 import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
@@ -1084,6 +1086,19 @@ public class BackEnd {
         aoi.setAuthor(info.getProperty(Constants.ATTRIBUTE_ADD_ON_AUTHOR));
         aoi.setDescription(info.getProperty(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION));
         return aoi;
+    }
+    
+    public Boolean isAddOnInstalledAndUpToDate(Pack pack) throws Throwable {
+        for (AddOnInfo addOn : getAddOns(pack.getType())) {
+            if (addOn.getName().equals(pack.getName())) {
+                if (VersionComparator.getInstance().compare(addOn.getVersion(), pack.getVersion()) >= 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return null;
     }
     
     public Collection<AddOnInfo> getAddOns() throws Throwable {

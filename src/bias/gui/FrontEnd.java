@@ -259,6 +259,38 @@ public class FrontEnd extends JFrame {
 
     private String lastAddedEntryType = null;
     
+    private Map<String, Integer> depCounters;
+    
+    private JTable onlineList;
+    
+    private DefaultTableModel extModel;
+    
+    private DefaultTableModel skinModel;
+
+    private DefaultTableModel libModel;
+    
+    private DefaultTableModel icSetModel;
+    
+    private DefaultListModel icModel;
+    
+    private DefaultTableModel onlineModel;
+    
+    private JProgressBar onlineSingleProgressBar;
+    
+    private JProgressBar onlineTotalProgressBar;
+    
+    private JTable extList;
+    
+    private JTable skinList;
+    
+    private JTable icSetList;
+    
+    private JList icList;
+    
+    private JTable libsList;
+    
+    private JTabbedPane addOnsPane;
+
     private JProgressBar memUsageProgressBar = null;
     
     private JList statusBarMessagesList = null;
@@ -4081,37 +4113,17 @@ public class FrontEnd extends JFrame {
                 status };
     }
     
-    private JTable onlineList;
-    
-    private DefaultTableModel extModel;
-    
-    private DefaultTableModel skinModel;
-
-    private DefaultTableModel libModel;
-    
-    private DefaultTableModel icSetModel;
-    
-    private DefaultListModel icModel;
-    
-    private DefaultTableModel onlineModel;
-    
-    private JProgressBar onlineSingleProgressBar;
-    
-    private JProgressBar onlineTotalProgressBar;
-    
-    private JTable extList;
-    
-    private JTable skinList;
-    
-    private JTable icSetList;
-    
-    private JList icList;
-    
-    private JTable libsList;
-    
-    private JTabbedPane addOnsPane;
-
-    private Map<String, Integer> depCounters;
+    private Object[] getPackRow(Pack pack, String status) {
+        return new Object[]{
+                Boolean.FALSE,
+                pack.getType().value(), 
+                pack.getName(), 
+                pack.getVersion(), 
+                pack.getAuthor() != null ? pack.getAuthor() : Constants.ADDON_FIELD_VALUE_NA, 
+                pack.getDescription() != null ? pack.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                FormatUtils.formatByteSize(pack.getFileSize()),
+                status};
+    }
     
     @SuppressWarnings("unchecked")
     private void initAddOnsManagementDialog() {
@@ -4551,7 +4563,9 @@ public class FrontEnd extends JFrame {
                     private static final long serialVersionUID = 1L;
                     @Override
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
-                        return mColIndex == 0 && (!getValueAt(rowIndex, 1).equals(PackType.LIBRARY.value())) ? true : false;
+                        return mColIndex == 0 
+                                        && (!getValueAt(rowIndex, 1).equals(PackType.LIBRARY.value()) 
+                                        || getValueAt(rowIndex, 7).equals(Constants.ADDON_STATUS_UPDATE)) ? true : false;
                     }
                     @Override
                     public Class<?> getColumnClass(int columnIndex) {
@@ -4575,6 +4589,7 @@ public class FrontEnd extends JFrame {
                 onlineModel.addColumn("Author");
                 onlineModel.addColumn("Description");
                 onlineModel.addColumn("Size");
+                onlineModel.addColumn("Status");
                 TableModelListener dependencyResolver = new TableModelListener(){
                     public void tableChanged(TableModelEvent e) {
                         if (e.getColumn() == 0) {
@@ -4899,15 +4914,17 @@ public class FrontEnd extends JFrame {
                                     && pack.getFileSize() != null
                                     && pack.getVersion() != null 
                                     && pack.getVersion().matches(VersionComparator.VERSION_PATTERN)) {
-                                getAvailableOnlinePackages().put(pack.getName(), pack);
-                                onlineModel.addRow(new Object[]{
-                                        Boolean.FALSE,
-                                        pack.getType().value(), 
-                                        pack.getName(), 
-                                        pack.getVersion(), 
-                                        pack.getAuthor() != null ? pack.getAuthor() : Constants.ADDON_FIELD_VALUE_NA, 
-                                        pack.getDescription() != null ? pack.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                                        FormatUtils.formatByteSize(pack.getFileSize()) });
+                                Boolean isInstalledAndUpToDate = BackEnd.getInstance().isAddOnInstalledAndUpToDate(pack);
+                                Object[] row = null;
+                                if (isInstalledAndUpToDate == null) {
+                                    row = getPackRow(pack, Constants.ADDON_STATUS_NEW);
+                                } else if (!isInstalledAndUpToDate) {
+                                    row = getPackRow(pack, Constants.ADDON_STATUS_UPDATE);
+                                }
+                                if (row != null) {
+                                    getAvailableOnlinePackages().put(pack.getName(), pack);
+                                    onlineModel.addRow(row);
+                                }
                             }
                         }
                         onlineListRefreshed = true;
