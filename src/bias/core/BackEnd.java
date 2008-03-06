@@ -1361,7 +1361,7 @@ public class BackEnd {
         return addOnInfo;
     }
     
-    public void uninstallAddOn(String addOnName, PackType addOnType) throws Exception {
+    public void uninstallAddOn(String addOnName, PackType addOnType) throws Throwable {
         String fullName = addOnName;
         addOnName = addOnName.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
         String fileSuffix = null;

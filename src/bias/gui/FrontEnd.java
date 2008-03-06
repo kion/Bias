@@ -82,6 +82,7 @@ import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
@@ -4090,13 +4091,23 @@ public class FrontEnd extends JFrame {
                 addOnInfo.getDescription() != null ? addOnInfo.getDescription() : Constants.ADDON_FIELD_VALUE_NA };
     }
     
-    private Object[] getAddOnInfoRow(AddOnInfo addOnInfo, String status) {
-        return new Object[] {
-                addOnInfo.getName(),
-                addOnInfo.getVersion(),
-                addOnInfo.getAuthor() != null ? addOnInfo.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
-                addOnInfo.getDescription() != null ? addOnInfo.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
-                status };
+    private Object[] getAddOnInfoRow(Boolean selected, AddOnInfo addOnInfo, String status) {
+        if (selected != null) {
+            return new Object[] {
+                    selected,
+                    addOnInfo.getName(),
+                    addOnInfo.getVersion(),
+                    addOnInfo.getAuthor() != null ? addOnInfo.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                    addOnInfo.getDescription() != null ? addOnInfo.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                    status };
+        } else {
+            return new Object[] {
+                    addOnInfo.getName(),
+                    addOnInfo.getVersion(),
+                    addOnInfo.getAuthor() != null ? addOnInfo.getAuthor() : Constants.ADDON_FIELD_VALUE_NA,
+                    addOnInfo.getDescription() != null ? addOnInfo.getDescription() : Constants.ADDON_FIELD_VALUE_NA,
+                    status };
+        }
     }
     
     private Object[] getPackRow(Pack pack, String status) {
@@ -4113,26 +4124,37 @@ public class FrontEnd extends JFrame {
     
     @SuppressWarnings("unchecked")
     private void initAddOnsManagementDialog() {
-        // TODO [P1] use checkboxes (instead of standard selection model handling) on exts/skins/iconsets lists to uninstall appropriate items 
         if (addOnsManagementDialog == null) {
             try {
                 depCounters = new HashMap<String, Integer>();
                 // extensions
                 extModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
+                    @Override
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
-                        return false;
+                        return mColIndex == 0 ? true : false;
+                    }
+                    @Override
+                    public Class<?> getColumnClass(int columnIndex) {
+                        if (columnIndex == 0) {
+                            return Boolean.class;
+                        } else {
+                            return super.getColumnClass(columnIndex);
+                        }
                     }
                 };
                 extList = new JTable(extModel);
                 final TableRowSorter<TableModel> extSorter = new TableRowSorter<TableModel>(extModel);
                 extSorter.setSortsOnUpdates(true);
                 extList.setRowSorter(extSorter);
+                extModel.addColumn(Constants.EMPTY_STR);
                 extModel.addColumn("Name");
                 extModel.addColumn("Version");
                 extModel.addColumn("Author");
                 extModel.addColumn("Description");
                 extModel.addColumn("Status");
+                extList.getColumnModel().getColumn(0).setPreferredWidth(30);
+                extList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                     String status;
                     try {
@@ -4149,15 +4171,16 @@ public class FrontEnd extends JFrame {
                         t.printStackTrace(System.err);
                         status = Constants.ADDON_STATUS_BROKEN;
                     }
-                    extModel.addRow(getAddOnInfoRow(extension, status));
+                    extModel.addRow(getAddOnInfoRow(Boolean.FALSE, extension, status));
                 }
                 JButton extDetailsButt = new JButton("Extension details");
                 extDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (extList.getSelectedRowCount() == 1) {
+                        int idx = extList.getSelectedRow();
+                        if (idx != -1) {
                             try {
-                                String version = (String) extList.getValueAt(extList.getSelectedRow(), 1);
-                                String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
+                                String extension = (String) extList.getValueAt(idx, 1);
+                                String version = (String) extList.getValueAt(idx, 2);
                                 try {
                                     File addOnInfoFile = new File(
                                             new File(Constants.ADDON_INFO_DIR, extension), 
@@ -4175,17 +4198,16 @@ public class FrontEnd extends JFrame {
                             } catch (Throwable t) {
                                 displayErrorMessage("Failed to display Extensions details!", t);
                             }
-                        } else {
-                            displayMessage("Please, choose only one extension from the list");
                         }
                     }
                 });
                 JButton extConfigButt = new JButton("Configure");
                 extConfigButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (extList.getSelectedRowCount() == 1) {
+                        int idx = extList.getSelectedRow();
+                        if (idx != -1) {
                             try {
-                                String ext = (String) extList.getValueAt(extList.getSelectedRow(), 0);
+                                String ext = (String) extList.getValueAt(idx, 0);
                                 Map<AddOnInfo, String> newExts = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
                                 if (newExts != null && newExts.containsKey(new AddOnInfo(ext))) {
                                     displayMessage(
@@ -4201,8 +4223,6 @@ public class FrontEnd extends JFrame {
                             } catch (Exception ex) {
                                 displayErrorMessage(ex);
                             }
-                        } else {
-                            displayMessage("Please, choose only one extension from the list");
                         }
                     }
                 });
@@ -4216,23 +4236,34 @@ public class FrontEnd extends JFrame {
                 extUninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            if (extList.getSelectedRowCount() != 0) {
+                            boolean selected = false;
+                            for (int i = 0; i < extModel.getRowCount(); i++) {
+                                if ((Boolean) extModel.getValueAt(i, 0)) {
+                                    selected = true;
+                                    break;
+                                }
+                            }
+                            if (selected) {
                                 if (confirmedUninstall()) {
-                                    int idx;
-                                    while ((idx = extList.getSelectedRow()) != -1) {
-                                        String extension = (String) extList.getValueAt(extList.getSelectedRow(), 0);
-                                        String extFullClassName = 
-                                            Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
-                                                                    + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
-                                        BackEnd.getInstance().uninstallAddOn(extFullClassName, PackType.EXTENSION);
-                                        idx = extSorter.convertRowIndexToModel(idx);
-                                        extModel.removeRow(idx);
-                                        modified = true;
+                                    int i = 0;
+                                    while  (i < extModel.getRowCount()) {
+                                        if ((Boolean) extModel.getValueAt(i, 0)) {
+                                            String extension = (String) extModel.getValueAt(i, 1);
+                                            String extFullClassName = 
+                                                Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                                        + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
+                                            BackEnd.getInstance().uninstallAddOn(extFullClassName, PackType.EXTENSION);
+                                            extModel.removeRow(i);
+                                            modified = true;
+                                            i = 0;
+                                        } else {
+                                            i++;
+                                        }
                                     }
                                 }
                             }
-                        } catch (Exception ex) {
-                            displayErrorMessage(ex);
+                        } catch (Throwable ex) {
+                            displayErrorMessage("Failed to uninstall extension(s)! " + getFailureDetails(ex), ex);
                         }
                     }
                 });
@@ -4240,8 +4271,17 @@ public class FrontEnd extends JFrame {
                 // skins
                 skinModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
+                    @Override
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
-                        return false;
+                        return mColIndex == 0 && !getValueAt(rowIndex, 1).equals(DEFAULT_SKIN) ? true : false;
+                    }
+                    @Override
+                    public Class<?> getColumnClass(int columnIndex) {
+                        if (columnIndex == 0) {
+                            return Boolean.class;
+                        } else {
+                            return super.getColumnClass(columnIndex);
+                        }
                     }
                 };
                 skinList = new JTable(skinModel) {
@@ -4253,7 +4293,7 @@ public class FrontEnd extends JFrame {
                         if (currSkinName == null) {
                             currSkinName = DEFAULT_SKIN;
                         }
-                        String name = (String) getModel().getValueAt(row, 0);
+                        String name = (String) getModel().getValueAt(row, 1);
                         if (name.equals(activeSkin)) {
                             c.setForeground(Color.BLUE);
                             Font f = super.getFont();
@@ -4270,12 +4310,15 @@ public class FrontEnd extends JFrame {
                 final TableRowSorter<TableModel> skinSorter = new TableRowSorter<TableModel>(skinModel);
                 skinSorter.setSortsOnUpdates(true);
                 skinList.setRowSorter(skinSorter);
+                skinModel.addColumn(Constants.EMPTY_STR);
                 skinModel.addColumn("Name");
                 skinModel.addColumn("Version");
                 skinModel.addColumn("Author");
                 skinModel.addColumn("Description");
                 skinModel.addColumn("Status");
-                skinModel.addRow(new Object[]{DEFAULT_SKIN,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Skin"});
+                skinList.getColumnModel().getColumn(0).setPreferredWidth(30);
+                skinList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                skinModel.addRow(new Object[]{Boolean.FALSE, DEFAULT_SKIN,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Skin"});
                 for (AddOnInfo skin : BackEnd.getInstance().getAddOns(PackType.SKIN)) {
                     String status;
                     try {
@@ -4292,18 +4335,19 @@ public class FrontEnd extends JFrame {
                         t.printStackTrace(System.err);
                         status = Constants.ADDON_STATUS_BROKEN;
                     }
-                    skinModel.addRow(getAddOnInfoRow(skin, status));
+                    skinModel.addRow(getAddOnInfoRow(Boolean.FALSE, skin, status));
                 }
                 JButton skinDetailsButt = new JButton("Skin details");
                 skinDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (skinList.getSelectedRowCount() == 1) {
+                        int idx = skinList.getSelectedRow();
+                        if (idx != -1) {
                             try {
-                                String skin = (String) skinList.getValueAt(skinList.getSelectedRow(), 0);
+                                String skin = (String) skinList.getValueAt(idx, 1);
                                 if (DEFAULT_SKIN.equals(skin)) {
                                     displayMessage("This is a default native Java cross-platform Skin.");
                                 } else {
-                                    String version = (String) skinList.getValueAt(skinList.getSelectedRow(), 1);
+                                    String version = (String) skinList.getValueAt(idx, 2);
                                     try {
                                         File addOnInfoFile = new File(
                                                 new File(Constants.ADDON_INFO_DIR, skin), 
@@ -4322,16 +4366,15 @@ public class FrontEnd extends JFrame {
                             } catch (Throwable t) {
                                 displayErrorMessage("Failed to display Skin details!", t);
                             }
-                        } else {
-                            displayMessage("Please, choose only one Skin from the list");
                         }
                     }
                 });
                 JButton skinActivateButt = new JButton("(Re)Activate Skin");
                 skinActivateButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (skinList.getSelectedRowCount() == 1) {
-                            String skin = (String) skinList.getValueAt(skinList.getSelectedRow(), 0);
+                        int idx = skinList.getSelectedRow();
+                        if (idx != -1) {
+                            String skin = (String) skinList.getValueAt(idx, 0);
                             if (DEFAULT_SKIN.equals(skin)) {
                                 try {
                                     modified = setActiveSkin(null);
@@ -4357,9 +4400,7 @@ public class FrontEnd extends JFrame {
                                     }
                                 }
                             }
-                        } else {
-                            displayMessage("Please, choose only one skin from the list");
-                        }    
+                        }
                     }
                 });
                 JButton skinInstButt = new JButton("Install/Update...");
@@ -4372,34 +4413,40 @@ public class FrontEnd extends JFrame {
                 skinUninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            if (skinList.getSelectedRowCount() > 0) {
+                            boolean selected = false;
+                            for (int i = 0; i < skinModel.getRowCount(); i++) {
+                                if ((Boolean) skinModel.getValueAt(i, 0)) {
+                                    selected = true;
+                                    break;
+                                }
+                            }
+                            if (selected) {
                                 if (confirmedUninstall()) {
                                     String currentSkin = config.getProperty(Constants.PROPERTY_SKIN);
-                                    int idx;
-                                    while ((idx = skinList.getSelectedRow()) != -1) {
-                                        String skin = (String) skinList.getValueAt(skinList.getSelectedRow(), 0);
-                                        if (!DEFAULT_SKIN.equals(skin)) {
+                                    int i = 0;
+                                    while  (i < skinModel.getRowCount()) {
+                                        String skin = (String) skinModel.getValueAt(i, 1);
+                                        if ((Boolean) skinModel.getValueAt(i, 0)) {
                                             String fullSkinClassName = 
                                                 Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                         + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
                                             BackEnd.getInstance().uninstallAddOn(fullSkinClassName, PackType.SKIN);
-                                            idx = skinSorter.convertRowIndexToModel(idx);
-                                            skinModel.removeRow(idx);
+                                            skinModel.removeRow(i);
                                             // if skin that has been uninstalled was active one...
                                             if (skin.equals(currentSkin)) {
                                                 //... unset it (default one will be used)
                                                 config.remove(Constants.PROPERTY_SKIN);
                                             }
                                             modified = true;
+                                            i = 0;
                                         } else {
-                                            displayErrorMessage("Default Skin can not be uninstalled!");
-                                            break;
+                                            i++;
                                         }
                                     }
                                 }
                             }
-                        } catch (Exception ex) {
-                            displayErrorMessage(ex);
+                        } catch (Throwable ex) {
+                            displayErrorMessage("Failed to uninstall skin(s)! " + getFailureDetails(ex), ex);
                         }
                     }
                 });
@@ -4407,20 +4454,32 @@ public class FrontEnd extends JFrame {
                 // icons
                 icSetModel = new DefaultTableModel() {
                     private static final long serialVersionUID = 1L;
+                    @Override
                     public boolean isCellEditable(int rowIndex, int mColIndex) {
-                        return false;
+                        return mColIndex == 0 ? true : false;
+                    }
+                    @Override
+                    public Class<?> getColumnClass(int columnIndex) {
+                        if (columnIndex == 0) {
+                            return Boolean.class;
+                        } else {
+                            return super.getColumnClass(columnIndex);
+                        }
                     }
                 };
                 icSetList = new JTable(icSetModel);
                 final TableRowSorter<TableModel> icSetSorter = new TableRowSorter<TableModel>(icSetModel);
                 icSetSorter.setSortsOnUpdates(true);
                 icSetList.setRowSorter(icSetSorter);
+                icSetModel.addColumn(Constants.EMPTY_STR);
                 icSetModel.addColumn("Name");
                 icSetModel.addColumn("Version");
                 icSetModel.addColumn("Author");
                 icSetModel.addColumn("Description");
+                icSetList.getColumnModel().getColumn(0).setPreferredWidth(30);
+                icSetList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 for (AddOnInfo iconSetInfo : BackEnd.getInstance().getIconSets()) {
-                    icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
+                    icSetModel.addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
                 }
                 icons = new HashMap<String, ImageIcon>();
                 icModel = new DefaultListModel();
@@ -4435,10 +4494,11 @@ public class FrontEnd extends JFrame {
                 JButton icSetDetailsButt = new JButton("IconSet details");
                 icSetDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        if (icSetList.getSelectedRowCount() == 1) {
+                        int idx = icSetList.getSelectedRow();
+                        if (idx != -1) {
                             try {
-                                String ic = (String) icSetList.getValueAt(icSetList.getSelectedRow(), 0);
-                                String version = (String) icSetList.getValueAt(icSetList.getSelectedRow(), 1);
+                                String ic = (String) icSetList.getValueAt(idx, 1);
+                                String version = (String) icSetList.getValueAt(idx, 2);
                                 try {
                                     File addOnInfoFile = new File(
                                             new File(Constants.ADDON_INFO_DIR, ic), 
@@ -4456,8 +4516,6 @@ public class FrontEnd extends JFrame {
                             } catch (Throwable t) {
                                 displayErrorMessage("Failed to display IconSet details!", t);
                             }
-                        } else {
-                            displayMessage("Please, choose only one IconSet from the list.");
                         }
                     }
                 });
@@ -4482,7 +4540,7 @@ public class FrontEnd extends JFrame {
                                                     icSetModel.removeRow(0);
                                                 }
                                                 for (AddOnInfo iconSetInfo : iconSets) {
-                                                    icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
+                                                    icSetModel.addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
                                                 }
                                                 added = true;
                                             }
@@ -4523,24 +4581,39 @@ public class FrontEnd extends JFrame {
                 JButton removeIconSetButt = new JButton("Uninstall selected IconSet(s)");
                 removeIconSetButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        StringBuffer sb = new StringBuffer();
-                        while (icSetList.getSelectedRow() != -1) {
-                            String icSet = (String) icSetList.getValueAt(icSetList.getSelectedRow(), 0);
-                            try {
-                                Collection<String> removedIds = BackEnd.getInstance().removeIconSet(icSet);
-                                for (String removedId : removedIds) {
-                                    icModel.removeElement(icons.get(removedId));
+                        try {
+                            boolean selected = false;
+                            for (int i = 0; i < icSetModel.getRowCount(); i++) {
+                                if ((Boolean) icSetModel.getValueAt(i, 0)) {
+                                    selected = true;
+                                    break;
                                 }
-                                int idx = icSetList.convertRowIndexToModel(icSetList.getSelectedRow());
-                                icSetModel.removeRow(idx);
-                                sb.append(icSet + Constants.NEW_LINE);
-                            } catch (Throwable t) {
-                                displayErrorMessage("Failed to remove IconSet '" + icSet + "'! " + getFailureDetails(t), t);
                             }
-                        }
-                        if (!Validator.isNullOrBlank(sb)) {
-                            icList.repaint();
-                            displayMessage("Following IconSets have been successfully removed: " + Constants.NEW_LINE + sb.toString());
+                            if (selected) {
+                                if (confirmedUninstall()) {
+                                    boolean changed = false;
+                                    int i = 0;
+                                    while  (i < icSetModel.getRowCount()) {
+                                        if ((Boolean) icSetModel.getValueAt(i, 0)) {
+                                            String icSet = (String) icSetModel.getValueAt(i, 1);
+                                            Collection<String> removedIds = BackEnd.getInstance().removeIconSet(icSet);
+                                            for (String removedId : removedIds) {
+                                                icModel.removeElement(icons.get(removedId));
+                                            }
+                                            icSetModel.removeRow(i);
+                                            changed = true;
+                                            i = 0;
+                                        } else {
+                                            i++;
+                                        }
+                                    }
+                                    if (changed) {
+                                        icList.repaint();
+                                    }
+                                }
+                            }
+                        } catch (Throwable ex) {
+                            displayErrorMessage("Failed to uninstall IsonSet(s)! " + getFailureDetails(ex), ex);
                         }
                     }
                 });
@@ -4569,7 +4642,7 @@ public class FrontEnd extends JFrame {
                 final TableRowSorter<TableModel> onlineSorter = new TableRowSorter<TableModel>(onlineModel);
                 onlineSorter.setSortsOnUpdates(true);
                 onlineList.setRowSorter(onlineSorter);
-                onlineModel.addColumn("D & I/U");
+                onlineModel.addColumn(Constants.EMPTY_STR);
                 onlineModel.addColumn("Type");
                 onlineModel.addColumn("Name");
                 onlineModel.addColumn("Version");
@@ -4577,6 +4650,7 @@ public class FrontEnd extends JFrame {
                 onlineModel.addColumn("Description");
                 onlineModel.addColumn("Size");
                 onlineModel.addColumn("Status");
+                onlineList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 TableModelListener dependencyResolver = new TableModelListener(){
                     public void tableChanged(TableModelEvent e) {
                         if (e.getColumn() == 0) {
@@ -4624,6 +4698,7 @@ public class FrontEnd extends JFrame {
                     }
                 };
                 onlineModel.addTableModelListener(dependencyResolver);
+                onlineList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 onlineSingleProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
                 onlineSingleProgressBar.setStringPainted(true);
                 onlineSingleProgressBar.setMinimum(0);
@@ -4806,7 +4881,7 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Advanced", uiIcons.getIconPreferences(), advPanel);
                 
-                addOnsManagementDialog = new JFrame("Manage Add-Ons");
+                addOnsManagementDialog = new JFrame("Bias :: Add-Ons Management");
                 addOnsManagementDialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
                 addOnsManagementDialog.addWindowListener(new WindowAdapter(){
                     @Override
@@ -4948,12 +5023,12 @@ public class FrontEnd extends JFrame {
                 try {
                     AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(addons.getValue(), addOnType);
                     String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
-                    int idx = findDataRowIndex(addOnModel, 0, installedAddOn.getName());
+                    int idx = findDataRowIndex(addOnModel, 1, installedAddOn.getName());
                     if (idx != -1) {
                         addOnModel.removeRow(idx);
-                        addOnModel.insertRow(idx, getAddOnInfoRow(installedAddOn, status));
+                        addOnModel.insertRow(idx, getAddOnInfoRow(Boolean.FALSE, installedAddOn, status));
                     } else {
-                        addOnModel.addRow(getAddOnInfoRow(installedAddOn, status));
+                        addOnModel.addRow(getAddOnInfoRow(Boolean.FALSE, installedAddOn, status));
                     }
                     sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Add-On '" + installedAddOn.getName() + Constants.BLANK_STR + installedAddOn.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                     modified = true;
@@ -5121,7 +5196,7 @@ public class FrontEnd extends JFrame {
                                         icSetModel.removeRow(0);
                                     }
                                     for (AddOnInfo iconSetInfo : iconSets) {
-                                        icSetModel.addRow(getAddOnInfoRow(iconSetInfo, null));
+                                        icSetModel.addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
                                     }
                                     sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                     icList.repaint();
@@ -5139,9 +5214,9 @@ public class FrontEnd extends JFrame {
                                 int idx = findDataRowIndex(libModel, 0, libInfo.getName());
                                 if (idx != -1) {
                                     libModel.removeRow(idx);
-                                    libModel.insertRow(idx, getAddOnInfoRow(libInfo, status));
+                                    libModel.insertRow(idx, getAddOnInfoRow(null, libInfo, status));
                                 } else {
-                                    libModel.addRow(getAddOnInfoRow(libInfo, status));
+                                    libModel.addRow(getAddOnInfoRow(null, libInfo, status));
                                 }
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 modified = true;
@@ -5154,12 +5229,12 @@ public class FrontEnd extends JFrame {
                                 AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
                                 String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
                                 DefaultTableModel model = addOnType == PackType.EXTENSION ? extModel : skinModel;
-                                int idx = findDataRowIndex(model, 0, installedAddOn.getName());
+                                int idx = findDataRowIndex(model, 1, installedAddOn.getName());
                                 if (idx != -1) {
                                     model.removeRow(idx);
-                                    model.insertRow(idx, getAddOnInfoRow(installedAddOn, status));
+                                    model.insertRow(idx, getAddOnInfoRow(Boolean.FALSE, installedAddOn, status));
                                 } else {
-                                    model.addRow(getAddOnInfoRow(installedAddOn, status));
+                                    model.addRow(getAddOnInfoRow(Boolean.FALSE, installedAddOn, status));
                                 }
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.value() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 modified = true;
@@ -5291,7 +5366,7 @@ public class FrontEnd extends JFrame {
         final TableRowSorter<TableModel> addOnSorter = new TableRowSorter<TableModel>(addOnModel);
         addOnSorter.setSortsOnUpdates(true);
         addOnList.setRowSorter(addOnSorter);
-        addOnModel.addColumn("Install/Update");
+        addOnModel.addColumn(Constants.EMPTY_STR);
         addOnModel.addColumn("Name");
         addOnModel.addColumn("Version");
         addOnModel.addColumn("Author");
@@ -5328,6 +5403,7 @@ public class FrontEnd extends JFrame {
         addOnModel.addColumn("Author");
         addOnModel.addColumn("Description");
         addOnModel.addColumn("Status");
+        addOnList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         for (AddOnInfo addOnInfo : addOnInfos) {
             String status;
             Map<AddOnInfo, String> libStatuses = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY);
@@ -5336,7 +5412,7 @@ public class FrontEnd extends JFrame {
             } else {
                 status = Constants.ADDON_STATUS_LOADED;
             }
-            addOnModel.addRow(getAddOnInfoRow(addOnInfo, status));
+            addOnModel.addRow(getAddOnInfoRow(null, addOnInfo, status));
         }
         return addOnList;
     }
