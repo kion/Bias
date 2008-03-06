@@ -295,7 +295,7 @@ public class FrontEnd extends JFrame {
     
     private JList statusBarMessagesList = null;
 
-    private Dialog dialog = null;
+    private JFrame dialog = null;
     
     private JScrollPane detailsPane = null;
 
@@ -4701,6 +4701,7 @@ public class FrontEnd extends JFrame {
                 onlineCancelInstallButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         Downloader.cancelAll();
+//                        Splash.hideSplash();
                     }
                 });
                 
@@ -4829,10 +4830,33 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Advanced", uiIcons.getIconPreferences(), advPanel);
                 
-                JOptionPane op = new JOptionPane();
-                op.setMessage(addOnsPane);
-                op.setMessageType(JOptionPane.INFORMATION_MESSAGE);
-                dialog = op.createDialog(FrontEnd.this, "Manage Add-Ons");
+                dialog = new JFrame("Manage Add-Ons");
+                dialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+                dialog.addWindowListener(new WindowAdapter(){
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        if (Downloader.getTotalActiveDownloadsCount() == 0) {
+                            dialog.setVisible(false);
+                        }
+                    }
+                });
+                JPanel p = new JPanel(new BorderLayout());
+                p.add(addOnsPane, BorderLayout.CENTER);
+                JButton okButt = new JButton("OK");
+                okButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        if (Downloader.getTotalActiveDownloadsCount() == 0) {
+                            dialog.setVisible(false);
+                        }
+                    }
+                });
+                p.add(okButt, BorderLayout.SOUTH);
+                dialog.add(p);
+                dialog.pack();
+                int x = (getToolkit().getScreenSize().width - dialog.getWidth()) / 2;
+                int y = (getToolkit().getScreenSize().height - dialog.getHeight()) / 2;
+                dialog.setLocation(x, y);
+                dialog.setVisible(true);
                 
             } catch (Throwable t) {
                 displayErrorMessage("Failed to initialize add-ons configuration screen!", t);
@@ -5005,16 +5029,13 @@ public class FrontEnd extends JFrame {
                 }
                 @Override
                 public void onFailure(URL url, File file, Throwable failure) {
+                    Splash.hideSplash();
                     displayAddOnsScreenErrorMessage("Failed to retrieve online list of available addons!", failure);
                 }
                 @Override
                 public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime) {
                     Splash.hideSplash();
                     JOptionPane.showMessageDialog(getActiveWindow(), "Online packages list refresh canceled by user!");
-                }
-                @Override
-                public void onFinish(long downloadedBytesNum, long elapsedTime) {
-                    Splash.hideSplash();
                 }
             });
             d.start();

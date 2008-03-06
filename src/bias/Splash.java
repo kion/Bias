@@ -3,7 +3,6 @@
  */
 package bias;
 
-import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Frame;
@@ -13,6 +12,8 @@ import java.awt.MediaTracker;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.net.URL;
+
+import javax.swing.JFrame;
 
 /**
  * @author kion
@@ -77,7 +78,7 @@ public class Splash extends Window {
     
     public static void hideSplash() {
         if (instance != null) {
-            if (!(instance.getOwner() instanceof Dialog)) {
+            if (!(instance.getOwner() instanceof JFrame)) {
                 instance.getOwner().dispose();
             }
             instance.dispose();
