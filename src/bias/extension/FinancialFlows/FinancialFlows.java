@@ -246,7 +246,7 @@ public class FinancialFlows extends EntryExtension {
      * @see bias.extension.Extension#serializeSettings()
      */
     public byte[] serializeSettings() throws Throwable {
-        // TODO [P1] table-sorting options should be stored as well
+        // TODO [P2] table-sorting options should be stored as well
         Properties p = new Properties();
         if (currency != null) {
             p.setProperty("CURRENCY", currency);
