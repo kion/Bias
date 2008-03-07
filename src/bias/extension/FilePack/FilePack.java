@@ -55,7 +55,7 @@ import bias.utils.Validator;
 public class FilePack extends EntryExtension {
 	private static final long serialVersionUID = 1L;
     
-    // TODO [P1] column widths should be stored as relative (% of whole table width) values
+    // TODO [P2] column widths should be stored as relative (% of whole table width) values
 
 	private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "add.png"));
     private static final ImageIcon ICON_DELETE = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "delete.png"));

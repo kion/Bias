@@ -375,8 +375,6 @@ public class FrontEnd extends JFrame {
 
     private static boolean unusedAddOnDataAndConfigFilesCleanedUp = false;
     
-    // TODO [P2] instead of one online-repository, it should be possible to have any number of them (extendible by user)
-    
     private static Map<String, Pack> availableOnlinePackages;
     
     private static Map<String, Pack> getAvailableOnlinePackages() {

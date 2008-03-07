@@ -296,7 +296,7 @@ public class FinancialFlows extends EntryExtension {
      */
     @Override
     public Collection<String> getSearchData() throws Throwable {
-        // TODO [P1] add purpose-data to search data
+        // TODO [P2] add purpose-data to search data
         Collection<String> searchData = new ArrayList<String>();
         searchData.addAll(incomeTypes);
         searchData.addAll(outgoTypes);
@@ -309,7 +309,7 @@ public class FinancialFlows extends EntryExtension {
      * @see bias.extension.EntryExtension#configure(byte[])
      */
     public byte[] configure(byte[] settings) throws Throwable {
-        // TODO [P1] implement (income/outcome types management, currency settings and so on should be here)
+        // TODO [P2] implement (income/outcome types management, currency settings and so on should be here)
         return null;
     }
 
@@ -565,7 +565,7 @@ public class FinancialFlows extends EntryExtension {
         getJTableSingle().getColumnModel().removeColumn(getJTableSingle().getColumnModel().getColumn(COLUMN_DIRECTION_IDX));
         singleSorter = new TableRowSorter<TableModel>(model);
         singleSorter.setSortsOnUpdates(true);
-        // TODO [P1] table-sorting options should be restored from settings
+        // TODO [P2] table-sorting options should be restored from settings
         List<SortKey> sortKeys = new LinkedList<SortKey>();
         sortKeys.add(new SortKey(COLUMN_DATE_IDX, SortOrder.ASCENDING));
         singleSorter.setSortKeys(sortKeys);
@@ -587,7 +587,7 @@ public class FinancialFlows extends EntryExtension {
         getJTableRegular().getColumnModel().removeColumn(getJTableRegular().getColumnModel().getColumn(COLUMN_DIRECTION_IDX));
         regularSorter = new TableRowSorter<TableModel>(model);
         regularSorter.setSortsOnUpdates(true);
-        // TODO [P1] table-sorting options should be restored from settings
+        // TODO [P2] table-sorting options should be restored from settings
         List<SortKey> sortKeys = new LinkedList<SortKey>();
         sortKeys.add(new SortKey(COLUMN_DIRECTION_IDX, SortOrder.ASCENDING));
         regularSorter.setSortKeys(sortKeys);
