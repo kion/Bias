@@ -60,6 +60,7 @@ public class Constants {
     public static final String HTML_COLOR_HIGHLIGHT_OK = "<font color=\"#00A000\">";
     public static final String HTML_COLOR_HIGHLIGHT_INFO = "<font color=\"#BC6A28\">";
     public static final String HTML_COLOR_HIGHLIGHT_ERROR = "<font color=\"#FA0000\">";
+    public static final String HTML_COLOR_HIGHLIGHT_WARNING = "<font color=\"#FA0000\">";
     public static final String HTML_COLOR_SUFFIX = "</font>";
     public static final String HTML_SUFFIX = "</html>";
     public static final String ADDON_FIELD_VALUE_NA = "N/A";
@@ -70,6 +71,7 @@ public class Constants {
     public static final String ADDON_STATUS_LOADED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_OK + "[LOADED]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     public static final String ADDON_STATUS_NEW = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_OK + "[New]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     public static final String ADDON_STATUS_UPDATE = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "[Update]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
+    public static final String ADDON_STATUS_UNUSED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "[Unused]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     public static final String ADDON_STATUS_BROKEN = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + "[BROKEN]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     
     public static final String UNICODE_ENCODING = "UTF-8";
@@ -106,7 +108,7 @@ public class Constants {
     
     public static final String GLOBAL_CONFIG_FILE = "config.properties";
     public static final String PREFERENCES_FILE = "preferences.properties";
-    public static final String REPOSITORIES_CONFIG_FILE = "repositories.properties";
+    public static final String REPOSITORY_CONFIG_FILE = "repository.properties";
     public static final String UNINSTALL_CONFIG_FILE = "uninstall.conf";
     public static final String METADATA_FILE_NAME = "metadata.xml";
     public static final String ICONS_CONFIG_FILE = "icons.conf";

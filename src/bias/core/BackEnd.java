@@ -312,7 +312,7 @@ public class BackEnd {
         // parse metadata file
         this.data = parseMetadata(metadata, identifiedData, null, false);
         // get lists of loaded addons
-        loadedAddOns = getAddOns(null);
+        loadedAddOns = getAddOns();
     }
     
     private Collection<String> getDataExportExtensionsList() {
@@ -1019,7 +1019,7 @@ public class BackEnd {
     
     public URL getRepositoryBaseURL() throws Exception {
         Properties p = new Properties();
-        File reposConfigFile = new File(Constants.CONFIG_DIR, Constants.REPOSITORIES_CONFIG_FILE);
+        File reposConfigFile = new File(Constants.CONFIG_DIR, Constants.REPOSITORY_CONFIG_FILE);
         String urlStr = null;
         if (reposConfigFile.exists()) {
             p.load(new FileInputStream(reposConfigFile));
@@ -1091,6 +1091,26 @@ public class BackEnd {
         info.setProperty(Constants.ATTRIBUTE_ADD_ON_VERSION, addOnInfo.getVersion());
         info.setProperty(Constants.ATTRIBUTE_ADD_ON_AUTHOR, addOnInfo.getAuthor());
         info.setProperty(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION, addOnInfo.getDescription());
+        StringBuffer deps = new StringBuffer();
+        if (addOnInfo.getDependencies() != null && !addOnInfo.getDependencies().isEmpty()) {
+            Iterator<Dependency> it = addOnInfo.getDependencies().iterator();
+            while (it.hasNext()) {
+                Dependency dep = it.next();
+                deps.append(dep.getType().value());
+                deps.append(Constants.ADDON_FILENAME_VERSION_SEPARATOR);
+                deps.append(dep.getName());
+                if (!Validator.isNullOrBlank(dep.getVersion())) {
+                    deps.append(Constants.ADDON_FILENAME_VERSION_SEPARATOR);
+                    deps.append(dep.getVersion());
+                }
+                if (it.hasNext()) {
+                    deps.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                }
+            }
+        }
+        if (!Validator.isNullOrBlank(deps)) {
+            info.setProperty(Constants.ATTRIBUTE_ADD_ON_DEPENDENCIES, deps.toString());
+        }
         FSUtils.writeFile(addOnInfoFile, PropertiesUtils.serializeProperties(info));
     }
     
@@ -1102,6 +1122,27 @@ public class BackEnd {
         aoi.setVersion(info.getProperty(Constants.ATTRIBUTE_ADD_ON_VERSION));
         aoi.setAuthor(info.getProperty(Constants.ATTRIBUTE_ADD_ON_AUTHOR));
         aoi.setDescription(info.getProperty(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION));
+        String deps = info.getProperty(Constants.ATTRIBUTE_ADD_ON_DEPENDENCIES);
+        if (!Validator.isNullOrBlank(deps)) {
+             for (String dep : deps.split(Constants.PROPERTY_VALUES_SEPARATOR)) {
+                 String[] depInfo = dep.trim().split(Constants.ADDON_FILENAME_VERSION_SEPARATOR);
+                 if (depInfo.length != 2 && depInfo.length != 3) {
+                     throw new Exception(
+                             "Invalid Add-On-Info: " + Constants.NEW_LINE +
+                             Constants.ATTRIBUTE_ADD_ON_DEPENDENCIES 
+                             + " attribute has invalid value!" + Constants.NEW_LINE
+                             + "[At least dependency type and name should be specified (version is optional)]");
+                 }
+                 Dependency d = new Dependency();
+                 d.setType(PackType.fromValue(depInfo[0]));
+                 d.setName(depInfo[1]);
+                 if (depInfo.length == 3) { 
+                     d.setVersion(depInfo[2]);
+                 }
+                 aoi.addDependency(d);
+             }
+            
+        }
         return aoi;
     }
     

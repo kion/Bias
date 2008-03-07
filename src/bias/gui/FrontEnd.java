@@ -373,7 +373,7 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton3 = null;
 
-    private static boolean cleanedUp = false;
+    private static boolean unusedAddOnDataAndConfigFilesCleanedUp = false;
     
     // TODO [P2] instead of one online-repository, it should be possible to have any number of them (extendible by user)
     
@@ -4655,7 +4655,6 @@ public class FrontEnd extends JFrame {
                     public void tableChanged(TableModelEvent e) {
                         if (e.getColumn() == 0) {
                             try {
-                                onlineModel.removeTableModelListener(this);
                                 Pack pack = getAvailableOnlinePackages().get((String) onlineModel.getValueAt(e.getFirstRow(), 2));
                                 if (pack.getDependency() != null && !pack.getDependency().isEmpty()) {
                                     for (Dependency dep : pack.getDependency()) {
@@ -4691,8 +4690,6 @@ public class FrontEnd extends JFrame {
                                 }
                             } catch (Throwable t) {
                                 displayErrorMessage("Failed to handle/resolve dependencies! " + getFailureDetails(t), t);
-                            } finally {
-                                onlineModel.addTableModelListener(this);
                             }
                         }
                     }
@@ -4853,31 +4850,101 @@ public class FrontEnd extends JFrame {
                 libsPanel.add(new JScrollPane(libsList), BorderLayout.CENTER);
                 advPanel.add(libsPanel, BorderLayout.CENTER);
                 
-                if (BackEnd.getInstance().unusedAddOnDataAndConfigFilesFound() && !cleanedUp) {
-                    JPanel cleanPanel = new JPanel(new BorderLayout());
+                JPanel advBottomPanel = new JPanel();
+                JPanel cleanPanel = null;
+                if (BackEnd.getInstance().unusedAddOnDataAndConfigFilesFound() && !unusedAddOnDataAndConfigFilesCleanedUp) {
+                    cleanPanel = new JPanel(new BorderLayout());
                     final JButton cleanButt = new JButton("Clean unused data and config files!");
                     JLabel cleanLabel = new JLabel(
-                            "<html>" +
-                            "<body>" +
-                            "<div color=\"red\">" +
+                            Constants.HTML_PREFIX +
+                            Constants.HTML_COLOR_HIGHLIGHT_WARNING +
                             "NOTE: This will remove all unused data and configuration files that were used by extensions/skins that are not currently loaded<br>" +
                             "(Do that only if you don't plan to install these extensions/skins again or want to reset their data/settings)" +
-                            "</div>" +
-                            "</body>" +
-                            "</html>");
+                            Constants.HTML_COLOR_SUFFIX +
+                            Constants.HTML_SUFFIX);
                     cleanButt.addActionListener(new ActionListener(){
                         public void actionPerformed(ActionEvent e) {
                             BackEnd.getInstance().removeUnusedAddOnDataAndConfigFiles();
                             cleanButt.setText("Clean unused data and config files! [Done]");
                             cleanButt.setEnabled(false);
-                            cleanedUp = true;
+                            unusedAddOnDataAndConfigFilesCleanedUp = true;
                         }
                     });
                     cleanPanel.add(cleanButt, BorderLayout.NORTH);
                     cleanPanel.add(cleanLabel, BorderLayout.CENTER);
-                    advPanel.add(cleanPanel, BorderLayout.SOUTH);
                 }
-                // TODO [P1] place clean-unused-libs feature implementation somewhere here...
+
+                // TODO [P1] place clean-unused-libs feature implementation here...
+                JPanel uninstLisbPanel = new JPanel(new BorderLayout());
+                final JButton detectButt = new JButton("Detect unused libraries");
+                final JButton cleanButt = new JButton("Uninstall unused libraries!");
+                cleanButt.setEnabled(false);
+                final JLabel cleanLabel = new JLabel(
+                        Constants.HTML_PREFIX +
+                        Constants.HTML_COLOR_HIGHLIGHT_WARNING +
+                        "NOTE: deleting unused libriaries will remove all libraries that some not currently loaded extensions/skins were dependent on<br>" +
+                        "(Do that only if you don't plan to install these extensions/skins again)" +
+                        Constants.HTML_COLOR_SUFFIX +
+                        Constants.HTML_SUFFIX);
+                cleanLabel.setVisible(false);
+                detectButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            Collection<String> deps = new ArrayList<String>();
+                            for (AddOnInfo addOnInfo : BackEnd.getInstance().getAddOns()) {
+                                if (addOnInfo.getDependencies() != null) {
+                                    for (Dependency dep : addOnInfo.getDependencies()) {
+                                        deps.add(dep.getName());
+                                    }
+                                }
+                            }
+                            cleanButt.setEnabled(false);
+                            cleanLabel.setVisible(false);
+                            for (int i = 0; i < libModel.getRowCount(); i++) {
+                                String libName = (String) libModel.getValueAt(i, 0);
+                                if (!deps.contains(libName)) {
+                                    libModel.setValueAt(Constants.ADDON_STATUS_UNUSED, i, 4);
+                                    cleanButt.setEnabled(true);
+                                    cleanLabel.setVisible(true);
+                                }
+                            }
+                        } catch (Throwable t) {
+                            displayErrorMessage("Failed to detect unused librarires! " + getFailureDetails(t), t);
+                        }
+                    }
+                });
+                cleanButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            int i = 0;
+                            while  (i < libModel.getRowCount()) {
+                                if (libModel.getValueAt(i, 4).equals(Constants.ADDON_STATUS_UNUSED)) {
+                                    String lib = (String) libModel.getValueAt(i, 0);
+                                    BackEnd.getInstance().uninstallAddOn(lib, PackType.LIBRARY);
+                                    libModel.removeRow(i);
+                                    i = 0;
+                                } else {
+                                    i++;
+                                }
+                            }
+                            cleanButt.setEnabled(false);
+                            cleanLabel.setVisible(false);
+                        } catch (Throwable t) {
+                            displayErrorMessage("Failed to uninstall unused librarires! " + getFailureDetails(t), t);
+                        }
+                    }
+                });
+                JPanel bp = new JPanel(new GridLayout(1,2));
+                bp.add(detectButt);
+                bp.add(cleanButt);
+                uninstLisbPanel.add(bp, BorderLayout.CENTER);
+                uninstLisbPanel.add(cleanLabel, BorderLayout.SOUTH);
+                
+                advBottomPanel.setLayout(new GridLayout(cleanPanel != null ? 2 : 1, 1));
+                advBottomPanel.add(uninstLisbPanel);
+                if (cleanPanel != null) advBottomPanel.add(cleanPanel);
+                
+                advPanel.add(advBottomPanel, BorderLayout.SOUTH);
                 
                 addOnsPane.addTab("Advanced", uiIcons.getIconPreferences(), advPanel);
                 
@@ -5209,6 +5276,9 @@ public class FrontEnd extends JFrame {
                                 libInfo.setVersion(pack.getVersion());
                                 libInfo.setDescription(pack.getDescription());
                                 libInfo.setAuthor(pack.getAuthor());
+                                if (pack.getDependency() != null) {
+                                    libInfo.addAllDependencies(pack.getDependency());
+                                }
                                 BackEnd.getInstance().installLibrary(file, libInfo);
                                 String status = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY).get(libInfo);
                                 int idx = findDataRowIndex(libModel, 0, libInfo.getName());
@@ -5302,7 +5372,6 @@ public class FrontEnd extends JFrame {
         final JTable addOnList = new JTable(addOnModel);
         
         TableModelListener dependencyResolver = new TableModelListener(){
-            private TableModelListener self = this;
             public void tableChanged(final TableModelEvent e) {
                 if (e.getColumn() == 0) {
                     final AddOnInfo pack = proposedAddOnsToInstall.get(addOnModel.getValueAt(e.getFirstRow(), 1));
@@ -5312,7 +5381,6 @@ public class FrontEnd extends JFrame {
                                 // ... and when done, try to resolve dependencies
                                 try {
                                     lockAddOnsManagementDialog();
-                                    addOnModel.removeTableModelListener(self);
                                     for (Dependency dep : pack.getDependencies()) {
                                         if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
                                             int idx = findDataRowIndex(onlineModel, 2, dep.getName());
@@ -5347,7 +5415,6 @@ public class FrontEnd extends JFrame {
                                     displayErrorMessage("Failed to handle/resolve dependencies! " + getFailureDetails(t), t);
                                 } finally {
                                     unlockAddOnsManagementDialog();
-                                    addOnModel.addTableModelListener(self);
                                 }
                             }
                         };

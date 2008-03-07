@@ -83,6 +83,13 @@ public class AddOnInfo {
         dependencies.add(dependency);
     }
 
+    public void addAllDependencies(Collection<Dependency> dependencies) {
+        if (this.dependencies == null) {
+            this.dependencies = new ArrayList<Dependency>();
+        }
+        this.dependencies.addAll(dependencies);
+    }
+
     /* (non-Javadoc)
      * @see java.lang.Object#equals(java.lang.Object)
      */
