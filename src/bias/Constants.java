@@ -163,7 +163,9 @@ public class Constants {
     public static final String OPTION_PROCESS_ONLY_RELATED_ICONS = "PROCESS_ONLY_RELATED_ICONS";
     public static final String OPTION_PROCESS_ICONS = "PROCESS_ICONS";
     public static final String OPTION_OVERWRITE_ICONS = "OVERWRITE_ICONS";
-    public static final String OPTION_PROCESS_ADDONS = "PROCESS_ADDONS";
+    public static final String OPTION_PROCESS_APP_CORE = "PROCESS_APP_CORE";
+    public static final String OPTION_PROCESS_ADDONS_AND_LIBS = "PROCESS_ADDONS_AND_LIBS";
+    public static final String OPTION_UPDATE_ADDONS_AND_LIBS = "UPDATE_ADDONS_AND_LIBS";
     public static final String OPTION_PROCESS_ADDON_CONFIGS = "PROCESS_ADDON_CONFIGS";
     public static final String OPTION_PROCESS_IMPORT_EXPORT_CONFIGS = "PROCESS_IMPORT_EXPORT_CONFIGS";
     public static final String OPTION_OVERWRITE_IMPORT_EXPORT_CONFIGS = "OVERWRITE_IMPORT_EXPORT_CONFIGS";

@@ -2822,7 +2822,9 @@ public class FrontEnd extends JFrame {
                                                         Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_TOOLS_DATA)),
                                                         Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ICONS)),
                                                         Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_ICONS)),
-                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDONS)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_APP_CORE)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDONS_AND_LIBS)),
+                                                        Boolean.valueOf(props.getProperty(Constants.OPTION_UPDATE_ADDONS_AND_LIBS)),
                                                         Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS)),
                                                         Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_ADDON_CONFIGS)),
                                                         Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS)),
@@ -2945,11 +2947,17 @@ public class FrontEnd extends JFrame {
                                                     JCheckBox overwriteIconsCB = new JCheckBox(oe);
                                                     p1.add(overwriteIconsCB);
                                                     createDependentCheckboxChangeListener(importIconsCB, overwriteIconsCB);
+
+                                                    JCheckBox importAppCoreCB = new JCheckBox("Import and update application core");
                                                     
-                                                    JCheckBox importAddOnsCB = new JCheckBox("Import addons (existing add-ons won't be overwritten)");
-
-                                                    JPanel p2 = new JPanel(new GridLayout(2, 2));
-
+                                                    JPanel p2 = new JPanel(new GridLayout(3, 2));
+                                                    
+                                                    JCheckBox importAddOnsAndLibsCB = new JCheckBox("Import addons and libraries");
+                                                    p2.add(importAddOnsAndLibsCB);
+                                                    JCheckBox updateAddOnsAndLibsCB = new JCheckBox("Update installed");
+                                                    p2.add(updateAddOnsAndLibsCB);
+                                                    createDependentCheckboxChangeListener(importAddOnsAndLibsCB, updateAddOnsAndLibsCB);
+                                                    
                                                     JCheckBox importAddOnConfigsCB = new JCheckBox("Import addon configs");
                                                     p2.add(importAddOnConfigsCB);
                                                     JCheckBox overwriteAddOnConfigsCB = new JCheckBox(oe);
@@ -2968,7 +2976,7 @@ public class FrontEnd extends JFrame {
                                                             FrontEnd.this,
                                                             new Component[] {
                                                                     p1,
-                                                                    importAddOnsCB,
+                                                                    importAppCoreCB,
                                                                     p2,
                                                                     passwordL,
                                                                     passwordTF
@@ -3001,7 +3009,9 @@ public class FrontEnd extends JFrame {
                                                                     overwriteToolsDataCB.isSelected(),
                                                                     importIconsCB.isSelected(),
                                                                     overwriteIconsCB.isSelected(),
-                                                                    importAddOnsCB.isSelected(),
+                                                                    importAppCoreCB.isSelected(),
+                                                                    importAddOnsAndLibsCB.isSelected(),
+                                                                    updateAddOnsAndLibsCB.isSelected(),
                                                                     importAddOnConfigsCB.isSelected(),
                                                                     overwriteAddOnConfigsCB.isSelected(),
                                                                     importImportExportConfigsCB.isSelected(),
@@ -3049,7 +3059,9 @@ public class FrontEnd extends JFrame {
                                                                 options.setProperty(Constants.OPTION_OVERWRITE_TOOLS_DATA, "" + overwriteToolsDataCB.isSelected());
                                                                 options.setProperty(Constants.OPTION_PROCESS_ICONS, "" + importIconsCB.isSelected());
                                                                 options.setProperty(Constants.OPTION_OVERWRITE_ICONS, "" + overwriteIconsCB.isSelected());
-                                                                options.setProperty(Constants.OPTION_PROCESS_ADDONS, "" + importAddOnsCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_PROCESS_APP_CORE, "" + importAppCoreCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_PROCESS_ADDONS_AND_LIBS, "" + importAddOnsAndLibsCB.isSelected());
+                                                                options.setProperty(Constants.OPTION_UPDATE_ADDONS_AND_LIBS, "" + updateAddOnsAndLibsCB.isSelected());
                                                                 options.setProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS, "" + importAddOnConfigsCB.isSelected());
                                                                 options.setProperty(Constants.OPTION_OVERWRITE_ADDON_CONFIGS, "" + overwriteAddOnConfigsCB.isSelected());
                                                                 options.setProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS, "" + importImportExportConfigsCB.isSelected());
@@ -3224,7 +3236,8 @@ public class FrontEnd extends JFrame {
                                                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA)), 
                                                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ICONS)), 
                                                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ONLY_RELATED_ICONS)), 
-                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDONS)), 
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_APP_CORE)), 
+                                                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDONS_AND_LIBS)), 
                                                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS)),
                                                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS)),
                                                 password);
@@ -3301,7 +3314,8 @@ public class FrontEnd extends JFrame {
                         final JCheckBox exportIconsCB = new JCheckBox("Export icons");
                         final JCheckBox exportOnlyRelatedIconsCB = new JCheckBox("Export icons related to exported data entries only");
                         createDependentCheckboxChangeListener(exportIconsCB, exportOnlyRelatedIconsCB);
-                        final JCheckBox exportAddOnsCB = new JCheckBox("Export addons"); 
+                        final JCheckBox exportAppCoreCB = new JCheckBox("Export application core"); 
+                        final JCheckBox exportAddOnsCB = new JCheckBox("Export addons and libraries"); 
                         final JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
                         final JCheckBox exportImportExportConfigsCB = new JCheckBox("Export import/export configs");
                         final JLabel passwordL1 = new JLabel("Encrypt exported data using password:");
@@ -3328,6 +3342,7 @@ public class FrontEnd extends JFrame {
                                 exportToolsDataCB, 
                                 exportIconsCB,
                                 exportOnlyRelatedIconsCB,
+                                exportAppCoreCB,
                                 exportAddOnsCB, 
                                 exportAddOnConfigsCB,
                                 exportImportExportConfigsCB,
@@ -3399,6 +3414,7 @@ public class FrontEnd extends JFrame {
                                                 exportToolsDataCB.isSelected(), 
                                                 exportIconsCB.isSelected(), 
                                                 exportOnlyRelatedIconsCB.isSelected(),
+                                                exportAppCoreCB.isSelected(),
                                                 exportAddOnsCB.isSelected(), 
                                                 exportAddOnConfigsCB.isSelected(),
                                                 exportImportExportConfigsCB.isSelected(),
@@ -3449,7 +3465,8 @@ public class FrontEnd extends JFrame {
                                                             options.setProperty(Constants.OPTION_PROCESS_TOOLS_DATA, "" + exportToolsDataCB.isSelected());
                                                             options.setProperty(Constants.OPTION_PROCESS_ICONS, "" + exportIconsCB.isSelected());
                                                             options.setProperty(Constants.OPTION_PROCESS_ONLY_RELATED_ICONS, "" + exportOnlyRelatedIconsCB.isSelected());
-                                                            options.setProperty(Constants.OPTION_PROCESS_ADDONS, "" + exportAddOnsCB.isSelected());
+                                                            options.setProperty(Constants.OPTION_PROCESS_ADDONS_AND_LIBS, "" + exportAddOnsCB.isSelected());
+                                                            options.setProperty(Constants.OPTION_PROCESS_APP_CORE, "" + exportAppCoreCB.isSelected());
                                                             options.setProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS, "" + exportAddOnConfigsCB.isSelected());
                                                             options.setProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS, "" + exportImportExportConfigsCB.isSelected());
                                                             String password = new String(passwordTF1.getPassword());
@@ -4565,8 +4582,12 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             if (icList.getSelectedValues().length > 0) {
+                                Collection<String> removeIds = new ArrayList<String>();
                                 for (Object icon : icList.getSelectedValues()) {
-                                    BackEnd.getInstance().removeIcon(((ImageIcon) icon).getDescription());
+                                    removeIds.add(((ImageIcon) icon).getDescription());
+                                }
+                                BackEnd.getInstance().removeIcons(removeIds);
+                                for (Object icon : icList.getSelectedValues()) {
                                     icModel.removeElement(icon);
                                 }
                                 displayMessage("Icon(s) have been successfully removed!");

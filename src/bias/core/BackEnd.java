@@ -372,7 +372,9 @@ public class BackEnd {
             boolean overwriteToolsData,
             boolean importIcons,
             boolean overwriteIcons,
-            boolean importAddOns,
+            boolean importAndUpdateAppCore,
+            boolean importAddOnsAndLibs,
+            boolean updateInstalledAddOnsAndLibs,
             boolean importAddOnConfigs,
             boolean overwriteAddOnConfigs,
             boolean importImportExportConfigs,
@@ -534,10 +536,40 @@ public class BackEnd {
                 }
             }
         }
-        // addon/lib files
-        if (importAddOns) {
-            // TODO [P1] core should be optionally updated
-            // TODO [P1] existing addons should be optionally updated
+        // app core
+        if (importAndUpdateAppCore) {
+            File appCoreFile = new File(importDir, Constants.APP_CORE_FILE_NAME);
+            if (appCoreFile.exists()) {
+                File localAppCoreUpdateFile = new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME);
+                FSUtils.duplicateFile(appCoreFile, localAppCoreUpdateFile);
+            }
+        }
+        // addons/libs
+        if (importAddOnsAndLibs) {
+            File addOnsDir = new File(importDir, Constants.ADDONS_DIR.getName());
+            if (addOnsDir.exists()) {
+                for (File addOnFile : addOnsDir.listFiles()) {
+                    File localAddOnFile = new File(Constants.ADDONS_DIR, addOnFile.getName());
+                    if (!localAddOnFile.exists()) {
+                        FSUtils.duplicateFile(addOnFile, localAddOnFile);
+                    } else if (updateInstalledAddOnsAndLibs) {
+                        localAddOnFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + addOnFile.getName());
+                        FSUtils.duplicateFile(addOnFile, localAddOnFile);
+                    }
+                }
+            }
+            File libsDir = new File(importDir, Constants.LIBS_DIR.getName());
+            if (libsDir.exists()) {
+                for (File libFile : libsDir.listFiles()) {
+                    File localLibFile = new File(Constants.LIBS_DIR, libFile.getName());
+                    if (!localLibFile.exists()) {
+                        FSUtils.duplicateFile(libFile, localLibFile);
+                    } else if (updateInstalledAddOnsAndLibs) {
+                        localLibFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + libFile.getName());
+                        FSUtils.duplicateFile(libFile, localLibFile);
+                    }
+                }
+            }
         }
         // parse metadata file
         DataCategory importedData = parseMetadata(metadata, importedIdentifiedData, existingIDs, overwriteDataEntries);
@@ -661,7 +693,8 @@ public class BackEnd {
             boolean exportToolsData, 
             boolean exportIcons,
             boolean exportOnlyRelatedIcons,
-            boolean exportAddOns,
+            boolean exportAppCore,
+            boolean exportAddOnsAndLibs,
             boolean exportAddOnConfigs,
             boolean exportImportExportConfigs,
             String password) throws Exception {
@@ -757,12 +790,18 @@ public class BackEnd {
                 }
             }
         }
-        // addons
-        if (exportAddOns) {
+        // addons/libs
+        if (exportAddOnsAndLibs) {
             File addonsDir = new File(exportDir, Constants.ADDONS_DIR.getName());
             FSUtils.duplicateFile(Constants.ADDONS_DIR, addonsDir);
             File libsDir = new File(exportDir, Constants.LIBS_DIR.getName());
             FSUtils.duplicateFile(Constants.LIBS_DIR, libsDir);
+        }
+        // app core
+        if (exportAppCore) {
+            File localAppCoreFile = new File(Constants.ROOT_DIR, Constants.APP_CORE_FILE_NAME);
+            File appCoreFile = new File(exportDir, Constants.APP_CORE_FILE_NAME);
+            FSUtils.duplicateFile(localAppCoreFile, appCoreFile);
         }
         // addon configs
         if (exportAddOnConfigs) {
@@ -814,15 +853,7 @@ public class BackEnd {
             }
         }
         // icons
-        StringBuffer iconsList = new StringBuffer();
-        for (Entry<UUID, byte[]> icon : icons.entrySet()) {
-            File iconFile = new File(Constants.ICONS_DIR, icon.getKey().toString() + Constants.ICON_FILE_SUFFIX);
-            FSUtils.writeFile(iconFile, icon.getValue());
-            iconsList.append(icon.getKey().toString());
-            iconsList.append(Constants.NEW_LINE);
-        }
-        File iconsListFile = new File(Constants.CONFIG_DIR, Constants.ICONS_CONFIG_FILE);
-        FSUtils.writeFile(iconsListFile, iconsList.toString().getBytes());
+        storeIconsList();
         // global config file
         StringWriter sw = new StringWriter();
         config.list(new PrintWriter(sw));
@@ -1508,14 +1539,14 @@ public class BackEnd {
                     iconSetRegFile.createNewFile();
                 } else {
                     iconIdsList.append(new String(FSUtils.readFile(iconSetRegFile)));
-                    iconIdsList.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                    iconIdsList.append(Constants.NEW_LINE);
                 }
                 Iterator<String> it = iconIds.iterator();
                 while (it.hasNext()) {
                     String iconId = it.next();
                     iconIdsList.append(iconId);
                     if (it.hasNext()) {
-                        iconIdsList.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                        iconIdsList.append(Constants.NEW_LINE);
                     }
                 }
                 FSUtils.writeFile(iconSetRegFile, iconIdsList.toString().getBytes());
@@ -1527,7 +1558,7 @@ public class BackEnd {
         Collection<String> removedIds = new ArrayList<String>();
         File iconSetRegFile = new File(Constants.CONFIG_DIR, iconSetName + Constants.ICONSET_REGISTRY_FILE_SUFFIX);
         if (iconSetRegFile.exists()) {
-            String[] iconIdsList = new String(FSUtils.readFile(iconSetRegFile)).split(Constants.PROPERTY_VALUES_SEPARATOR);
+            String[] iconIdsList = new String(FSUtils.readFile(iconSetRegFile)).split(Constants.NEW_LINE);
             for (String iconId : iconIdsList) {
                 removeIcon(iconId);
                 removedIds.add(iconId);
@@ -1536,6 +1567,7 @@ public class BackEnd {
         }
         File iconSetInfoFile = new File(Constants.CONFIG_DIR, iconSetName + Constants.ADDON_ICONSET_INFO_FILE_SUFFIX);
         FSUtils.delete(iconSetInfoFile);
+        storeIconsList();
         return removedIds;
     }
     
@@ -1551,75 +1583,96 @@ public class BackEnd {
     public Collection<ImageIcon> addIcons(File file) throws Throwable {
         Map<ImageIcon, String> icons = new LinkedHashMap<ImageIcon, String>();
         if (file != null && file.exists() && !file.isDirectory()) {
-            if (file.getName().matches(Constants.JAR_FILE_PATTERN)) {
-                JarInputStream in = new JarInputStream(new FileInputStream(file));
-                AddOnInfo aoi = null;
-                Manifest manifest = in.getManifest();
-                if (manifest != null) {
-                    String iconSetName = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_NAME);
-                    String iconSetVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_VERSION);
-                    String iconSetAuthor = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_AUTHOR);
-                    String iconSetDescription = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION);
-                    aoi = new AddOnInfo(iconSetName, iconSetVersion, iconSetAuthor, iconSetDescription);
-                }
-                File destination = new File(Constants.ADDON_INFO_DIR, aoi.getName());
-                if (destination.exists()) {
-                    FSUtils.delete(destination);
-                }
-                JarEntry entry;                     
-                while ((entry = in.getNextJarEntry()) != null) {
-                    String name = entry.getName();
-                    if (!name.equals(Constants.JAR_FILE_ADDON_INFO_DIR_PATH) && name.startsWith(Constants.JAR_FILE_ADDON_INFO_DIR_PATH)) {
-                        if (name.endsWith(Constants.PATH_SEPARATOR)) {
-                            name = name.substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
-                            if (!Validator.isNullOrBlank(name)) {
-                                File dir = new File(destination, name);
-                                dir.mkdirs();
+            try {
+                if (file.getName().matches(Constants.JAR_FILE_PATTERN)) {
+                    JarInputStream in = new JarInputStream(new FileInputStream(file));
+                    AddOnInfo aoi = null;
+                    Manifest manifest = in.getManifest();
+                    if (manifest != null) {
+                        String iconSetName = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_NAME);
+                        String iconSetVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_VERSION);
+                        String iconSetAuthor = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_AUTHOR);
+                        String iconSetDescription = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION);
+                        aoi = new AddOnInfo(iconSetName, iconSetVersion, iconSetAuthor, iconSetDescription);
+                    }
+                    File destination = new File(Constants.ADDON_INFO_DIR, aoi.getName());
+                    if (destination.exists()) {
+                        FSUtils.delete(destination);
+                    }
+                    JarEntry entry;                     
+                    while ((entry = in.getNextJarEntry()) != null) {
+                        String name = entry.getName();
+                        if (!name.equals(Constants.JAR_FILE_ADDON_INFO_DIR_PATH) && name.startsWith(Constants.JAR_FILE_ADDON_INFO_DIR_PATH)) {
+                            if (name.endsWith(Constants.PATH_SEPARATOR)) {
+                                name = name.substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
+                                if (!Validator.isNullOrBlank(name)) {
+                                    File dir = new File(destination, name);
+                                    dir.mkdirs();
+                                }
+                            } else {
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                int b;
+                                while ((b = in.read()) != -1) {
+                                    baos.write(b);
+                                }
+                                baos.close();
+                                name = entry.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
+                                name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
+                                File f = new File(destination, name);
+                                File dir = f.getParentFile();
+                                if (!dir.exists()) {
+                                    dir.mkdirs();
+                                }
+                                f.createNewFile();
+                                FSUtils.writeFile(f, baos.toByteArray());
                             }
                         } else {
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            ByteArrayOutputStream out = new ByteArrayOutputStream();
                             int b;
                             while ((b = in.read()) != -1) {
-                                baos.write(b);
+                                out.write(b);
                             }
-                            baos.close();
-                            name = entry.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
-                            name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
-                            File f = new File(destination, name);
-                            File dir = f.getParentFile();
-                            if (!dir.exists()) {
-                                dir.mkdirs();
+                            out.close();
+                            byte[] bytes = out.toByteArray();
+                            ImageIcon icon = addIcon(entry.getName(), new ByteArrayInputStream(bytes));
+                            if (icon != null) {
+                                icons.put(icon, icon.getDescription());
                             }
-                            f.createNewFile();
-                            FSUtils.writeFile(f, baos.toByteArray());
-                        }
-                    } else {
-                        ByteArrayOutputStream out = new ByteArrayOutputStream();
-                        int b;
-                        while ((b = in.read()) != -1) {
-                            out.write(b);
-                        }
-                        out.close();
-                        ImageIcon icon = addIcon(entry.getName(), new ByteArrayInputStream(out.toByteArray()));
-                        if (icon != null) {
-                            icons.put(icon, icon.getDescription());
                         }
                     }
+                    in.close();
+                    if (aoi != null) {
+                        storeIconSet(aoi, icons.values());
+                    }
+                } else {
+                    ImageIcon icon = addIcon(file.getName(), new FileInputStream(file));
+                    if (icon != null) {
+                        icons.put(icon, icon.getDescription());
+                    }
                 }
-                in.close();
-                if (aoi != null) {
-                    storeIconSet(aoi, icons.values());
-                }
-            } else {
-                ImageIcon icon = addIcon(file.getName(), new FileInputStream(file));
-                if (icon != null) {
-                    icons.put(icon, icon.getDescription());
-                }
+            } finally {
+                storeIconsList();
             }
         } else {
             throw new Exception("Invalid icon(set) file/package!");
         }
         return icons.keySet();
+    }
+    
+    private void storeIconsList() throws IOException {
+        StringBuffer iconsList = new StringBuffer();
+        for (Entry<UUID, byte[]> icon : icons.entrySet()) {
+            File iconFile = new File(Constants.ICONS_DIR, icon.getKey().toString() + Constants.ICON_FILE_SUFFIX);
+            FSUtils.writeFile(iconFile, icon.getValue());
+            iconsList.append(icon.getKey().toString());
+            iconsList.append(Constants.NEW_LINE);
+        }
+        File iconsListFile = new File(Constants.CONFIG_DIR, Constants.ICONS_CONFIG_FILE);
+        if (!Validator.isNullOrBlank(iconsList)) {
+            FSUtils.writeFile(iconsListFile, iconsList.toString().getBytes());
+        } else {
+            FSUtils.delete(iconsListFile);
+        }
     }
     
     private ImageIcon addIcon(String idStr, InputStream is) throws IOException {
@@ -1641,13 +1694,23 @@ public class BackEnd {
                 icon.setDescription(id.toString());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(image, Constants.ICON_FORMAT, baos);
-                this.icons.put(id, baos.toByteArray());
+                byte[] iconBytes = baos.toByteArray();
+                File iconFile = new File(Constants.ICONS_DIR, id.toString() + Constants.ICON_FILE_SUFFIX);
+                FSUtils.writeFile(iconFile, iconBytes);
+                this.icons.put(id, iconBytes);
             }
         }
         return icon;
     }
 
-    public void removeIcon(String id) {
+    public void removeIcons(Collection<String> ids) throws IOException {
+        for (String id : ids) {
+            removeIcon(id);
+        }
+        storeIconsList();
+    }
+
+    private void removeIcon(String id) {
         File iconFile = new File(Constants.ICONS_DIR, id + Constants.ICON_FILE_SUFFIX);
         FSUtils.delete(iconFile);
         icons.remove(UUID.fromString(id));
