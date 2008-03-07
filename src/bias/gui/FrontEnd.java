@@ -4874,7 +4874,6 @@ public class FrontEnd extends JFrame {
                     cleanPanel.add(cleanLabel, BorderLayout.CENTER);
                 }
 
-                // TODO [P1] place clean-unused-libs feature implementation here...
                 JPanel uninstLisbPanel = new JPanel(new BorderLayout());
                 final JButton detectButt = new JButton("Detect unused libraries");
                 final JButton cleanButt = new JButton("Uninstall unused libraries!");
