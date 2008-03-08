@@ -14,6 +14,11 @@ import bias.utils.FSUtils;
  */
 public class Constants {
     
+    public static enum TRANSFER_OPERATION_TYPE {
+        IMPORT,
+        EXPORT
+    }
+    
     private static final String DIRNAME_ADDON_INFO = "ADDON-INFO";
     
     public static final File ROOT_DIR = Launcher.getRootDir();
@@ -120,6 +125,7 @@ public class Constants {
     public static final String LIB_JAR_FILE_SUFFIX = ".lib.jar";
     public static final String IMPORT_CONFIG_FILE_SUFFIX = ".import.properties";
     public static final String EXPORT_CONFIG_FILE_SUFFIX = ".export.properties";
+    public static final String TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX = ".transfer.conf";
     public static final String EXTENSION_PACKAGE_NAME = Extension.class.getPackage().getName();
     public static final String SKIN_PACKAGE_NAME = Skin.class.getPackage().getName();
     public static final String ICON_FORMAT = "PNG";
@@ -170,10 +176,6 @@ public class Constants {
     public static final String OPTION_PROCESS_IMPORT_EXPORT_CONFIGS = "PROCESS_IMPORT_EXPORT_CONFIGS";
     public static final String OPTION_OVERWRITE_IMPORT_EXPORT_CONFIGS = "OVERWRITE_IMPORT_EXPORT_CONFIGS";
     public static final String OPTION_OVERWRITE_ADDON_CONFIGS = "OVERWRITE_ADDON_CONFIGS";
-    public static final String TRANSFER_OPTION_FILEPATH = "FILEPATH";
-    public static final String TRANSFER_OPTION_SERVER = "SERVER";
-    public static final String TRANSFER_OPTION_USERNAME = "USERNAME";
-    public static final String TRANSFER_OPTION_PASSWORD = "TRANSFER_PASSWORD";
     
     public static final String PROPERTY_SKIN = "SKIN";
     public static final String PROPERTY_WINDOW_COORDINATE_X = "WINDOW_COORDINATE_X";

@@ -20,8 +20,10 @@ import bias.core.pack.PackType;
  */
 public class ExtensionFactory {
     
-    private static Map<String, Class<? extends EntryExtension>> entryTypes = null;
-    private static Map<ToolExtension, String> toolTypes = null;
+    private static Map<String, Class<? extends EntryExtension>> annotatedEntryTypes = null;
+    private static Map<ToolExtension, String> annotatedToolTypes = null;
+    private static Map<String, TransferExtension> annotatedTransferTypes = null;
+    private static Map<String, TransferExtension> transferTypes = null;
     
     private ExtensionFactory() {
         // hidden default constructor
@@ -40,6 +42,9 @@ public class ExtensionFactory {
                 } else if (pts.length == 2 && pts[0].equals(byte[].class) && pts[1].equals(byte[].class)) {
                     extension = clazz.getConstructor(new Class[]{byte[].class, byte[].class}).newInstance(new Object[]{data, settings});
                     break;
+                } else if (pts.length == 1 && pts[0].equals(byte[].class)) {
+                    extension = clazz.getConstructor(new Class[]{byte[].class}).newInstance(new Object[]{settings});
+                    break;
                 } else {
                     throw new Exception("Failed to instantiate extension (class does not declare expected constructor)!");
                 }
@@ -54,9 +59,14 @@ public class ExtensionFactory {
         return extension;
     }
     
-    public static ToolExtension newToolExtension(Class<? extends ToolExtension> clazz, byte[] data) throws Throwable {
+    private static ToolExtension newToolExtension(Class<? extends Extension> clazz, byte[] data) throws Throwable {
         byte[] settings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), PackType.EXTENSION);
         return (ToolExtension) newExtension(clazz, null, data, settings);
+    }
+    
+    public static TransferExtension newTransferExtension(Class<? extends Extension> clazz) throws Throwable {
+        byte[] settings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), PackType.EXTENSION);
+        return (TransferExtension) newExtension(clazz, null, null, settings);
     }
     
     @SuppressWarnings("unchecked")
@@ -68,14 +78,14 @@ public class ExtensionFactory {
         return extension;
     }
     
-    public static EntryExtension newEntryExtension(Class<? extends EntryExtension> clazz) throws Throwable {
+    public static EntryExtension newEntryExtension(Class<? extends Extension> clazz) throws Throwable {
         return (EntryExtension) newExtension(clazz);
     }
     
     @SuppressWarnings("unchecked")
     public static Map<String, Class<? extends EntryExtension>> getAnnotatedEntryExtensionClasses() throws Throwable {
-        if (entryTypes == null) {
-            entryTypes = new LinkedHashMap<String, Class<? extends EntryExtension>>();
+        if (annotatedEntryTypes == null) {
+            annotatedEntryTypes = new LinkedHashMap<String, Class<? extends EntryExtension>>();
             for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
                     String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
@@ -85,7 +95,7 @@ public class ExtensionFactory {
                     if (EntryExtension.class.isAssignableFrom(extClass)) {
                         // extension is ok, add it to the list
                         String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
-                        entryTypes.put(annotationStr, (Class<? extends EntryExtension>) extClass);
+                        annotatedEntryTypes.put(annotationStr, (Class<? extends EntryExtension>) extClass);
                     }
                 } catch (Throwable t) {
                     // ignore broken extensions
@@ -93,13 +103,13 @@ public class ExtensionFactory {
                 }
             }
         }
-        return entryTypes;
+        return annotatedEntryTypes;
     }
     
     @SuppressWarnings("unchecked")
     public static Map<ToolExtension, String> getAnnotatedToolExtensions() throws Throwable {
-        if (toolTypes == null) {
-            toolTypes = new LinkedHashMap<ToolExtension, String>();
+        if (annotatedToolTypes == null) {
+            annotatedToolTypes = new LinkedHashMap<ToolExtension, String>();
             for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
                     String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
@@ -107,17 +117,53 @@ public class ExtensionFactory {
                     Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
                     if (ToolExtension.class.isAssignableFrom(extClass)) {
                         // extension instantiation test
-                        ToolExtension ext = newToolExtension((Class<ToolExtension>) Class.forName(fullExtName), BackEnd.getInstance().getToolData(fullExtName));
+                        ToolExtension ext = newToolExtension(extClass, BackEnd.getInstance().getToolData(fullExtName));
                         // extension is ok, add it to the list
                         String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
-                        toolTypes.put(ext, annotationStr);
+                        annotatedToolTypes.put(ext, annotationStr);
                     }
                 } catch (Throwable t) {
                     // ignore, broken extensions just won't be returned
                 }
             }
         }
-        return toolTypes;
+        return annotatedToolTypes;
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static Map<String, TransferExtension> getAnnotatedTransferExtensions() throws Throwable {
+        if (annotatedTransferTypes == null) {
+            annotatedTransferTypes = new LinkedHashMap<String, TransferExtension>();
+            transferTypes = new LinkedHashMap<String, TransferExtension>();
+            TransferExtension ext = newTransferExtension(LocalTransfer.class);
+            annotatedTransferTypes.put("LocalTransfer [Transfer from/to local file system]", ext);
+            transferTypes.put(LocalTransfer.class.getSimpleName(), ext);
+            for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
+                try {
+                    String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
+                                            + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
+                    Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
+                    if (TransferExtension.class.isAssignableFrom(extClass)) {
+                        // extension instantiation test
+                        ext = newTransferExtension(extClass);
+                        // extension is ok, add it to the list
+                        String annotationStr = extension.getName() + " [" + (extension.getDescription() != null ? extension.getDescription() : "No description") + "]";
+                        annotatedTransferTypes.put(annotationStr, ext);
+                        transferTypes.put(extClass.getSimpleName(), ext);
+                    }
+                } catch (Throwable t) {
+                    // ignore, broken extensions just won't be returned
+                }
+            }
+        }
+        return annotatedTransferTypes;
+    }
+    
+    public static TransferExtension getTransferExtension(String name) throws Throwable {
+        if (transferTypes == null) {
+            getAnnotatedTransferExtensions();
+        }
+        return transferTypes.get(name);
     }
     
 }

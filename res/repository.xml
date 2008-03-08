@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <bias:repository xmlns:bias="http://bias.sourceforge.net">
 	<pack type="AppCore" name="AppCore" version="0.9.7" author="R. Kasianenko" description="Bias Application Core" file-size="100000" />
+	<pack type="Extension" name="FTPTransfer" version="0.1.1" author="R. Kasianenko" description="Import/Export through FTP" file-size="100000" />
 	<pack type="Extension" name="HTMLPage" version="0.6.1" author="R. Kasianenko" description="WYSIWYG HTML page editor" file-size="100000" />
 	<pack type="Extension" name="ToDoList" version="0.7.5" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="100000" />
 	<pack type="Extension" name="Graffiti" version="0.2.3" author="R. Kasianenko" description="Basic paint editor" file-size="100000" />

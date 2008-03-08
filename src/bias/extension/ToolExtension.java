@@ -24,7 +24,6 @@ public abstract class ToolExtension implements Extension {
     /**
      * The only allowed constructor that is aware of initialization data and settings.
      * 
-     * @param id id to be assigned to extension instance
      * @param data data to be encapsulated by extension instance
      * @param settings extension instance settings
      */

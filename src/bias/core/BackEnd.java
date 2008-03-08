@@ -497,8 +497,7 @@ public class BackEnd {
                     }
                 }
                 // reload import/export configs
-                loadImportConfigurations();
-                loadExportConfigurations();
+                loadTransferConfigurations();
             }
             // add-on configs
             if (importAddOnConfigs) {
@@ -866,118 +865,107 @@ public class BackEnd {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
     }
     
-    private void loadImportConfigurations() throws Exception {
+    private void loadTransferConfigurations() throws Exception {
         importConfigs = null;
         importConfigIDs = null;
-        getImportConfigurations();
-    }
-    
-    public Map<String, Properties> getImportConfigurations() throws Exception {
-        if (importConfigs == null) {
-            importConfigs = new HashMap<String, Properties>();
-            importConfigIDs = new HashMap<String, String>();
-            File[] configFiles = Constants.CONFIG_DIR.listFiles(FILE_FILTER_IMPORT_CONFIG);
-            for (File file : configFiles) {
-                Properties props = new Properties();
-                byte[] encryptedData = FSUtils.readFile(file);
-                byte[] decryptedData = decrypt(encryptedData);
-                props.load(new ByteArrayInputStream(decryptedData));
-                String name = props.getProperty(Constants.OPTION_CONFIG_NAME);
-                String id = file.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                importConfigs.put(name, props);
-                importConfigIDs.put(name, id);
-            }
-        }
-        return importConfigs;
-    }
-    
-    private void loadExportConfigurations() throws Exception {
+        getTransferConfigurations(Constants.TRANSFER_OPERATION_TYPE.IMPORT);
         exportConfigs = null;
         exportConfigIDs = null;
-        getExportConfigurations();
+        getTransferConfigurations(Constants.TRANSFER_OPERATION_TYPE.EXPORT);
     }
     
-    public Map<String, Properties> getExportConfigurations() throws Exception {
-        if (exportConfigs == null) {
-            exportConfigs = new HashMap<String, Properties>();
-            exportConfigIDs = new HashMap<String, String>();
-            File[] configFiles = Constants.CONFIG_DIR.listFiles(FILE_FILTER_EXPORT_CONFIG);
-            for (File file : configFiles) {
-                Properties props = new Properties();
-                byte[] encryptedData = FSUtils.readFile(file);
-                byte[] decryptedData = decrypt(encryptedData);
-                props.load(new ByteArrayInputStream(decryptedData));
-                String name = props.getProperty(Constants.OPTION_CONFIG_NAME);
-                String id = file.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                exportConfigs.put(name, props);
-                exportConfigIDs.put(name, id);
+    public Map<String, Properties> getTransferConfigurations(Constants.TRANSFER_OPERATION_TYPE opType) throws Exception {
+        Map<String, Properties> configs;
+        Map<String, String> configIDs;
+        FilenameFilter ff;
+        if (opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT) {
+            if (importConfigs == null) {
+                importConfigs = new HashMap<String, Properties>();
+                importConfigIDs = new HashMap<String, String>();
             }
+            configs = importConfigs;
+            configIDs = importConfigIDs;
+            ff = FILE_FILTER_IMPORT_CONFIG;
+        } else {
+            if (exportConfigs == null) {
+                exportConfigs = new HashMap<String, Properties>();
+                exportConfigIDs = new HashMap<String, String>();
+            }
+            configs = exportConfigs;
+            configIDs = exportConfigIDs;
+            ff = FILE_FILTER_EXPORT_CONFIG;
         }
-        return exportConfigs;
+        File[] configFiles = Constants.CONFIG_DIR.listFiles(ff);
+        for (File file : configFiles) {
+            Properties props = new Properties();
+            byte[] encryptedData = FSUtils.readFile(file);
+            byte[] decryptedData = decrypt(encryptedData);
+            props.load(new ByteArrayInputStream(decryptedData));
+            String name = props.getProperty(Constants.OPTION_CONFIG_NAME);
+            String id = file.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+            configs.put(name, props);
+            configIDs.put(name, id);
+        }
+        return configs;
     }
     
-    public void storeImportConfiguration(String name, Properties config) throws Exception {
-        String fileName = importConfigIDs.get(name);
+    public byte[] getTransferOptions(String configName, Constants.TRANSFER_OPERATION_TYPE opType) throws Exception {
+        Map<String, String> configIDs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigIDs : exportConfigIDs; 
+        String fileName = configIDs.get(configName) + Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX;
+        File transferOptionsFile = new File(Constants.CONFIG_DIR, fileName);
+        byte[] encryptedData = FSUtils.readFile(transferOptionsFile);
+        byte[] decryptedData = decrypt(encryptedData);
+        return decryptedData;
+    }
+    
+    public void storeTransferConfigurationAndOptions(String name, Properties config, byte[] transferOptions, Constants.TRANSFER_OPERATION_TYPE opType) throws Exception {
+        Map<String, Properties> configs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigs : exportConfigs;;
+        Map<String, String> configIDs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
+        String configSuffix = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? Constants.IMPORT_CONFIG_FILE_SUFFIX : Constants.EXPORT_CONFIG_FILE_SUFFIX;
+        String fileName = configIDs.get(name);
         if (fileName == null) {
             UUID id = UUID.randomUUID();
-            importConfigIDs.put(name, id.toString());
+            configIDs.put(name, id.toString());
             fileName = id.toString();
         }
-        importConfigs.put(name, config);
-        fileName += Constants.IMPORT_CONFIG_FILE_SUFFIX;
+        configs.put(name, config);
+        String transferOptionsFileName = fileName + Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX;
+        fileName += configSuffix;
         File configFile = new File(Constants.CONFIG_DIR, fileName);
+        File transferOptionsFile = new File(Constants.CONFIG_DIR, transferOptionsFileName);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         config.store(baos, null);
         byte[] encryptedData = encrypt(baos.toByteArray());
         FSUtils.writeFile(configFile, encryptedData);
+        encryptedData = encrypt(transferOptions);
+        FSUtils.writeFile(transferOptionsFile, encryptedData);
     }
     
-    public void removeImportConfiguration(String name) throws Exception {
-        String fileName = importConfigIDs.get(name);
-        fileName += Constants.IMPORT_CONFIG_FILE_SUFFIX;
+    public void removeTransferConfiguration(String name, Constants.TRANSFER_OPERATION_TYPE opType) throws Exception {
+        Map<String, Properties> configs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigs : exportConfigs;;
+        Map<String, String> configIDs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
+        String configSuffix = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? Constants.IMPORT_CONFIG_FILE_SUFFIX : Constants.EXPORT_CONFIG_FILE_SUFFIX;
+        String fileName = configIDs.get(name);
+        String transferOptionsFileName = fileName + Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX;
+        fileName += configSuffix;
         File configFile = new File(Constants.CONFIG_DIR, fileName);
+        File transferOptionsFile = new File(Constants.CONFIG_DIR, transferOptionsFileName);
         configFile.delete();
-        importConfigs.remove(name);
-        importConfigIDs.remove(name);
+        transferOptionsFile.delete();
+        configs.remove(name);
+        configIDs.remove(name);
     }
     
-    public void renameImportConfiguration(String oldName, String newName) throws Exception {
-        Properties config = importConfigs.get(oldName);
+    public void renameTransferConfiguration(String oldName, String newName, Constants.TRANSFER_OPERATION_TYPE opType) throws Exception {
+        Map<String, Properties> configs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigs : exportConfigs;;
+        Map<String, String> configIDs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
+        Properties config = configs.get(oldName);
         config.setProperty(Constants.OPTION_CONFIG_NAME, newName);
-        removeImportConfiguration(oldName);
-        storeImportConfiguration(newName, config);
-    }
-    
-    public void storeExportConfiguration(String name, Properties config) throws Exception {
-        String fileName = exportConfigIDs.get(name);
-        if (fileName == null) {
-            UUID id = UUID.randomUUID();
-            exportConfigIDs.put(name, id.toString());
-            fileName = id.toString();
-        }
-        exportConfigs.put(name, config);
-        fileName += Constants.EXPORT_CONFIG_FILE_SUFFIX;
-        File configFile = new File(Constants.CONFIG_DIR, fileName);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        config.store(baos, null);
-        byte[] encryptedData = encrypt(baos.toByteArray());
-        FSUtils.writeFile(configFile, encryptedData);
-    }
-    
-    public void removeExportConfiguration(String name) throws Exception {
-        String fileName = exportConfigIDs.get(name);
-        fileName += Constants.EXPORT_CONFIG_FILE_SUFFIX;
-        File configFile = new File(Constants.CONFIG_DIR, fileName);
-        configFile.delete();
-        exportConfigs.remove(name);
-        exportConfigIDs.remove(name);
-    }
-    
-    public void renameExportConfiguration(String oldName, String newName) throws Exception {
-        Properties config = exportConfigs.get(oldName);
-        config.setProperty(Constants.OPTION_CONFIG_NAME, newName);
-        removeExportConfiguration(oldName);
-        storeExportConfiguration(newName, config);
+        File oldTransferOptionsFile = new File(Constants.CONFIG_DIR, configIDs.get(oldName) + Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX);
+        byte[] transferOptions = FSUtils.readFile(oldTransferOptionsFile);
+        storeTransferConfigurationAndOptions(newName, config, transferOptions, opType);
+        oldTransferOptionsFile.delete();
+        removeTransferConfiguration(oldName, opType);
     }
     
     private void storeMetadata(Document metadata, File file, Cipher cipher) throws Exception {
