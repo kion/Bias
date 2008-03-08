@@ -183,6 +183,7 @@ public class Constants {
     public static final String PROPERTY_WINDOW_WIDTH = "WINDOW_WIDTH";
     public static final String PROPERTY_WINDOW_HEIGHT = "WINDOW_HEIGHT";
     public static final String PROPERTY_LAST_SELECTED_ID = "LAST_SELECTED_ID";
+    public static final String PROPERTY_LAST_UPDATE_DATE = "LAST_UPDATE_DATE";
 
     public static final String XML_ELEMENT_ROOT_CONTAINER = "root-container";
     public static final String XML_ELEMENT_PREFERENCE = "preference";

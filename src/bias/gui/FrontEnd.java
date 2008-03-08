@@ -522,6 +522,7 @@ public class FrontEnd extends JFrame {
             instance.applyPreferences();
             representTools();
             initTransferrers();
+            instance.performAutoUpdate();
         }
         return instance;
     }
@@ -724,6 +725,54 @@ public class FrontEnd extends JFrame {
 
         this.setLocation(wpxValue, wpyValue);
         this.setSize(wwValue, whValue);
+    }
+    
+    private void performAutoUpdate() {
+        if (Preferences.getInstance().enableAutoUpdate) {
+            boolean update = false;
+            if (Preferences.getInstance().autoUpdateInterval == 0) {
+                update = true;
+            } else {
+                String timeStr = config.getProperty(Constants.PROPERTY_LAST_UPDATE_DATE);
+                if (!Validator.isNullOrBlank(timeStr)) {
+                    long lastUpdateTime = Long.valueOf(timeStr);
+                    long currentTime = System.currentTimeMillis();
+                    int interval = (int) ((currentTime - lastUpdateTime) / 1000 / 60 / 60 / 24);
+                    // check if specified number of days from last update date have passed...
+                    if (interval >= Preferences.getInstance().autoUpdateInterval) {
+                        // ... and perform update, if yes
+                        update = true;
+                    }
+                } else {
+                    update = true;
+                }
+            }
+            if (update) {
+                new Thread(new Runnable(){
+                    public void run() {
+                        try {
+                            // sleep for 5 minutes before update...
+                            Thread.sleep(1000 * 60 * 5);
+                            // ... then perform update
+                            downloadAndInstallAllUpdates(new Runnable(){
+                                public void run() {
+                                    // remember last update date
+                                    config.setProperty(Constants.PROPERTY_LAST_UPDATE_DATE, "" + System.currentTimeMillis());
+                                    // inform user about update complete
+                                    JOptionPane.showMessageDialog(
+                                            getActiveWindow(), 
+                                            "<html>Automatic update complete<br/><br/>" +
+                                                    "<i>(Note: automatic update can be disabled via preferences option 'Enable automatic updates',<br>" +
+                                                    "update interval can be adjusted via preferences option 'Automatic update interval')</i><html>");
+                                }
+                            });
+                        } catch (InterruptedException ex) {
+                            // ignore, update just won't be performed this time
+                        }
+                    }
+                }).start();
+            }
+        }
     }
     
     /**
@@ -3858,7 +3907,7 @@ public class FrontEnd extends JFrame {
                             Component prefControl = null;
                             String type = field.getType().getSimpleName().toLowerCase();
                             if ("string".equals(type)) {
-                                prefPanel = new JPanel(new GridLayout(1, 2));
+                                prefPanel = new JPanel(new GridLayout(2, 1));
                                 JLabel prefTitle = new JLabel(prefAnn.title() + Constants.BLANK_STR);
                                 prefTitle.setToolTipText(prefAnn.description());
                                 prefPanel.add(prefTitle);
@@ -3903,7 +3952,7 @@ public class FrontEnd extends JFrame {
                                 ((JCheckBox) prefControl).setToolTipText(prefAnn.description());
                                 ((JCheckBox) prefControl).setSelected(field.getBoolean(Preferences.getInstance()));
                             } else if ("int".equals(type)) {
-                                prefPanel = new JPanel(new GridLayout(1, 2));
+                                prefPanel = new JPanel(new GridLayout(2, 1));
                                 JLabel prefTitle = new JLabel(prefAnn.title() + Constants.BLANK_STR);
                                 prefTitle.setToolTipText(prefAnn.description());
                                 prefPanel.add(prefTitle);
@@ -4103,37 +4152,22 @@ public class FrontEnd extends JFrame {
                 status};
     }
     
+    private Map<String, Integer> getDepCounters() {
+        if (depCounters == null) {
+            depCounters = new HashMap<String, Integer>();
+        }
+        return depCounters;
+    }
+    
     @SuppressWarnings("unchecked")
     private void initAddOnsManagementDialog() {
         if (addOnsManagementDialog == null) {
             try {
-                depCounters = new HashMap<String, Integer>();
                 // extensions
-                extModel = new DefaultTableModel() {
-                    private static final long serialVersionUID = 1L;
-                    @Override
-                    public boolean isCellEditable(int rowIndex, int mColIndex) {
-                        return mColIndex == 0 ? true : false;
-                    }
-                    @Override
-                    public Class<?> getColumnClass(int columnIndex) {
-                        if (columnIndex == 0) {
-                            return Boolean.class;
-                        } else {
-                            return super.getColumnClass(columnIndex);
-                        }
-                    }
-                };
-                extList = new JTable(extModel);
-                final TableRowSorter<TableModel> extSorter = new TableRowSorter<TableModel>(extModel);
+                extList = new JTable(getExtensionsModel());
+                final TableRowSorter<TableModel> extSorter = new TableRowSorter<TableModel>(getExtensionsModel());
                 extSorter.setSortsOnUpdates(true);
                 extList.setRowSorter(extSorter);
-                extModel.addColumn(Constants.EMPTY_STR);
-                extModel.addColumn("Name");
-                extModel.addColumn("Version");
-                extModel.addColumn("Author");
-                extModel.addColumn("Description");
-                extModel.addColumn("Status");
                 extList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 extList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
@@ -4152,7 +4186,7 @@ public class FrontEnd extends JFrame {
                         t.printStackTrace(System.err);
                         status = Constants.ADDON_STATUS_BROKEN;
                     }
-                    extModel.addRow(getAddOnInfoRow(Boolean.FALSE, extension, status));
+                    getExtensionsModel().addRow(getAddOnInfoRow(Boolean.FALSE, extension, status));
                 }
                 JButton extDetailsButt = new JButton("Extension details");
                 extDetailsButt.addActionListener(new ActionListener(){
@@ -4209,7 +4243,7 @@ public class FrontEnd extends JFrame {
                 JButton extInstButt = new JButton("Install/Update...");
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        installLocalPackages(extensionFileChooser, PackType.EXTENSION, extModel);
+                        installLocalPackages(extensionFileChooser, PackType.EXTENSION, getExtensionsModel());
                     }
                 });
                 JButton extUninstButt = new JButton("Uninstall");
@@ -4217,8 +4251,8 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             boolean selected = false;
-                            for (int i = 0; i < extModel.getRowCount(); i++) {
-                                if ((Boolean) extModel.getValueAt(i, 0)) {
+                            for (int i = 0; i < getExtensionsModel().getRowCount(); i++) {
+                                if ((Boolean) getExtensionsModel().getValueAt(i, 0)) {
                                     selected = true;
                                     break;
                                 }
@@ -4226,14 +4260,14 @@ public class FrontEnd extends JFrame {
                             if (selected) {
                                 if (confirmedUninstall()) {
                                     int i = 0;
-                                    while  (i < extModel.getRowCount()) {
-                                        if ((Boolean) extModel.getValueAt(i, 0)) {
-                                            String extension = (String) extModel.getValueAt(i, 1);
+                                    while  (i < getExtensionsModel().getRowCount()) {
+                                        if ((Boolean) getExtensionsModel().getValueAt(i, 0)) {
+                                            String extension = (String) getExtensionsModel().getValueAt(i, 1);
                                             String extFullClassName = 
                                                 Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                         + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
                                             BackEnd.getInstance().uninstallAddOn(extFullClassName, PackType.EXTENSION);
-                                            extModel.removeRow(i);
+                                            getExtensionsModel().removeRow(i);
                                             modified = true;
                                             i = 0;
                                         } else {
@@ -4249,22 +4283,7 @@ public class FrontEnd extends JFrame {
                 });
 
                 // skins
-                skinModel = new DefaultTableModel() {
-                    private static final long serialVersionUID = 1L;
-                    @Override
-                    public boolean isCellEditable(int rowIndex, int mColIndex) {
-                        return mColIndex == 0 && !getValueAt(rowIndex, 1).equals(DEFAULT_SKIN) ? true : false;
-                    }
-                    @Override
-                    public Class<?> getColumnClass(int columnIndex) {
-                        if (columnIndex == 0) {
-                            return Boolean.class;
-                        } else {
-                            return super.getColumnClass(columnIndex);
-                        }
-                    }
-                };
-                skinList = new JTable(skinModel) {
+                skinList = new JTable(getSkinModel()) {
                     private static final long serialVersionUID = 1L;
                     @Override
                     public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
@@ -4287,18 +4306,12 @@ public class FrontEnd extends JFrame {
                         return c;
                     }
                 };
-                final TableRowSorter<TableModel> skinSorter = new TableRowSorter<TableModel>(skinModel);
+                final TableRowSorter<TableModel> skinSorter = new TableRowSorter<TableModel>(getSkinModel());
                 skinSorter.setSortsOnUpdates(true);
                 skinList.setRowSorter(skinSorter);
-                skinModel.addColumn(Constants.EMPTY_STR);
-                skinModel.addColumn("Name");
-                skinModel.addColumn("Version");
-                skinModel.addColumn("Author");
-                skinModel.addColumn("Description");
-                skinModel.addColumn("Status");
                 skinList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 skinList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                skinModel.addRow(new Object[]{Boolean.FALSE, DEFAULT_SKIN,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Skin"});
+                getSkinModel().addRow(new Object[]{Boolean.FALSE, DEFAULT_SKIN,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Skin"});
                 for (AddOnInfo skin : BackEnd.getInstance().getAddOns(PackType.SKIN)) {
                     String status;
                     try {
@@ -4315,7 +4328,7 @@ public class FrontEnd extends JFrame {
                         t.printStackTrace(System.err);
                         status = Constants.ADDON_STATUS_BROKEN;
                     }
-                    skinModel.addRow(getAddOnInfoRow(Boolean.FALSE, skin, status));
+                    getSkinModel().addRow(getAddOnInfoRow(Boolean.FALSE, skin, status));
                 }
                 JButton skinDetailsButt = new JButton("Skin details");
                 skinDetailsButt.addActionListener(new ActionListener(){
@@ -4386,7 +4399,7 @@ public class FrontEnd extends JFrame {
                 JButton skinInstButt = new JButton("Install/Update...");
                 skinInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        installLocalPackages(skinFileChooser, PackType.SKIN, skinModel);
+                        installLocalPackages(skinFileChooser, PackType.SKIN, getSkinModel());
                     }
                 });
                 JButton skinUninstButt = new JButton("Uninstall");
@@ -4394,8 +4407,8 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             boolean selected = false;
-                            for (int i = 0; i < skinModel.getRowCount(); i++) {
-                                if ((Boolean) skinModel.getValueAt(i, 0)) {
+                            for (int i = 0; i < getSkinModel().getRowCount(); i++) {
+                                if ((Boolean) getSkinModel().getValueAt(i, 0)) {
                                     selected = true;
                                     break;
                                 }
@@ -4404,14 +4417,14 @@ public class FrontEnd extends JFrame {
                                 if (confirmedUninstall()) {
                                     String currentSkin = config.getProperty(Constants.PROPERTY_SKIN);
                                     int i = 0;
-                                    while  (i < skinModel.getRowCount()) {
-                                        String skin = (String) skinModel.getValueAt(i, 1);
-                                        if ((Boolean) skinModel.getValueAt(i, 0)) {
+                                    while  (i < getSkinModel().getRowCount()) {
+                                        String skin = (String) getSkinModel().getValueAt(i, 1);
+                                        if ((Boolean) getSkinModel().getValueAt(i, 0)) {
                                             String fullSkinClassName = 
                                                 Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                         + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
                                             BackEnd.getInstance().uninstallAddOn(fullSkinClassName, PackType.SKIN);
-                                            skinModel.removeRow(i);
+                                            getSkinModel().removeRow(i);
                                             // if skin that has been uninstalled was active one...
                                             if (skin.equals(currentSkin)) {
                                                 //... unset it (default one will be used)
@@ -4432,34 +4445,14 @@ public class FrontEnd extends JFrame {
                 });
                 
                 // icons
-                icSetModel = new DefaultTableModel() {
-                    private static final long serialVersionUID = 1L;
-                    @Override
-                    public boolean isCellEditable(int rowIndex, int mColIndex) {
-                        return mColIndex == 0 ? true : false;
-                    }
-                    @Override
-                    public Class<?> getColumnClass(int columnIndex) {
-                        if (columnIndex == 0) {
-                            return Boolean.class;
-                        } else {
-                            return super.getColumnClass(columnIndex);
-                        }
-                    }
-                };
-                icSetList = new JTable(icSetModel);
-                final TableRowSorter<TableModel> icSetSorter = new TableRowSorter<TableModel>(icSetModel);
+                icSetList = new JTable(getIconSetModel());
+                final TableRowSorter<TableModel> icSetSorter = new TableRowSorter<TableModel>(getIconSetModel());
                 icSetSorter.setSortsOnUpdates(true);
                 icSetList.setRowSorter(icSetSorter);
-                icSetModel.addColumn(Constants.EMPTY_STR);
-                icSetModel.addColumn("Name");
-                icSetModel.addColumn("Version");
-                icSetModel.addColumn("Author");
-                icSetModel.addColumn("Description");
                 icSetList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 icSetList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 for (AddOnInfo iconSetInfo : BackEnd.getInstance().getIconSets()) {
-                    icSetModel.addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
+                    getIconSetModel().addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
                 }
                 icons = new HashMap<String, ImageIcon>();
                 icModel = new DefaultListModel();
@@ -4516,11 +4509,11 @@ public class FrontEnd extends JFrame {
                                                     FrontEnd.icons.put(icon.getDescription(), icon);
                                                 }
                                                 Collection<AddOnInfo> iconSets = BackEnd.getInstance().getIconSets();
-                                                while (icSetModel.getRowCount() > 0) {
-                                                    icSetModel.removeRow(0);
+                                                while (getIconSetModel().getRowCount() > 0) {
+                                                    getIconSetModel().removeRow(0);
                                                 }
                                                 for (AddOnInfo iconSetInfo : iconSets) {
-                                                    icSetModel.addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
+                                                    getIconSetModel().addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
                                                 }
                                                 added = true;
                                             }
@@ -4567,8 +4560,8 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             boolean selected = false;
-                            for (int i = 0; i < icSetModel.getRowCount(); i++) {
-                                if ((Boolean) icSetModel.getValueAt(i, 0)) {
+                            for (int i = 0; i < getIconSetModel().getRowCount(); i++) {
+                                if ((Boolean) getIconSetModel().getValueAt(i, 0)) {
                                     selected = true;
                                     break;
                                 }
@@ -4577,14 +4570,14 @@ public class FrontEnd extends JFrame {
                                 if (confirmedUninstall()) {
                                     boolean changed = false;
                                     int i = 0;
-                                    while  (i < icSetModel.getRowCount()) {
-                                        if ((Boolean) icSetModel.getValueAt(i, 0)) {
-                                            String icSet = (String) icSetModel.getValueAt(i, 1);
+                                    while  (i < getIconSetModel().getRowCount()) {
+                                        if ((Boolean) getIconSetModel().getValueAt(i, 0)) {
+                                            String icSet = (String) getIconSetModel().getValueAt(i, 1);
                                             Collection<String> removedIds = BackEnd.getInstance().removeIconSet(icSet);
                                             for (String removedId : removedIds) {
                                                 icModel.removeElement(icons.get(removedId));
                                             }
-                                            icSetModel.removeRow(i);
+                                            getIconSetModel().removeRow(i);
                                             changed = true;
                                             i = 0;
                                         } else {
@@ -4602,72 +4595,49 @@ public class FrontEnd extends JFrame {
                     }
                 });
 
-                // online list of available addons
-                onlineModel = new DefaultTableModel() {
-                    private static final long serialVersionUID = 1L;
-                    @Override
-                    public boolean isCellEditable(int rowIndex, int mColIndex) {
-                        return mColIndex == 0 
-                                        && (!getValueAt(rowIndex, 1).equals(PackType.LIBRARY.value()) 
-                                        || getValueAt(rowIndex, 7).equals(Constants.ADDON_STATUS_UPDATE)) ? true : false;
-                    }
-                    @Override
-                    public Class<?> getColumnClass(int columnIndex) {
-                        if (columnIndex == 0) {
-                            return Boolean.class;
-                        } else {
-                            return super.getColumnClass(columnIndex);
-                        }
-                    }
-                };
-                onlineList = new JTable(onlineModel);
+                // list of loaded libs
                 libsList = getLibsList(BackEnd.getInstance().getAddOns(PackType.LIBRARY));
                 libModel = (DefaultTableModel) libsList.getModel();
-                final TableRowSorter<TableModel> onlineSorter = new TableRowSorter<TableModel>(onlineModel);
+                
+                // online list of available addons
+                onlineList = new JTable(getOnlineModel());
+                final TableRowSorter<TableModel> onlineSorter = new TableRowSorter<TableModel>(getOnlineModel());
                 onlineSorter.setSortsOnUpdates(true);
                 onlineList.setRowSorter(onlineSorter);
-                onlineModel.addColumn(Constants.EMPTY_STR);
-                onlineModel.addColumn("Type");
-                onlineModel.addColumn("Name");
-                onlineModel.addColumn("Version");
-                onlineModel.addColumn("Author");
-                onlineModel.addColumn("Description");
-                onlineModel.addColumn("Size");
-                onlineModel.addColumn("Status");
                 onlineList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 TableModelListener dependencyResolver = new TableModelListener(){
                     public void tableChanged(TableModelEvent e) {
                         if (e.getColumn() == 0) {
                             try {
-                                Pack pack = getAvailableOnlinePackages().get((String) onlineModel.getValueAt(e.getFirstRow(), 2));
+                                Pack pack = getAvailableOnlinePackages().get((String) getOnlineModel().getValueAt(e.getFirstRow(), 2));
                                 if (pack.getDependency() != null && !pack.getDependency().isEmpty()) {
                                     for (Dependency dep : pack.getDependency()) {
                                         if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
-                                            int idx = findDataRowIndex(onlineModel, 2, dep.getName());
+                                            int idx = findDataRowIndex(getOnlineModel(), 2, dep.getName());
                                             if (idx == -1) {
-                                                onlineModel.setValueAt(Boolean.FALSE, e.getFirstRow(), e.getColumn());
+                                                getOnlineModel().setValueAt(Boolean.FALSE, e.getFirstRow(), e.getColumn());
                                                 throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
                                                                         dep.getType().value() + " '" + dep.getName() + "' " + 
                                                                         (dep.getVersion() != null ? 
                                                                         " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
                                                                         " is not available!");
                                             } else {
-                                                Integer counter = depCounters.get(dep.getName());
+                                                Integer counter = getDepCounters().get(dep.getName());
                                                 if (counter == null) {
                                                     counter = 0;
                                                 }
-                                                if ((Boolean) onlineModel.getValueAt(e.getFirstRow(), e.getColumn())) {
+                                                if ((Boolean) getOnlineModel().getValueAt(e.getFirstRow(), e.getColumn())) {
                                                     counter++;
                                                     if (counter == 1) {
-                                                        onlineModel.setValueAt(Boolean.TRUE, idx, 0);
+                                                        getOnlineModel().setValueAt(Boolean.TRUE, idx, 0);
                                                     }
                                                 } else {
                                                     counter--;
                                                     if (counter == 0) {
-                                                        onlineModel.setValueAt(Boolean.FALSE, idx, 0);
+                                                        getOnlineModel().setValueAt(Boolean.FALSE, idx, 0);
                                                     }
                                                 }
-                                                depCounters.put(dep.getName(), counter);
+                                                getDepCounters().put(dep.getName(), counter);
                                             }
                                         }
                                     }
@@ -4678,19 +4648,11 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 };
-                onlineModel.addTableModelListener(dependencyResolver);
+                getOnlineModel().addTableModelListener(dependencyResolver);
                 onlineList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                onlineSingleProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
-                onlineSingleProgressBar.setStringPainted(true);
-                onlineSingleProgressBar.setMinimum(0);
-                onlineSingleProgressBar.setString(Constants.EMPTY_STR);
-                onlineTotalProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
-                onlineTotalProgressBar.setStringPainted(true);
-                onlineTotalProgressBar.setMinimum(0);
-                onlineTotalProgressBar.setString(Constants.EMPTY_STR);
                 final JPanel onlineProgressPanel = new JPanel(new GridLayout(2,1));
-                onlineProgressPanel.add(onlineSingleProgressBar);
-                onlineProgressPanel.add(onlineTotalProgressBar);
+                onlineProgressPanel.add(getOnlineSingleProgressBar());
+                onlineProgressPanel.add(getOnlineTotalProgressBar());
                 JButton onlineRefreshButt = new JButton("Refresh");
                 onlineRefreshButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -4943,15 +4905,7 @@ public class FrontEnd extends JFrame {
                 });
                 JPanel p = new JPanel(new BorderLayout());
                 p.add(addOnsPane, BorderLayout.CENTER);
-                closeAddOnsManagementDialogButt = new JButton("Close");
-                closeAddOnsManagementDialogButt.addActionListener(new ActionListener(){
-                    public void actionPerformed(ActionEvent e) {
-                        if (!addOnsManagementDialogLocked) {
-                            addOnsManagementDialog.setVisible(false);
-                        }
-                    }
-                });
-                p.add(closeAddOnsManagementDialogButt, BorderLayout.SOUTH);
+                p.add(getCloseAddOnsManagementDialogButt(), BorderLayout.SOUTH);
                 addOnsManagementDialog.add(p);
                 addOnsManagementDialog.pack();
                 int x = (getToolkit().getScreenSize().width - addOnsManagementDialog.getWidth()) / 2;
@@ -4965,37 +4919,192 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private DefaultTableModel getIconSetModel() {
+        if (icSetModel == null) {
+            icSetModel = new DefaultTableModel() {
+                private static final long serialVersionUID = 1L;
+                @Override
+                public boolean isCellEditable(int rowIndex, int mColIndex) {
+                    return mColIndex == 0 ? true : false;
+                }
+                @Override
+                public Class<?> getColumnClass(int columnIndex) {
+                    if (columnIndex == 0) {
+                        return Boolean.class;
+                    } else {
+                        return super.getColumnClass(columnIndex);
+                    }
+                }
+            };
+            icSetModel.addColumn(Constants.EMPTY_STR);
+            icSetModel.addColumn("Name");
+            icSetModel.addColumn("Version");
+            icSetModel.addColumn("Author");
+            icSetModel.addColumn("Description");
+        }
+        return icSetModel;
+    }
+    
+    private DefaultTableModel getSkinModel() {
+        if (skinModel == null) {
+            skinModel = new DefaultTableModel() {
+                private static final long serialVersionUID = 1L;
+                @Override
+                public boolean isCellEditable(int rowIndex, int mColIndex) {
+                    return mColIndex == 0 && !getValueAt(rowIndex, 1).equals(DEFAULT_SKIN) ? true : false;
+                }
+                @Override
+                public Class<?> getColumnClass(int columnIndex) {
+                    if (columnIndex == 0) {
+                        return Boolean.class;
+                    } else {
+                        return super.getColumnClass(columnIndex);
+                    }
+                }
+            };
+            skinModel.addColumn(Constants.EMPTY_STR);
+            skinModel.addColumn("Name");
+            skinModel.addColumn("Version");
+            skinModel.addColumn("Author");
+            skinModel.addColumn("Description");
+            skinModel.addColumn("Status");
+        }
+        return skinModel;
+    }
+    
+    private DefaultTableModel getExtensionsModel() {
+        if (extModel == null) {
+            extModel = new DefaultTableModel() {
+                private static final long serialVersionUID = 1L;
+                @Override
+                public boolean isCellEditable(int rowIndex, int mColIndex) {
+                    return mColIndex == 0 ? true : false;
+                }
+                @Override
+                public Class<?> getColumnClass(int columnIndex) {
+                    if (columnIndex == 0) {
+                        return Boolean.class;
+                    } else {
+                        return super.getColumnClass(columnIndex);
+                    }
+                }
+            };
+            extModel.addColumn(Constants.EMPTY_STR);
+            extModel.addColumn("Name");
+            extModel.addColumn("Version");
+            extModel.addColumn("Author");
+            extModel.addColumn("Description");
+            extModel.addColumn("Status");
+        }
+        return extModel;
+    }
+    
+    private DefaultTableModel getOnlineModel() {
+        if (onlineModel == null) {
+            onlineModel = new DefaultTableModel() {
+                private static final long serialVersionUID = 1L;
+                @Override
+                public boolean isCellEditable(int rowIndex, int mColIndex) {
+                    return mColIndex == 0 
+                                    && (!getValueAt(rowIndex, 1).equals(PackType.LIBRARY.value()) 
+                                    || getValueAt(rowIndex, 7).equals(Constants.ADDON_STATUS_UPDATE)) ? true : false;
+                }
+                @Override
+                public Class<?> getColumnClass(int columnIndex) {
+                    if (columnIndex == 0) {
+                        return Boolean.class;
+                    } else {
+                        return super.getColumnClass(columnIndex);
+                    }
+                }
+            };
+            onlineModel.addColumn(Constants.EMPTY_STR);
+            onlineModel.addColumn("Type");
+            onlineModel.addColumn("Name");
+            onlineModel.addColumn("Version");
+            onlineModel.addColumn("Author");
+            onlineModel.addColumn("Description");
+            onlineModel.addColumn("Size");
+            onlineModel.addColumn("Status");
+        }
+        return onlineModel;
+    }
+    
+    private JProgressBar getOnlineSingleProgressBar() {
+        if (onlineSingleProgressBar == null) {
+            onlineSingleProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
+            onlineSingleProgressBar.setStringPainted(true);
+            onlineSingleProgressBar.setMinimum(0);
+            onlineSingleProgressBar.setString(Constants.EMPTY_STR);
+        }
+        return onlineSingleProgressBar;
+    }
+    
+    private JProgressBar getOnlineTotalProgressBar() {
+        if (onlineTotalProgressBar == null) {
+            onlineTotalProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
+            onlineTotalProgressBar.setStringPainted(true);
+            onlineTotalProgressBar.setMinimum(0);
+            onlineTotalProgressBar.setString(Constants.EMPTY_STR);
+        }
+        return onlineTotalProgressBar;
+    }
+    
+    private JButton getCloseAddOnsManagementDialogButt() {
+        if (closeAddOnsManagementDialogButt == null) {
+            closeAddOnsManagementDialogButt = new JButton("Close");
+            closeAddOnsManagementDialogButt.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent e) {
+                    if (!addOnsManagementDialogLocked) {
+                        addOnsManagementDialog.setVisible(false);
+                    }
+                }
+            });
+        }
+        return closeAddOnsManagementDialogButt;
+    }
+    
     private void lockAddOnsManagementDialog() {
-        closeAddOnsManagementDialogButt.setText(null);
-        closeAddOnsManagementDialogButt.setIcon(ICON_PROCESS);
+        getCloseAddOnsManagementDialogButt().setText(null);
+        getCloseAddOnsManagementDialogButt().setIcon(ICON_PROCESS);
         addOnsManagementDialogLocked = true;
     }
     
     private void unlockAddOnsManagementDialog() {
-        closeAddOnsManagementDialogButt.setText("Close");
-        closeAddOnsManagementDialogButt.setIcon(null);
+        getCloseAddOnsManagementDialogButt().setText("Close");
+        getCloseAddOnsManagementDialogButt().setIcon(null);
         addOnsManagementDialogLocked = false;
     }
     
-    // TODO [P1] implement auto-update feature
-//    private void downloadAndInstallAllUpdates() {
-//        Runnable updateTask = new Runnable(){
-//            public void run() {
-//                selectAllUpdates();
-//                downloadAndInstallOnlinePackages(null);
-//            }
-//        };
-//        if (!onlineListRefreshed) {
-//            refreshOnlinePackagesList(updateTask);
-//        } else {
-//            updateTask.run();
-//        }
-//    }
+    private void downloadAndInstallAllUpdates(final Runnable onFinishAction) {
+        Runnable updateTask = new Runnable(){
+            public void run() {
+                if (updatesAvailable()) {
+                    selectAllUpdates();
+                    downloadAndInstallOnlinePackages(onFinishAction);
+                }
+            }
+        };
+        if (!onlineListRefreshed) {
+            refreshOnlinePackagesList(updateTask);
+        } else {
+            updateTask.run();
+        }
+    }
+    
+    private boolean updatesAvailable() {
+        for (int i = 0; i < getOnlineModel().getRowCount(); i++) {
+            if (getOnlineModel().getValueAt(i, 7).equals(Constants.ADDON_STATUS_UPDATE)) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     private void selectAllUpdates() {
-        for (int i = 0; i < onlineList.getRowCount(); i++) {
-            if (onlineList.getValueAt(i, 7).equals(Constants.ADDON_STATUS_UPDATE)) {
-                onlineList.setValueAt(Boolean.TRUE, i, 0);
+        for (int i = 0; i < getOnlineModel().getRowCount(); i++) {
+            if (getOnlineModel().getValueAt(i, 7).equals(Constants.ADDON_STATUS_UPDATE)) {
+                getOnlineModel().setValueAt(Boolean.TRUE, i, 0);
             }
         }
     }
@@ -5030,7 +5139,7 @@ public class FrontEnd extends JFrame {
                             if (!proposedAddOnsToInstall.isEmpty()) {
                                 // check if there're dependency-packages present...
                                 boolean depsPresent = false;
-                                for (Integer i : depCounters.values()) {
+                                for (Integer i : getDepCounters().values()) {
                                     if (i > 0) {
                                         depsPresent = true;
                                         break;
@@ -5098,8 +5207,8 @@ public class FrontEnd extends JFrame {
     private boolean onlineListRefreshed = false;
     
     private void refreshOnlinePackagesList(final Runnable onFinishAction) {
-        while (onlineModel.getRowCount() > 0) {
-            onlineModel.removeRow(0);
+        while (getOnlineModel().getRowCount() > 0) {
+            getOnlineModel().removeRow(0);
         }
         try {
             URL addonsListURL = new URL(BackEnd.getInstance().getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
@@ -5125,7 +5234,7 @@ public class FrontEnd extends JFrame {
                                 }
                                 if (row != null) {
                                     getAvailableOnlinePackages().put(pack.getName(), pack);
-                                    onlineModel.addRow(row);
+                                    getOnlineModel().addRow(row);
                                 }
                             }
                         }
@@ -5163,11 +5272,11 @@ public class FrontEnd extends JFrame {
             final Map<URL, File> urlFileMap = new LinkedHashMap<URL, File>();
             Collection<Integer> depIndexes = new ArrayList<Integer>();
             long tSize = 0;
-            for (String dep : depCounters.keySet()) {
-                int idx = findDataRowIndex(onlineModel, 2, dep);
+            for (String dep : getDepCounters().keySet()) {
+                int idx = findDataRowIndex(getOnlineModel(), 2, dep);
                 if (idx != -1) {
-                    if ((Boolean) onlineModel.getValueAt(idx, 0)) {
-                        Pack pack = getAvailableOnlinePackages().get((String) onlineModel.getValueAt(idx, 2));
+                    if ((Boolean) getOnlineModel().getValueAt(idx, 0)) {
+                        Pack pack = getAvailableOnlinePackages().get((String) getOnlineModel().getValueAt(idx, 2));
                         String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
                         URL url;
                         if (!Validator.isNullOrBlank(pack.getUrl())) {
@@ -5183,9 +5292,9 @@ public class FrontEnd extends JFrame {
                     }
                 }
             }
-            for (int i = 0; i < onlineModel.getRowCount(); i++) {
-                if ((Boolean) onlineModel.getValueAt(i, 0) && !depIndexes.contains(i)) {
-                    Pack pack = getAvailableOnlinePackages().get((String) onlineModel.getValueAt(i, 2));
+            for (int i = 0; i < getOnlineModel().getRowCount(); i++) {
+                if ((Boolean) getOnlineModel().getValueAt(i, 0) && !depIndexes.contains(i)) {
+                    Pack pack = getAvailableOnlinePackages().get((String) getOnlineModel().getValueAt(i, 2));
                     String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
                     URL url;
                     if (!Validator.isNullOrBlank(pack.getUrl())) {
@@ -5210,22 +5319,22 @@ public class FrontEnd extends JFrame {
                     public void onStart(URL url, File file) {
                         Pack pack = urlPackageMap.get(url);
                         if (pack.getFileSize() != null) {
-                            onlineSingleProgressBar.setMaximum(pack.getFileSize().intValue());
+                            getOnlineSingleProgressBar().setMaximum(pack.getFileSize().intValue());
                         }
                     };
                     @Override
                     public void onSingleProgress(URL url, File file, long downloadedBytesNum, long elapsedTime) {
                         Pack pack = urlPackageMap.get(url);
-                        onlineSingleProgressBar.setValue((int) downloadedBytesNum);
-                        onlineSingleProgressBar.setString(pack.getName() + Constants.BLANK_STR + pack.getVersion() 
+                        getOnlineSingleProgressBar().setValue((int) downloadedBytesNum);
+                        getOnlineSingleProgressBar().setString(pack.getName() + Constants.BLANK_STR + pack.getVersion() 
                                 + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(pack.getFileSize()) + ")");
                     };
                     @Override
                     public void onTotalProgress(int itemNum, long downloadedBytesNum, long elapsedTime) {
-                        onlineTotalProgressBar.setValue((int) downloadedBytesNum);
+                        getOnlineTotalProgressBar().setValue((int) downloadedBytesNum);
                         double estimationCoef = ((double) totalSize) / ((double) downloadedBytesNum);
                         long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
-                        onlineTotalProgressBar.setString(itemNum + " / " + urlFileMap.size() 
+                        getOnlineTotalProgressBar().setString(itemNum + " / " + urlFileMap.size() 
                                 + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(totalSize) + ")"
                                 + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
                                 + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
@@ -5242,11 +5351,11 @@ public class FrontEnd extends JFrame {
                                         FrontEnd.icons.put(icon.getDescription(), icon);
                                     }
                                     Collection<AddOnInfo> iconSets = BackEnd.getInstance().getIconSets();
-                                    while (icSetModel.getRowCount() > 0) {
-                                        icSetModel.removeRow(0);
+                                    while (getIconSetModel().getRowCount() > 0) {
+                                        getIconSetModel().removeRow(0);
                                     }
                                     for (AddOnInfo iconSetInfo : iconSets) {
-                                        icSetModel.addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
+                                        getIconSetModel().addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
                                     }
                                     sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                     icList.repaint();
@@ -5281,7 +5390,7 @@ public class FrontEnd extends JFrame {
                                 PackType addOnType = PackType.fromValue(pack.getType().value());
                                 AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
                                 String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
-                                DefaultTableModel model = addOnType == PackType.EXTENSION ? extModel : skinModel;
+                                DefaultTableModel model = addOnType == PackType.EXTENSION ? getExtensionsModel() : getSkinModel();
                                 int idx = findDataRowIndex(model, 1, installedAddOn.getName());
                                 if (idx != -1) {
                                     model.removeRow(idx);
@@ -5315,7 +5424,7 @@ public class FrontEnd extends JFrame {
                                 onFinishAction.run();
                             }
                         }
-                        depCounters.clear();
+                        getDepCounters().clear();
                         refreshOnlinePackagesList(null);
                     }
                     @Override
@@ -5326,7 +5435,7 @@ public class FrontEnd extends JFrame {
                         JOptionPane.showMessageDialog(getActiveWindow(), "Packages download/installation canceled by user!");
                     }
                 });
-                onlineTotalProgressBar.setMaximum(totalSize.intValue());
+                getOnlineTotalProgressBar().setMaximum(totalSize.intValue());
                 d.start();
             }    
         } catch (Exception ex) {
@@ -5366,7 +5475,7 @@ public class FrontEnd extends JFrame {
                                     lockAddOnsManagementDialog();
                                     for (Dependency dep : pack.getDependencies()) {
                                         if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
-                                            int idx = findDataRowIndex(onlineModel, 2, dep.getName());
+                                            int idx = findDataRowIndex(getOnlineModel(), 2, dep.getName());
                                             if (idx == -1) {
                                                 addOnModel.setValueAt(Boolean.FALSE, e.getFirstRow(), e.getColumn());
                                                 throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
@@ -5375,22 +5484,22 @@ public class FrontEnd extends JFrame {
                                                                         " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
                                                                         " is not available!");
                                             } else {
-                                                Integer counter = depCounters.get(dep.getName());
+                                                Integer counter = getDepCounters().get(dep.getName());
                                                 if (counter == null) {
                                                     counter = 0;
                                                 }
                                                 if ((Boolean) addOnModel.getValueAt(e.getFirstRow(), e.getColumn())) {
                                                     counter++;
                                                     if (counter == 1) {
-                                                        onlineModel.setValueAt(Boolean.TRUE, idx, 0);
+                                                        getOnlineModel().setValueAt(Boolean.TRUE, idx, 0);
                                                     }
                                                 } else {
                                                     counter--;
                                                     if (counter == 0) {
-                                                        onlineModel.setValueAt(Boolean.FALSE, idx, 0);
+                                                        getOnlineModel().setValueAt(Boolean.FALSE, idx, 0);
                                                     }
                                                 }
-                                                depCounters.put(dep.getName(), counter);
+                                                getDepCounters().put(dep.getName(), counter);
                                             }
                                         }
                                     }

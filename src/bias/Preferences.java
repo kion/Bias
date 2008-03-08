@@ -174,7 +174,9 @@ public class Preferences {
     @PreferenceAnnotation(
             title = "Hide main window on start",
             description = "Defines whether application should start with hidden main window (system tray icon will be shown in this case)")
-    @PreferenceEnableAnnotation(enabledByField = "remainInSysTrayOnWindowClose", enabledByValue = "true")        
+    @PreferenceEnableAnnotation(
+            enabledByField = "remainInSysTrayOnWindowClose", 
+            enabledByValue = "true")        
     public boolean startHidden = false;
     
     @PreferenceAnnotation(
@@ -196,6 +198,19 @@ public class Preferences {
             title = "Auto-mode",
             description = "Defines whether some common operations (like data saving before export) should be performed automatically (without users confirmation).")
     public boolean autoMode = false;
+    
+    @PreferenceAnnotation(
+            title = "Enable automatic update",
+            description = "Application core and add-ons will be automatically updated if this options is enabled.")
+    public boolean enableAutoUpdate = true;
+
+    @PreferenceAnnotation(
+            title = "Automatic update interval (set to 0 to update on each startup), in days: ",
+            description = "Defines how often automatic update is performed")
+    @PreferenceEnableAnnotation(
+            enabledByField = "enableAutoUpdate", 
+            enabledByValue = "true")        
+    public int autoUpdateInterval = 7;
     
     @PreferenceAnnotation(
             title = "Show memory usage information in status bar",
