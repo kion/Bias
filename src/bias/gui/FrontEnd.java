@@ -2807,8 +2807,6 @@ public class FrontEnd extends JFrame {
         });
     }
     
-    // TODO [P1] both import and export should have option 'force import/export unchanged data'
-
     private ImportAction importAction = new ImportAction();
     private class ImportAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
