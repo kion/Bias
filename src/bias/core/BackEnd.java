@@ -364,8 +364,9 @@ public class BackEnd {
         File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
         if (checkSumsFile.exists()) {
             Properties p = new Properties();
-            // TODO [P1] decrypt
-            p.load(new FileInputStream(checkSumsFile));
+            byte[] encryptedData = FSUtils.readFile(checkSumsFile);
+            byte[] decryptedData = decrypt(encryptedData);
+            p.load(new ByteArrayInputStream(decryptedData));
             String storedCheckSum = p.getProperty(fileLocation);
             if (!Validator.isNullOrBlank(storedCheckSum)) {
                 new FileWriter(new File("/home/kion/tmp/t1.txt")).write(storedCheckSum);
@@ -385,8 +386,10 @@ public class BackEnd {
             p.load(new FileInputStream(checkSumsFile));
         }
         p.setProperty(fileLocation, checkSum);
-        // TODO [P1] encrypt
-        p.store(new FileOutputStream(checkSumsFile), null);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        p.store(baos, null);
+        byte[] encryptedData = encrypt(baos.toByteArray());
+        FSUtils.writeFile(checkSumsFile, encryptedData);
     }
     
     public DataCategory importData(
