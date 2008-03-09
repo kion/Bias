@@ -9,17 +9,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -56,6 +58,7 @@ import bias.core.pack.PackType;
 import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.ToolExtension;
+import bias.extension.TransferExtension;
 import bias.utils.ArchUtils;
 import bias.utils.FSUtils;
 import bias.utils.PropertiesUtils;
@@ -355,6 +358,35 @@ public class BackEnd {
                 de.setData(decrypt(data));
             }
         }
+    }
+    
+    public boolean isTransferFileLocationCheckSumChanged(Class<? extends TransferExtension> transferExtClass, String fileLocation, String checkSum) throws Exception {
+        File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
+        if (checkSumsFile.exists()) {
+            Properties p = new Properties();
+            // TODO [P1] decrypt
+            p.load(new FileInputStream(checkSumsFile));
+            String storedCheckSum = p.getProperty(fileLocation);
+            if (!Validator.isNullOrBlank(storedCheckSum)) {
+                new FileWriter(new File("/home/kion/tmp/t1.txt")).write(storedCheckSum);
+                new FileWriter(new File("/home/kion/tmp/t2.txt")).write(checkSum);
+                if (storedCheckSum.equals(checkSum)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    public void storeTransferFileLocationCheckSum(Class<? extends TransferExtension> transferExtClass, String fileLocation, String checkSum) throws Exception {
+        Properties p = new Properties();
+        File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
+        if (checkSumsFile.exists()) {
+            p.load(new FileInputStream(checkSumsFile));
+        }
+        p.setProperty(fileLocation, checkSum);
+        // TODO [P1] encrypt
+        p.store(new FileOutputStream(checkSumsFile), null);
     }
     
     public DataCategory importData(
@@ -683,7 +715,7 @@ public class BackEnd {
         }
     }
     
-    public File exportData(
+    public FileInfo exportData(
             DataCategory data,
             boolean exportPreferences,
             boolean exportGlobalConfig,
@@ -753,9 +785,7 @@ public class BackEnd {
         }
         // global config file
         if (exportGlobalConfig) {
-            StringWriter sw = new StringWriter();
-            config.list(new PrintWriter(sw));
-            FSUtils.writeFile(new File(configDir, Constants.GLOBAL_CONFIG_FILE), sw.getBuffer().toString().getBytes());
+            config.store(new FileOutputStream(new File(configDir, Constants.GLOBAL_CONFIG_FILE)), null);
         }
         // icons
         if (exportIcons) {
@@ -826,8 +856,12 @@ public class BackEnd {
             dataDir.delete();
         }
         File file = new File(Constants.TMP_DIR, "data.zip");
-        ArchUtils.compress(exportDir, file);
-        return file;
+        String checkSum = ArchUtils.compress(
+                exportDir, 
+                file, 
+                MessageDigest.getInstance(Constants.DIGEST_ALGORITHM), 
+                Collections.singleton(Constants.GLOBAL_CONFIG_FILE));
+        return new FileInfo(file, checkSum);
     }
     
     public void store() throws Exception {
@@ -854,9 +888,7 @@ public class BackEnd {
         // icons
         storeIconsList();
         // global config file
-        StringWriter sw = new StringWriter();
-        config.list(new PrintWriter(sw));
-        FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE), sw.getBuffer().toString().getBytes());
+        config.store(new FileOutputStream(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE)), null);
         // preferences file
         storePreferences();
     }
@@ -1267,9 +1299,10 @@ public class BackEnd {
                         }
                     } else {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        int b;
-                        while ((b = in.read()) != -1) {
-                            baos.write(b);
+                        byte[] buffer = new byte[1024];
+                        int br;
+                        while ((br = in.read(buffer)) > 0) {
+                            baos.write(buffer, 0, br);
                         }
                         baos.close();
                         name = je.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
@@ -1599,9 +1632,10 @@ public class BackEnd {
                                 }
                             } else {
                                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                int b;
-                                while ((b = in.read()) != -1) {
-                                    baos.write(b);
+                                byte[] buffer = new byte[1024];
+                                int br;
+                                while ((br = in.read(buffer)) > 0) {
+                                    baos.write(buffer, 0, br);
                                 }
                                 baos.close();
                                 name = entry.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
@@ -1616,9 +1650,10 @@ public class BackEnd {
                             }
                         } else {
                             ByteArrayOutputStream out = new ByteArrayOutputStream();
-                            int b;
-                            while ((b = in.read()) != -1) {
-                                out.write(b);
+                            byte[] buffer = new byte[1024];
+                            int br;
+                            while ((br = in.read(buffer)) > 0) {
+                                out.write(buffer, 0, br);
                             }
                             out.close();
                             byte[] bytes = out.toByteArray();

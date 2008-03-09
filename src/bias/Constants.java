@@ -81,6 +81,7 @@ public class Constants {
     
     public static final String UNICODE_ENCODING = "UTF-8";
     
+    public static final String DIGEST_ALGORITHM = "MD5";
     public static final String CIPHER_ALGORITHM = "PBEWithMD5AndDES";
     
     public static final byte[] CIPHER_SALT = "kn+kv=lv".getBytes();
@@ -130,6 +131,7 @@ public class Constants {
     public static final String SKIN_PACKAGE_NAME = Skin.class.getPackage().getName();
     public static final String ICON_FORMAT = "PNG";
     public static final String ICON_FILE_SUFFIX = ".png";
+    public static final String CHECKSUM_CONFIG_FILE_SUFFIX = ".checksum.properties";
     public static final String EXTENSION_CONFIG_FILE_SUFFIX = ".ext.conf";
     public static final String SKIN_CONFIG_FILE_SUFFIX = ".skin.conf";
     public static final String DATA_ENTRY_CONFIG_FILE_SUFFIX = ".data.conf";
@@ -150,6 +152,7 @@ public class Constants {
 
     public static final String DATA_TREE_ROOT_NODE_CAPTION = "ALL DATA";
     public static final String OPTION_TRANSFER_TYPE = "TRANSFER_TYPE";
+    public static final String OPTION_FILE_LOCATION = "FILE_LOCATION";
     public static final String OPTION_CONFIG_NAME = "CONFIG_NAME";
     public static final String OPTION_EXPORT_ALL = "EXPORT_ALL";
     public static final String OPTION_SELECTED_RECURSIVE_IDS = "SELECTED_RECURSIVE_IDS";

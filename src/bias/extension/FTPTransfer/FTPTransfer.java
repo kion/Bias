@@ -18,6 +18,7 @@ import javax.swing.JTextField;
 
 import bias.Constants;
 import bias.Preferences;
+import bias.extension.TransferConfiguration;
 import bias.extension.TransferExtension;
 import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
@@ -33,6 +34,10 @@ public class FTPTransfer extends TransferExtension {
     private static final String TRANSFER_OPTION_USERNAME = "USERNAME";
     private static final String TRANSFER_OPTION_PASSWORD = "TRANSFER_PASSWORD";
 
+    private static final String CHECKSUM_FILE_SUFIX = ".checksum";
+
+    private static final String PATH_SEPARATOR = "/";
+
     private static final String PROTOCOL_PREFIX = "ftp://";
 
     private static final String PORT_SEPARATOR = ":";
@@ -47,16 +52,38 @@ public class FTPTransfer extends TransferExtension {
      * @see bias.extension.TransferExtension#doExport(byte[], byte[])
      */
     @Override
-    public void doExport(byte[] data, byte[] options) throws Exception {
+    public void doExport(byte[] data, byte[] options) throws Throwable {
+        performExport(data, options, false);
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.TransferExtension#doExportCheckSum(byte[], byte[])
+     */
+    @Override
+    public void doExportCheckSum(byte[] data, byte[] options) throws Throwable {
+        performExport(data, options, true);
+    }
+    
+    private void performExport(byte[] data, byte[] options, boolean checksum) throws Throwable {
         Properties opts = PropertiesUtils.deserializeProperties(options);
         String server = opts.getProperty(TRANSFER_OPTION_SERVER);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
         String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);
         String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
+        if (checksum) {
+            int idx = filePath.lastIndexOf(PATH_SEPARATOR);
+            if (idx != -1) {
+                String fileName = filePath.substring(idx + 1) + CHECKSUM_FILE_SUFIX;
+                filePath = filePath.substring(0, idx);
+                filePath = filePath + PATH_SEPARATOR + fileName;
+            } else {
+                filePath += CHECKSUM_FILE_SUFIX;
+            }
+        }
         URL url = new URL(PROTOCOL_PREFIX + username + ":" + password + "@" + server + filePath + ";type=i");
         URLConnection urlc = url.openConnection();
-        urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut);
-        urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut);
+        urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut * 1000);
+        urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut * 1000);
         OutputStream os = urlc.getOutputStream();
         os.write(data);
         os.close();
@@ -66,35 +93,58 @@ public class FTPTransfer extends TransferExtension {
      * @see bias.extension.TransferExtension#doImport(byte[])
      */
     @Override
-    public byte[] doImport(byte[] options) throws Exception {
+    public byte[] doImport(byte[] options) throws Throwable {
+        return performImport(options, false);
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.TransferExtension#doImportCheckSum(byte[])
+     */
+    @Override
+    public byte[] doImportCheckSum(byte[] options) throws Throwable {
+        return performImport(options, true);
+    }
+    
+    private byte[] performImport(byte[] options, boolean checksum) throws Throwable {
         Properties opts = PropertiesUtils.deserializeProperties(options);
         String server = opts.getProperty(TRANSFER_OPTION_SERVER);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
         String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);
         String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
+        if (checksum) {
+            int idx = filePath.lastIndexOf(PATH_SEPARATOR);
+            if (idx != -1) {
+                String fileName = filePath.substring(idx + 1) + CHECKSUM_FILE_SUFIX;
+                filePath = filePath.substring(0, idx);
+                filePath = filePath + PATH_SEPARATOR + fileName;
+            } else {
+                filePath += CHECKSUM_FILE_SUFIX;
+            }
+        }
         if (!server.contains(PORT_SEPARATOR)) {
             server += PORT_SEPARATOR + DEFAULT_PORT;
         }
         URL url = new URL(PROTOCOL_PREFIX + username + ":" + password + "@" + server + filePath + ";type=i");
         URLConnection urlc = url.openConnection();
-        urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut);
-        urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut);
+        urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut * 1000);
+        urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut * 1000);
         InputStream is = urlc.getInputStream();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        int b;
-        while ((b = is.read()) != -1) {
-            baos.write(b);
+        byte[] buffer = new byte[1024];
+        int br;
+        while ((br = is.read(buffer)) > 0) {
+            baos.write(buffer, 0, br);
         }
         baos.close();
         is.close();
         return baos.toByteArray();
     }
-    
+
     /* (non-Javadoc)
-     * @see bias.extension.TransferExtension#configure(bias.extension.TransferExtension.OPERATION_TYPE)
+     * @see bias.extension.TransferExtension#configure(bias.Constants.TRANSFER_OPERATION_TYPE)
      */
     @Override
-    public byte[] configure(Constants.TRANSFER_OPERATION_TYPE opType) throws Throwable {
+    public TransferConfiguration configure(Constants.TRANSFER_OPERATION_TYPE opType) throws Throwable {
         Properties options = new Properties();
         JLabel serverL = new JLabel("FTP Server (domain name or IP, including port if using non-default one)");
         JTextField serverTF = new JTextField();
@@ -137,7 +187,7 @@ public class FTPTransfer extends TransferExtension {
                 options.setProperty(TRANSFER_OPTION_PASSWORD, text);
             }
         }
-        return PropertiesUtils.serializeProperties(options);
+        return new TransferConfiguration(PropertiesUtils.serializeProperties(options), filepathTF.getText());
     }
 
 }

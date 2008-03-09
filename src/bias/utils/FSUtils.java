@@ -29,9 +29,10 @@ public class FSUtils {
         FileInputStream fis = new FileInputStream(file);
         BufferedInputStream bis = new BufferedInputStream(fis);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        int b;
-        while ((b = bis.read()) != -1) {
-            baos.write(b);
+        byte[] buffer = new byte[1024];
+        int br;
+        while ((br = bis.read(buffer)) > 0) {
+            baos.write(buffer, 0, br);
         }
         baos.close();
         bis.close();
@@ -43,9 +44,10 @@ public class FSUtils {
         ByteArrayInputStream bais = new ByteArrayInputStream(data);
         FileOutputStream fos = new FileOutputStream(file);
         BufferedOutputStream bos = new BufferedOutputStream(fos);
-        int b;
-        while ((b = bais.read()) != -1) {
-            bos.write(b);
+        byte[] buffer = new byte[1024];
+        int br;
+        while ((br = bais.read(buffer)) > 0) {
+            bos.write(buffer, 0, br);
         }
         bos.close();
         bais.close();

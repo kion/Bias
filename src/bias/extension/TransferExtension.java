@@ -37,13 +37,27 @@ public abstract class TransferExtension implements Extension {
      * 
      * @return imported data
      */
-    public abstract byte[] doImport(byte[] options) throws Exception;
+    public abstract byte[] doImport(byte[] options) throws Throwable;
+
+    /**
+     * Imports data checksum using provided import settings.
+     * Should be overridden to perform checksum-import for certain transfer-extension's instance.
+     * 
+     * @return imported data
+     */
+    public abstract byte[] doImportCheckSum(byte[] options) throws Throwable;
 
     /**
      * Exports given data using provided import settings.
      * Should be overridden to perform export for certain transfer-extension's instance.
      */
-    public abstract void doExport(byte[] data, byte[] options) throws Exception;
+    public abstract void doExport(byte[] data, byte[] options) throws Throwable;
+
+    /**
+     * Exports given data checksum using provided import settings.
+     * Should be overridden to perform checksum-export for certain transfer-extension's instance.
+     */
+    public abstract void doExportCheckSum(byte[] data, byte[] options) throws Throwable;
 
     /**
      * Performs general transfer-extension configuration.
@@ -59,15 +73,12 @@ public abstract class TransferExtension implements Extension {
 
     /**
      * Configures transfer-extension right before import/export operation is to be performed.
-     * Should be overridden to return settings for certain transfer-extension.
-     * By default returns null (no configuration).
+     * Should be implemented to return settings for certain transfer-extension.
      * 
      * @param operation type (import/export) to be performed after configuration
      * @return settings byte array containing serialized configuration settings
      */
-    public byte[] configure(Constants.TRANSFER_OPERATION_TYPE opType) throws Throwable {
-        return null;
-    }
+    public abstract TransferConfiguration configure(Constants.TRANSFER_OPERATION_TYPE opType) throws Throwable;
 
     /**
      * Defines whether extension's configuration should be skipped on export

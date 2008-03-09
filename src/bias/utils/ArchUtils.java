@@ -10,6 +10,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.security.MessageDigest;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -20,11 +26,11 @@ import bias.Constants;
  * @author kion
  */
 public class ArchUtils {
-    
+
     private ArchUtils() {
         // hidden default constructor
     }
-    
+
     public static void extract(byte[] source, File destination) throws IOException {
         if (!destination.exists()) {
             destination.mkdirs();
@@ -39,9 +45,10 @@ public class ArchUtils {
                 dir.mkdir();
             } else {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                int b;
-                while ((b = is.read()) != -1) {
-                    baos.write(b);
+                byte[] buffer = new byte[1024];
+                int br;
+                while ((br = is.read(buffer)) > 0) {
+                    baos.write(buffer, 0, br);
                 }
                 baos.close();
                 String name = URLDecoder.decode(ze.getName(), Constants.UNICODE_ENCODING);
@@ -56,8 +63,20 @@ public class ArchUtils {
         }
         is.close();
     }
+
+    public static void compress(File source, File destination) throws Exception {
+        doCompress(source, destination, null, null);
+    }
     
-    public static void compress(File source, File destination) throws IOException {
+    public static String compress(File source, File destination, MessageDigest md) throws Exception {
+        return doCompress(source, destination, md, null);
+    }
+    
+    public static String compress(File source, File destination, MessageDigest md, Set<String> fileNamesToSkipInCheckSumCalculation) throws Exception {
+        return doCompress(source, destination, md, fileNamesToSkipInCheckSumCalculation);
+    }
+    
+    private static String doCompress(File source, File destination, MessageDigest md, Set<String> fileNamesToSkipInCheckSumCalculation) throws Exception {
         if (!destination.exists()) {
             File destinationDir = destination.getParentFile();
             if (!destinationDir.exists()) {
@@ -71,26 +90,49 @@ public class ArchUtils {
         }
         destination.createNewFile();
         ZipOutputStream out = new ZipOutputStream(new FileOutputStream(destination));
-        compress(source, source, out);
+        compress(source, source, out, md, fileNamesToSkipInCheckSumCalculation);
         out.close();
+        return getHexString(md.digest());
     }
-    
-    private static void compress(File root, File in, ZipOutputStream out) throws IOException {
+
+    private static void compress(File root, File in, ZipOutputStream out, MessageDigest md, Set<String> fileNamesToSkipInCheckSumCalculation) throws IOException {
         if (in.isDirectory()) {
-            for (File f : in.listFiles()) {
-                compress(root, f, out);
+            List<File> files = Arrays.asList(in.listFiles());
+            Collections.sort(files, new Comparator<File>(){
+                public int compare(File o1, File o2) {
+                    return o1.getName().compareTo(o2.getName());
+                }
+            });
+            for (File f : files) {
+                compress(root, f, out, md, fileNamesToSkipInCheckSumCalculation);
             }
         } else {
             String path = root.toURI().relativize(in.toURI()).toString();
             out.putNextEntry(new ZipEntry(path));
             FileInputStream fin = new FileInputStream(in);
-            int b;
-            while ((b = fin.read()) != -1) {
-                out.write(b);
+            byte[] buffer = new byte[1024];
+            int br;
+            if (md == null || (fileNamesToSkipInCheckSumCalculation != null && fileNamesToSkipInCheckSumCalculation.contains(in.getName()))) {
+                while ((br = fin.read(buffer)) > 0) {
+                    out.write(buffer, 0, br);
+                }
+            } else {
+                while ((br = fin.read(buffer)) > 0) {
+                    out.write(buffer, 0, br);
+                    md.update(buffer, 0, br);
+                }
             }
             fin.close();
             out.closeEntry();
         }
+    }
+
+    private static String getHexString(byte[] bytes) {
+        String result = Constants.EMPTY_STR;
+        for (int i = 0; i < bytes.length; i++) {
+            result += Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1);
+        }
+        return result;
     }
 
 }
