@@ -2806,6 +2806,8 @@ public class FrontEnd extends JFrame {
             }
         });
     }
+    
+    // TODO [P1] both import and export should have option 'force import/export unchanged data'
 
     private ImportAction importAction = new ImportAction();
     private class ImportAction extends AbstractAction {
@@ -2866,12 +2868,14 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
+                final JCheckBox importUnchangedDataCB = new JCheckBox("Force import even if data haven't been changed since last import");
                 JPanel p = new JPanel(new BorderLayout());
-                p.add(configsCB, BorderLayout.CENTER);
+                p.add(configsCB, BorderLayout.NORTH);
                 JPanel pb = new JPanel(new GridLayout(1, 2));
                 pb.add(renButt);
                 pb.add(delButt);
-                p.add(pb, BorderLayout.SOUTH);
+                p.add(pb, BorderLayout.CENTER);
+                p.add(importUnchangedDataCB, BorderLayout.SOUTH);
                 Component[] c = new Component[] {
                         new JLabel("<html>Choose existing import configuration to use, <br/>" + 
                                    "or leave selection empty and press OK for custom export.</html>"),
@@ -2902,8 +2906,11 @@ public class FrontEnd extends JFrame {
                                         }
                                         String fileLocation = props.getProperty(Constants.OPTION_FILE_LOCATION);
                                         byte[] transferOptions = BackEnd.getInstance().getTransferOptions(configName, TRANSFER_TYPE.IMPORT);
-                                        String checkSum = new String(transferrer.doImportCheckSum(transferOptions));
-                                        if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, transferrer.getClass(), fileLocation, checkSum)) {
+                                        String checkSum = null;
+                                        if (!importUnchangedDataCB.isSelected()) {
+                                            checkSum = new String(transferrer.doImportCheckSum(transferOptions));
+                                        }
+                                        if (checkSum != null && !BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, transferrer.getClass(), fileLocation, checkSum)) {
                                             label.setText("<html><font color=green>Data import - Completed</font></html>");
                                             processLabel.setText("Import discarded: data haven't changed since last import.");
                                         } else {
@@ -3025,8 +3032,11 @@ public class FrontEnd extends JFrame {
                             Thread importThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
-                                        String checkSum = new String(transferrer.doImportCheckSum(transferOptions));
-                                        if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, transferrer.getClass(), fileLocation, checkSum)) {
+                                        String checkSum = null;
+                                        if (!importUnchangedDataCB.isSelected()) {
+                                            checkSum = new String(transferrer.doImportCheckSum(transferOptions));
+                                        }
+                                        if (checkSum != null && !BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, transferrer.getClass(), fileLocation, checkSum)) {
                                             label.setText("<html><font color=green>Data import - Completed</font></html>");
                                             processModel.addElement("Import discarded: data haven't changed since last import.");
                                             autoscrollList(processList);
@@ -3317,12 +3327,14 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
+                final JCheckBox exportUnchangedDataCB = new JCheckBox("Force export even if data haven't been changed since last export");
                 JPanel p = new JPanel(new BorderLayout());
-                p.add(configsCB, BorderLayout.CENTER);
+                p.add(configsCB, BorderLayout.NORTH);
                 JPanel pb = new JPanel(new GridLayout(1, 2));
                 pb.add(renButt);
                 pb.add(delButt);
-                p.add(pb, BorderLayout.SOUTH);
+                p.add(pb, BorderLayout.CENTER);
+                p.add(exportUnchangedDataCB, BorderLayout.SOUTH);
                 Component[] c = new Component[] {
                         new JLabel("<html>Choose existing export configuration to use, <br/>" + 
                                    "or leave selection empty and press OK for custom export.</html>"),
@@ -3385,7 +3397,7 @@ public class FrontEnd extends JFrame {
                                             throw new Exception("It looks like transfer type used in this stored export configuration is no longer available (extension uninstalled?).");
                                         }
                                         String fileLocation = props.getProperty(Constants.OPTION_FILE_LOCATION);
-                                        if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.EXPORT, transferrer.getClass(), fileLocation, fileInfo.getCheckSum())) {
+                                        if (!exportUnchangedDataCB.isSelected() && !BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.EXPORT, transferrer.getClass(), fileLocation, fileInfo.getCheckSum())) {
                                             label.setText("<html><font color=green>Data export - Completed</font></html>");
                                             processLabel.setText("Export discarded: data haven't changed since last export.");
                                         } else {
@@ -3602,7 +3614,7 @@ public class FrontEnd extends JFrame {
                                                 throw new Exception("Export file location is missing!");
                                             }
                                             try {
-                                                if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.EXPORT, transferrer.getClass(), fileLocation, fileInfo.getCheckSum())) {
+                                                if (!exportUnchangedDataCB.isSelected() && !BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.EXPORT, transferrer.getClass(), fileLocation, fileInfo.getCheckSum())) {
                                                     label.setText("<html><font color=green>Data export - Completed</font></html>");
                                                     processModel.addElement("Export discarded: data haven't changed since last export.");
                                                     autoscrollList(processList);

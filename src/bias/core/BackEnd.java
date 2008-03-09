@@ -378,18 +378,20 @@ public class BackEnd {
     }
     
     public void storeTransferFileLocationCheckSum(TRANSFER_TYPE transferType, Class<? extends TransferExtension> transferExtClass, String fileLocation, String checkSum) throws Exception {
-        Properties p = new Properties();
-        File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
-        if (checkSumsFile.exists()) {
-            byte[] encryptedData = FSUtils.readFile(checkSumsFile);
-            byte[] decryptedData = decrypt(encryptedData);
-            p.load(new ByteArrayInputStream(decryptedData));
+        if (checkSum != null) {
+            Properties p = new Properties();
+            File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
+            if (checkSumsFile.exists()) {
+                byte[] encryptedData = FSUtils.readFile(checkSumsFile);
+                byte[] decryptedData = decrypt(encryptedData);
+                p.load(new ByteArrayInputStream(decryptedData));
+            }
+            p.setProperty(transferType.name() + Constants.VALUES_SEPARATOR + fileLocation, checkSum);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();;
+            p.store(baos, null);
+            byte[] encryptedData = encrypt(baos.toByteArray());
+            FSUtils.writeFile(checkSumsFile, encryptedData);
         }
-        p.setProperty(transferType.name() + Constants.VALUES_SEPARATOR + fileLocation, checkSum);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();;
-        p.store(baos, null);
-        byte[] encryptedData = encrypt(baos.toByteArray());
-        FSUtils.writeFile(checkSumsFile, encryptedData);
     }
     
     public DataCategory importData(

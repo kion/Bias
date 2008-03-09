@@ -92,7 +92,7 @@ public class ArchUtils {
         ZipOutputStream out = new ZipOutputStream(new FileOutputStream(destination));
         compress(source, source, out, md, fileNamesToSkipInCheckSumCalculation);
         out.close();
-        return getHexString(md.digest());
+        return md != null ? getHexString(md.digest()) : null;
     }
 
     private static void compress(File root, File in, ZipOutputStream out, MessageDigest md, Set<String> fileNamesToSkipInCheckSumCalculation) throws IOException {
