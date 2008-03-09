@@ -395,8 +395,6 @@ public class FrontEnd extends JFrame {
         return unmarshaller;
     }
     
-    // TODO [P1] add more event types for listeners registration
-    
     private static Map<Class<? extends StartUpEventListener>, StartUpEventListener> startUpEventListeners;
     public static void addStartUpEventListener(StartUpEventListener l) {
         if (startUpEventListeners == null) {
