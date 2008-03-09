@@ -14,7 +14,7 @@ import bias.utils.FSUtils;
  */
 public class Constants {
     
-    public static enum TRANSFER_OPERATION_TYPE {
+    public static enum TRANSFER_TYPE {
         IMPORT,
         EXPORT
     }
@@ -94,7 +94,7 @@ public class Constants {
     public static final String PATH_SEPARATOR = "/";
 
     public static final String ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME = "repository.xml";
-    public static final String ADDON_FILENAME_VERSION_SEPARATOR = "_";
+    public static final String VALUES_SEPARATOR = "_";
     public static final String JAR_FILE_SUFFIX = ".jar";
     public static final String ADDON_DETAILS_FILENAME_SUFFIX = ".html";
     

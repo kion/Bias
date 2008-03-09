@@ -115,6 +115,7 @@ import javax.xml.bind.Unmarshaller;
 import bias.Constants;
 import bias.Preferences;
 import bias.Splash;
+import bias.Constants.TRANSFER_TYPE;
 import bias.Preferences.PreferenceValidator;
 import bias.annotation.PreferenceAnnotation;
 import bias.annotation.PreferenceEnableAnnotation;
@@ -137,6 +138,8 @@ import bias.event.BeforeSaveEventListener;
 import bias.event.EventListener;
 import bias.event.SaveEvent;
 import bias.event.StartUpEventListener;
+import bias.event.TransferEvent;
+import bias.event.TransferEventListener;
 import bias.extension.EntryExtension;
 import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
@@ -411,6 +414,28 @@ public class FrontEnd extends JFrame {
                     l.onEvent();
                 } catch (Throwable t) {
                     displayErrorMessage("start-up event listener '" + l.getClass().getSimpleName() + "' failed!", t);
+                }
+            }
+        }
+    }
+    
+    private static Map<Class<? extends TransferEventListener>, TransferEventListener> transferEventListeners;
+    public static void addTransferEventListener(TransferEventListener l) {
+        if (transferEventListeners == null) {
+            transferEventListeners = new HashMap<Class<? extends TransferEventListener>, TransferEventListener>();
+        }
+        addEventListener(transferEventListeners, l);
+    }
+    public static void removeTransferEventListener(TransferEventListener l) {
+        removeEventListener(transferEventListeners, l);
+    }
+    private static void fireTransferEvent(TransferEvent e) {
+        if (transferEventListeners != null) {
+            for (TransferEventListener l : transferEventListeners.values()) {
+                try {
+                    l.onEvent(e);
+                } catch (Throwable t) {
+                    displayErrorMessage("transfer event listener (" + e.getTransferType().name() + ") '" + l.getClass().getSimpleName() + "' failed!", t);
                 }
             }
         }
@@ -2798,7 +2823,7 @@ public class FrontEnd extends JFrame {
             try {
                 final JComboBox configsCB = new JComboBox();
                 configsCB.addItem(Constants.EMPTY_STR);
-                for (String configName : BackEnd.getInstance().getTransferConfigurations(Constants.TRANSFER_OPERATION_TYPE.IMPORT).keySet()) {
+                for (String configName : BackEnd.getInstance().getTransferConfigurations(TRANSFER_TYPE.IMPORT).keySet()) {
                     configsCB.addItem(configName);
                 }
                 final JButton delButt = new JButton("Delete");
@@ -2807,7 +2832,7 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             String name = (String) configsCB.getSelectedItem();
-                            BackEnd.getInstance().removeTransferConfiguration(name, Constants.TRANSFER_OPERATION_TYPE.IMPORT);
+                            BackEnd.getInstance().removeTransferConfiguration(name, TRANSFER_TYPE.IMPORT);
                             configsCB.removeItem(name);
                         } catch (Exception ex) {
                             displayErrorMessage("Failed to delete selected import-configuration!", ex);
@@ -2822,7 +2847,7 @@ public class FrontEnd extends JFrame {
                             String oldName = (String) configsCB.getSelectedItem();
                             String newName = JOptionPane.showInputDialog(FrontEnd.this, "New name:", oldName);
                             if (!Validator.isNullOrBlank(newName)) {
-                                BackEnd.getInstance().renameTransferConfiguration(oldName, newName, Constants.TRANSFER_OPERATION_TYPE.IMPORT);
+                                BackEnd.getInstance().renameTransferConfiguration(oldName, newName, TRANSFER_TYPE.IMPORT);
                                 configsCB.removeItem(oldName);
                                 configsCB.addItem(newName);
                                 configsCB.setSelectedItem(newName);
@@ -2867,7 +2892,7 @@ public class FrontEnd extends JFrame {
                                 public void run() {
                                     try {
                                         String configName = configsCB.getSelectedItem().toString();
-                                        Properties props = BackEnd.getInstance().getTransferConfigurations(Constants.TRANSFER_OPERATION_TYPE.IMPORT).get(configName);
+                                        Properties props = BackEnd.getInstance().getTransferConfigurations(TRANSFER_TYPE.IMPORT).get(configName);
                                         String type = props.getProperty(Constants.OPTION_TRANSFER_TYPE);
                                         String password = props.getProperty(Constants.OPTION_DATA_PASSWORD);
                                         if (password == null) {
@@ -2878,9 +2903,9 @@ public class FrontEnd extends JFrame {
                                             throw new Exception("It looks like transfer type used in this stored import configuration is no longer available (extension uninstalled?).");
                                         }
                                         String fileLocation = props.getProperty(Constants.OPTION_FILE_LOCATION);
-                                        byte[] transferOptions = BackEnd.getInstance().getTransferOptions(configName, Constants.TRANSFER_OPERATION_TYPE.IMPORT);
+                                        byte[] transferOptions = BackEnd.getInstance().getTransferOptions(configName, TRANSFER_TYPE.IMPORT);
                                         String checkSum = new String(transferrer.doImportCheckSum(transferOptions));
-                                        if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(transferrer.getClass(), fileLocation, checkSum)) {
+                                        if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, transferrer.getClass(), fileLocation, checkSum)) {
                                             label.setText("<html><font color=green>Data import - Completed</font></html>");
                                             processLabel.setText("Import discarded: data haven't changed since last import.");
                                         } else {
@@ -2935,7 +2960,8 @@ public class FrontEnd extends JFrame {
                                                     label.setText("<html><font color=green>Data import - Completed</font></html>");
                                                     processLabel.setText("Data have been successfully imported.");
                                                     displayStatusBarMessage("import done");
-                                                    BackEnd.getInstance().storeTransferFileLocationCheckSum(transferrer.getClass(), fileLocation, checkSum);
+                                                    BackEnd.getInstance().storeTransferFileLocationCheckSum(TRANSFER_TYPE.IMPORT, transferrer.getClass(), fileLocation, checkSum);
+                                                    fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass(), configName));
                                                 } catch (GeneralSecurityException gse) {
                                                     processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
                                                     label.setText("<html><font color=red>Data import - Failed</font></html>");
@@ -2975,7 +3001,7 @@ public class FrontEnd extends JFrame {
                         if (opt == JOptionPane.OK_OPTION) {
                             final String annotation = (String) cb.getSelectedItem();
                             final TransferExtension transferrer = ExtensionFactory.getAnnotatedTransferExtensions().get(annotation);
-                            TransferConfiguration transferConfiguration = transferrer.configure(Constants.TRANSFER_OPERATION_TYPE.IMPORT);
+                            TransferConfiguration transferConfiguration = transferrer.configure(TRANSFER_TYPE.IMPORT);
                             if (transferConfiguration == null) {
                                 hideBottomPanel();
                                 throw new Exception("Invalid transfer configuration (null)!");
@@ -3002,7 +3028,7 @@ public class FrontEnd extends JFrame {
                                 public void run() {
                                     try {
                                         String checkSum = new String(transferrer.doImportCheckSum(transferOptions));
-                                        if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(transferrer.getClass(), fileLocation, checkSum)) {
+                                        if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, transferrer.getClass(), fileLocation, checkSum)) {
                                             label.setText("<html><font color=green>Data import - Completed</font></html>");
                                             processModel.addElement("Import discarded: data haven't changed since last import.");
                                             autoscrollList(processList);
@@ -3146,7 +3172,8 @@ public class FrontEnd extends JFrame {
                                                         processModel.addElement("Data have been successfully imported.");
                                                         autoscrollList(processList);
                                                         displayStatusBarMessage("import done");
-                                                        BackEnd.getInstance().storeTransferFileLocationCheckSum(transferrer.getClass(), fileLocation, checkSum);
+                                                        BackEnd.getInstance().storeTransferFileLocationCheckSum(TRANSFER_TYPE.IMPORT, transferrer.getClass(), fileLocation, checkSum);
+                                                        fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass()));
                                                         Component[] c = new Component[] {
                                                                 new JLabel("Data have been successfully imported."),
                                                                 new JLabel("If you want to save this import configuration,"),
@@ -3183,7 +3210,7 @@ public class FrontEnd extends JFrame {
                                                             if (!Validator.isNullOrBlank(password)) {
                                                                 options.setProperty(Constants.OPTION_DATA_PASSWORD, password);
                                                             }
-                                                            BackEnd.getInstance().storeTransferConfigurationAndOptions(configName, options, transferOptions, Constants.TRANSFER_OPERATION_TYPE.IMPORT);
+                                                            BackEnd.getInstance().storeTransferConfigurationAndOptions(configName, options, transferOptions, TRANSFER_TYPE.IMPORT);
                                                             processModel.addElement("Import configuration stored as '" + configName + "'");
                                                             autoscrollList(processList);
                                                         }
@@ -3247,7 +3274,7 @@ public class FrontEnd extends JFrame {
                 // now proceed with export
                 final JComboBox configsCB = new JComboBox();
                 configsCB.addItem(Constants.EMPTY_STR);
-                for (String configName : BackEnd.getInstance().getTransferConfigurations(Constants.TRANSFER_OPERATION_TYPE.EXPORT).keySet()) {
+                for (String configName : BackEnd.getInstance().getTransferConfigurations(TRANSFER_TYPE.EXPORT).keySet()) {
                     configsCB.addItem(configName);
                 }
                 final JButton delButt = new JButton("Delete");
@@ -3256,7 +3283,7 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             String name = (String) configsCB.getSelectedItem();
-                            BackEnd.getInstance().removeTransferConfiguration(name, Constants.TRANSFER_OPERATION_TYPE.EXPORT);
+                            BackEnd.getInstance().removeTransferConfiguration(name, TRANSFER_TYPE.EXPORT);
                             configsCB.removeItem(name);
                         } catch (Exception ex) {
                             displayErrorMessage("Failed to delete selected export-configuration!", ex);
@@ -3271,7 +3298,7 @@ public class FrontEnd extends JFrame {
                             String oldName = (String) configsCB.getSelectedItem();
                             String newName = JOptionPane.showInputDialog(FrontEnd.this, "New name:", oldName);
                             if (!Validator.isNullOrBlank(newName)) {
-                                BackEnd.getInstance().renameTransferConfiguration(oldName, newName, Constants.TRANSFER_OPERATION_TYPE.EXPORT);
+                                BackEnd.getInstance().renameTransferConfiguration(oldName, newName, TRANSFER_TYPE.EXPORT);
                                 configsCB.removeItem(oldName);
                                 configsCB.addItem(newName);
                                 configsCB.setSelectedItem(newName);
@@ -3320,7 +3347,7 @@ public class FrontEnd extends JFrame {
                                 public void run() {
                                     try {
                                         String configName = configsCB.getSelectedItem().toString();
-                                        final Properties props = BackEnd.getInstance().getTransferConfigurations(Constants.TRANSFER_OPERATION_TYPE.EXPORT).get(configName);
+                                        final Properties props = BackEnd.getInstance().getTransferConfigurations(TRANSFER_TYPE.EXPORT).get(configName);
                                         String exportAllStr = props.getProperty(Constants.OPTION_EXPORT_ALL);
                                         if (Validator.isNullOrBlank(exportAllStr) || !Boolean.valueOf(exportAllStr)) {
                                             String idsStr = props.getProperty(Constants.OPTION_SELECTED_IDS);
@@ -3360,18 +3387,19 @@ public class FrontEnd extends JFrame {
                                             throw new Exception("It looks like transfer type used in this stored export configuration is no longer available (extension uninstalled?).");
                                         }
                                         String fileLocation = props.getProperty(Constants.OPTION_FILE_LOCATION);
-                                        if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(transferrer.getClass(), fileLocation, fileInfo.getCheckSum())) {
+                                        if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.EXPORT, transferrer.getClass(), fileLocation, fileInfo.getCheckSum())) {
                                             label.setText("<html><font color=green>Data export - Completed</font></html>");
                                             processLabel.setText("Export discarded: data haven't changed since last export.");
                                         } else {
-                                            byte[] transferOptions = BackEnd.getInstance().getTransferOptions(configName, Constants.TRANSFER_OPERATION_TYPE.EXPORT);
+                                            byte[] transferOptions = BackEnd.getInstance().getTransferOptions(configName, TRANSFER_TYPE.EXPORT);
                                             transferrer.doExportCheckSum(fileInfo.getCheckSum().getBytes(), transferOptions);
                                             byte[] exportedData = FSUtils.readFile(fileInfo.getFile());
                                             transferrer.doExport(exportedData, transferOptions);
                                             label.setText("<html><font color=green>Data export - Completed</font></html>");
                                             processLabel.setText("Data have been successfully exported.");
                                             displayStatusBarMessage("export done");
-                                            BackEnd.getInstance().storeTransferFileLocationCheckSum(transferrer.getClass(), fileLocation, fileInfo.getCheckSum());
+                                            BackEnd.getInstance().storeTransferFileLocationCheckSum(TRANSFER_TYPE.EXPORT, transferrer.getClass(), fileLocation, fileInfo.getCheckSum());
+                                            fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
                                         }
                                     } catch (Throwable ex) {
                                         String errMsg = "Failed to export data!";
@@ -3560,7 +3588,7 @@ public class FrontEnd extends JFrame {
                                         } else {    
                                             String annotation = (String) cb.getSelectedItem();
                                             final TransferExtension transferrer = ExtensionFactory.getAnnotatedTransferExtensions().get(annotation);
-                                            TransferConfiguration transferConfiguration = transferrer.configure(Constants.TRANSFER_OPERATION_TYPE.IMPORT);
+                                            TransferConfiguration transferConfiguration = transferrer.configure(TRANSFER_TYPE.IMPORT);
                                             if (transferConfiguration == null) {
                                                 hideBottomPanel();
                                                 throw new Exception("Invalid transfer configuration (null)!");
@@ -3576,7 +3604,7 @@ public class FrontEnd extends JFrame {
                                                 throw new Exception("Export file location is missing!");
                                             }
                                             try {
-                                                if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(transferrer.getClass(), fileLocation, fileInfo.getCheckSum())) {
+                                                if (!BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.EXPORT, transferrer.getClass(), fileLocation, fileInfo.getCheckSum())) {
                                                     label.setText("<html><font color=green>Data export - Completed</font></html>");
                                                     processModel.addElement("Export discarded: data haven't changed since last export.");
                                                     autoscrollList(processList);
@@ -3594,7 +3622,8 @@ public class FrontEnd extends JFrame {
                                                     processModel.addElement("Data have been successfully transferred.");
                                                     autoscrollList(processList);
                                                     displayStatusBarMessage("export done");
-                                                    BackEnd.getInstance().storeTransferFileLocationCheckSum(transferrer.getClass(), fileLocation, fileInfo.getCheckSum());
+                                                    BackEnd.getInstance().storeTransferFileLocationCheckSum(TRANSFER_TYPE.EXPORT, transferrer.getClass(), fileLocation, fileInfo.getCheckSum());
+                                                    fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass()));
                                                     configsCB.setEditable(true);
                                                     Component[] c = new Component[] {
                                                             new JLabel("Data have been successfully exported."),
@@ -3650,7 +3679,7 @@ public class FrontEnd extends JFrame {
                                                                 options.setProperty(Constants.OPTION_SELECTED_RECURSIVE_IDS, ids.toString());
                                                             }
                                                         }
-                                                        BackEnd.getInstance().storeTransferConfigurationAndOptions(configName, options, transferOptions, Constants.TRANSFER_OPERATION_TYPE.EXPORT);
+                                                        BackEnd.getInstance().storeTransferConfigurationAndOptions(configName, options, transferOptions, TRANSFER_TYPE.EXPORT);
                                                         processModel.addElement("Export configuration stored as '" + configName + "'");
                                                         autoscrollList(processList);
                                                     }
@@ -4263,7 +4292,7 @@ public class FrontEnd extends JFrame {
                                 try {
                                     File addOnInfoFile = new File(
                                             new File(Constants.ADDON_INFO_DIR, extension), 
-                                            extension + Constants.ADDON_FILENAME_VERSION_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
+                                            extension + Constants.VALUES_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
                                     if (addOnInfoFile.exists()) {
                                         URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                         URL addOnURL = addOnInfoFile.toURI().toURL();
@@ -4408,7 +4437,7 @@ public class FrontEnd extends JFrame {
                                     try {
                                         File addOnInfoFile = new File(
                                                 new File(Constants.ADDON_INFO_DIR, skin), 
-                                                skin + Constants.ADDON_FILENAME_VERSION_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
+                                                skin + Constants.VALUES_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
                                         if (addOnInfoFile.exists()) {
                                             URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                             URL addOnURL = addOnInfoFile.toURI().toURL();
@@ -4539,7 +4568,7 @@ public class FrontEnd extends JFrame {
                                 try {
                                     File addOnInfoFile = new File(
                                             new File(Constants.ADDON_INFO_DIR, ic), 
-                                            ic + Constants.ADDON_FILENAME_VERSION_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
+                                            ic + Constants.VALUES_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
                                     if (addOnInfoFile.exists()) {
                                         URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                         URL addOnURL = addOnInfoFile.toURI().toURL();
@@ -4731,7 +4760,7 @@ public class FrontEnd extends JFrame {
                             String addOnName = (String) onlineList.getValueAt(idx, 2);
                             try {
                                 final Pack pack = getAvailableOnlinePackages().get(addOnName);
-                                String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_DETAILS_FILENAME_SUFFIX;
+                                String fileName = pack.getName() + (pack.getVersion() != null ? Constants.VALUES_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_DETAILS_FILENAME_SUFFIX;
                                 final URL addOnURL = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
                                 try {
                                     loadAndDisplayPackageDetails(BackEnd.getInstance().getRepositoryBaseURL(), addOnURL, pack.getName());
@@ -5341,7 +5370,7 @@ public class FrontEnd extends JFrame {
                 if (idx != -1) {
                     if ((Boolean) getOnlineModel().getValueAt(idx, 0)) {
                         Pack pack = getAvailableOnlinePackages().get((String) getOnlineModel().getValueAt(idx, 2));
-                        String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
+                        String fileName = pack.getName() + (pack.getVersion() != null ? Constants.VALUES_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
                         URL url;
                         if (!Validator.isNullOrBlank(pack.getUrl())) {
                             url = new URL(pack.getUrl());
@@ -5359,7 +5388,7 @@ public class FrontEnd extends JFrame {
             for (int i = 0; i < getOnlineModel().getRowCount(); i++) {
                 if ((Boolean) getOnlineModel().getValueAt(i, 0) && !depIndexes.contains(i)) {
                     Pack pack = getAvailableOnlinePackages().get((String) getOnlineModel().getValueAt(i, 2));
-                    String fileName = pack.getName() + (pack.getVersion() != null ? Constants.ADDON_FILENAME_VERSION_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
+                    String fileName = pack.getName() + (pack.getVersion() != null ? Constants.VALUES_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
                     URL url;
                     if (!Validator.isNullOrBlank(pack.getUrl())) {
                         url = new URL(pack.getUrl());

@@ -78,7 +78,7 @@ public abstract class TransferExtension implements Extension {
      * @param operation type (import/export) to be performed after configuration
      * @return settings byte array containing serialized configuration settings
      */
-    public abstract TransferConfiguration configure(Constants.TRANSFER_OPERATION_TYPE opType) throws Throwable;
+    public abstract TransferConfiguration configure(Constants.TRANSFER_TYPE transferType) throws Throwable;
 
     /**
      * Defines whether extension's configuration should be skipped on export

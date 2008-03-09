@@ -9,7 +9,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,6 +51,7 @@ import org.w3c.dom.NodeList;
 
 import bias.Constants;
 import bias.Preferences;
+import bias.Constants.TRANSFER_TYPE;
 import bias.core.pack.Dependency;
 import bias.core.pack.Pack;
 import bias.core.pack.PackType;
@@ -360,17 +360,15 @@ public class BackEnd {
         }
     }
     
-    public boolean isTransferFileLocationCheckSumChanged(Class<? extends TransferExtension> transferExtClass, String fileLocation, String checkSum) throws Exception {
+    public boolean isTransferFileLocationCheckSumChanged(TRANSFER_TYPE transferType, Class<? extends TransferExtension> transferExtClass, String fileLocation, String checkSum) throws Exception {
         File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
         if (checkSumsFile.exists()) {
-            Properties p = new Properties();
             byte[] encryptedData = FSUtils.readFile(checkSumsFile);
             byte[] decryptedData = decrypt(encryptedData);
+            Properties p = new Properties();
             p.load(new ByteArrayInputStream(decryptedData));
-            String storedCheckSum = p.getProperty(fileLocation);
+            String storedCheckSum = p.getProperty(transferType.name() + Constants.VALUES_SEPARATOR + fileLocation);
             if (!Validator.isNullOrBlank(storedCheckSum)) {
-                new FileWriter(new File("/home/kion/tmp/t1.txt")).write(storedCheckSum);
-                new FileWriter(new File("/home/kion/tmp/t2.txt")).write(checkSum);
                 if (storedCheckSum.equals(checkSum)) {
                     return false;
                 }
@@ -379,14 +377,16 @@ public class BackEnd {
         return true;
     }
     
-    public void storeTransferFileLocationCheckSum(Class<? extends TransferExtension> transferExtClass, String fileLocation, String checkSum) throws Exception {
+    public void storeTransferFileLocationCheckSum(TRANSFER_TYPE transferType, Class<? extends TransferExtension> transferExtClass, String fileLocation, String checkSum) throws Exception {
         Properties p = new Properties();
         File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
         if (checkSumsFile.exists()) {
-            p.load(new FileInputStream(checkSumsFile));
+            byte[] encryptedData = FSUtils.readFile(checkSumsFile);
+            byte[] decryptedData = decrypt(encryptedData);
+            p.load(new ByteArrayInputStream(decryptedData));
         }
-        p.setProperty(fileLocation, checkSum);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        p.setProperty(transferType.name() + Constants.VALUES_SEPARATOR + fileLocation, checkSum);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();;
         p.store(baos, null);
         byte[] encryptedData = encrypt(baos.toByteArray());
         FSUtils.writeFile(checkSumsFile, encryptedData);
@@ -903,17 +903,17 @@ public class BackEnd {
     private void loadTransferConfigurations() throws Exception {
         importConfigs = null;
         importConfigIDs = null;
-        getTransferConfigurations(Constants.TRANSFER_OPERATION_TYPE.IMPORT);
+        getTransferConfigurations(Constants.TRANSFER_TYPE.IMPORT);
         exportConfigs = null;
         exportConfigIDs = null;
-        getTransferConfigurations(Constants.TRANSFER_OPERATION_TYPE.EXPORT);
+        getTransferConfigurations(Constants.TRANSFER_TYPE.EXPORT);
     }
     
-    public Map<String, Properties> getTransferConfigurations(Constants.TRANSFER_OPERATION_TYPE opType) throws Exception {
+    public Map<String, Properties> getTransferConfigurations(Constants.TRANSFER_TYPE transferType) throws Exception {
         Map<String, Properties> configs;
         Map<String, String> configIDs;
         FilenameFilter ff;
-        if (opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT) {
+        if (transferType == Constants.TRANSFER_TYPE.IMPORT) {
             if (importConfigs == null) {
                 importConfigs = new HashMap<String, Properties>();
                 importConfigIDs = new HashMap<String, String>();
@@ -944,8 +944,8 @@ public class BackEnd {
         return configs;
     }
     
-    public byte[] getTransferOptions(String configName, Constants.TRANSFER_OPERATION_TYPE opType) throws Exception {
-        Map<String, String> configIDs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigIDs : exportConfigIDs; 
+    public byte[] getTransferOptions(String configName, Constants.TRANSFER_TYPE transferType) throws Exception {
+        Map<String, String> configIDs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs; 
         String fileName = configIDs.get(configName) + Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX;
         File transferOptionsFile = new File(Constants.CONFIG_DIR, fileName);
         byte[] encryptedData = FSUtils.readFile(transferOptionsFile);
@@ -953,10 +953,10 @@ public class BackEnd {
         return decryptedData;
     }
     
-    public void storeTransferConfigurationAndOptions(String name, Properties config, byte[] transferOptions, Constants.TRANSFER_OPERATION_TYPE opType) throws Exception {
-        Map<String, Properties> configs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigs : exportConfigs;;
-        Map<String, String> configIDs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
-        String configSuffix = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? Constants.IMPORT_CONFIG_FILE_SUFFIX : Constants.EXPORT_CONFIG_FILE_SUFFIX;
+    public void storeTransferConfigurationAndOptions(String name, Properties config, byte[] transferOptions, Constants.TRANSFER_TYPE transferType) throws Exception {
+        Map<String, Properties> configs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigs : exportConfigs;;
+        Map<String, String> configIDs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
+        String configSuffix = transferType == Constants.TRANSFER_TYPE.IMPORT ? Constants.IMPORT_CONFIG_FILE_SUFFIX : Constants.EXPORT_CONFIG_FILE_SUFFIX;
         String fileName = configIDs.get(name);
         if (fileName == null) {
             UUID id = UUID.randomUUID();
@@ -976,10 +976,10 @@ public class BackEnd {
         FSUtils.writeFile(transferOptionsFile, encryptedData);
     }
     
-    public void removeTransferConfiguration(String name, Constants.TRANSFER_OPERATION_TYPE opType) throws Exception {
-        Map<String, Properties> configs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigs : exportConfigs;;
-        Map<String, String> configIDs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
-        String configSuffix = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? Constants.IMPORT_CONFIG_FILE_SUFFIX : Constants.EXPORT_CONFIG_FILE_SUFFIX;
+    public void removeTransferConfiguration(String name, Constants.TRANSFER_TYPE transferType) throws Exception {
+        Map<String, Properties> configs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigs : exportConfigs;;
+        Map<String, String> configIDs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
+        String configSuffix = transferType == Constants.TRANSFER_TYPE.IMPORT ? Constants.IMPORT_CONFIG_FILE_SUFFIX : Constants.EXPORT_CONFIG_FILE_SUFFIX;
         String fileName = configIDs.get(name);
         String transferOptionsFileName = fileName + Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX;
         fileName += configSuffix;
@@ -991,16 +991,16 @@ public class BackEnd {
         configIDs.remove(name);
     }
     
-    public void renameTransferConfiguration(String oldName, String newName, Constants.TRANSFER_OPERATION_TYPE opType) throws Exception {
-        Map<String, Properties> configs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigs : exportConfigs;;
-        Map<String, String> configIDs = opType == Constants.TRANSFER_OPERATION_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
+    public void renameTransferConfiguration(String oldName, String newName, Constants.TRANSFER_TYPE transferType) throws Exception {
+        Map<String, Properties> configs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigs : exportConfigs;;
+        Map<String, String> configIDs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
         Properties config = configs.get(oldName);
         config.setProperty(Constants.OPTION_CONFIG_NAME, newName);
         File oldTransferOptionsFile = new File(Constants.CONFIG_DIR, configIDs.get(oldName) + Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX);
         byte[] transferOptions = FSUtils.readFile(oldTransferOptionsFile);
-        storeTransferConfigurationAndOptions(newName, config, transferOptions, opType);
+        storeTransferConfigurationAndOptions(newName, config, transferOptions, transferType);
         oldTransferOptionsFile.delete();
-        removeTransferConfiguration(oldName, opType);
+        removeTransferConfiguration(oldName, transferType);
     }
     
     private void storeMetadata(Document metadata, File file, Cipher cipher) throws Exception {
@@ -1151,10 +1151,10 @@ public class BackEnd {
             while (it.hasNext()) {
                 Dependency dep = it.next();
                 deps.append(dep.getType().value());
-                deps.append(Constants.ADDON_FILENAME_VERSION_SEPARATOR);
+                deps.append(Constants.VALUES_SEPARATOR);
                 deps.append(dep.getName());
                 if (!Validator.isNullOrBlank(dep.getVersion())) {
-                    deps.append(Constants.ADDON_FILENAME_VERSION_SEPARATOR);
+                    deps.append(Constants.VALUES_SEPARATOR);
                     deps.append(dep.getVersion());
                 }
                 if (it.hasNext()) {
@@ -1179,7 +1179,7 @@ public class BackEnd {
         String deps = info.getProperty(Constants.ATTRIBUTE_ADD_ON_DEPENDENCIES);
         if (!Validator.isNullOrBlank(deps)) {
              for (String dep : deps.split(Constants.PROPERTY_VALUES_SEPARATOR)) {
-                 String[] depInfo = dep.trim().split(Constants.ADDON_FILENAME_VERSION_SEPARATOR);
+                 String[] depInfo = dep.trim().split(Constants.VALUES_SEPARATOR);
                  if (depInfo.length != 2 && depInfo.length != 3) {
                      throw new Exception(
                              "Invalid Add-On-Info: " + Constants.NEW_LINE +
@@ -1374,7 +1374,7 @@ public class BackEnd {
                 if (!Validator.isNullOrBlank(addOnDependencies)) {
                     String[] deps = addOnDependencies.split(Constants.PROPERTY_VALUES_SEPARATOR);
                     for (String dep : deps) {
-                        String[] depInfo = dep.trim().split(Constants.ADDON_FILENAME_VERSION_SEPARATOR);
+                        String[] depInfo = dep.trim().split(Constants.VALUES_SEPARATOR);
                         if (depInfo.length != 2 && depInfo.length != 3) {
                             throw new Exception(
                                     "Invalid Add-On-Package: " + Constants.NEW_LINE +

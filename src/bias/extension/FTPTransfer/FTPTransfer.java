@@ -144,7 +144,7 @@ public class FTPTransfer extends TransferExtension {
      * @see bias.extension.TransferExtension#configure(bias.Constants.TRANSFER_OPERATION_TYPE)
      */
     @Override
-    public TransferConfiguration configure(Constants.TRANSFER_OPERATION_TYPE opType) throws Throwable {
+    public TransferConfiguration configure(Constants.TRANSFER_TYPE transferType) throws Throwable {
         Properties options = new Properties();
         JLabel serverL = new JLabel("FTP Server (domain name or IP, including port if using non-default one)");
         JTextField serverTF = new JTextField();

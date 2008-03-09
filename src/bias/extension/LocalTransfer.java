@@ -89,11 +89,11 @@ public class LocalTransfer extends TransferExtension {
      * @see bias.extension.TransferExtension#configure(bias.Constants.TRANSFER_OPERATION_TYPE)
      */
     @Override
-    public TransferConfiguration configure(Constants.TRANSFER_OPERATION_TYPE opType) throws Throwable {
+    public TransferConfiguration configure(Constants.TRANSFER_TYPE transferType) throws Throwable {
         Properties options = null;
         ZipFileChooser zfc = new ZipFileChooser();
         int rVal = 0;
-        switch (opType) {
+        switch (transferType) {
         case IMPORT:
             rVal = zfc.showOpenDialog(FrontEnd.getActiveWindow());
             break;
@@ -105,7 +105,7 @@ public class LocalTransfer extends TransferExtension {
         if (rVal == JFileChooser.APPROVE_OPTION) {
             options = new Properties();
             filePath = zfc.getSelectedFile().getAbsolutePath();
-            if (Constants.TRANSFER_OPERATION_TYPE.EXPORT.equals(opType) && !filePath.matches(Constants.ZIP_FILE_PATTERN)) {
+            if (Constants.TRANSFER_TYPE.EXPORT.equals(transferType) && !filePath.matches(Constants.ZIP_FILE_PATTERN)) {
                 filePath += ".zip";
             }
             options.setProperty(TRANSFER_OPTION_FILEPATH, filePath);
