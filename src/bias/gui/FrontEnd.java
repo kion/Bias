@@ -772,8 +772,8 @@ public class FrontEnd extends JFrame {
                                     JOptionPane.showMessageDialog(
                                             getActiveWindow(), 
                                             "<html>Automatic update complete<br/><br/>" +
-                                                    "<i>(Note: automatic update can be disabled via preferences option 'Enable automatic update',<br>" +
-                                                    "update interval can be adjusted via preferences option 'Automatic update interval')</i><html>");
+                                            "<i>(Note: automatic update can be disabled via preferences option 'Enable automatic update',<br>" +
+                                            "update interval can be adjusted via preferences option 'Automatic update interval')</i><html>");
                                 }
                             });
                         } catch (InterruptedException ex) {
