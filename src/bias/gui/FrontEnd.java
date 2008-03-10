@@ -753,29 +753,11 @@ public class FrontEnd extends JFrame {
         this.setSize(wwValue, whValue);
     }
     
-    // TODO [P1] auto-update should work even if application hasn't been restarted for period of time
-    //           longer than auto-update-interval specified in preferences
+    // TODO [P2] auto-update should work even if application hasn't been restarted for period of time
+    //           longer than auto-update-interval specified in preferences (so, not on startup only)
     private void handleAutoUpdate() {
         if (Preferences.getInstance().enableAutoUpdate) {
-            boolean update = false;
-            if (Preferences.getInstance().autoUpdateInterval == 0) {
-                update = true;
-            } else {
-                String timeStr = config.getProperty(Constants.PROPERTY_LAST_UPDATE_DATE);
-                if (!Validator.isNullOrBlank(timeStr)) {
-                    long lastUpdateTime = Long.valueOf(timeStr);
-                    long currentTime = System.currentTimeMillis();
-                    int interval = (int) ((currentTime - lastUpdateTime) / 1000 / 60 / 60 / 24);
-                    // check if specified number of days from last update date have passed...
-                    if (interval >= Preferences.getInstance().autoUpdateInterval) {
-                        // ... and perform update, if yes
-                        update = true;
-                    }
-                } else {
-                    update = true;
-                }
-            }
-            if (update) {
+            if (Preferences.getInstance().autoUpdateInterval == 0 || isTimeToUpdate()) {
                 new Thread(new Runnable(){
                     public void run() {
                         try {
@@ -801,6 +783,22 @@ public class FrontEnd extends JFrame {
                 }).start();
             }
         }
+    }
+    
+    private boolean isTimeToUpdate() {
+        String timeStr = config.getProperty(Constants.PROPERTY_LAST_UPDATE_DATE);
+        if (!Validator.isNullOrBlank(timeStr)) {
+            long lastUpdateTime = Long.valueOf(timeStr);
+            long currentTime = System.currentTimeMillis();
+            int interval = (int) ((currentTime - lastUpdateTime) / 1000 / 60 / 60 / 24);
+            // check if specified number of days from last update date have passed
+            if (interval >= Preferences.getInstance().autoUpdateInterval) {
+                return true;
+            }
+        } else {
+            return true;
+        }
+        return false;
     }
     
     /**

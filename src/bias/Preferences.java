@@ -152,7 +152,7 @@ public class Preferences {
     
     @PreferenceAnnotation(
             title = "Preferred date format:",
-            description = "Defines preferred date format for dates rendering.")
+            description = "Defines preferred date format for dates rendering")
     @PreferenceValidationAnnotation(validationClass = PreferredDateFormatValidator.class)        
     public String preferredDateFormat = "dd.MM.yyyy @ HH:mm:ss";
     
@@ -196,12 +196,12 @@ public class Preferences {
     
     @PreferenceAnnotation(
             title = "Auto-mode",
-            description = "Defines whether some common operations (like data saving before export) should be performed automatically (without users confirmation).")
+            description = "Defines whether some common operations (like data saving before export) should be performed automatically (without users confirmation)")
     public boolean autoMode = false;
     
     @PreferenceAnnotation(
             title = "Enable automatic update",
-            description = "Application core and add-ons will be automatically updated if this options is enabled.")
+            description = "Application core and add-ons will be checked for updates on startup if this option is enabled.")
     public boolean enableAutoUpdate = true;
 
     @PreferenceAnnotation(
@@ -214,7 +214,7 @@ public class Preferences {
     
     @PreferenceAnnotation(
             title = "Show memory usage information in status bar",
-            description = "Defines if memory usage information should be shown in the status bar.")
+            description = "Defines if memory usage information should be shown in the status bar")
     public boolean showMemoryUsage = false;
     
 }
