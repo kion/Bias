@@ -98,11 +98,13 @@ public class ArchUtils {
     private static void compress(File root, File in, ZipOutputStream out, MessageDigest md, Set<String> fileNamesToSkipInCheckSumCalculation) throws IOException {
         if (in.isDirectory()) {
             List<File> files = Arrays.asList(in.listFiles());
-            Collections.sort(files, new Comparator<File>(){
-                public int compare(File o1, File o2) {
-                    return o1.getName().compareTo(o2.getName());
-                }
-            });
+            if (md != null) {
+                Collections.sort(files, new Comparator<File>(){
+                    public int compare(File o1, File o2) {
+                        return o1.getName().compareTo(o2.getName());
+                    }
+                });
+            }
             for (File f : files) {
                 compress(root, f, out, md, fileNamesToSkipInCheckSumCalculation);
             }
