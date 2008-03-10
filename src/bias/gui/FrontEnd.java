@@ -546,7 +546,7 @@ public class FrontEnd extends JFrame {
             instance.applyPreferences();
             representTools();
             initTransferrers();
-            instance.performAutoUpdate();
+            instance.handleAutoUpdate();
         }
         return instance;
     }
@@ -753,7 +753,9 @@ public class FrontEnd extends JFrame {
         this.setSize(wwValue, whValue);
     }
     
-    private void performAutoUpdate() {
+    // TODO [P1] auto-update should work even if application hasn't been restarted for period of time
+    //           longer than auto-update-interval specified in preferences
+    private void handleAutoUpdate() {
         if (Preferences.getInstance().enableAutoUpdate) {
             boolean update = false;
             if (Preferences.getInstance().autoUpdateInterval == 0) {
@@ -788,7 +790,7 @@ public class FrontEnd extends JFrame {
                                     JOptionPane.showMessageDialog(
                                             getActiveWindow(), 
                                             "<html>Automatic update complete<br/><br/>" +
-                                                    "<i>(Note: automatic update can be disabled via preferences option 'Enable automatic updates',<br>" +
+                                                    "<i>(Note: automatic update can be disabled via preferences option 'Enable automatic update',<br>" +
                                                     "update interval can be adjusted via preferences option 'Automatic update interval')</i><html>");
                                 }
                             });
