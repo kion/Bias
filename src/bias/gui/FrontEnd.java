@@ -5763,9 +5763,9 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             JLabel title1Label = new JLabel("Bias Personal Information Manager, version 0.9.7");
             JLabel link1Label = new LinkLabel("http://bias.sourceforge.net/");
-            JLabel title2Label = new JLabel("(c) Roman Kasianenko, 2007");
+            JLabel title2Label = new JLabel("© Roman Kasianenko, 2006-2008");
         	JLabel link2Label = new LinkLabel("http://kion.name/");
-            JLabel title3Label = new JLabel("EtweeSoft (Software Development Organization)");
+            JLabel title3Label = new JLabel("@ EtweeSoft (Software Development Organization)");
             JLabel link3Label = new LinkLabel("http://etweesoft.org/");
             JOptionPane.showMessageDialog(
                     FrontEnd.this, 
