@@ -98,7 +98,7 @@ public class Graffiti extends EntryExtension {
         this.add(getJToolBar(), BorderLayout.SOUTH);  
         JPanel panel = new JPanel(new GridBagLayout());
         // TODO [P2] dimension should be customizable
-        Dimension d = new Dimension(300,300);
+        Dimension d = new Dimension(500,500);
         JPanel cp = new JPanel();
         pp = new PaintingPanel(d, getSimpleBrushInstance(), Color.BLACK);
         cp.add(pp);
