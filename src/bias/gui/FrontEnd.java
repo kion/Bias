@@ -5314,6 +5314,8 @@ public class FrontEnd extends JFrame {
     
     private boolean onlineListRefreshed = false;
     
+    // FIXME [P1] application core package version should be compared as well 
+    //           (currently, it always looks like not up to date)
     private void refreshOnlinePackagesList(final Runnable onFinishAction) {
         while (getOnlineModel().getRowCount() > 0) {
             getOnlineModel().removeRow(0);

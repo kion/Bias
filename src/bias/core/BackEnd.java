@@ -1214,8 +1214,6 @@ public class BackEnd {
         return aoi;
     }
     
-    // FIXME [P1] application core package version should be compared as well 
-    //           (currently, it always looks like not up to date)
     public Boolean isAddOnInstalledAndUpToDate(Pack pack) throws Throwable {
         for (AddOnInfo addOn : getAddOns(pack.getType())) {
             if (addOn.getName().equals(pack.getName())) {
