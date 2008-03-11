@@ -4,6 +4,10 @@
 package bias.extension;
 
 import bias.Constants;
+import bias.Constants.TRANSFER_TYPE;
+import bias.core.BackEnd;
+import bias.core.FileInfo;
+import bias.utils.FSUtils;
 
 
 /**
@@ -11,61 +15,91 @@ import bias.Constants;
  */
 public abstract class TransferExtension implements Extension {
     
-    private byte[] settings;
+    private byte[] options;
     
     /**
-     * The only allowed constructor that is aware of initialization data and settings.
+     * The only allowed constructor that is aware of initialization data and options.
      * 
-     * @param settings extension instance settings
+     * @param options extension instance options
      */
-    public TransferExtension(byte[] settings) {
-        this.settings = settings;
+    public TransferExtension(byte[] options) {
+        this.options = options;
     }
 
     /**
-     * @return the settings
+     * @return the options
      */
     public byte[] getSettings() {
-        return settings;
+        return options;
     }
     
     // TODO [P2] optimization (memory usage): looks like it's better to use Input/Output streams instead of byte arrays during transfer
 
     /**
-     * Imports data using provided import settings.
+     * Imports data using provided import options.
+     * This template method imports checksum first, then imports actual data
+     * @return array of bytes representing imported data, or null if data is up to data and import has been discarded
+     */
+    public byte[] importData(TransferOptions options, boolean force) throws Throwable {
+        byte[] importedData = null;
+        String checkSum = new String(doImportCheckSum(options.getOptions()));
+        if (force || BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, this.getClass(), options.getFileLocation(), checkSum)) {
+            importedData = doImport(options.getOptions());
+            BackEnd.getInstance().storeTransferFileLocationCheckSum(TRANSFER_TYPE.IMPORT, this.getClass(), options.getFileLocation(), checkSum);
+        }
+        return importedData;
+    }
+
+    /**
+     * Imports data using provided import options.
      * Should be overridden to perform import for certain transfer-extension's instance.
      * 
      * @return imported data
      */
-    public abstract byte[] doImport(byte[] options) throws Throwable;
+    protected abstract byte[] doImport(byte[] options) throws Throwable;
 
     /**
-     * Imports data checksum using provided import settings.
+     * Imports data checksum using provided import options.
      * Should be overridden to perform checksum-import for certain transfer-extension's instance.
      * 
      * @return imported data
      */
-    public abstract byte[] doImportCheckSum(byte[] options) throws Throwable;
+    protected abstract byte[] doImportCheckSum(byte[] options) throws Throwable;
+    
+    /**
+     * Exports given data using provided import options.
+     * This template method exports checksum first, then exports actual data
+     * @return boolean true if data have been successfully exported, or false if data is up to date and export has been discarded
+     */
+    public boolean exportData(FileInfo exportedFileInfo, TransferOptions options, boolean force) throws Throwable {
+        if (force || BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.EXPORT, this.getClass(), options.getFileLocation(), exportedFileInfo.getCheckSum())) {
+            doExportCheckSum(exportedFileInfo.getCheckSum().getBytes(), options.getOptions());
+            doExport(FSUtils.readFile(exportedFileInfo.getFile()), options.getOptions());
+            BackEnd.getInstance().storeTransferFileLocationCheckSum(TRANSFER_TYPE.EXPORT, this.getClass(), options.getFileLocation(), exportedFileInfo.getCheckSum());
+            return true;
+        }
+        return false;
+    }
 
     /**
-     * Exports given data using provided import settings.
+     * Exports given data using provided import options.
      * Should be overridden to perform export for certain transfer-extension's instance.
      */
-    public abstract void doExport(byte[] data, byte[] options) throws Throwable;
+    protected abstract void doExport(byte[] data, byte[] options) throws Throwable;
 
     /**
-     * Exports given data checksum using provided import settings.
+     * Exports given data checksum using provided import options.
      * Should be overridden to perform checksum-export for certain transfer-extension's instance.
      */
-    public abstract void doExportCheckSum(byte[] data, byte[] options) throws Throwable;
+    protected abstract void doExportCheckSum(byte[] data, byte[] options) throws Throwable;
 
     /**
      * Performs general transfer-extension configuration.
-     * Should be overridden to return settings for certain transfer-extension.
+     * Should be overridden to return options for certain transfer-extension.
      * By default returns null (no configuration).
      * 
-     * @param settings initial settings
-     * @return settings byte array containing serialized configuration settings
+     * @param options initial options
+     * @return options byte array containing serialized configuration options
      */
     public byte[] configure() throws Throwable {
         return null;
@@ -73,12 +107,12 @@ public abstract class TransferExtension implements Extension {
 
     /**
      * Configures transfer-extension right before import/export operation is to be performed.
-     * Should be implemented to return settings for certain transfer-extension.
+     * Should be implemented to return options for certain transfer-extension.
      * 
      * @param operation type (import/export) to be performed after configuration
-     * @return settings byte array containing serialized configuration settings
+     * @return options byte array containing serialized configuration options
      */
-    public abstract TransferConfiguration configure(Constants.TRANSFER_TYPE transferType) throws Throwable;
+    public abstract TransferOptions configure(Constants.TRANSFER_TYPE transferType) throws Throwable;
 
     /**
      * Defines whether extension's configuration should be skipped on export

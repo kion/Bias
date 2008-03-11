@@ -20,7 +20,6 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -29,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Map.Entry;
 import java.util.jar.JarEntry;
@@ -404,28 +404,9 @@ public class BackEnd {
     
     public DataCategory importData(
             File importDir, 
-            Collection<UUID> existingIDs,
-            boolean importDataEntries,
-            boolean overwriteDataEntries,
-            boolean importDataEntryConfigs,
-            boolean overwriteDataEntryConfigs,
-            boolean importPrefs,
-            boolean overwritePrefs,
-            boolean importGlobalConfig,
-            boolean overwriteGlobalConfig,
-            boolean importToolsData,
-            boolean overwriteToolsData,
-            boolean importIcons,
-            boolean overwriteIcons,
-            boolean importAndUpdateAppCore,
-            boolean importAddOnsAndLibs,
-            boolean updateInstalledAddOnsAndLibs,
-            boolean importAddOnConfigs,
-            boolean overwriteAddOnConfigs,
-            boolean importImportExportConfigs,
-            boolean overwriteImportExportConfigs,
-            String password) throws Exception {
-        Cipher cipher = initCipher(Cipher.DECRYPT_MODE, password);
+            Collection<UUID> existingIDs, 
+            ImportConfiguration config) throws Exception {
+        Cipher cipher = initCipher(Cipher.DECRYPT_MODE, config.getPassword());
         Map<String,DataEntry> importedIdentifiedData = new LinkedHashMap<String, DataEntry>();
         Document metadata = null;
         byte[] data = null;
@@ -433,12 +414,12 @@ public class BackEnd {
         byte[] encryptedData = null;
         File dataDir = new File(importDir, Constants.DATA_DIR.getName());
         if (dataDir.exists()) {
-            if (importDataEntries) {
+            if (config.isImportDataEntries()) {
                 // data entry files
                 for (File dataFile : dataDir.listFiles(FILE_FILTER_DATA)) {
                     String entryIDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     File localDataFile = new File(Constants.DATA_DIR, entryIDStr + Constants.DATA_FILE_SUFFIX);
-                    if (!localDataFile.exists() || overwriteDataEntries) {
+                    if (!localDataFile.exists() || config.isOverwriteDataEntries()) {
                         data = FSUtils.readFile(dataFile);
                         decryptedData = useCipher(cipher, data);
                         encryptedData = encrypt(decryptedData);
@@ -475,11 +456,11 @@ public class BackEnd {
                 }
             }
             // tools data files
-            if (importToolsData) {
+            if (config.isImportToolsData()) {
                 for (File dataFile : dataDir.listFiles(FILE_FILTER_TOOL_DATA)) {
                     String iDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     File localDataFile = new File(Constants.DATA_DIR, iDStr + Constants.TOOL_DATA_FILE_SUFFIX);
-                    if (!localDataFile.exists() || overwriteToolsData) {
+                    if (!localDataFile.exists() || config.isOverwriteToolsData()) {
                         data = FSUtils.readFile(dataFile);
                         decryptedData = useCipher(cipher, data);
                         encryptedData = encrypt(decryptedData);
@@ -495,11 +476,11 @@ public class BackEnd {
         File configDir = new File(importDir, Constants.CONFIG_DIR.getName());
         if (configDir.exists()) {
             // preferences
-            if (importPrefs) {
+            if (config.isImportPrefs()) {
                 File prefsFile = new File(configDir, Constants.PREFERENCES_FILE);
                 if (prefsFile.exists()) {
                     File localPrefsFile = new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE);
-                    if (!localPrefsFile.exists() || overwritePrefs) {
+                    if (!localPrefsFile.exists() || config.isOverwritePrefs()) {
                         FSUtils.duplicateFile(prefsFile, localPrefsFile);
                         // reload preferences file
                         loadPreferences();
@@ -507,11 +488,11 @@ public class BackEnd {
                 }
             }
             // global config
-            if (importGlobalConfig) {
+            if (config.isImportGlobalConfig()) {
                 File globalConfFile = new File(configDir, Constants.GLOBAL_CONFIG_FILE);
                 if (globalConfFile.exists()) {
                     File localGlobalConfFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
-                    if (!localGlobalConfFile.exists() || overwriteGlobalConfig) {
+                    if (!localGlobalConfFile.exists() || config.isOverwriteGlobalConfig()) {
                         FSUtils.duplicateFile(globalConfFile, localGlobalConfFile);
                         // reload global config file
                         loadConfig();
@@ -519,10 +500,10 @@ public class BackEnd {
                 }
             }
             // data entry configs
-            if (importDataEntryConfigs) {
+            if (config.isImportDataEntryConfigs()) {
                 for (File configFile : configDir.listFiles(FILE_FILTER_DATA_ENTRY_CONFIG)) {
                     File localConfigFile = new File(Constants.CONFIG_DIR, configFile.getName());
-                    if (!localConfigFile.exists() || overwriteDataEntryConfigs) {
+                    if (!localConfigFile.exists() || config.isOverwriteDataEntryConfigs()) {
                         encryptedData = FSUtils.readFile(configFile);
                         decryptedData = useCipher(cipher, encryptedData);
                         encryptedData = encrypt(decryptedData);
@@ -531,10 +512,10 @@ public class BackEnd {
                 }
             }
             // import/export configs
-            if (importImportExportConfigs) {
+            if (config.isImportImportExportConfigs()) {
                 for (File configFile : configDir.listFiles(FILE_FILTER_IMPORT_EXPORT_CONFIG)) {
                     File localConfigFile = new File(Constants.CONFIG_DIR, configFile.getName());
-                    if (!localConfigFile.exists() || overwriteImportExportConfigs) {
+                    if (!localConfigFile.exists() || config.isOverwriteImportExportConfigs()) {
                         encryptedData = FSUtils.readFile(configFile);
                         decryptedData = useCipher(cipher, encryptedData);
                         encryptedData = encrypt(decryptedData);
@@ -545,10 +526,10 @@ public class BackEnd {
                 loadTransferConfigurations();
             }
             // add-on configs
-            if (importAddOnConfigs) {
+            if (config.isImportAddOnConfigs()) {
                 for (File configFile : configDir.listFiles(FILE_FILTER_ADDON_CONFIG)) {
                     File localConfigFile = new File(Constants.CONFIG_DIR, configFile.getName());
-                    if (!localConfigFile.exists() || overwriteAddOnConfigs) {
+                    if (!localConfigFile.exists() || config.isOverwriteAddOnConfigs()) {
                         encryptedData = FSUtils.readFile(configFile);
                         decryptedData = useCipher(cipher, encryptedData);
                         encryptedData = encrypt(decryptedData);
@@ -558,7 +539,7 @@ public class BackEnd {
             }
         }
         // icon files
-        if (importIcons) {
+        if (config.isImportIcons()) {
             File iconsDir = new File(importDir, Constants.ICONS_DIR.getName());
             File iconsListFile = new File(configDir, Constants.ICONS_CONFIG_FILE);
             if (iconsListFile.exists()) {
@@ -567,7 +548,7 @@ public class BackEnd {
                     if (!Validator.isNullOrBlank(iconId)) {
                         File iconFile = new File(iconsDir, iconId + Constants.ICON_FILE_SUFFIX);
                         File localIconFile = new File(Constants.ICONS_DIR, iconId + Constants.ICON_FILE_SUFFIX);
-                        if (!localIconFile.exists() || overwriteIcons) {
+                        if (!localIconFile.exists() || config.isOverwriteIcons()) {
                             data = FSUtils.readFile(iconFile);
                             FSUtils.writeFile(localIconFile, data);
                             icons.put(UUID.fromString(iconId), data);
@@ -581,7 +562,7 @@ public class BackEnd {
             }
         }
         // app core
-        if (importAndUpdateAppCore) {
+        if (config.isImportAndUpdateAppCore()) {
             File appCoreFile = new File(importDir, Constants.APP_CORE_FILE_NAME);
             if (appCoreFile.exists()) {
                 File localAppCoreUpdateFile = new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME);
@@ -589,14 +570,14 @@ public class BackEnd {
             }
         }
         // addons/libs
-        if (importAddOnsAndLibs) {
+        if (config.isImportAddOnsAndLibs()) {
             File addOnsDir = new File(importDir, Constants.ADDONS_DIR.getName());
             if (addOnsDir.exists()) {
                 for (File addOnFile : addOnsDir.listFiles()) {
                     File localAddOnFile = new File(Constants.ADDONS_DIR, addOnFile.getName());
                     if (!localAddOnFile.exists()) {
                         FSUtils.duplicateFile(addOnFile, localAddOnFile);
-                    } else if (updateInstalledAddOnsAndLibs) {
+                    } else if (config.isUpdateInstalledAddOnsAndLibs()) {
                         localAddOnFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + addOnFile.getName());
                         FSUtils.duplicateFile(addOnFile, localAddOnFile);
                     }
@@ -608,7 +589,7 @@ public class BackEnd {
                     File localLibFile = new File(Constants.LIBS_DIR, libFile.getName());
                     if (!localLibFile.exists()) {
                         FSUtils.duplicateFile(libFile, localLibFile);
-                    } else if (updateInstalledAddOnsAndLibs) {
+                    } else if (config.isUpdateInstalledAddOnsAndLibs()) {
                         localLibFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + libFile.getName());
                         FSUtils.duplicateFile(libFile, localLibFile);
                     }
@@ -616,7 +597,7 @@ public class BackEnd {
             }
         }
         // parse metadata file
-        DataCategory importedData = parseMetadata(metadata, importedIdentifiedData, existingIDs, overwriteDataEntries);
+        DataCategory importedData = parseMetadata(metadata, importedIdentifiedData, existingIDs, config.isOverwriteDataEntries());
         // add imported data to existing data
         this.data.addDataItems(importedData.getData());
         return importedData;
@@ -732,19 +713,8 @@ public class BackEnd {
     
     public FileInfo exportData(
             DataCategory data,
-            boolean exportPreferences,
-            boolean exportGlobalConfig,
-            boolean exportDataEntryConfigs,
-            boolean exportOnlyRelatedDataEntryConfigs,
-            boolean exportToolsData, 
-            boolean exportIcons,
-            boolean exportOnlyRelatedIcons,
-            boolean exportAppCore,
-            boolean exportAddOnsAndLibs,
-            boolean exportAddOnConfigs,
-            boolean exportImportExportConfigs,
-            String password) throws Exception {
-        Cipher cipher = initCipher(Cipher.ENCRYPT_MODE, password);
+            ExportConfiguration config) throws Exception {
+        Cipher cipher = initCipher(Cipher.ENCRYPT_MODE, config.getPassword());
         File exportDir = new File(Constants.TMP_DIR, "exportDir");
         FSUtils.delete(exportDir);
         exportDir.mkdirs();
@@ -752,9 +722,6 @@ public class BackEnd {
         Document metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
         Element rootNode = metadata.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
         rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, data.getPlacement().toString());
-        if (data.getActiveIndex() != null) {
-            rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX, data.getActiveIndex().toString());
-        }
         File dataDir = new File(exportDir, Constants.DATA_DIR.getName());
         dataDir.mkdir();
         Collection<UUID> ids = buildNode(metadata, rootNode, data, false);
@@ -786,30 +753,30 @@ public class BackEnd {
         File configDir = new File(exportDir, Constants.CONFIG_DIR.getName());
         configDir.mkdir();
         // data entry configs
-        if (exportDataEntryConfigs) {
+        if (config.isExportDataEntryConfigs()) {
             for (File dataConfig : Constants.CONFIG_DIR.listFiles(FILE_FILTER_DATA_ENTRY_CONFIG)) {
                 UUID id = UUID.fromString(dataConfig.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
-                if (!exportOnlyRelatedDataEntryConfigs || ids.contains(id)) {
+                if (!config.isExportOnlyRelatedDataEntryConfigs() || ids.contains(id)) {
                     reencryptFile(dataConfig, configDir, cipher);
                 }
             }
         }
         // preferences file
-        if (exportPreferences) {
+        if (config.isExportPreferences()) {
             FSUtils.writeFile(new File(configDir, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
         }
         // global config file
-        if (exportGlobalConfig) {
-            config.store(new FileOutputStream(new File(configDir, Constants.GLOBAL_CONFIG_FILE)), null);
+        if (config.isExportGlobalConfig()) {
+            this.config.store(new FileOutputStream(new File(configDir, Constants.GLOBAL_CONFIG_FILE)), null);
         }
         // icons
-        if (exportIcons) {
+        if (config.isExportIcons()) {
             if (!icons.isEmpty()) {
                 File iconsDir = new File(exportDir, Constants.ICONS_DIR.getName());
                 iconsDir.mkdir();
                 StringBuffer iconsList = new StringBuffer();
                 for (Entry<UUID, byte[]> icon : icons.entrySet()) {
-                    if (!exportOnlyRelatedIcons || ids.contains(icon.getKey())) {
+                    if (!config.isExportOnlyRelatedIcons() || ids.contains(icon.getKey())) {
                         File iconFile = new File(iconsDir, icon.getKey().toString() + Constants.ICON_FILE_SUFFIX);
                         FSUtils.writeFile(iconFile, icon.getValue());
                         iconsList.append(icon.getKey().toString());
@@ -825,7 +792,7 @@ public class BackEnd {
             }
         }
         // tools data files
-        if (exportToolsData) {
+        if (config.isExportToolsData()) {
             for (Entry<String, byte[]> toolEntry : toolsData.entrySet()) {
                 if (getDataExportExtensionsList().contains(toolEntry.getKey()) && toolEntry.getValue() != null) {
                     String tool = toolEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
@@ -835,20 +802,20 @@ public class BackEnd {
             }
         }
         // addons/libs
-        if (exportAddOnsAndLibs) {
+        if (config.isExportAddOnsAndLibs()) {
             File addonsDir = new File(exportDir, Constants.ADDONS_DIR.getName());
             FSUtils.duplicateFile(Constants.ADDONS_DIR, addonsDir);
             File libsDir = new File(exportDir, Constants.LIBS_DIR.getName());
             FSUtils.duplicateFile(Constants.LIBS_DIR, libsDir);
         }
         // app core
-        if (exportAppCore) {
+        if (config.isExportAppCore()) {
             File localAppCoreFile = new File(Constants.ROOT_DIR, Constants.APP_CORE_FILE_NAME);
             File appCoreFile = new File(exportDir, Constants.APP_CORE_FILE_NAME);
             FSUtils.duplicateFile(localAppCoreFile, appCoreFile);
         }
         // addon configs
-        if (exportAddOnConfigs) {
+        if (config.isExportAddOnConfigs()) {
             for (File addOnConfig : Constants.CONFIG_DIR.listFiles(FILE_FILTER_ADDON_CONFIG)) {
                 String addOnName = addOnConfig.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                 addOnName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
@@ -859,7 +826,7 @@ public class BackEnd {
             }
         }
         // import/export configs
-        if (exportImportExportConfigs) {
+        if (config.isExportImportExportConfigs()) {
             for (File localConfig : Constants.CONFIG_DIR.listFiles(FILE_FILTER_IMPORT_EXPORT_CONFIG)) {
                 reencryptFile(localConfig, configDir, cipher);
             }
@@ -871,11 +838,13 @@ public class BackEnd {
             dataDir.delete();
         }
         File file = new File(Constants.TMP_DIR, "data.zip");
+        Set<String> fileNamesToSkipInCheckSumCalculation = new HashSet<String>();
+        fileNamesToSkipInCheckSumCalculation.add(Constants.GLOBAL_CONFIG_FILE);
         String checkSum = ArchUtils.compress(
                 exportDir, 
                 file, 
                 MessageDigest.getInstance(Constants.DIGEST_ALGORITHM), 
-                Collections.singleton(Constants.GLOBAL_CONFIG_FILE));
+                fileNamesToSkipInCheckSumCalculation);
         return new FileInfo(file, checkSum);
     }
     
@@ -912,20 +881,181 @@ public class BackEnd {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
     }
     
+    private ImportConfiguration populateImportConfiguration(Properties props) {
+        return new ImportConfiguration(
+                props.getProperty(Constants.OPTION_TRANSFER_PROVIDER),
+                props.getProperty(Constants.OPTION_FILE_LOCATION),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRIES)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_DATA_ENTRIES)), 
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_DATA_ENTRY_CONFIGS)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_PREFERENCES)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_GLOBAL_CONFIG)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_TOOLS_DATA)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ICONS)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_ICONS)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_APP_CORE)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDONS_AND_LIBS)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_UPDATE_ADDONS_AND_LIBS)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_ADDON_CONFIGS)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_IMPORT_EXPORT_CONFIGS)),
+                props.getProperty(Constants.OPTION_DATA_PASSWORD));
+    }
+    
+    private ExportConfiguration populateExportConfiguration(Properties props) {
+        String exportAllStr = props.getProperty(Constants.OPTION_EXPORT_ALL);
+        boolean exportAll = !Validator.isNullOrBlank(exportAllStr) && Boolean.valueOf(exportAllStr);
+        ExportConfiguration config = new ExportConfiguration(
+                props.getProperty(Constants.OPTION_TRANSFER_PROVIDER),
+                props.getProperty(Constants.OPTION_FILE_LOCATION),
+                exportAll,
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES)), 
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG)), 
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS)), 
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ONLY_RELATED_DATA_ENTRY_CONFIGS)), 
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA)), 
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ICONS)), 
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ONLY_RELATED_ICONS)), 
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_APP_CORE)), 
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDONS_AND_LIBS)), 
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS)),
+                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS)),
+                props.getProperty(Constants.OPTION_DATA_PASSWORD));
+        if (!exportAll) {
+            Collection<UUID> selectedEntries = new LinkedList<UUID>();
+            Collection<UUID> selectedRecursiveEntries = new LinkedList<UUID>();
+            String idsStr = props.getProperty(Constants.OPTION_SELECTED_IDS);
+            if (!Validator.isNullOrBlank(idsStr)) {
+                String[] ids = idsStr.split(Constants.PROPERTY_VALUES_SEPARATOR);
+                for (String id : ids) {
+                    selectedEntries.add(UUID.fromString(id));
+                }
+                config.setSelectedIds(selectedEntries);
+            }
+            idsStr = props.getProperty(Constants.OPTION_SELECTED_RECURSIVE_IDS);
+            if (!Validator.isNullOrBlank(idsStr)) {
+                String[] ids = idsStr.split(Constants.PROPERTY_VALUES_SEPARATOR);
+                for (String id : ids) {
+                    selectedRecursiveEntries.add(UUID.fromString(id));
+                }
+                config.setSelectedRecursiveIds(selectedRecursiveEntries);
+            }
+        }
+        return config;
+    }
+    
+    private Properties populateProperties(String configName, ImportConfiguration config) {
+        Properties props = new Properties();
+        props.setProperty(Constants.OPTION_CONFIG_NAME, configName);
+        props.setProperty(Constants.OPTION_TRANSFER_PROVIDER, config.getTransferProvider());
+        props.setProperty(Constants.OPTION_FILE_LOCATION, config.getFileLocation());
+        props.setProperty(Constants.OPTION_PROCESS_DATA_ENTRIES, "" + config.isImportDataEntries());
+        props.setProperty(Constants.OPTION_OVERWRITE_DATA_ENTRIES, "" + config.isOverwriteDataEntries()); 
+        props.setProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS, "" + config.isImportDataEntryConfigs());
+        props.setProperty(Constants.OPTION_OVERWRITE_DATA_ENTRY_CONFIGS, "" + config.isOverwriteDataEntryConfigs());
+        props.setProperty(Constants.OPTION_PROCESS_PREFERENCES, "" + config.isImportPrefs());
+        props.setProperty(Constants.OPTION_OVERWRITE_PREFERENCES, "" + config.isOverwritePrefs());
+        props.setProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG, "" + config.isImportGlobalConfig());
+        props.setProperty(Constants.OPTION_OVERWRITE_GLOBAL_CONFIG, "" + config.isOverwriteGlobalConfig());
+        props.setProperty(Constants.OPTION_PROCESS_TOOLS_DATA, "" + config.isImportToolsData());
+        props.setProperty(Constants.OPTION_OVERWRITE_TOOLS_DATA, "" + config.isOverwriteToolsData());
+        props.setProperty(Constants.OPTION_PROCESS_ICONS, "" + config.isImportIcons());
+        props.setProperty(Constants.OPTION_OVERWRITE_ICONS, "" + config.isOverwriteIcons());
+        props.setProperty(Constants.OPTION_PROCESS_APP_CORE, "" + config.isImportAndUpdateAppCore());
+        props.setProperty(Constants.OPTION_PROCESS_ADDONS_AND_LIBS, "" + config.isImportAddOnsAndLibs());
+        props.setProperty(Constants.OPTION_UPDATE_ADDONS_AND_LIBS, "" + config.isUpdateInstalledAddOnsAndLibs());
+        props.setProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS, "" + config.isImportAddOnConfigs());
+        props.setProperty(Constants.OPTION_OVERWRITE_ADDON_CONFIGS, "" + config.isOverwriteAddOnConfigs());
+        props.setProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS, "" + config.isImportImportExportConfigs());
+        props.setProperty(Constants.OPTION_OVERWRITE_IMPORT_EXPORT_CONFIGS, "" + config.isOverwriteImportExportConfigs());
+        props.setProperty(Constants.OPTION_DATA_PASSWORD, config.getPassword());
+        return props;
+    }
+    
+    private Properties populateProperties(String configName, ExportConfiguration config) {
+        Properties props = new Properties();
+        props.setProperty(Constants.OPTION_CONFIG_NAME, configName);
+        props.setProperty(Constants.OPTION_TRANSFER_PROVIDER, config.getTransferProvider());
+        props.setProperty(Constants.OPTION_FILE_LOCATION, config.getFileLocation());
+        props.setProperty(Constants.OPTION_PROCESS_PREFERENCES, "" + config.isExportPreferences()); 
+        props.setProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG, "" + config.isExportGlobalConfig()); 
+        props.setProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS, "" + config.isExportDataEntryConfigs()); 
+        props.setProperty(Constants.OPTION_PROCESS_ONLY_RELATED_DATA_ENTRY_CONFIGS, "" + config.isExportOnlyRelatedDataEntryConfigs()); 
+        props.setProperty(Constants.OPTION_PROCESS_TOOLS_DATA, "" + config.isExportToolsData()); 
+        props.setProperty(Constants.OPTION_PROCESS_ICONS, "" + config.isExportIcons()); 
+        props.setProperty(Constants.OPTION_PROCESS_ONLY_RELATED_ICONS, "" + config.isExportOnlyRelatedIcons()); 
+        props.setProperty(Constants.OPTION_PROCESS_APP_CORE, "" + config.isExportAppCore()); 
+        props.setProperty(Constants.OPTION_PROCESS_ADDONS_AND_LIBS, "" + config.isExportAddOnsAndLibs()); 
+        props.setProperty(Constants.OPTION_PROCESS_ADDON_CONFIGS, "" + config.isExportAddOnConfigs());
+        props.setProperty(Constants.OPTION_PROCESS_IMPORT_EXPORT_CONFIGS, "" + config.isExportImportExportConfigs());
+        props.setProperty(Constants.OPTION_DATA_PASSWORD, config.getPassword());
+        if (config.isExportAll()) {
+            props.setProperty(Constants.OPTION_EXPORT_ALL, "" + true);
+        } else {
+            props.remove(Constants.OPTION_EXPORT_ALL);
+            StringBuffer ids = new StringBuffer(); 
+            Iterator<UUID> it = config.getSelectedIds().iterator();
+            while (it.hasNext()) {
+                UUID id = it.next();
+                ids.append(id.toString());
+                if (it.hasNext()) {
+                    ids.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                }
+            }
+            if (!Validator.isNullOrBlank(ids)) {
+                props.setProperty(Constants.OPTION_SELECTED_IDS, ids.toString());
+            }
+            ids = new StringBuffer(); 
+            it = config.getSelectedRecursiveIds().iterator();
+            while (it.hasNext()) {
+                UUID id = it.next();
+                ids.append(id.toString());
+                if (it.hasNext()) {
+                    ids.append(Constants.PROPERTY_VALUES_SEPARATOR);
+                }
+            }
+            if (!Validator.isNullOrBlank(ids)) {
+                props.setProperty(Constants.OPTION_SELECTED_RECURSIVE_IDS, ids.toString());
+            }
+        }
+        return props;
+    }
+    
+    public Map<String, ImportConfiguration> getImportConfigurations() throws Exception {
+        Map<String, ImportConfiguration> configs = new HashMap<String, ImportConfiguration>();
+        for (Entry<String, Properties> entry : getTransferConfigurations(TRANSFER_TYPE.IMPORT).entrySet()) {
+            configs.put(entry.getKey(), populateImportConfiguration(entry.getValue()));
+        }
+        return configs;
+    }
+    
+    public Map<String, ExportConfiguration> getExportConfigurations() throws Exception {
+        Map<String, ExportConfiguration> configs = new HashMap<String, ExportConfiguration>();
+        for (Entry<String, Properties> entry : getTransferConfigurations(TRANSFER_TYPE.EXPORT).entrySet()) {
+            configs.put(entry.getKey(), populateExportConfiguration(entry.getValue()));
+        }
+        return configs;
+    }
+    
     private void loadTransferConfigurations() throws Exception {
         importConfigs = null;
         importConfigIDs = null;
-        getTransferConfigurations(Constants.TRANSFER_TYPE.IMPORT);
+        getTransferConfigurations(TRANSFER_TYPE.IMPORT);
         exportConfigs = null;
         exportConfigIDs = null;
-        getTransferConfigurations(Constants.TRANSFER_TYPE.EXPORT);
+        getTransferConfigurations(TRANSFER_TYPE.EXPORT);
     }
     
-    public Map<String, Properties> getTransferConfigurations(Constants.TRANSFER_TYPE transferType) throws Exception {
+    private Map<String, Properties> getTransferConfigurations(TRANSFER_TYPE transferType) throws Exception {
         Map<String, Properties> configs;
         Map<String, String> configIDs;
         FilenameFilter ff;
-        if (transferType == Constants.TRANSFER_TYPE.IMPORT) {
+        if (transferType == TRANSFER_TYPE.IMPORT) {
             if (importConfigs == null) {
                 importConfigs = new HashMap<String, Properties>();
                 importConfigIDs = new HashMap<String, String>();
@@ -958,8 +1088,16 @@ public class BackEnd {
         return configs;
     }
     
-    public byte[] getTransferOptions(String configName, Constants.TRANSFER_TYPE transferType) throws Exception {
-        Map<String, String> configIDs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs; 
+    public byte[] getImportOptions(String configName) throws Exception {
+        return getTransferOptions(configName, TRANSFER_TYPE.IMPORT);
+    }
+    
+    public byte[] getExportOptions(String configName) throws Exception {
+        return getTransferOptions(configName, TRANSFER_TYPE.EXPORT);
+    }
+    
+    private byte[] getTransferOptions(String configName, TRANSFER_TYPE transferType) throws Exception {
+        Map<String, String> configIDs = transferType == TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs; 
         String fileName = configIDs.get(configName) + Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX;
         File transferOptionsFile = new File(Constants.CONFIG_DIR, fileName);
         byte[] encryptedData = FSUtils.readFile(transferOptionsFile);
@@ -967,10 +1105,20 @@ public class BackEnd {
         return decryptedData;
     }
     
-    public void storeTransferConfigurationAndOptions(String name, Properties config, byte[] transferOptions, Constants.TRANSFER_TYPE transferType) throws Exception {
-        Map<String, Properties> configs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigs : exportConfigs;;
-        Map<String, String> configIDs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
-        String configSuffix = transferType == Constants.TRANSFER_TYPE.IMPORT ? Constants.IMPORT_CONFIG_FILE_SUFFIX : Constants.EXPORT_CONFIG_FILE_SUFFIX;
+    public void storeImportConfigurationAndOptions(String name, ImportConfiguration config, byte[] transferOptions) throws Exception {
+        Properties options = populateProperties(name, config);
+        storeTransferConfigurationAndOptions(name, options, transferOptions, TRANSFER_TYPE.IMPORT);
+    }
+    
+    public void storeExportConfigurationAndOptions(String name, ExportConfiguration config, byte[] transferOptions) throws Exception {
+        Properties options = populateProperties(name, config);
+        storeTransferConfigurationAndOptions(name, options, transferOptions, TRANSFER_TYPE.EXPORT);
+    }
+    
+    private void storeTransferConfigurationAndOptions(String name, Properties config, byte[] transferOptions, TRANSFER_TYPE transferType) throws Exception {
+        Map<String, Properties> configs = transferType == TRANSFER_TYPE.IMPORT ? importConfigs : exportConfigs;
+        Map<String, String> configIDs = transferType == TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;
+        String configSuffix = transferType == TRANSFER_TYPE.IMPORT ? Constants.IMPORT_CONFIG_FILE_SUFFIX : Constants.EXPORT_CONFIG_FILE_SUFFIX;
         String fileName = configIDs.get(name);
         if (fileName == null) {
             UUID id = UUID.randomUUID();
@@ -990,10 +1138,18 @@ public class BackEnd {
         FSUtils.writeFile(transferOptionsFile, encryptedData);
     }
     
-    public void removeTransferConfiguration(String name, Constants.TRANSFER_TYPE transferType) throws Exception {
-        Map<String, Properties> configs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigs : exportConfigs;;
-        Map<String, String> configIDs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
-        String configSuffix = transferType == Constants.TRANSFER_TYPE.IMPORT ? Constants.IMPORT_CONFIG_FILE_SUFFIX : Constants.EXPORT_CONFIG_FILE_SUFFIX;
+    public void removeImportConfiguration(String name) throws Exception {
+        removeTransferConfiguration(name, TRANSFER_TYPE.IMPORT);
+    }
+    
+    public void removeExportConfiguration(String name) throws Exception {
+        removeTransferConfiguration(name, TRANSFER_TYPE.EXPORT);
+    }
+    
+    private void removeTransferConfiguration(String name, TRANSFER_TYPE transferType) throws Exception {
+        Map<String, Properties> configs = transferType == TRANSFER_TYPE.IMPORT ? importConfigs : exportConfigs;;
+        Map<String, String> configIDs = transferType == TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
+        String configSuffix = transferType == TRANSFER_TYPE.IMPORT ? Constants.IMPORT_CONFIG_FILE_SUFFIX : Constants.EXPORT_CONFIG_FILE_SUFFIX;
         String fileName = configIDs.get(name);
         String transferOptionsFileName = fileName + Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX;
         fileName += configSuffix;
@@ -1005,9 +1161,17 @@ public class BackEnd {
         configIDs.remove(name);
     }
     
-    public void renameTransferConfiguration(String oldName, String newName, Constants.TRANSFER_TYPE transferType) throws Exception {
-        Map<String, Properties> configs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigs : exportConfigs;;
-        Map<String, String> configIDs = transferType == Constants.TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;;
+    public void renameImportConfiguration(String oldName, String newName) throws Exception {
+        renameTransferConfiguration(oldName, newName, TRANSFER_TYPE.IMPORT);
+    }
+    
+    public void renameExportConfiguration(String oldName, String newName) throws Exception {
+        renameTransferConfiguration(oldName, newName, TRANSFER_TYPE.EXPORT);
+    }
+    
+    private void renameTransferConfiguration(String oldName, String newName, TRANSFER_TYPE transferType) throws Exception {
+        Map<String, Properties> configs = transferType == TRANSFER_TYPE.IMPORT ? importConfigs : exportConfigs;
+        Map<String, String> configIDs = transferType == TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;
         Properties config = configs.get(oldName);
         config.setProperty(Constants.OPTION_CONFIG_NAME, newName);
         File oldTransferOptionsFile = new File(Constants.CONFIG_DIR, configIDs.get(oldName) + Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX);
@@ -1021,6 +1185,7 @@ public class BackEnd {
         OutputFormat of = new OutputFormat();
         StringWriter sw = new StringWriter();
         new XMLSerializer(sw, of).serialize(metadata);
+        System.out.println(sw.getBuffer().toString()); // FIXME
         byte[] encryptedData = useCipher(cipher, sw.getBuffer().toString().getBytes());
         FSUtils.writeFile(file, encryptedData);
     }

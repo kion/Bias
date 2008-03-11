@@ -6,13 +6,13 @@ package bias.extension;
 /**
  * @author kion
  */
-public class TransferConfiguration {
+public class TransferOptions {
     
     private byte[] options;
     
     private String fileLocation;
 
-    public TransferConfiguration(byte[] options, String fileLocation) {
+    public TransferOptions(byte[] options, String fileLocation) {
         this.options = options;
         this.fileLocation = fileLocation;
     }

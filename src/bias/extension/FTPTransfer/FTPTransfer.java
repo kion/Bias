@@ -18,7 +18,7 @@ import javax.swing.JTextField;
 
 import bias.Constants;
 import bias.Preferences;
-import bias.extension.TransferConfiguration;
+import bias.extension.TransferOptions;
 import bias.extension.TransferExtension;
 import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
@@ -144,7 +144,7 @@ public class FTPTransfer extends TransferExtension {
      * @see bias.extension.TransferExtension#configure(bias.Constants.TRANSFER_OPERATION_TYPE)
      */
     @Override
-    public TransferConfiguration configure(Constants.TRANSFER_TYPE transferType) throws Throwable {
+    public TransferOptions configure(Constants.TRANSFER_TYPE transferType) throws Throwable {
         Properties options = new Properties();
         JLabel serverL = new JLabel("FTP Server (domain name or IP, including port if using non-default one)");
         JTextField serverTF = new JTextField();
@@ -187,7 +187,7 @@ public class FTPTransfer extends TransferExtension {
                 options.setProperty(TRANSFER_OPTION_PASSWORD, text);
             }
         }
-        return new TransferConfiguration(PropertiesUtils.serializeProperties(options), filepathTF.getText());
+        return new TransferOptions(PropertiesUtils.serializeProperties(options), filepathTF.getText());
     }
 
 }
