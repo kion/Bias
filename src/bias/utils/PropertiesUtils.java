@@ -50,7 +50,9 @@ public class PropertiesUtils {
         Properties properties = new Properties();
         if (bytes != null) {
             try {
-                properties.load(new ByteArrayInputStream(bytes));
+                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                properties.load(bais);
+                bais.close();
             } catch (IOException e) {}
         }
         return properties;

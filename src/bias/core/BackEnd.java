@@ -366,7 +366,9 @@ public class BackEnd {
             byte[] encryptedData = FSUtils.readFile(checkSumsFile);
             byte[] decryptedData = decrypt(encryptedData);
             Properties p = new Properties();
-            p.load(new ByteArrayInputStream(decryptedData));
+            ByteArrayInputStream bais = new ByteArrayInputStream(decryptedData);
+            p.load(bais);
+            bais.close();
             String storedCheckSum = p.getProperty(transferType.name() + Constants.VALUES_SEPARATOR + fileLocation);
             if (!Validator.isNullOrBlank(storedCheckSum)) {
                 if (storedCheckSum.equals(checkSum)) {
@@ -384,7 +386,9 @@ public class BackEnd {
             if (checkSumsFile.exists()) {
                 byte[] encryptedData = FSUtils.readFile(checkSumsFile);
                 byte[] decryptedData = decrypt(encryptedData);
-                p.load(new ByteArrayInputStream(decryptedData));
+                ByteArrayInputStream bais = new ByteArrayInputStream(decryptedData);
+                p.load(bais);
+                bais.close();
             }
             p.setProperty(transferType.name() + Constants.VALUES_SEPARATOR + fileLocation, checkSum);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();;
@@ -628,7 +632,9 @@ public class BackEnd {
         File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
         if (configFile.exists()) {
             byte[] data = FSUtils.readFile(configFile);
-            config.load(new ByteArrayInputStream(data));
+            ByteArrayInputStream bais = new ByteArrayInputStream(data);
+            config.load(bais);
+            bais.close();
         }
     }
 
@@ -937,7 +943,9 @@ public class BackEnd {
             Properties props = new Properties();
             byte[] encryptedData = FSUtils.readFile(file);
             byte[] decryptedData = decrypt(encryptedData);
-            props.load(new ByteArrayInputStream(decryptedData));
+            ByteArrayInputStream bais = new ByteArrayInputStream(decryptedData);
+            props.load(bais);
+            bais.close();
             String name = props.getProperty(Constants.OPTION_CONFIG_NAME);
             String id = file.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
             configs.put(name, props);
@@ -1078,7 +1086,9 @@ public class BackEnd {
         File reposConfigFile = new File(Constants.CONFIG_DIR, Constants.REPOSITORY_CONFIG_FILE);
         String urlStr = null;
         if (reposConfigFile.exists()) {
-            p.load(new FileInputStream(reposConfigFile));
+            FileInputStream fis = new FileInputStream(reposConfigFile);
+            p.load(fis);
+            fis.close();
             urlStr = p.getProperty(Constants.MAIN_REPOSITORY_KEY);
         }
         if (Validator.isNullOrBlank(urlStr)) {
@@ -1172,7 +1182,9 @@ public class BackEnd {
     
     private AddOnInfo readAddOnInfo(File addOnInfoFile) throws Throwable {
         Properties info = new Properties();
-        info.load(new FileInputStream(addOnInfoFile));
+        InputStream is = new FileInputStream(addOnInfoFile);
+        info.load(is);
+        is.close();
         AddOnInfo aoi = new AddOnInfo();
         aoi.setName(addOnInfoFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
         aoi.setVersion(info.getProperty(Constants.ATTRIBUTE_ADD_ON_VERSION));
@@ -1202,6 +1214,8 @@ public class BackEnd {
         return aoi;
     }
     
+    // FIXME [P1] application core package version should be compared as well 
+    //           (currently, it always looks like not up to date)
     public Boolean isAddOnInstalledAndUpToDate(Pack pack) throws Throwable {
         for (AddOnInfo addOn : getAddOns(pack.getType())) {
             if (addOn.getName().equals(pack.getName())) {
