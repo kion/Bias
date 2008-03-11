@@ -5314,8 +5314,6 @@ public class FrontEnd extends JFrame {
     
     private boolean onlineListRefreshed = false;
     
-    // FIXME [P1] application core package version should be compared as well 
-    //           (currently, it always looks like not up to date)
     private void refreshOnlinePackagesList(final Runnable onFinishAction) {
         while (getOnlineModel().getRowCount() > 0) {
             getOnlineModel().removeRow(0);
@@ -5774,7 +5772,7 @@ public class FrontEnd extends JFrame {
         }
 
         public void actionPerformed(ActionEvent evt) {
-            JLabel title1Label = new JLabel("Bias Versatile Information Manager, version 0.9.7");
+            JLabel title1Label = new JLabel("Bias Versatile Information Manager, version " + BackEnd.getInstance().getAppVersion());
             JLabel link1Label = new LinkLabel("http://bias.sourceforge.net/");
             JLabel title2Label = new JLabel("© Roman Kasianenko, 2006-2008");
         	JLabel link2Label = new LinkLabel("http://kion.name/");

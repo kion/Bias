@@ -82,6 +82,8 @@ public class BackEnd {
     
     private static String password;
     
+    private String appVersion;
+    
     private File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
 
     private static Collection<AddOnInfo> loadedAddOns;
@@ -316,6 +318,8 @@ public class BackEnd {
         this.data = parseMetadata(metadata, identifiedData, null, false);
         // get lists of loaded addons
         loadedAddOns = getAddOns();
+        // get application's version
+        appVersion = readAppVersion();
     }
     
     private Collection<String> getDataExportExtensionsList() {
@@ -1215,16 +1219,42 @@ public class BackEnd {
     }
     
     public Boolean isAddOnInstalledAndUpToDate(Pack pack) throws Throwable {
-        for (AddOnInfo addOn : getAddOns(pack.getType())) {
-            if (addOn.getName().equals(pack.getName())) {
-                if (VersionComparator.getInstance().compare(addOn.getVersion(), pack.getVersion()) >= 0) {
-                    return true;
-                } else {
-                    return false;
+        if (pack.getType() == PackType.APP_CORE) {
+            if (VersionComparator.getInstance().compare(getAppVersion(), pack.getVersion()) >= 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            for (AddOnInfo addOn : getAddOns(pack.getType())) {
+                if (addOn.getName().equals(pack.getName())) {
+                    if (VersionComparator.getInstance().compare(addOn.getVersion(), pack.getVersion()) >= 0) {
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
             }
         }
         return null;
+    }
+    
+    public String getAppVersion() {
+        return appVersion;
+    }
+    
+    private String readAppVersion() throws Exception {
+        File appCoreFile = new File(Constants.ROOT_DIR, Constants.APP_CORE_FILE_NAME);
+        JarInputStream in = new JarInputStream(new FileInputStream(appCoreFile));
+        Manifest manifest = in.getManifest();
+        String appVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_APP_VERSION);
+        if (Validator.isNullOrBlank(appVersion)) {
+            throw new Exception(
+                    "Invalid Application Core JAR File:" + Constants.NEW_LINE +
+                    Constants.ATTRIBUTE_APP_VERSION
+                    + " attribute in MANIFEST.MF file is missing/empty!");
+        }
+        return appVersion;
     }
     
     public Collection<AddOnInfo> getAddOns() throws Throwable {
