@@ -3,13 +3,13 @@
      Oct 15, 2006 01:01:55 AM                                                        
 
      Bias    
-     Bias OpenSource Personal Information Manager
+     Bias OpenSource Versatile Information Manager
                    
      author: kion                                                                
      ====================================================================== -->
 <project name="Bias" default="BuildAndRunApp">
 	<description>
-    	Bias OpenSource Personal Information Manager Project
+    	Bias OpenSource Versatile Information Manager Project
     </description>
 
 	<!-- ================================= 

@@ -652,7 +652,7 @@ public class FrontEnd extends JFrame {
                 if (trayIcon == null) {
                     trayIcon = new TrayIcon(
                             ICON_APP.getImage(), 
-                            "Bias :: Personal Information Manager");
+                            "Bias :: Versatile Information Manager");
                     trayIcon.setImageAutoSize(true);
                     trayIcon.addMouseListener(new MouseAdapter(){
                         @Override
@@ -5772,7 +5772,7 @@ public class FrontEnd extends JFrame {
         }
 
         public void actionPerformed(ActionEvent evt) {
-            JLabel title1Label = new JLabel("Bias Personal Information Manager, version 0.9.7");
+            JLabel title1Label = new JLabel("Bias Versatile Information Manager, version 0.9.7");
             JLabel link1Label = new LinkLabel("http://bias.sourceforge.net/");
             JLabel title2Label = new JLabel("© Roman Kasianenko, 2006-2008");
         	JLabel link2Label = new LinkLabel("http://kion.name/");
