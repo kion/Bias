@@ -169,6 +169,8 @@ import bias.utils.Downloader.DownloadListener;
  */
 public class FrontEnd extends JFrame {
 
+    // TODO [P1] root-category placement should be customizable as well
+    
     // TODO [P3] internationalization
 
     private static final long serialVersionUID = 1L;
