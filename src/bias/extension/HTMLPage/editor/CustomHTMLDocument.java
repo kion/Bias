@@ -29,7 +29,16 @@ public class CustomHTMLDocument extends HTMLDocument {
         Object family = attr.getAttribute(StyleConstants.FontFamily);
         Object size = attr.getAttribute(StyleConstants.FontSize);
         if (family == null && size == null) {
-            return DEFAULT_FONT;
+            int style = DEFAULT_FONT.getStyle(); 
+            Object bold = attr.getAttribute(StyleConstants.Bold);
+            if (bold != null && (Boolean) bold) {
+                style = style|Font.BOLD;
+            }
+            Object italic = attr.getAttribute(StyleConstants.Italic);
+            if (italic != null && (Boolean) italic) {
+                style = style|Font.ITALIC;
+            }
+            return new Font(DEFAULT_FONT.getFamily(), style, DEFAULT_FONT.getSize());
         }
         return super.getFont(attr);
     }
