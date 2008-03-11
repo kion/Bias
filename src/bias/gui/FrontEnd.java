@@ -2927,7 +2927,7 @@ public class FrontEnd extends JFrame {
                                                 }
                                                 label.setText("<html><font color=green>Data import - Completed</font></html>");
                                                 processLabel.setText("Data have been successfully imported.");
-                                                displayStatusBarMessage("import done");
+                                                displayStatusBarMessage("import done (" + configName + ")");
                                                 fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass(), configName));
                                             } catch (GeneralSecurityException gse) {
                                                 processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
@@ -3301,7 +3301,7 @@ public class FrontEnd extends JFrame {
                                         if (exported) {
                                             label.setText("<html><font color=green>Data export - Completed</font></html>");
                                             processLabel.setText("Data have been successfully exported.");
-                                            displayStatusBarMessage("export done");
+                                            displayStatusBarMessage("export done (" + configName + ")");
                                             fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
                                         } else {
                                             label.setText("<html><font color=green>Data export - Completed</font></html>");
