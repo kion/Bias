@@ -1185,7 +1185,6 @@ public class BackEnd {
         OutputFormat of = new OutputFormat();
         StringWriter sw = new StringWriter();
         new XMLSerializer(sw, of).serialize(metadata);
-        System.out.println(sw.getBuffer().toString()); // FIXME
         byte[] encryptedData = useCipher(cipher, sw.getBuffer().toString().getBytes());
         FSUtils.writeFile(file, encryptedData);
     }
