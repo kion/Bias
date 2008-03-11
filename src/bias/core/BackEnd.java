@@ -194,6 +194,18 @@ public class BackEnd {
         }
     };
     
+    private static final FilenameFilter FILE_FILTER_TRANSFER_OPTIONS_CONFIG = new FilenameFilter(){
+        public boolean accept(File dir, String name) {
+            return name.endsWith(Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX);
+        }
+    };
+    
+    private static final FilenameFilter FILE_FILTER_CHECKSUM_CONFIG = new FilenameFilter(){
+        public boolean accept(File dir, String name) {
+            return name.endsWith(Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
+        }
+    };
+    
     private BackEnd() {
         try {
             CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, password);
@@ -1963,6 +1975,7 @@ public class BackEnd {
     
     private static void reencryptData() throws Exception {
         reencryptFiles(Constants.DATA_DIR.listFiles(FILE_FILTER_DATA));
+        reencryptFiles(Constants.DATA_DIR.listFiles(FILE_FILTER_TOOL_DATA));
     }
     
     private static void reencryptAttachments() throws Exception {
@@ -1981,6 +1994,8 @@ public class BackEnd {
         reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_DATA_ENTRY_CONFIG));
         reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_ADDON_CONFIG));
         reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_IMPORT_EXPORT_CONFIG));
+        reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_TRANSFER_OPTIONS_CONFIG));
+        reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_CHECKSUM_CONFIG));
     }
     
     private static void reencryptFiles(File[] files) throws Exception {

@@ -3330,9 +3330,8 @@ public class FrontEnd extends JFrame {
                             checkTreeManager = new CheckTreeManager(dataTree);
                             checkTreeManager.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
                                 public void valueChanged(TreeSelectionEvent e) {
-                                    TreePath selectedPath = e.getNewLeadSelectionPath();
-                                    TreePath treeSelPath = dataTree.getSelectionPath();
-                                    if (selectedPath != null && selectedPath.equals(treeSelPath)) {
+                                    TreePath selectedPath = dataTree.getSelectionPath();
+                                    if (selectedPath != null) {
                                         DefaultMutableTreeNode node = ((DefaultMutableTreeNode) selectedPath.getLastPathComponent());
                                         if (dataTree.isCollapsed(selectedPath) && !node.isLeaf()) {
                                             boolean isSelected = checkTreeManager.getSelectionModel().isPathSelected(selectedPath, true);
@@ -3346,11 +3345,11 @@ public class FrontEnd extends JFrame {
                                             }
                                         }
                                     }
-                                    if (treeSelPath != null) {
-                                        boolean isSelected = checkTreeManager.getSelectionModel().isPathSelected(treeSelPath, true);
+                                    if (selectedPath != null) {
+                                        boolean isSelected = checkTreeManager.getSelectionModel().isPathSelected(selectedPath, true);
                                         if (!isSelected) {
-                                            DefaultMutableTreeNode node = ((DefaultMutableTreeNode) treeSelPath.getLastPathComponent());
-                                            if (dataTree.isCollapsed(treeSelPath) && node.isLeaf()) {
+                                            DefaultMutableTreeNode node = ((DefaultMutableTreeNode) selectedPath.getLastPathComponent());
+                                            if (dataTree.isCollapsed(selectedPath) && node.isLeaf()) {
                                                 Collection<DefaultMutableTreeNode> childs = categoriesToExportRecursively.get(node);
                                                 if (childs != null) {
                                                     for (DefaultMutableTreeNode child : childs) {
@@ -4596,22 +4595,24 @@ public class FrontEnd extends JFrame {
                                                                         " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
                                                                         " is not available!");
                                             } else {
-                                                Integer counter = getDepCounters().get(dep.getName());
-                                                if (counter == null) {
-                                                    counter = 0;
-                                                }
-                                                if ((Boolean) getOnlineModel().getValueAt(e.getFirstRow(), e.getColumn())) {
-                                                    counter++;
-                                                    if (counter == 1) {
-                                                        getOnlineModel().setValueAt(Boolean.TRUE, idx, 0);
+                                                synchronized (FrontEnd.this) {
+                                                    Integer counter = getDepCounters().get(dep.getName());
+                                                    if (counter == null) {
+                                                        counter = 0;
                                                     }
-                                                } else {
-                                                    counter--;
-                                                    if (counter == 0) {
-                                                        getOnlineModel().setValueAt(Boolean.FALSE, idx, 0);
+                                                    if ((Boolean) getOnlineModel().getValueAt(e.getFirstRow(), e.getColumn())) {
+                                                        counter++;
+                                                        if (counter == 1) {
+                                                            getOnlineModel().setValueAt(Boolean.TRUE, idx, 0);
+                                                        }
+                                                    } else {
+                                                        counter--;
+                                                        if (counter == 0) {
+                                                            getOnlineModel().setValueAt(Boolean.FALSE, idx, 0);
+                                                        }
                                                     }
+                                                    getDepCounters().put(dep.getName(), counter);
                                                 }
-                                                getDepCounters().put(dep.getName(), counter);
                                             }
                                         }
                                     }
@@ -5466,22 +5467,24 @@ public class FrontEnd extends JFrame {
                                                                         " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
                                                                         " is not available!");
                                             } else {
-                                                Integer counter = getDepCounters().get(dep.getName());
-                                                if (counter == null) {
-                                                    counter = 0;
-                                                }
-                                                if ((Boolean) addOnModel.getValueAt(e.getFirstRow(), e.getColumn())) {
-                                                    counter++;
-                                                    if (counter == 1) {
-                                                        getOnlineModel().setValueAt(Boolean.TRUE, idx, 0);
+                                                synchronized (FrontEnd.this) {
+                                                    Integer counter = getDepCounters().get(dep.getName());
+                                                    if (counter == null) {
+                                                        counter = 0;
                                                     }
-                                                } else {
-                                                    counter--;
-                                                    if (counter == 0) {
-                                                        getOnlineModel().setValueAt(Boolean.FALSE, idx, 0);
+                                                    if ((Boolean) addOnModel.getValueAt(e.getFirstRow(), e.getColumn())) {
+                                                        counter++;
+                                                        if (counter == 1) {
+                                                            getOnlineModel().setValueAt(Boolean.TRUE, idx, 0);
+                                                        }
+                                                    } else {
+                                                        counter--;
+                                                        if (counter == 0) {
+                                                            getOnlineModel().setValueAt(Boolean.FALSE, idx, 0);
+                                                        }
                                                     }
+                                                    getDepCounters().put(dep.getName(), counter);
                                                 }
-                                                getDepCounters().put(dep.getName(), counter);
                                             }
                                         }
                                     }
