@@ -1314,9 +1314,13 @@ public class FrontEnd extends JFrame {
         return data;
     }
     
+    private static volatile Object LOCK = new Object();
+
     private void shutdown() {
         fireBeforeExitEvent();
-        BackEnd.getInstance().shutdown(0);
+        synchronized (LOCK) {
+            BackEnd.getInstance().shutdown(0);
+        }
     }
     
     private void exitWithOptionalAutoSave() {
@@ -3115,74 +3119,76 @@ public class FrontEnd extends JFrame {
                 if (verbose) displayBottomPanel(label, panel);
                 Thread importThread = new Thread(new Runnable(){
                     public void run() {
-                        try {
-                            ImportConfiguration importConfig = BackEnd.getInstance().getPopulatedImportConfigurations().get(configName);
-                            TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
-                            if (transferrer == null) {
-                                throw new Exception("It looks like transfer type used in this stored import configuration is no longer available (extension uninstalled?).");
-                            }
-                            byte[] transferOptions = BackEnd.getInstance().getImportOptions(configName);
-                            byte[] importedData = transferrer.importData(new TransferOptions(transferOptions, importConfig.getFileLocation()), force);
-                            if (importedData == null) {
-                                if (verbose) {
-                                    label.setText("<html><font color=green>Data import - Completed</font></html>");
-                                    processLabel.setText("Import discarded: data haven't changed since last import.");
+                        synchronized (LOCK) {
+                            try {
+                                ImportConfiguration importConfig = BackEnd.getInstance().getPopulatedImportConfigurations().get(configName);
+                                TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
+                                if (transferrer == null) {
+                                    throw new Exception("It looks like transfer type used in this stored import configuration is no longer available (extension uninstalled?).");
                                 }
-                            } else {
-                                try {
-                                    File importDir = new File(Constants.TMP_DIR, UUID.randomUUID().toString());
-                                    FSUtils.delete(importDir);
-                                    ArchUtils.extract(importedData, importDir);
-                                    DataCategory data = BackEnd.getInstance().importData(importDir, instance.getVisualEntriesIDs(), importConfig);
-                                    if (!data.getData().isEmpty()) {
-                                        instance.representData(data);
-                                    }
-                                    if (importConfig.isImportToolsData()) {
-                                        representTools();
-                                    }
-                                    if (importConfig.isImportImportExportConfigs()) {
-                                        initTransferrers();
-                                    }
-                                    if (importConfig.isImportPrefs()) {
-                                        Preferences.getInstance().init();
-                                        instance.applyPreferences();
-                                    }
-                                    if (importConfig.isImportGlobalConfig()) {
-                                        initGlobalSettings();
-                                        instance.applyGlobalSettings();
-                                    }
+                                byte[] transferOptions = BackEnd.getInstance().getImportOptions(configName);
+                                byte[] importedData = transferrer.importData(new TransferOptions(transferOptions, importConfig.getFileLocation()), force);
+                                if (importedData == null) {
                                     if (verbose) {
                                         label.setText("<html><font color=green>Data import - Completed</font></html>");
-                                        processLabel.setText("Data have been successfully imported.");
+                                        processLabel.setText("Import discarded: data haven't changed since last import.");
                                     }
-                                    instance.displayStatusBarMessage("import done (" + configName + ")");
-                                    fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass(), configName));
-                                } catch (GeneralSecurityException gse) {
-                                    if (verbose) {
-                                        processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
-                                        label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                } else {
+                                    try {
+                                        File importDir = new File(Constants.TMP_DIR, UUID.randomUUID().toString());
+                                        FSUtils.delete(importDir);
+                                        ArchUtils.extract(importedData, importDir);
+                                        DataCategory data = BackEnd.getInstance().importData(importDir, instance.getVisualEntriesIDs(), importConfig);
+                                        if (!data.getData().isEmpty()) {
+                                            instance.representData(data);
+                                        }
+                                        if (importConfig.isImportToolsData()) {
+                                            representTools();
+                                        }
+                                        if (importConfig.isImportImportExportConfigs()) {
+                                            initTransferrers();
+                                        }
+                                        if (importConfig.isImportPrefs()) {
+                                            Preferences.getInstance().init();
+                                            instance.applyPreferences();
+                                        }
+                                        if (importConfig.isImportGlobalConfig()) {
+                                            initGlobalSettings();
+                                            instance.applyGlobalSettings();
+                                        }
+                                        if (verbose) {
+                                            label.setText("<html><font color=green>Data import - Completed</font></html>");
+                                            processLabel.setText("Data have been successfully imported.");
+                                        }
+                                        instance.displayStatusBarMessage("import done (" + configName + ")");
+                                        fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass(), configName));
+                                    } catch (GeneralSecurityException gse) {
+                                        if (verbose) {
+                                            processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
+                                            label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                        }
+                                        gse.printStackTrace(System.err);
+                                    } catch (Throwable t) {
+                                        String errMsg = "Failed to import data!";
+                                        if (t.getMessage() != null) {
+                                            errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
+                                        }
+                                        if (verbose) {
+                                            processLabel.setText(errMsg);
+                                            label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                        }
+                                        t.printStackTrace(System.err);
                                     }
-                                    gse.printStackTrace(System.err);
-                                } catch (Throwable t) {
-                                    String errMsg = "Failed to import data!";
-                                    if (t.getMessage() != null) {
-                                        errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
-                                    }
-                                    if (verbose) {
-                                        processLabel.setText(errMsg);
-                                        label.setText("<html><font color=red>Data import - Failed</font></html>");
-                                    }
-                                    t.printStackTrace(System.err);
                                 }
+                            } catch (Throwable ex) {
+                                String errMsg = "Failed to import data!";
+                                if (ex.getMessage() != null) {
+                                    errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                                }
+                                processLabel.setText(errMsg);
+                                label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                ex.printStackTrace(System.err);
                             }
-                        } catch (Throwable ex) {
-                            String errMsg = "Failed to import data!";
-                            if (ex.getMessage() != null) {
-                                errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
-                            }
-                            processLabel.setText(errMsg);
-                            label.setText("<html><font color=red>Data import - Failed</font></html>");
-                            ex.printStackTrace(System.err);
                         }
                     }
                 });
@@ -3552,40 +3558,42 @@ public class FrontEnd extends JFrame {
                 if (verbose) displayBottomPanel(label, panel);
                 Thread exportThread = new Thread(new Runnable(){
                     public void run() {
-                        try {
-                            DataCategory data = instance.collectData();
-                            final ExportConfiguration exportConfig = BackEnd.getInstance().getPopulatedExportConfigurations().get(configName);
-                            if (!exportConfig.isExportAll()) {
-                                instance.filterData(data, exportConfig.getSelectedIds(), exportConfig.getSelectedRecursiveIds());
-                            }
-                            FileInfo fileInfo = BackEnd.getInstance().exportData(data, exportConfig);
-                            TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
-                            if (transferrer == null) {
-                                throw new Exception("It looks like transfer type used in this stored export configuration is no longer available (extension uninstalled?).");
-                            }
-                            byte[] transferOptions = BackEnd.getInstance().getExportOptions(configName);
-                            boolean exported = transferrer.exportData(fileInfo, new TransferOptions(transferOptions, exportConfig.getFileLocation()), force);
-                            if (exported) {
-                                if (verbose) {
-                                    label.setText("<html><font color=green>Data export - Completed</font></html>");
-                                    processLabel.setText("Data have been successfully exported.");
+                        synchronized (LOCK) {
+                            try {
+                                DataCategory data = instance.collectData();
+                                final ExportConfiguration exportConfig = BackEnd.getInstance().getPopulatedExportConfigurations().get(configName);
+                                if (!exportConfig.isExportAll()) {
+                                    instance.filterData(data, exportConfig.getSelectedIds(), exportConfig.getSelectedRecursiveIds());
                                 }
-                                instance.displayStatusBarMessage("export done (" + configName + ")");
-                                fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
-                            } else if (verbose) {
-                                label.setText("<html><font color=green>Data export - Completed</font></html>");
-                                processLabel.setText("Export discarded: data haven't changed since last export.");
+                                FileInfo fileInfo = BackEnd.getInstance().exportData(data, exportConfig);
+                                TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
+                                if (transferrer == null) {
+                                    throw new Exception("It looks like transfer type used in this stored export configuration is no longer available (extension uninstalled?).");
+                                }
+                                byte[] transferOptions = BackEnd.getInstance().getExportOptions(configName);
+                                boolean exported = transferrer.exportData(fileInfo, new TransferOptions(transferOptions, exportConfig.getFileLocation()), force);
+                                if (exported) {
+                                    if (verbose) {
+                                        label.setText("<html><font color=green>Data export - Completed</font></html>");
+                                        processLabel.setText("Data have been successfully exported.");
+                                    }
+                                    instance.displayStatusBarMessage("export done (" + configName + ")");
+                                    fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
+                                } else if (verbose) {
+                                    label.setText("<html><font color=green>Data export - Completed</font></html>");
+                                    processLabel.setText("Export discarded: data haven't changed since last export.");
+                                }
+                            } catch (Throwable ex) {
+                                String errMsg = "Failed to export data!";
+                                if (ex.getMessage() != null) {
+                                    errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                                }
+                                if (verbose) {
+                                    processLabel.setText(errMsg);
+                                    label.setText("<html><font color=red>Data export - Failed</font></html>");
+                                }
+                                ex.printStackTrace(System.err);
                             }
-                        } catch (Throwable ex) {
-                            String errMsg = "Failed to export data!";
-                            if (ex.getMessage() != null) {
-                                errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
-                            }
-                            if (verbose) {
-                                processLabel.setText(errMsg);
-                                label.setText("<html><font color=red>Data export - Failed</font></html>");
-                            }
-                            ex.printStackTrace(System.err);
                         }
                     }
                 });
