@@ -1194,7 +1194,6 @@ public class FrontEnd extends JFrame {
         return extension;
     }
     
-    // FIXME [P1] when storing before exit, need to wait while all listeners finish their work before exiting
     private void store(boolean beforeExit) throws Throwable {
         fireBeforeSaveEvent(new SaveEvent(beforeExit));
         BackEnd.getInstance().setConfig(collectProperties());
@@ -1907,6 +1906,10 @@ public class FrontEnd extends JFrame {
             }
         }).start();
     }
+    
+    // TODO [P1] add some possibility to display progress-like messages in status bar
+    //           (so, some before-exit-listeners can inform user about actions performed,
+    //            and it won't look that weird that exit is not performed immediately)
 
     /**
      * This method initializes jContentPane
