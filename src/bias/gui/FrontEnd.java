@@ -1905,7 +1905,7 @@ public class FrontEnd extends JFrame {
         }).start();
     }
     
-    // TODO [P1] add some possibility to display progress-like messages in status bar
+    // TODO [P1] add some possibility to display 'processing' messages in status bar
     //           (so, some before-exit-listeners can inform user about actions performed,
     //            and it won't look that weird that exit is not performed immediately)
 
