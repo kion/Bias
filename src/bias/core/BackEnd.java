@@ -2114,7 +2114,7 @@ public class BackEnd {
     
     public void shutdown(int code) {
         try {
-            cleanUpOrphanedStuff(collectDataEntryIDs(data));
+            cleanUpOrphanedStuff(collectRecognizableIDs(data, false));
             FSUtils.delete(Constants.TMP_DIR);
         } catch (Throwable t) {
             System.err.println("Error on shutdown: ");
@@ -2125,11 +2125,16 @@ public class BackEnd {
         }
     }
     
-    private Collection<UUID> collectDataEntryIDs(DataCategory data) {
+    public Collection<UUID> getStoredDataEntryIDs() {
+        return collectRecognizableIDs(data, true);
+    }
+    
+    private Collection<UUID> collectRecognizableIDs(DataCategory data, boolean includeDataCategories) {
         Collection<UUID> ids = new ArrayList<UUID>();
         for (Recognizable r : data.getData()) {
             if (r instanceof DataCategory) {
-                ids.addAll(collectDataEntryIDs((DataCategory) r));
+                if (includeDataCategories) ids.add(r.getId());
+                ids.addAll(collectRecognizableIDs((DataCategory) r, includeDataCategories));
             } else if (r instanceof DataEntry) {
                 ids.add(r.getId());
             }

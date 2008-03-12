@@ -2394,19 +2394,6 @@ public class FrontEnd extends JFrame {
         return true;
     }
     
-    private boolean autoconfirmed(String title, String message) {
-        if (!Preferences.getInstance().autoMode) {
-            int opt = JOptionPane.showConfirmDialog(
-                    getActiveWindow(), 
-                    "<html>" + message + "<br/><br/>" +
-                            "<i>(Note: this dialog can be disabled via preferences option 'Auto-mode')</i><html>", 
-                    title, 
-                    JOptionPane.OK_CANCEL_OPTION);
-            return opt == JOptionPane.OK_OPTION;
-        }
-        return true;
-    }
-    
     private boolean defineRootPlacement() {
         boolean result = false;
         Placement placement = (Placement) JOptionPane.showInputDialog(FrontEnd.this, "Choose placement:",
@@ -3217,13 +3204,6 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent e) {
             try {
-                if (!autoconfirmed("Save data before export", 
-                        "Data need to be saved before export can be performed. Save now and proceed with export?")) {
-                    return;
-                }
-                // store first
-                store(false);
-                // now proceed with export
                 final JComboBox configsCB = new JComboBox();
                 configsCB.addItem(Constants.EMPTY_STR);
                 for (String configName : BackEnd.getInstance().getPopulatedExportConfigurations().keySet()) {
@@ -3291,6 +3271,7 @@ public class FrontEnd extends JFrame {
                         autoExport(configName, exportUnchangedDataCB.isSelected(), true);
                     } else {
                         final DataCategory data = collectData();
+                        filterData(data, BackEnd.getInstance().getStoredDataEntryIDs());
                         final Collection<UUID> selectedEntries = new LinkedList<UUID>();
                         final Collection<UUID> selectedRecursiveEntries = new LinkedList<UUID>();
                         final JTree dataTree;
@@ -3625,6 +3606,17 @@ public class FrontEnd extends JFrame {
                     selectedEntries.add(childEntry.getId());
                     selectDescenantEntries(childNode, selectedEntries);
                 }
+            }
+        }
+    }
+    
+    private void filterData(DataCategory data, Collection<UUID> filterEntries) {
+        Collection<Recognizable> initialData = new ArrayList<Recognizable>(data.getData());
+        for (Recognizable r : initialData) {
+            if (!filterEntries.contains(r.getId())) {
+                data.removeDataItem(r);
+            } else if (r instanceof DataCategory) {
+                filterData((DataCategory) r, filterEntries);
             }
         }
     }

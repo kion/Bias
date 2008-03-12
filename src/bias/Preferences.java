@@ -195,11 +195,6 @@ public class Preferences {
     public boolean displayConfirmationDialogs = true;
     
     @PreferenceAnnotation(
-            title = "Auto-mode",
-            description = "Defines whether some common operations (like data saving before export) should be performed automatically (without users confirmation)")
-    public boolean autoMode = false;
-    
-    @PreferenceAnnotation(
             title = "Enable automatic update",
             description = "Application core and add-ons will be checked for updates on startup if this option is enabled.")
     public boolean enableAutoUpdate = true;
