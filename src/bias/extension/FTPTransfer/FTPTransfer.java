@@ -18,8 +18,8 @@ import javax.swing.JTextField;
 
 import bias.Constants;
 import bias.Preferences;
-import bias.extension.TransferOptions;
 import bias.extension.TransferExtension;
+import bias.extension.TransferOptions;
 import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
@@ -34,7 +34,7 @@ public class FTPTransfer extends TransferExtension {
     private static final String TRANSFER_OPTION_USERNAME = "USERNAME";
     private static final String TRANSFER_OPTION_PASSWORD = "TRANSFER_PASSWORD";
 
-    private static final String CHECKSUM_FILE_SUFIX = ".checksum";
+    private static final String META_DATA_FILE_SUFIX = ".metadata";
 
     private static final String PATH_SEPARATOR = "/";
 
@@ -49,35 +49,23 @@ public class FTPTransfer extends TransferExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.TransferExtension#doExport(byte[], byte[])
+     * @see bias.extension.TransferExtension#exportData(byte[], byte[], boolean)
      */
     @Override
-    public void doExport(byte[] data, byte[] options) throws Throwable {
-        performExport(data, options, false);
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.TransferExtension#doExportCheckSum(byte[], byte[])
-     */
-    @Override
-    public void doExportCheckSum(byte[] data, byte[] options) throws Throwable {
-        performExport(data, options, true);
-    }
-    
-    private void performExport(byte[] data, byte[] options, boolean checksum) throws Throwable {
+    public void exportData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable {
         Properties opts = PropertiesUtils.deserializeProperties(options);
         String server = opts.getProperty(TRANSFER_OPTION_SERVER);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
         String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);
         String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
-        if (checksum) {
+        if (transferMetaData) {
             int idx = filePath.lastIndexOf(PATH_SEPARATOR);
             if (idx != -1) {
-                String fileName = filePath.substring(idx + 1) + CHECKSUM_FILE_SUFIX;
+                String fileName = filePath.substring(idx + 1) + META_DATA_FILE_SUFIX;
                 filePath = filePath.substring(0, idx);
                 filePath = filePath + PATH_SEPARATOR + fileName;
             } else {
-                filePath += CHECKSUM_FILE_SUFIX;
+                filePath += META_DATA_FILE_SUFIX;
             }
         }
         URL url = new URL(PROTOCOL_PREFIX + username + ":" + password + "@" + server + filePath + ";type=i");
@@ -90,35 +78,23 @@ public class FTPTransfer extends TransferExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.TransferExtension#doImport(byte[])
+     * @see bias.extension.TransferExtension#importData(byte[], boolean)
      */
     @Override
-    public byte[] doImport(byte[] options) throws Throwable {
-        return performImport(options, false);
-    }
-    
-    /* (non-Javadoc)
-     * @see bias.extension.TransferExtension#doImportCheckSum(byte[])
-     */
-    @Override
-    public byte[] doImportCheckSum(byte[] options) throws Throwable {
-        return performImport(options, true);
-    }
-    
-    private byte[] performImport(byte[] options, boolean checksum) throws Throwable {
+    public byte[] importData(byte[] options, boolean transferMetaData) throws Throwable {
         Properties opts = PropertiesUtils.deserializeProperties(options);
         String server = opts.getProperty(TRANSFER_OPTION_SERVER);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
         String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);
         String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
-        if (checksum) {
+        if (transferMetaData) {
             int idx = filePath.lastIndexOf(PATH_SEPARATOR);
             if (idx != -1) {
-                String fileName = filePath.substring(idx + 1) + CHECKSUM_FILE_SUFIX;
+                String fileName = filePath.substring(idx + 1) + META_DATA_FILE_SUFIX;
                 filePath = filePath.substring(0, idx);
                 filePath = filePath + PATH_SEPARATOR + fileName;
             } else {
-                filePath += CHECKSUM_FILE_SUFIX;
+                filePath += META_DATA_FILE_SUFIX;
             }
         }
         if (!server.contains(PORT_SEPARATOR)) {

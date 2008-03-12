@@ -190,6 +190,10 @@ public class Constants {
     public static final String PROPERTY_LAST_SELECTED_ID = "LAST_SELECTED_ID";
     public static final String PROPERTY_LAST_UPDATE_DATE = "LAST_UPDATE_DATE";
 
+    public static final String META_DATA_CHECKSUM = "CHECKSUM";
+    public static final String META_DATA_TIMESTAMP = "TIMESTAMP";
+    public static final String META_DATA_FILESIZE = "FILESIZE";
+
     public static final String XML_ELEMENT_ROOT_CONTAINER = "root-container";
     public static final String XML_ELEMENT_PREFERENCE = "preference";
     public static final String XML_ELEMENT_CATEGORY = "category";

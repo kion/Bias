@@ -21,34 +21,22 @@ public class LocalTransfer extends TransferExtension {
 
     private static final String TRANSFER_OPTION_FILEPATH = "FILEPATH";
 
-    private static final String CHECKSUM_FILE_SUFIX = ".checksum";
+    private static final String META_DATA_FILE_SUFIX = ".metadata";
 
     public LocalTransfer(byte[] settings) {
         super(settings);
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.TransferExtension#doExport(byte[], byte[])
+     * @see bias.extension.TransferExtension#exportData(byte[], byte[], boolean)
      */
     @Override
-    public void doExport(byte[] data, byte[] options) throws Throwable {
-        performExport(data, options, false);
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.TransferExtension#doExportCheckSum(byte[], byte[])
-     */
-    @Override
-    public void doExportCheckSum(byte[] data, byte[] options) throws Throwable {
-        performExport(data, options, true);
-    }
-    
-    private void performExport(byte[] data, byte[] options, boolean checksum) throws Exception {
+    public void exportData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable {
         Properties opts = PropertiesUtils.deserializeProperties(options);
         String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
         File file = new File(filePath);
-        if (checksum) {
-            file = new File(file.getParentFile(), file.getName() + CHECKSUM_FILE_SUFIX);
+        if (transferMetaData) {
+            file = new File(file.getParentFile(), file.getName() + META_DATA_FILE_SUFIX);
         }
         if (file.exists()) {
             file.delete();
@@ -60,31 +48,19 @@ public class LocalTransfer extends TransferExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.TransferExtension#doImport(byte[])
+     * @see bias.extension.TransferExtension#importData(byte[], boolean)
      */
     @Override
-    public byte[] doImport(byte[] options) throws Throwable {
-        return performImport(options, false);
-    }
-    
-    /* (non-Javadoc)
-     * @see bias.extension.TransferExtension#doImportCheckSum(byte[])
-     */
-    @Override
-    public byte[] doImportCheckSum(byte[] options) throws Throwable {
-        return performImport(options, true);
-    }
-    
-    private byte[] performImport(byte[] options, boolean checksum) throws Throwable {
+    public byte[] importData(byte[] options, boolean transferMetaData) throws Throwable {
         Properties opts = PropertiesUtils.deserializeProperties(options);
         String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
         File file = new File(filePath);
-        if (checksum) {
-            file = new File(file.getParentFile(), file.getName() + CHECKSUM_FILE_SUFIX);
+        if (transferMetaData) {
+            file = new File(file.getParentFile(), file.getName() + META_DATA_FILE_SUFIX);
         }
         return FSUtils.readFile(file);
     }
-
+    
     /* (non-Javadoc)
      * @see bias.extension.TransferExtension#configure(bias.Constants.TRANSFER_OPERATION_TYPE)
      */

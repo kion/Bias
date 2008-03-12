@@ -377,6 +377,7 @@ public class BackEnd {
     }
     
     public boolean isTransferFileLocationCheckSumChanged(TRANSFER_TYPE transferType, Class<? extends TransferExtension> transferExtClass, String fileLocation, String checkSum) throws Exception {
+        if (checkSum == null) return false;
         File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
         if (checkSumsFile.exists()) {
             byte[] encryptedData = FSUtils.readFile(checkSumsFile);
@@ -723,7 +724,7 @@ public class BackEnd {
         }
     }
     
-    public FileInfo exportData(
+    public TransferData exportData(
             DataCategory data,
             ExportConfiguration config) throws Exception {
         Cipher cipher = initCipher(Cipher.ENCRYPT_MODE, config.getPassword());
@@ -858,7 +859,11 @@ public class BackEnd {
                 file, 
                 MessageDigest.getInstance(Constants.DIGEST_ALGORITHM), 
                 fileNamesToSkipInCheckSumCalculation);
-        return new FileInfo(file, checkSum);
+        Properties metaData = new Properties();
+        metaData.setProperty(Constants.META_DATA_CHECKSUM, checkSum);
+        metaData.setProperty(Constants.META_DATA_TIMESTAMP, "" + System.currentTimeMillis());
+        metaData.setProperty(Constants.META_DATA_FILESIZE, "" + file.length());
+        return new TransferData(FSUtils.readFile(file), metaData);
     }
     
     public void store() throws Exception {
