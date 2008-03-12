@@ -169,8 +169,6 @@ import bias.utils.Downloader.DownloadListener;
  */
 public class FrontEnd extends JFrame {
 
-    // TODO [P1] root-category placement should be customizable as well
-    
     // TODO [P3] internationalization
 
     private static final long serialVersionUID = 1L;
@@ -2680,16 +2678,19 @@ public class FrontEnd extends JFrame {
         
         public AdjustCategoryAction() {
             putValue(Action.NAME, "adjustCategory");
-            putValue(Action.SHORT_DESCRIPTION, "adjust active category");
+            putValue(Action.SHORT_DESCRIPTION, "adjust category");
             putValue(Action.SMALL_ICON, uiIcons.getIconAdjustCategory());
         }
         
         public void actionPerformed(ActionEvent evt) {
             try {
-                JLabel pLabel = new JLabel("Tabs placement:");
+                JLabel pLabel = new JLabel("Active cateogry tabs placement:");
+                JLabel rpLabel = new JLabel("Root category tabs placement:");
                 JComboBox placementsChooser = new JComboBox();
+                JComboBox rootPlacementsChooser = new JComboBox();
                 for (Placement placement : PLACEMENTS) {
                     placementsChooser.addItem(placement);
+                    rootPlacementsChooser.addItem(placement);
                 }
                 for (int i = 0; i < placementsChooser.getItemCount(); i++) {
                     if (((Placement) placementsChooser.getItemAt(i)).getInteger().equals(currentTabPane.getTabPlacement())) {
@@ -2697,9 +2698,20 @@ public class FrontEnd extends JFrame {
                         break;
                     }
                 }
-                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, new Component[]{ pLabel, placementsChooser }, "Category adjustment", JOptionPane.OK_CANCEL_OPTION);
+                for (int i = 0; i < rootPlacementsChooser.getItemCount(); i++) {
+                    if (((Placement) rootPlacementsChooser.getItemAt(i)).getInteger().equals(getJTabbedPane().getTabPlacement())) {
+                        rootPlacementsChooser.setSelectedIndex(i);
+                        break;
+                    }
+                }
+                int opt = JOptionPane.showConfirmDialog(
+                        FrontEnd.this, 
+                        new Component[]{ pLabel, placementsChooser, rpLabel, rootPlacementsChooser }, 
+                        "Category adjustment", 
+                        JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
                     currentTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
+                    getJTabbedPane().setTabPlacement(((Placement) rootPlacementsChooser.getSelectedItem()).getInteger());
                 }
             } catch (Exception ex) {
                 displayErrorMessage("Failed to adjust category!", ex);
@@ -2713,7 +2725,7 @@ public class FrontEnd extends JFrame {
         
         public AdjustEntryAction() {
             putValue(Action.NAME, "adjustEntry");
-            putValue(Action.SHORT_DESCRIPTION, "adjust active entry");
+            putValue(Action.SHORT_DESCRIPTION, "adjust entry");
             putValue(Action.SMALL_ICON, uiIcons.getIconAdjustEntry());
         }
         
