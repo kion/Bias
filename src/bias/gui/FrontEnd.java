@@ -1194,6 +1194,7 @@ public class FrontEnd extends JFrame {
         return extension;
     }
     
+    // FIXME [P1] when storing before exit, need to wait while all listeners finish their work before exiting
     private void store(boolean beforeExit) throws Throwable {
         fireBeforeSaveEvent(new SaveEvent(beforeExit));
         BackEnd.getInstance().setConfig(collectProperties());
