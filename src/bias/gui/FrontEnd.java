@@ -148,8 +148,8 @@ import bias.extension.ExtensionFactory;
 import bias.extension.MissingExtensionInformer;
 import bias.extension.ToolExtension;
 import bias.extension.ToolRepresentation;
-import bias.extension.TransferOptions;
 import bias.extension.TransferExtension;
+import bias.extension.TransferOptions;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
 import bias.skin.Skin;
 import bias.skin.UIIcons;
@@ -2821,7 +2821,7 @@ public class FrontEnd extends JFrame {
             try {
                 final JComboBox configsCB = new JComboBox();
                 configsCB.addItem(Constants.EMPTY_STR);
-                for (String configName : BackEnd.getInstance().getImportConfigurations().keySet()) {
+                for (String configName : BackEnd.getInstance().getPopulatedImportConfigurations().keySet()) {
                     configsCB.addItem(configName);
                 }
                 final JButton delButt = new JButton("Delete");
@@ -2882,82 +2882,8 @@ public class FrontEnd extends JFrame {
                 int opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Import", JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
                     if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
-                        try {
-                            final JPanel panel = new JPanel(new BorderLayout());
-                            final JLabel processLabel = new JLabel("Importing data...");
-                            panel.add(processLabel, BorderLayout.CENTER);
-                            final JLabel label = new JLabel("Import data");
-                            displayBottomPanel(label, panel);
-                            Thread importThread = new Thread(new Runnable(){
-                                public void run() {
-                                    try {
-                                        String configName = configsCB.getSelectedItem().toString();
-                                        ImportConfiguration importConfig = BackEnd.getInstance().getImportConfigurations().get(configName);
-                                        TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
-                                        if (transferrer == null) {
-                                            throw new Exception("It looks like transfer type used in this stored import configuration is no longer available (extension uninstalled?).");
-                                        }
-                                        byte[] transferOptions = BackEnd.getInstance().getImportOptions(configName);
-                                        byte[] importedData = transferrer.importData(new TransferOptions(transferOptions, importConfig.getFileLocation()), importUnchangedDataCB.isSelected());
-                                        if (importedData == null) {
-                                            label.setText("<html><font color=green>Data import - Completed</font></html>");
-                                            processLabel.setText("Import discarded: data haven't changed since last import.");
-                                        } else {
-                                            try {
-                                                File importDir = new File(Constants.TMP_DIR, "importDir");
-                                                FSUtils.delete(importDir);
-                                                ArchUtils.extract(importedData, importDir);
-                                                DataCategory data = BackEnd.getInstance().importData(importDir, getVisualEntriesIDs(), importConfig);
-                                                if (!data.getData().isEmpty()) {
-                                                    representData(data);
-                                                }
-                                                if (importConfig.isImportToolsData()) {
-                                                    representTools();
-                                                }
-                                                if (importConfig.isImportImportExportConfigs()) {
-                                                    initTransferrers();
-                                                }
-                                                if (importConfig.isImportPrefs()) {
-                                                    Preferences.getInstance().init();
-                                                    applyPreferences();
-                                                }
-                                                if (importConfig.isImportGlobalConfig()) {
-                                                    initGlobalSettings();
-                                                    applyGlobalSettings();
-                                                }
-                                                label.setText("<html><font color=green>Data import - Completed</font></html>");
-                                                processLabel.setText("Data have been successfully imported.");
-                                                displayStatusBarMessage("import done (" + configName + ")");
-                                                fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass(), configName));
-                                            } catch (GeneralSecurityException gse) {
-                                                processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
-                                                label.setText("<html><font color=red>Data import - Failed</font></html>");
-                                                gse.printStackTrace(System.err);
-                                            } catch (Throwable t) {
-                                                String errMsg = "Failed to import data!";
-                                                if (t.getMessage() != null) {
-                                                    errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
-                                                }
-                                                processLabel.setText(errMsg);
-                                                label.setText("<html><font color=red>Data import - Failed</font></html>");
-                                                t.printStackTrace(System.err);
-                                            }
-                                        }
-                                    } catch (Throwable ex) {
-                                        String errMsg = "Failed to import data!";
-                                        if (ex.getMessage() != null) {
-                                            errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
-                                        }
-                                        processLabel.setText(errMsg);
-                                        label.setText("<html><font color=red>Data import - Failed</font></html>");
-                                        ex.printStackTrace(System.err);
-                                    }
-                                }
-                            });
-                            importThread.start();
-                        } catch (Exception ex) {
-                            displayErrorMessage("Failed to import data!", ex);
-                        }
+                        String configName = (String) configsCB.getSelectedItem();
+                        autoImport(configName, importUnchangedDataCB.isSelected(), true);
                     } else {
                         JComboBox cb = new JComboBox();
                         for (String annotation : ExtensionFactory.getAnnotatedTransferExtensions().keySet()) {
@@ -3085,7 +3011,7 @@ public class FrontEnd extends JFrame {
                                                 } else {    
                                                     processModel.addElement("Extracting data to be imported...");
                                                     autoscrollList(processList);
-                                                    File importDir = new File(Constants.TMP_DIR, "importDir");
+                                                    File importDir = new File(Constants.TMP_DIR, UUID.randomUUID().toString());
                                                     FSUtils.delete(importDir);
                                                     ArchUtils.extract(importedData, importDir);
                                                     processModel.addElement("Data to be imported have been successfully extracted.");
@@ -3191,6 +3117,94 @@ public class FrontEnd extends JFrame {
         }
     };
     
+    public static void autoImport(final String configName, final boolean force, final boolean verbose) {
+        if (instance != null) {
+            try {
+                final JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
+                final JLabel processLabel = verbose ? new JLabel("Importing data...") : null;
+                if (verbose) panel.add(processLabel, BorderLayout.CENTER);
+                final JLabel label = verbose ? new JLabel("Import data") : null;
+                if (verbose) displayBottomPanel(label, panel);
+                Thread importThread = new Thread(new Runnable(){
+                    public void run() {
+                        try {
+                            ImportConfiguration importConfig = BackEnd.getInstance().getPopulatedImportConfigurations().get(configName);
+                            TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
+                            if (transferrer == null) {
+                                throw new Exception("It looks like transfer type used in this stored import configuration is no longer available (extension uninstalled?).");
+                            }
+                            byte[] transferOptions = BackEnd.getInstance().getImportOptions(configName);
+                            byte[] importedData = transferrer.importData(new TransferOptions(transferOptions, importConfig.getFileLocation()), force);
+                            if (importedData == null) {
+                                if (verbose) {
+                                    label.setText("<html><font color=green>Data import - Completed</font></html>");
+                                    processLabel.setText("Import discarded: data haven't changed since last import.");
+                                }
+                            } else {
+                                try {
+                                    File importDir = new File(Constants.TMP_DIR, UUID.randomUUID().toString());
+                                    FSUtils.delete(importDir);
+                                    ArchUtils.extract(importedData, importDir);
+                                    DataCategory data = BackEnd.getInstance().importData(importDir, instance.getVisualEntriesIDs(), importConfig);
+                                    if (!data.getData().isEmpty()) {
+                                        instance.representData(data);
+                                    }
+                                    if (importConfig.isImportToolsData()) {
+                                        representTools();
+                                    }
+                                    if (importConfig.isImportImportExportConfigs()) {
+                                        initTransferrers();
+                                    }
+                                    if (importConfig.isImportPrefs()) {
+                                        Preferences.getInstance().init();
+                                        instance.applyPreferences();
+                                    }
+                                    if (importConfig.isImportGlobalConfig()) {
+                                        initGlobalSettings();
+                                        instance.applyGlobalSettings();
+                                    }
+                                    if (verbose) {
+                                        label.setText("<html><font color=green>Data import - Completed</font></html>");
+                                        processLabel.setText("Data have been successfully imported.");
+                                    }
+                                    instance.displayStatusBarMessage("import done (" + configName + ")");
+                                    fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass(), configName));
+                                } catch (GeneralSecurityException gse) {
+                                    if (verbose) {
+                                        processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
+                                        label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                    }
+                                    gse.printStackTrace(System.err);
+                                } catch (Throwable t) {
+                                    String errMsg = "Failed to import data!";
+                                    if (t.getMessage() != null) {
+                                        errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
+                                    }
+                                    if (verbose) {
+                                        processLabel.setText(errMsg);
+                                        label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                    }
+                                    t.printStackTrace(System.err);
+                                }
+                            }
+                        } catch (Throwable ex) {
+                            String errMsg = "Failed to import data!";
+                            if (ex.getMessage() != null) {
+                                errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                            }
+                            processLabel.setText(errMsg);
+                            label.setText("<html><font color=red>Data import - Failed</font></html>");
+                            ex.printStackTrace(System.err);
+                        }
+                    }
+                });
+                importThread.start();
+            } catch (Exception ex) {
+                displayErrorMessage("Failed to import data!", ex);
+            }
+        }
+    }
+    
     private ExportAction exportAction = new ExportAction();
     private class ExportAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
@@ -3212,7 +3226,7 @@ public class FrontEnd extends JFrame {
                 // now proceed with export
                 final JComboBox configsCB = new JComboBox();
                 configsCB.addItem(Constants.EMPTY_STR);
-                for (String configName : BackEnd.getInstance().getExportConfigurations().keySet()) {
+                for (String configName : BackEnd.getInstance().getPopulatedExportConfigurations().keySet()) {
                     configsCB.addItem(configName);
                 }
                 final JButton delButt = new JButton("Delete");
@@ -3272,57 +3286,13 @@ public class FrontEnd extends JFrame {
                 };
                 opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Export", JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
-                    final DataCategory data = collectData();
-                    final Collection<UUID> selectedEntries = new LinkedList<UUID>();
-                    final Collection<UUID> selectedRecursiveEntries = new LinkedList<UUID>();
-
                     if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
-                        try {
-                            final JPanel panel = new JPanel(new BorderLayout());
-                            final JLabel processLabel = new JLabel("Exporting data...");
-                            panel.add(processLabel, BorderLayout.CENTER);
-                            final JLabel label = new JLabel("Export data");
-                            displayBottomPanel(label, panel);
-                            Thread exportThread = new Thread(new Runnable(){
-                                public void run() {
-                                    try {
-                                        String configName = configsCB.getSelectedItem().toString();
-                                        final ExportConfiguration exportConfig = BackEnd.getInstance().getExportConfigurations().get(configName);
-                                        if (!exportConfig.isExportAll()) {
-                                            filterData(data, exportConfig.getSelectedIds(), exportConfig.getSelectedRecursiveIds());
-                                        }
-                                        FileInfo fileInfo = BackEnd.getInstance().exportData(data, exportConfig);
-                                        TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
-                                        if (transferrer == null) {
-                                            throw new Exception("It looks like transfer type used in this stored export configuration is no longer available (extension uninstalled?).");
-                                        }
-                                        byte[] transferOptions = BackEnd.getInstance().getExportOptions(configName);
-                                        boolean exported = transferrer.exportData(fileInfo, new TransferOptions(transferOptions, exportConfig.getFileLocation()), exportUnchangedDataCB.isSelected());
-                                        if (exported) {
-                                            label.setText("<html><font color=green>Data export - Completed</font></html>");
-                                            processLabel.setText("Data have been successfully exported.");
-                                            displayStatusBarMessage("export done (" + configName + ")");
-                                            fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
-                                        } else {
-                                            label.setText("<html><font color=green>Data export - Completed</font></html>");
-                                            processLabel.setText("Export discarded: data haven't changed since last export.");
-                                        }
-                                    } catch (Throwable ex) {
-                                        String errMsg = "Failed to export data!";
-                                        if (ex.getMessage() != null) {
-                                            errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
-                                        }
-                                        processLabel.setText(errMsg);
-                                        label.setText("<html><font color=red>Data export - Failed</font></html>");
-                                        ex.printStackTrace(System.err);
-                                    }
-                                }
-                            });
-                            exportThread.start();
-                        } catch (Exception ex) {
-                            displayErrorMessage("Failed to export data!", ex);
-                        }
+                        String configName = (String) configsCB.getSelectedItem();
+                        autoExport(configName, exportUnchangedDataCB.isSelected(), true);
                     } else {
+                        final DataCategory data = collectData();
+                        final Collection<UUID> selectedEntries = new LinkedList<UUID>();
+                        final Collection<UUID> selectedRecursiveEntries = new LinkedList<UUID>();
                         final JTree dataTree;
                         final CheckTreeManager checkTreeManager;
                         if (!data.getData().isEmpty()) {
@@ -3589,6 +3559,60 @@ public class FrontEnd extends JFrame {
             }
         }
     };
+    
+    public static void autoExport(final String configName, final boolean force, final boolean verbose) {
+        if (instance != null) {
+            try {
+                final JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
+                final JLabel processLabel = verbose ? new JLabel("Exporting data...") : null;
+                if (verbose) panel.add(processLabel, BorderLayout.CENTER);
+                final JLabel label = verbose ? new JLabel("Export data") : null;
+                if (verbose) displayBottomPanel(label, panel);
+                Thread exportThread = new Thread(new Runnable(){
+                    public void run() {
+                        try {
+                            DataCategory data = instance.collectData();
+                            final ExportConfiguration exportConfig = BackEnd.getInstance().getPopulatedExportConfigurations().get(configName);
+                            if (!exportConfig.isExportAll()) {
+                                instance.filterData(data, exportConfig.getSelectedIds(), exportConfig.getSelectedRecursiveIds());
+                            }
+                            FileInfo fileInfo = BackEnd.getInstance().exportData(data, exportConfig);
+                            TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
+                            if (transferrer == null) {
+                                throw new Exception("It looks like transfer type used in this stored export configuration is no longer available (extension uninstalled?).");
+                            }
+                            byte[] transferOptions = BackEnd.getInstance().getExportOptions(configName);
+                            boolean exported = transferrer.exportData(fileInfo, new TransferOptions(transferOptions, exportConfig.getFileLocation()), force);
+                            if (exported) {
+                                if (verbose) {
+                                    label.setText("<html><font color=green>Data export - Completed</font></html>");
+                                    processLabel.setText("Data have been successfully exported.");
+                                }
+                                instance.displayStatusBarMessage("export done (" + configName + ")");
+                                fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
+                            } else if (verbose) {
+                                label.setText("<html><font color=green>Data export - Completed</font></html>");
+                                processLabel.setText("Export discarded: data haven't changed since last export.");
+                            }
+                        } catch (Throwable ex) {
+                            String errMsg = "Failed to export data!";
+                            if (ex.getMessage() != null) {
+                                errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                            }
+                            if (verbose) {
+                                processLabel.setText(errMsg);
+                                label.setText("<html><font color=red>Data export - Failed</font></html>");
+                            }
+                            ex.printStackTrace(System.err);
+                        }
+                    }
+                });
+                exportThread.start();
+            } catch (Exception ex) {
+                displayErrorMessage("Failed to export data!", ex);
+            }
+        }
+    }
     
     @SuppressWarnings("unchecked")
     private void selectDescenantEntries(DefaultMutableTreeNode node, Collection<UUID> selectedEntries) {

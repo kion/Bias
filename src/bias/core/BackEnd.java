@@ -727,7 +727,8 @@ public class BackEnd {
             DataCategory data,
             ExportConfiguration config) throws Exception {
         Cipher cipher = initCipher(Cipher.ENCRYPT_MODE, config.getPassword());
-        File exportDir = new File(Constants.TMP_DIR, "exportDir");
+        String exportID = UUID.randomUUID().toString();
+        File exportDir = new File(Constants.TMP_DIR, exportID);
         FSUtils.delete(exportDir);
         exportDir.mkdirs();
         // metadata file and data entries
@@ -849,7 +850,7 @@ public class BackEnd {
         if (dataDir.listFiles().length == 0) {
             dataDir.delete();
         }
-        File file = new File(Constants.TMP_DIR, "data.zip");
+        File file = new File(Constants.TMP_DIR, exportID + Constants.ZIP_FILE_SUFFIX);
         Set<String> fileNamesToSkipInCheckSumCalculation = new HashSet<String>();
         fileNamesToSkipInCheckSumCalculation.add(Constants.GLOBAL_CONFIG_FILE);
         String checkSum = ArchUtils.compress(
@@ -1038,18 +1039,43 @@ public class BackEnd {
         return props;
     }
     
-    public Map<String, ImportConfiguration> getImportConfigurations() throws Exception {
+    public Map<String, ImportConfiguration> getPopulatedImportConfigurations() throws Exception {
         Map<String, ImportConfiguration> configs = new HashMap<String, ImportConfiguration>();
-        for (Entry<String, Properties> entry : getTransferConfigurations(TRANSFER_TYPE.IMPORT).entrySet()) {
+        for (Entry<String, Properties> entry : getTransferConfigurationsProperties(TRANSFER_TYPE.IMPORT).entrySet()) {
             configs.put(entry.getKey(), populateImportConfiguration(entry.getValue()));
         }
         return configs;
     }
     
-    public Map<String, ExportConfiguration> getExportConfigurations() throws Exception {
+    public Map<String, ExportConfiguration> getPopulatedExportConfigurations() throws Exception {
         Map<String, ExportConfiguration> configs = new HashMap<String, ExportConfiguration>();
-        for (Entry<String, Properties> entry : getTransferConfigurations(TRANSFER_TYPE.EXPORT).entrySet()) {
+        for (Entry<String, Properties> entry : getTransferConfigurationsProperties(TRANSFER_TYPE.EXPORT).entrySet()) {
             configs.put(entry.getKey(), populateExportConfiguration(entry.getValue()));
+        }
+        return configs;
+    }
+    
+    public Collection<String> getImportConfigurations() throws Exception {
+        return getTransferConfigurations(TRANSFER_TYPE.IMPORT);
+    }
+    
+    public Collection<String> getExportConfigurations() throws Exception {
+        return getTransferConfigurations(TRANSFER_TYPE.EXPORT);
+    }
+    
+    private Collection<String> getTransferConfigurations(TRANSFER_TYPE transferType) throws Exception {
+        Collection<String> configs = new ArrayList<String>();
+        FilenameFilter ff = transferType == TRANSFER_TYPE.IMPORT ? FILE_FILTER_IMPORT_CONFIG : FILE_FILTER_EXPORT_CONFIG;
+        File[] configFiles = Constants.CONFIG_DIR.listFiles(ff);
+        for (File file : configFiles) {
+            Properties props = new Properties();
+            byte[] encryptedData = FSUtils.readFile(file);
+            byte[] decryptedData = decrypt(encryptedData);
+            ByteArrayInputStream bais = new ByteArrayInputStream(decryptedData);
+            props.load(bais);
+            bais.close();
+            String name = props.getProperty(Constants.OPTION_CONFIG_NAME);
+            configs.add(name);
         }
         return configs;
     }
@@ -1057,13 +1083,13 @@ public class BackEnd {
     private void loadTransferConfigurations() throws Exception {
         importConfigs = null;
         importConfigIDs = null;
-        getTransferConfigurations(TRANSFER_TYPE.IMPORT);
+        getTransferConfigurationsProperties(TRANSFER_TYPE.IMPORT);
         exportConfigs = null;
         exportConfigIDs = null;
-        getTransferConfigurations(TRANSFER_TYPE.EXPORT);
+        getTransferConfigurationsProperties(TRANSFER_TYPE.EXPORT);
     }
     
-    private Map<String, Properties> getTransferConfigurations(TRANSFER_TYPE transferType) throws Exception {
+    private Map<String, Properties> getTransferConfigurationsProperties(TRANSFER_TYPE transferType) throws Exception {
         Map<String, Properties> configs;
         Map<String, String> configIDs;
         FilenameFilter ff;

@@ -234,6 +234,23 @@
 	</target>
 
 	<!-- ================================= 
+          target: Build_Extension_Synchronizer
+         ================================= -->
+	<target name="Build_Extension_Synchronizer" description="Synchronizer Add-On">
+		<delete dir="build" includes="Synchronizer*.jar" />
+		<jar basedir="bin" destfile="build/Synchronizer_${Synchronizer_Version}.jar" includes="bias/extension/Synchronizer/** bias/res/Synchronizer/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/Synchronizer_${Synchronizer_Version}.html" />
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="Synchronizer" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="${Synchronizer_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Event-driven data synchronizer" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+			</manifest>
+		</jar>
+	</target>
+
+	<!-- ================================= 
           target: Build_Skin_JGLooksSkin             
          ================================= -->
 	<target name="Build_Skin_JGLooksSkin" description="JGoodies Looks Skin">

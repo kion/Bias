@@ -96,6 +96,7 @@ public class Constants {
     public static final String ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME = "repository.xml";
     public static final String VALUES_SEPARATOR = "_";
     public static final String JAR_FILE_SUFFIX = ".jar";
+    public static final String ZIP_FILE_SUFFIX = ".zip";
     public static final String ADDON_DETAILS_FILENAME_SUFFIX = ".html";
     
     public static final String PROPERTY_VALUES_SEPARATOR = ",";
