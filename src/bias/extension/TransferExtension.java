@@ -43,7 +43,7 @@ public abstract class TransferExtension implements Extension {
     /**
      * Imports data using provided import options.
      * This template method imports metadata first, then imports actual data
-     * @return TransferData instance representing imported data and it's metadata, or null if data is up to data and import has been discarded
+     * @return TransferData instance representing imported data and it's metadata, or null if data is up to date and import has been discarded
      */
     public TransferData importData(TransferOptions options, boolean force) throws Throwable {
         TransferData td = new TransferData(null, null);
