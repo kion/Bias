@@ -151,10 +151,10 @@ public class Preferences {
     /* PREFERENCES DECLARATION SECTION */
     
     @PreferenceAnnotation(
-            title = "Preferred date format:",
-            description = "Defines preferred date format for dates rendering")
+            title = "Preferred date-time format:",
+            description = "Defines preferred format for date-time rendering")
     @PreferenceValidationAnnotation(validationClass = PreferredDateFormatValidator.class)        
-    public String preferredDateFormat = "dd.MM.yyyy @ HH:mm:ss";
+    public String preferredDateTimeFormat = "dd.MM.yyyy @ HH:mm:ss";
     
     @PreferenceAnnotation(
             title = "Preferred timeout for network operations (in seconds):",

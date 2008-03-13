@@ -557,7 +557,7 @@ public class FrontEnd extends JFrame {
         } else {
             hideSysTrayIcon();
         }
-        dateFormat = new SimpleDateFormat(Preferences.getInstance().preferredDateFormat);
+        dateFormat = new SimpleDateFormat(Preferences.getInstance().preferredDateTimeFormat);
         if (instance.hotKeysBindingsChanged) {
             instance.bindHotKeys();
             instance.hotKeysBindingsChanged = false;
