@@ -44,8 +44,8 @@ public class FTPTransfer extends TransferExtension {
     
     private static final int DEFAULT_PORT = 21;
     
-    public FTPTransfer(byte[] settings) {
-        super(settings);
+    public FTPTransfer(byte[] options) {
+        super(options);
     }
 
     /* (non-Javadoc)

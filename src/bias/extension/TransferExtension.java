@@ -34,7 +34,7 @@ public abstract class TransferExtension implements Extension {
     /**
      * @return the options
      */
-    public byte[] getSettings() {
+    public byte[] getOptions() {
         return options;
     }
     

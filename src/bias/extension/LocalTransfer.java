@@ -23,8 +23,8 @@ public class LocalTransfer extends TransferExtension {
 
     private static final String META_DATA_FILE_SUFIX = ".metadata";
 
-    public LocalTransfer(byte[] settings) {
-        super(settings);
+    public LocalTransfer(byte[] options) {
+        super(options);
     }
 
     /* (non-Javadoc)
