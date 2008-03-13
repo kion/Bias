@@ -126,9 +126,9 @@ import bias.core.BackEnd;
 import bias.core.DataCategory;
 import bias.core.DataEntry;
 import bias.core.ExportConfiguration;
-import bias.core.TransferData;
 import bias.core.ImportConfiguration;
 import bias.core.Recognizable;
+import bias.core.TransferData;
 import bias.core.pack.Dependency;
 import bias.core.pack.ObjectFactory;
 import bias.core.pack.Pack;
@@ -155,13 +155,13 @@ import bias.skin.Skin;
 import bias.skin.UIIcons;
 import bias.utils.AppManager;
 import bias.utils.ArchUtils;
+import bias.utils.DownloadListener;
 import bias.utils.Downloader;
 import bias.utils.FSUtils;
 import bias.utils.FormatUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 import bias.utils.VersionComparator;
-import bias.utils.Downloader.DownloadListener;
 
 
 /**
