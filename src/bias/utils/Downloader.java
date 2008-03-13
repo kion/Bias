@@ -19,6 +19,16 @@ import java.util.Map;
  */
 public class Downloader {
     
+    public static abstract class DownloadListener {
+        public void onStart(URL url, File file){};
+        public void onFailure(URL url, File file, Throwable failure){};
+        public void onTotalProgress(int itemNum, long downloadedBytesNum, long elapsedTime){};
+        public void onSingleProgress(URL url, File file, long downloadedBytesNum, long elapsedTime){};
+        public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime){};
+        public void onFinish(long downloadedBytesNum, long elapsedTime){};
+        public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime){};
+    }
+
     private static volatile Integer totalActiveDownloadsCount = 0;
     private static volatile boolean cancelAll = false;
     private boolean cancel = false;

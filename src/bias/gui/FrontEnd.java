@@ -155,13 +155,13 @@ import bias.skin.Skin;
 import bias.skin.UIIcons;
 import bias.utils.AppManager;
 import bias.utils.ArchUtils;
-import bias.utils.DownloadListener;
 import bias.utils.Downloader;
 import bias.utils.FSUtils;
 import bias.utils.FormatUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 import bias.utils.VersionComparator;
+import bias.utils.Downloader.DownloadListener;
 
 
 /**
