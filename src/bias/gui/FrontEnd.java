@@ -755,8 +755,9 @@ public class FrontEnd extends JFrame {
         this.setSize(wwValue, whValue);
     }
     
-    // TODO [P2] auto-update should work even if application hasn't been restarted for period of time
-    //           longer than auto-update-interval specified in preferences (so, not on startup only)
+    // TODO [P1] auto-update should work even if application hasn't been restarted for period of time
+    //           longer than auto-update-interval specified in preferences (so, not on startup only);
+    //           use ScheduledThreadPoolExecutor here ?...
     private void handleAutoUpdate() {
         if (Preferences.getInstance().enableAutoUpdate) {
             if (Preferences.getInstance().autoUpdateInterval == 0 || isTimeToUpdate()) {
