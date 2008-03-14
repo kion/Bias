@@ -53,6 +53,9 @@ import java.util.Properties;
 import java.util.Stack;
 import java.util.UUID;
 import java.util.Map.Entry;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -169,7 +172,7 @@ import bias.utils.Downloader.DownloadListener;
  */
 public class FrontEnd extends JFrame {
     
-    // TODO [P1] make use of classes in java.util.concurrent package instead of direct using of Thread/Runnable
+    // TODO [P1] make use of classes in java.util.concurrent package instead of direct usage of Thread/Runnable
 
     // TODO [P3] internationalization
 
@@ -184,7 +187,8 @@ public class FrontEnd extends JFrame {
 
     private static final ImageIcon ICON_CLOSE = new ImageIcon(FrontEnd.class.getResource("/bias/res/close.png"));
 
-    private static final ImageIcon ICON_PROCESS = new ImageIcon(FrontEnd.class.getResource("/bias/res/process.gif"));
+    // TODO [P1] make use of process-icon
+//    private static final ImageIcon ICON_PROCESS = new ImageIcon(FrontEnd.class.getResource("/bias/res/process.gif"));
 
     private static final Placement[] PLACEMENTS = new Placement[] { 
             new Placement(JTabbedPane.TOP),
@@ -216,7 +220,7 @@ public class FrontEnd extends JFrame {
     
     private static FrontEnd instance;
     
-    private static Map<String, ImageIcon> icons;
+    private static Map<String, ImageIcon> icons = new HashMap<String, ImageIcon>();
     
     private static Map<Class<? extends ToolExtension>, ToolExtension> tools;
 
@@ -259,8 +263,6 @@ public class FrontEnd extends JFrame {
     
     private boolean hotKeysBindingsChanged = true;
 
-    private boolean addOnsManagementDialogLocked = false;
-    
     private String lastAddedEntryType = null;
     
     private Map<String, Integer> depCounters;
@@ -300,8 +302,6 @@ public class FrontEnd extends JFrame {
     private JList statusBarMessagesList = null;
 
     private JFrame addOnsManagementDialog = null;
-    
-    private JButton closeAddOnsManagementDialogButt;
     
     private JScrollPane detailsPane = null;
 
@@ -545,15 +545,18 @@ public class FrontEnd extends JFrame {
             preInit();
             activateSkin();
             instance = new FrontEnd();
-            instance.applyPreferences();
+            instance.applyPreferences(true);
             representTools();
             initTransferrers();
-            instance.handleAutoUpdate();
         }
         return instance;
     }
 
     private void applyPreferences() {
+        applyPreferences(false);
+    }
+    
+    private void applyPreferences(boolean isStartingUp) {
         if (Preferences.getInstance().useSysTrayIcon) {
             showSysTrayIcon();
         } else {
@@ -580,6 +583,7 @@ public class FrontEnd extends JFrame {
                 memUsageIndicatorPanel.setVisible(false);
             }
         }
+        instance.handleAutoUpdate(isStartingUp);
         instance.displayStatusBarMessage("preferences applied");
     }
     
@@ -755,35 +759,47 @@ public class FrontEnd extends JFrame {
         this.setSize(wwValue, whValue);
     }
     
-    // TODO [P1] auto-update should work even if application hasn't been restarted for period of time
-    //           longer than auto-update-interval specified in preferences (so, not on startup only);
-    //           use ScheduledThreadPoolExecutor here ?...
-    private void handleAutoUpdate() {
-        if (Preferences.getInstance().enableAutoUpdate) {
+    private Runnable updateCompleteInformer = new Runnable(){
+        public void run() {
+            // remember last update date
+            config.setProperty(Constants.PROPERTY_LAST_UPDATE_DATE, "" + System.currentTimeMillis());
+            // inform user about update complete
+            JOptionPane.showMessageDialog(
+                    getActiveWindow(), 
+                    "<html>Automatic update complete<br/><br/>" +
+                    "<i>(Note: automatic update can be disabled via preferences option 'Enable automatic update',<br>" +
+                    "update interval can be adjusted via preferences option 'Automatic update interval')</i><html>");
+        }
+    };
+
+    private Runnable updateCommand = new Runnable(){
+        public void run() {
+            long delay = 1000 * 60 * 5; // 5 minutes
             if (Preferences.getInstance().autoUpdateInterval == 0 || isTimeToUpdate()) {
-                new Thread(new Runnable(){
-                    public void run() {
-                        try {
-                            // sleep for 5 minutes before update...
-                            Thread.sleep(1000 * 60 * 5);
-                            // ... then perform update
-                            downloadAndInstallAllUpdates(new Runnable(){
-                                public void run() {
-                                    // remember last update date
-                                    config.setProperty(Constants.PROPERTY_LAST_UPDATE_DATE, "" + System.currentTimeMillis());
-                                    // inform user about update complete
-                                    JOptionPane.showMessageDialog(
-                                            getActiveWindow(), 
-                                            "<html>Automatic update complete<br/><br/>" +
-                                            "<i>(Note: automatic update can be disabled via preferences option 'Enable automatic update',<br>" +
-                                            "update interval can be adjusted via preferences option 'Automatic update interval')</i><html>");
-                                }
-                            });
-                        } catch (InterruptedException ex) {
-                            // ignore, update just won't be performed this time
-                        }
-                    }
-                }).start();
+                try {
+                    Thread.sleep(delay);
+                } catch (InterruptedException ex) {
+                    // ignore, update just won't be performed this time
+                }
+                downloadAndInstallAllUpdates(updateCompleteInformer);
+            }
+        }
+    };
+    
+    private ScheduledExecutorService updateService;
+    
+    private void handleAutoUpdate(boolean isStartingUp) {
+        if (Preferences.getInstance().enableAutoUpdate) {
+            if (updateService != null) {
+                updateService.shutdownNow();
+            }
+            updateService = new ScheduledThreadPoolExecutor(1);                
+            if (Preferences.getInstance().autoUpdateInterval == 0) {
+                if (isStartingUp) {
+                    updateService.schedule(updateCommand, 0, TimeUnit.DAYS);
+                }
+            } else {
+                updateService.scheduleAtFixedRate(updateCommand, 0, Preferences.getInstance().autoUpdateInterval, TimeUnit.DAYS);
             }
         }
     }
@@ -4245,7 +4261,7 @@ public class FrontEnd extends JFrame {
                         t.printStackTrace(System.err);
                         status = Constants.ADDON_STATUS_BROKEN;
                     }
-                    getExtensionsModel().addRow(getAddOnInfoRow(Boolean.FALSE, extension, status));
+                    addOrReplaceTableModelAddOnRow(getExtensionsModel(), extension, true, 1, status);
                 }
                 JButton extDetailsButt = new JButton("Extension details");
                 extDetailsButt.addActionListener(new ActionListener(){
@@ -4374,7 +4390,7 @@ public class FrontEnd extends JFrame {
                 skinList.setRowSorter(skinSorter);
                 skinList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 skinList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                getSkinModel().addRow(new Object[]{Boolean.FALSE, DEFAULT_SKIN,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Skin"});
+                getSkinModel().insertRow(0, new Object[]{Boolean.FALSE, DEFAULT_SKIN,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Skin"});
                 for (AddOnInfo skin : BackEnd.getInstance().getAddOns(PackType.SKIN)) {
                     String status;
                     try {
@@ -4391,7 +4407,7 @@ public class FrontEnd extends JFrame {
                         t.printStackTrace(System.err);
                         status = Constants.ADDON_STATUS_BROKEN;
                     }
-                    getSkinModel().addRow(getAddOnInfoRow(Boolean.FALSE, skin, status));
+                    addOrReplaceTableModelAddOnRow(getSkinModel(), skin, true, 1, status);
                 }
                 JButton skinDetailsButt = new JButton("Skin details");
                 skinDetailsButt.addActionListener(new ActionListener(){
@@ -4523,16 +4539,13 @@ public class FrontEnd extends JFrame {
                 icSetList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 icSetList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 for (AddOnInfo iconSetInfo : BackEnd.getInstance().getIconSets()) {
-                    getIconSetModel().addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
+                    addOrReplaceTableModelAddOnRow(getIconSetModel(), iconSetInfo, true, 1, null);
                 }
-                icons = new HashMap<String, ImageIcon>();
-                icModel = new DefaultListModel();
-                icList = new JList(icModel);
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-                    icModel.addElement(icon);
+                    getIconListModel().addElement(icon);
                     icons.put(icon.getDescription(), icon);
                 }
-                JScrollPane jsp = new JScrollPane(icList);
+                JScrollPane jsp = new JScrollPane(getIconList());
                 jsp.setPreferredSize(new Dimension(200,200));
                 jsp.setMinimumSize(new Dimension(200,200));
                 JButton icSetDetailsButt = new JButton("IconSet details");
@@ -4567,7 +4580,6 @@ public class FrontEnd extends JFrame {
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                            lockAddOnsManagementDialog();
                             Thread installThread = new Thread(new Runnable(){
                                 public void run() {
                                     try {
@@ -4576,7 +4588,7 @@ public class FrontEnd extends JFrame {
                                             Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
                                             if (!icons.isEmpty()) {
                                                 for (ImageIcon icon : icons) {
-                                                    icModel.addElement(icon);
+                                                    getIconListModel().addElement(icon);
                                                     FrontEnd.icons.put(icon.getDescription(), icon);
                                                 }
                                                 Collection<AddOnInfo> iconSets = BackEnd.getInstance().getIconSets();
@@ -4584,21 +4596,19 @@ public class FrontEnd extends JFrame {
                                                     getIconSetModel().removeRow(0);
                                                 }
                                                 for (AddOnInfo iconSetInfo : iconSets) {
-                                                    getIconSetModel().addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
+                                                    addOrReplaceTableModelAddOnRow(getIconSetModel(), iconSetInfo, true, 1, null);
                                                 }
                                                 added = true;
                                             }
                                         }
                                         if (added) {
-                                            icList.repaint();
+                                            getIconList().repaint();
                                             displayMessage("Icon(s) successfully installed!");
                                         } else {
                                             displayErrorMessage("Nothing to install!");
                                         }
                                     } catch (Throwable t) {
                                         displayErrorMessage("Failed to install icon(s)! " + getFailureDetails(t), t);
-                                    } finally {
-                                        unlockAddOnsManagementDialog();
                                     }
                                 }
                             });
@@ -4610,14 +4620,14 @@ public class FrontEnd extends JFrame {
                 removeIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            if (icList.getSelectedValues().length > 0) {
+                            if (getIconList().getSelectedValues().length > 0) {
                                 Collection<String> removeIds = new ArrayList<String>();
-                                for (Object icon : icList.getSelectedValues()) {
+                                for (Object icon : getIconList().getSelectedValues()) {
                                     removeIds.add(((ImageIcon) icon).getDescription());
                                 }
                                 BackEnd.getInstance().removeIcons(removeIds);
-                                for (Object icon : icList.getSelectedValues()) {
-                                    icModel.removeElement(icon);
+                                for (Object icon : getIconList().getSelectedValues()) {
+                                    getIconListModel().removeElement(icon);
                                 }
                                 displayMessage("Icon(s) have been successfully removed!");
                             }
@@ -4646,7 +4656,7 @@ public class FrontEnd extends JFrame {
                                             String icSet = (String) getIconSetModel().getValueAt(i, 1);
                                             Collection<String> removedIds = BackEnd.getInstance().removeIconSet(icSet);
                                             for (String removedId : removedIds) {
-                                                icModel.removeElement(icons.get(removedId));
+                                                getIconListModel().removeElement(icons.get(removedId));
                                             }
                                             getIconSetModel().removeRow(i);
                                             changed = true;
@@ -4656,7 +4666,7 @@ public class FrontEnd extends JFrame {
                                         }
                                     }
                                     if (changed) {
-                                        icList.repaint();
+                                        getIconList().repaint();
                                     }
                                 }
                             }
@@ -4668,7 +4678,6 @@ public class FrontEnd extends JFrame {
 
                 // list of loaded libs
                 libsList = getLibsList(BackEnd.getInstance().getAddOns(PackType.LIBRARY));
-                libModel = (DefaultTableModel) libsList.getModel();
                 
                 // online list of available addons
                 onlineList = new JTable(getOnlineModel());
@@ -4918,10 +4927,10 @@ public class FrontEnd extends JFrame {
                             }
                             cleanButt.setEnabled(false);
                             cleanLabel.setVisible(false);
-                            for (int i = 0; i < libModel.getRowCount(); i++) {
-                                String libName = (String) libModel.getValueAt(i, 0);
+                            for (int i = 0; i < getLibModel().getRowCount(); i++) {
+                                String libName = (String) getLibModel().getValueAt(i, 0);
                                 if (!deps.contains(libName)) {
-                                    libModel.setValueAt(Constants.ADDON_STATUS_UNUSED, i, 4);
+                                    getLibModel().setValueAt(Constants.ADDON_STATUS_UNUSED, i, 4);
                                     cleanButt.setEnabled(true);
                                     cleanLabel.setVisible(true);
                                 }
@@ -4935,11 +4944,11 @@ public class FrontEnd extends JFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             int i = 0;
-                            while  (i < libModel.getRowCount()) {
-                                if (libModel.getValueAt(i, 4).equals(Constants.ADDON_STATUS_UNUSED)) {
-                                    String lib = (String) libModel.getValueAt(i, 0);
+                            while  (i < getLibModel().getRowCount()) {
+                                if (getLibModel().getValueAt(i, 4).equals(Constants.ADDON_STATUS_UNUSED)) {
+                                    String lib = (String) getLibModel().getValueAt(i, 0);
                                     BackEnd.getInstance().uninstallAddOn(lib, PackType.LIBRARY);
-                                    libModel.removeRow(i);
+                                    getLibModel().removeRow(i);
                                     i = 0;
                                 } else {
                                     i++;
@@ -4967,19 +4976,8 @@ public class FrontEnd extends JFrame {
                 addOnsPane.addTab("Advanced", uiIcons.getIconPreferences(), advPanel);
                 
                 addOnsManagementDialog = new JFrame("Bias :: Add-Ons Management");
-                addOnsManagementDialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-                addOnsManagementDialog.addWindowListener(new WindowAdapter(){
-                    @Override
-                    public void windowClosing(WindowEvent e) {
-                        if (!addOnsManagementDialogLocked) {
-                            addOnsManagementDialog.setVisible(false);
-                        }
-                    }
-                });
-                JPanel p = new JPanel(new BorderLayout());
-                p.add(addOnsPane, BorderLayout.CENTER);
-                p.add(getCloseAddOnsManagementDialogButt(), BorderLayout.SOUTH);
-                addOnsManagementDialog.add(p);
+                addOnsManagementDialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+                addOnsManagementDialog.add(addOnsPane);
                 addOnsManagementDialog.pack();
                 int x = (getToolkit().getScreenSize().width - addOnsManagementDialog.getWidth()) / 2;
                 int y = (getToolkit().getScreenSize().height - addOnsManagementDialog.getHeight()) / 2;
@@ -4990,6 +4988,20 @@ public class FrontEnd extends JFrame {
                 displayErrorMessage("Failed to initialize add-ons configuration screen!", t);
             }
         }
+    }
+    
+    private JList getIconList() {
+        if (icList == null) {
+            icList = new JList(getIconListModel());
+        }
+        return icList;
+    }
+    
+    private DefaultListModel getIconListModel() {
+        if (icModel == null) {
+            icModel = new DefaultListModel();
+        }
+        return icModel;
     }
     
     private DefaultTableModel getIconSetModel() {
@@ -5072,6 +5084,24 @@ public class FrontEnd extends JFrame {
         return extModel;
     }
     
+    private DefaultTableModel getLibModel() {
+        if (libModel == null) {
+            libModel = new DefaultTableModel() {
+                private static final long serialVersionUID = 1L;
+                @Override
+                public boolean isCellEditable(int rowIndex, int mColIndex) {
+                    return false;
+                }
+            };
+            libModel.addColumn("Name");
+            libModel.addColumn("Version");
+            libModel.addColumn("Author");
+            libModel.addColumn("Description");
+            libModel.addColumn("Status");
+        }
+        return libModel;
+    }
+    
     private DefaultTableModel getOnlineModel() {
         if (onlineModel == null) {
             onlineModel = new DefaultTableModel() {
@@ -5122,33 +5152,7 @@ public class FrontEnd extends JFrame {
         }
         return onlineTotalProgressBar;
     }
-    
-    private JButton getCloseAddOnsManagementDialogButt() {
-        if (closeAddOnsManagementDialogButt == null) {
-            closeAddOnsManagementDialogButt = new JButton("Close");
-            closeAddOnsManagementDialogButt.addActionListener(new ActionListener(){
-                public void actionPerformed(ActionEvent e) {
-                    if (!addOnsManagementDialogLocked) {
-                        addOnsManagementDialog.setVisible(false);
-                    }
-                }
-            });
-        }
-        return closeAddOnsManagementDialogButt;
-    }
-    
-    private void lockAddOnsManagementDialog() {
-        getCloseAddOnsManagementDialogButt().setText(null);
-        getCloseAddOnsManagementDialogButt().setIcon(ICON_PROCESS);
-        addOnsManagementDialogLocked = true;
-    }
-    
-    private void unlockAddOnsManagementDialog() {
-        getCloseAddOnsManagementDialogButt().setText("Close");
-        getCloseAddOnsManagementDialogButt().setIcon(null);
-        addOnsManagementDialogLocked = false;
-    }
-    
+
     private void downloadAndInstallAllUpdates(final Runnable onFinishAction) {
         Runnable updateTask = new Runnable(){
             public void run() {
@@ -5158,11 +5162,7 @@ public class FrontEnd extends JFrame {
                 }
             }
         };
-        if (!onlineListRefreshed) {
-            refreshOnlinePackagesList(updateTask);
-        } else {
-            updateTask.run();
-        }
+        refreshOnlinePackagesList(updateTask);
     }
     
     private boolean updatesAvailable() {
@@ -5186,60 +5186,54 @@ public class FrontEnd extends JFrame {
         if (addOnFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
             Thread installThread = new Thread(new Runnable(){
                 public void run() {
-                    try {
-                        lockAddOnsManagementDialog();
-                        final Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
-                        StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
-                        boolean error = false;
-                        for (File file : addOnFileChooser.getSelectedFiles()) {
-                            try {
-                                AddOnInfo installedAddOn = BackEnd.getInstance().getAddOnInfoAndDependencies(file, addOnType);
-                                proposedAddOnsToInstall.put(installedAddOn, file);
-                            } catch (Throwable t) {
-                                error = true;
-                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failure on reading add-on's info from file '" + file.getName() + "': " + getFailureDetails(t) + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                t.printStackTrace(System.err);
-                            }
+                    final Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
+                    StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
+                    boolean error = false;
+                    for (File file : addOnFileChooser.getSelectedFiles()) {
+                        try {
+                            AddOnInfo installedAddOn = BackEnd.getInstance().getAddOnInfoAndDependencies(file, addOnType);
+                            proposedAddOnsToInstall.put(installedAddOn, file);
+                        } catch (Throwable t) {
+                            error = true;
+                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failure on reading add-on's info from file '" + file.getName() + "': " + getFailureDetails(t) + Constants.HTML_COLOR_SUFFIX + "</li>");
+                            t.printStackTrace(System.err);
                         }
-                        unlockAddOnsManagementDialog();
-                        if (error) {
-                            sb.append("</ul>" + Constants.HTML_SUFFIX);
-                            JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
-                        }
+                    }
+                    if (error) {
+                        sb.append("</ul>" + Constants.HTML_SUFFIX);
+                        JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
+                    }
+                    if (!proposedAddOnsToInstall.isEmpty()) {
+                        Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
+                        proposedAddOnsToInstall.keySet().retainAll(confirmedAddOnsToInstall);
                         if (!proposedAddOnsToInstall.isEmpty()) {
-                            Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
-                            proposedAddOnsToInstall.keySet().retainAll(confirmedAddOnsToInstall);
-                            if (!proposedAddOnsToInstall.isEmpty()) {
-                                // check if there're dependency-packages present...
-                                boolean depsPresent = false;
-                                for (Integer i : getDepCounters().values()) {
-                                    if (i > 0) {
-                                        depsPresent = true;
-                                        break;
-                                    }
-                                }
-                                // ... and if yes...
-                                if (depsPresent) {
-                                    // ... remember currently active tab...
-                                    final int activeTabIdx = addOnsPane.getSelectedIndex();
-                                    // ... then switch to "Online" tab...
-                                    addOnsPane.setSelectedIndex(3);
-                                    // ... download dependency-packages...
-                                    downloadAndInstallOnlinePackages(new Runnable(){
-                                        public void run() {
-                                            // ... then switch back to the previously active tab...
-                                            addOnsPane.setSelectedIndex(activeTabIdx);
-                                            // ... and finally, install local packages...
-                                            installLocalPackages(proposedAddOnsToInstall, addOnType, addOnModel);
-                                        }
-                                    });
-                                } else {
-                                    installLocalPackages(proposedAddOnsToInstall, addOnType, addOnModel);
+                            // check if there're dependency-packages present...
+                            boolean depsPresent = false;
+                            for (Integer i : getDepCounters().values()) {
+                                if (i > 0) {
+                                    depsPresent = true;
+                                    break;
                                 }
                             }
+                            // ... and if yes...
+                            if (depsPresent) {
+                                // ... remember currently active tab...
+                                final int activeTabIdx = addOnsPane.getSelectedIndex();
+                                // ... then switch to "Online" tab...
+                                addOnsPane.setSelectedIndex(3);
+                                // ... download dependency-packages...
+                                downloadAndInstallOnlinePackages(new Runnable(){
+                                    public void run() {
+                                        // ... then switch back to the previously active tab...
+                                        addOnsPane.setSelectedIndex(activeTabIdx);
+                                        // ... and finally, install local packages...
+                                        installLocalPackages(proposedAddOnsToInstall, addOnType, addOnModel);
+                                    }
+                                });
+                            } else {
+                                installLocalPackages(proposedAddOnsToInstall, addOnType, addOnModel);
+                            }
                         }
-                    } finally {
-                        unlockAddOnsManagementDialog();
                     }
                 }
             });
@@ -5248,37 +5242,31 @@ public class FrontEnd extends JFrame {
     }
     
     private void installLocalPackages(Map<AddOnInfo, File> proposedAddOnsToInstall, PackType addOnType, DefaultTableModel addOnModel) {
-        try {
-            boolean modified = false;
-            lockAddOnsManagementDialog();
-            StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
-            for (Entry<AddOnInfo, File> addons : proposedAddOnsToInstall.entrySet()) {
-                try {
-                    AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(addons.getValue(), addOnType);
-                    String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
-                    int idx = findDataRowIndex(addOnModel, 1, installedAddOn.getName());
-                    if (idx != -1) {
-                        addOnModel.removeRow(idx);
-                        addOnModel.insertRow(idx, getAddOnInfoRow(Boolean.FALSE, installedAddOn, status));
-                    } else {
-                        addOnModel.addRow(getAddOnInfoRow(Boolean.FALSE, installedAddOn, status));
-                    }
-                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Add-On '" + installedAddOn.getName() + Constants.BLANK_STR + installedAddOn.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                    modified = true;
-                } catch (Throwable t) {
-                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install add-on '" + addons.getKey().getName() + Constants.BLANK_STR + addons.getKey().getVersion() + "' from file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                    t.printStackTrace(System.err);
+        boolean modified = false;
+        StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
+        for (Entry<AddOnInfo, File> addons : proposedAddOnsToInstall.entrySet()) {
+            try {
+                AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(addons.getValue(), addOnType);
+                String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
+                int idx = findDataRowIndex(addOnModel, 1, installedAddOn.getName());
+                if (idx != -1) {
+                    addOnModel.removeRow(idx);
+                    addOnModel.insertRow(idx, getAddOnInfoRow(Boolean.FALSE, installedAddOn, status));
+                } else {
+                    addOnModel.addRow(getAddOnInfoRow(Boolean.FALSE, installedAddOn, status));
                 }
+                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Add-On '" + installedAddOn.getName() + Constants.BLANK_STR + installedAddOn.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                modified = true;
+            } catch (Throwable t) {
+                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install add-on '" + addons.getKey().getName() + Constants.BLANK_STR + addons.getKey().getVersion() + "' from file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                t.printStackTrace(System.err);
             }
-            if (modified) {
-                displayStatusBarMessage("add-ons configuration changed");
-            }
-            unlockAddOnsManagementDialog();
-            sb.append("</ul>" + Constants.HTML_SUFFIX);
-            JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
-        } finally {
-            unlockAddOnsManagementDialog();
         }
+        if (modified) {
+            displayStatusBarMessage("add-ons configuration changed");
+        }
+        sb.append("</ul>" + Constants.HTML_SUFFIX);
+        JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
     }
     
     private boolean onlineListRefreshed = false;
@@ -5291,7 +5279,6 @@ public class FrontEnd extends JFrame {
         try {
             URL addonsListURL = new URL(BackEnd.getInstance().getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
-            lockAddOnsManagementDialog();
             Downloader d = Downloader.createSingleFileDownloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
             d.setDownloadListener(new DownloadListener(){
                 @Override
@@ -5317,24 +5304,19 @@ public class FrontEnd extends JFrame {
                             }
                         }
                         onlineListRefreshed = true;
-                        unlockAddOnsManagementDialog();
                         if (onFinishAction != null) {
                             onFinishAction.run();
                         }
                     } catch (Throwable t) {
                         displayErrorMessage("Failed to parse downloaded list of available addons!", t);
-                    } finally {
-                        unlockAddOnsManagementDialog();
                     }
                 }
                 @Override
                 public void onFailure(URL url, File file, Throwable failure) {
-                    unlockAddOnsManagementDialog();
                     displayErrorMessage("Failed to retrieve online list of available addons!", failure);
                 }
                 @Override
                 public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime) {
-                    unlockAddOnsManagementDialog();
                     JOptionPane.showMessageDialog(getActiveWindow(), "Online packages list refresh canceled by user!");
                 }
             });
@@ -5388,7 +5370,6 @@ public class FrontEnd extends JFrame {
             }
             final Long totalSize = new Long(tSize);
             if (!urlFileMap.isEmpty()) {
-                lockAddOnsManagementDialog();
                 Downloader d = Downloader.createMultipleFilesDownloader(urlFileMap, Preferences.getInstance().preferredTimeOut);
                 d.setDownloadListener(new DownloadListener(){
                     private StringBuffer sb = new StringBuffer();
@@ -5426,7 +5407,7 @@ public class FrontEnd extends JFrame {
                                 Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
                                 if (!icons.isEmpty()) {
                                     for (ImageIcon icon : icons) {
-                                        icModel.addElement(icon);
+                                        getIconListModel().addElement(icon);
                                         FrontEnd.icons.put(icon.getDescription(), icon);
                                     }
                                     Collection<AddOnInfo> iconSets = BackEnd.getInstance().getIconSets();
@@ -5434,10 +5415,10 @@ public class FrontEnd extends JFrame {
                                         getIconSetModel().removeRow(0);
                                     }
                                     for (AddOnInfo iconSetInfo : iconSets) {
-                                        getIconSetModel().addRow(getAddOnInfoRow(Boolean.FALSE, iconSetInfo, null));
+                                        addOrReplaceTableModelAddOnRow(getIconSetModel(), iconSetInfo, true, 1, null);
                                     }
                                     sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                    icList.repaint();
+                                    getIconList().repaint();
                                 } else {
                                     sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 }
@@ -5452,13 +5433,7 @@ public class FrontEnd extends JFrame {
                                 }
                                 BackEnd.getInstance().installLibrary(file, libInfo);
                                 String status = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY).get(libInfo);
-                                int idx = findDataRowIndex(libModel, 0, libInfo.getName());
-                                if (idx != -1) {
-                                    libModel.removeRow(idx);
-                                    libModel.insertRow(idx, getAddOnInfoRow(null, libInfo, status));
-                                } else {
-                                    libModel.addRow(getAddOnInfoRow(null, libInfo, status));
-                                }
+                                addOrReplaceTableModelAddOnRow(getLibModel(), libInfo, false, 0, status);
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 modified = true;
                             } else if (pack.getType() == PackType.APP_CORE) {
@@ -5497,7 +5472,6 @@ public class FrontEnd extends JFrame {
                     }
                     @Override
                     public void onFinish(long downloadedBytesNum, long elapsedTime) {
-                        unlockAddOnsManagementDialog();
                         if (!Validator.isNullOrBlank(sb)) {
                             JOptionPane.showMessageDialog(
                                     getActiveWindow(), 
@@ -5554,7 +5528,6 @@ public class FrontEnd extends JFrame {
                             public void run() {
                                 // ... and when done, try to resolve dependencies
                                 try {
-                                    lockAddOnsManagementDialog();
                                     for (Dependency dep : pack.getDependencies()) {
                                         if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
                                             int idx = findDataRowIndex(getOnlineModel(), 2, dep.getName());
@@ -5589,8 +5562,6 @@ public class FrontEnd extends JFrame {
                                     }
                                 } catch (Throwable t) {
                                     displayErrorMessage("Failed to handle/resolve dependencies! " + getFailureDetails(t), t);
-                                } finally {
-                                    unlockAddOnsManagementDialog();
                                 }
                             }
                         };
@@ -5630,23 +5601,7 @@ public class FrontEnd extends JFrame {
     }
     
     private JTable getLibsList(Collection<AddOnInfo> addOnInfos) {
-        final DefaultTableModel addOnModel = new DefaultTableModel() {
-            private static final long serialVersionUID = 1L;
-            @Override
-            public boolean isCellEditable(int rowIndex, int mColIndex) {
-                return false;
-            }
-        };
-        final JTable addOnList = new JTable(addOnModel);
-        final TableRowSorter<TableModel> addOnSorter = new TableRowSorter<TableModel>(addOnModel);
-        addOnSorter.setSortsOnUpdates(true);
-        addOnList.setRowSorter(addOnSorter);
-        addOnModel.addColumn("Name");
-        addOnModel.addColumn("Version");
-        addOnModel.addColumn("Author");
-        addOnModel.addColumn("Description");
-        addOnModel.addColumn("Status");
-        addOnList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        final JTable addOnList = new JTable(getLibModel());
         for (AddOnInfo addOnInfo : addOnInfos) {
             String status;
             Map<AddOnInfo, String> libStatuses = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY);
@@ -5655,15 +5610,29 @@ public class FrontEnd extends JFrame {
             } else {
                 status = Constants.ADDON_STATUS_LOADED;
             }
-            addOnModel.addRow(getAddOnInfoRow(null, addOnInfo, status));
+            addOrReplaceTableModelAddOnRow(getLibModel(), addOnInfo, false, 0, status);
         }
+        addOnList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        final TableRowSorter<TableModel> addOnSorter = new TableRowSorter<TableModel>(getLibModel());
+        addOnSorter.setSortsOnUpdates(true);
+        addOnList.setRowSorter(addOnSorter);
         return addOnList;
+    }
+    
+    private void addOrReplaceTableModelAddOnRow(DefaultTableModel addOnModel, AddOnInfo addOnInfo, boolean withCheckBox, int searchIdx, String status) {
+        int idx = findDataRowIndex(addOnModel, searchIdx, addOnInfo.getName());
+        if (idx != -1) {
+            addOnModel.removeRow(idx);
+            if (status != null) status = Constants.ADDON_STATUS_UPDATED;
+            addOnModel.insertRow(idx, getAddOnInfoRow((withCheckBox ? Boolean.FALSE : null), addOnInfo, status));
+        } else {
+            addOnModel.addRow(getAddOnInfoRow((withCheckBox ? Boolean.FALSE : null), addOnInfo, status));
+        }
     }
 
     private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final String addOnName) {
         Thread loadDetailsThread = new Thread(new Runnable(){
             public void run() {
-                lockAddOnsManagementDialog();
                 boolean loaded = false;
                 InputStream is = null;
                 ByteArrayOutputStream baos = null;
@@ -5679,7 +5648,6 @@ public class FrontEnd extends JFrame {
                 } catch (Throwable t) {
                     displayErrorMessage("Failed to load package details page! " + getFailureDetails(t), t);
                 } finally {
-                    unlockAddOnsManagementDialog();
                         try {
                             if (is != null) is.close();
                             if (baos != null) baos.close();

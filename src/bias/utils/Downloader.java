@@ -13,6 +13,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author kion
@@ -29,7 +30,7 @@ public class Downloader {
         public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime){};
     }
 
-    private static volatile Integer totalActiveDownloadsCount = 0;
+    private static AtomicInteger totalActiveDownloadsCount = new AtomicInteger(0);
     private static volatile boolean cancelAll = false;
     private boolean cancel = false;
     private DownloadListener listener;
@@ -49,7 +50,7 @@ public class Downloader {
                 if (listener != null) {
                     listener.onStart(url, file);
                 }
-                increaseTotalActiveDownloadsCount();
+                incrementTotalActiveDownloadsCount();
                 long startTime = System.currentTimeMillis();
                 long downloadedBytesNum = 0;
                 long elapsedTime = 0;
@@ -94,7 +95,7 @@ public class Downloader {
                         }    
                         listener.onFinish(downloadedBytesNum, elapsedTime);
                     }
-                    decreaseTotalActiveDownloadsCount();
+                    decrementTotalActiveDownloadsCount();
                 }
             }
         });
@@ -103,7 +104,7 @@ public class Downloader {
     private Downloader(final Map<URL, File> urlFileMap, final int timeout) {
         thread = new Thread(new Runnable(){
             public void run() {
-                increaseTotalActiveDownloadsCount();
+                incrementTotalActiveDownloadsCount();
                 long startTime = System.currentTimeMillis();
                 long downloadedBytesNum = 0;
                 long elapsedTime = 0;
@@ -159,14 +160,14 @@ public class Downloader {
                             } else if (cancel || cancelAll) {
                                 listener.onCancel(url, file, downloadedBytesNum, elapsedTime);
                                 listener.onFinish(downloadedBytesNum, elapsedTime);
-                                decreaseTotalActiveDownloadsCount();
+                                decrementTotalActiveDownloadsCount();
                                 break;
                             } else {
                                 listener.onComplete(url, file, downloadedBytesNum, elapsedTime);
                             }
                             if (!it.hasNext()) {
                                 listener.onFinish(downloadedBytesNum, elapsedTime);
-                                decreaseTotalActiveDownloadsCount();
+                                decrementTotalActiveDownloadsCount();
                             }
                         }
                     }
@@ -186,24 +187,24 @@ public class Downloader {
     }
     
     public static void cancelAll() {
-        if (totalActiveDownloadsCount > 0) {
+        if (totalActiveDownloadsCount.get() > 0) {
             cancelAll = true;
         }
     }
     
-    private static synchronized void increaseTotalActiveDownloadsCount() {
-        totalActiveDownloadsCount++;
+    private static void incrementTotalActiveDownloadsCount() {
+        totalActiveDownloadsCount.incrementAndGet();
     }
     
-    private static synchronized void decreaseTotalActiveDownloadsCount() {
-        totalActiveDownloadsCount--;
-        if (totalActiveDownloadsCount == 0) {
+    private static void decrementTotalActiveDownloadsCount() {
+        totalActiveDownloadsCount.decrementAndGet();
+        if (totalActiveDownloadsCount.get() == 0) {
             cancelAll = false;
         }
     }
     
-    public synchronized static int getTotalActiveDownloadsCount() {
-        return totalActiveDownloadsCount;
+    public static int getTotalActiveDownloadsCount() {
+        return totalActiveDownloadsCount.get();
     }
 
     public void setDownloadListener(DownloadListener l) {

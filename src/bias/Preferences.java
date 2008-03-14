@@ -200,7 +200,7 @@ public class Preferences {
     public boolean enableAutoUpdate = true;
 
     @PreferenceAnnotation(
-            title = "Automatic update interval (set to 0 to update on each startup), in days: ",
+            title = "Automatic update interval, in days (set to 0 to update on startup only): ",
             description = "Defines how often automatic update is performed")
     @PreferenceEnableAnnotation(
             enabledByField = "enableAutoUpdate", 
