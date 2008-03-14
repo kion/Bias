@@ -168,6 +168,8 @@ import bias.utils.Downloader.DownloadListener;
  * @author kion
  */
 public class FrontEnd extends JFrame {
+    
+    // TODO [P1] make use of classes in java.util.concurrent package instead of direct using of Thread/Runnable
 
     // TODO [P3] internationalization
 

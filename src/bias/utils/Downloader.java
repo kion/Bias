@@ -29,7 +29,6 @@ public class Downloader {
         public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime){};
     }
 
-    // TODO [P1] use ThreadGroup and real state (active/finished) of threads in it instead of counter ?...
     private static volatile Integer totalActiveDownloadsCount = 0;
     private static volatile boolean cancelAll = false;
     private boolean cancel = false;
