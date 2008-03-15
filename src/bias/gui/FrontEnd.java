@@ -5027,10 +5027,10 @@ public class FrontEnd extends JFrame {
                 });
                 onlineTopPanel.add(onlineFilterText, BorderLayout.CENTER);
                 onlineTopPanel.add(new JScrollPane(onlineList), BorderLayout.SOUTH);
-                onlinePanel.add(onlineTopPanel, BorderLayout.NORTH);
-                onlinePanel.add(onlineProgressPanel, BorderLayout.CENTER);
+                onlinePanel.add(onlineTopPanel, BorderLayout.CENTER);
                 JPanel p = new JPanel(new BorderLayout());
-                p.add(getOnlineShowAllPackagesCheckBox(), BorderLayout.NORTH);
+                p.add(onlineProgressPanel, BorderLayout.NORTH);
+                p.add(getOnlineShowAllPackagesCheckBox(), BorderLayout.CENTER);
                 p.add(onlineControlsPanel, BorderLayout.SOUTH);
                 onlinePanel.add(p, BorderLayout.SOUTH);
                 
