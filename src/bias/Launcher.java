@@ -43,11 +43,10 @@ public class Launcher {
 
     public static void main(String[] args) throws Throwable {
 
-        // find out root directory application is run from
         URL url = Launcher.class.getResource(Launcher.class.getSimpleName() + CLASS_FILE_SUFFIX);
         String jarFilePath = url.getFile().substring(0, url.getFile().indexOf(Launcher.class.getName().replaceAll("\\.", "/")) - 2);
-        jarFilePath = jarFilePath.substring(FILE_PROTOCOL_PREFIX.length(), jarFilePath.length());
-        rootDir = new File(jarFilePath).getParentFile();
+        URL jarFileURL = new URL(jarFilePath);
+        rootDir = new File(jarFileURL.toURI()).getParentFile();
         addonsDir = new File(rootDir, "addons");
         libsDir = new File(rootDir, "libs");
         configDir = new File(rootDir, "conf");
