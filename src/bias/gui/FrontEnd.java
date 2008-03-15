@@ -540,7 +540,11 @@ public class FrontEnd extends JFrame {
         } else {
             getInstance().setVisible(true);
         }
-        fireStartUpEvent();
+        syncExecute(new Runnable(){
+            public void run() { 
+                fireStartUpEvent();
+            }
+        });
     }
     
     private static FrontEnd getInstance() {
@@ -1214,14 +1218,19 @@ public class FrontEnd extends JFrame {
         return extension;
     }
     
-    private void store(boolean beforeExit) {
-        fireBeforeSaveEvent(new SaveEvent(beforeExit));
-        safeExecute(new Runnable(){
+    private void store(final boolean beforeExit) {
+        if (beforeExit) finalizeUI();
+        syncExecute(new Runnable(){
+            public void run() { 
+                fireBeforeSaveEvent(new SaveEvent(beforeExit));
+            }
+        });
+        syncExecute(new Runnable(){
             public void run() { 
                 BackEnd.getInstance().setConfig(collectProperties()); 
             }
         });
-        safeExecute(new Runnable(){
+        syncExecute(new Runnable(){
             public void run() { 
                 try {
                     BackEnd.getInstance().setData(collectData());
@@ -1230,7 +1239,7 @@ public class FrontEnd extends JFrame {
                 }
             }
         });
-        safeExecute(new Runnable(){
+        syncExecute(new Runnable(){
             public void run() { 
                 try {
                     BackEnd.getInstance().setToolsData(collectToolsData());
@@ -1239,7 +1248,7 @@ public class FrontEnd extends JFrame {
                 }
             }
         });
-        safeExecute(new Runnable(){
+        syncExecute(new Runnable(){
             public void run() { 
                 try {
                     BackEnd.getInstance().store();
@@ -1249,7 +1258,11 @@ public class FrontEnd extends JFrame {
             }
         });
         displayStatusBarMessage("data saved");
-        fireAfterSaveEvent(new SaveEvent(beforeExit));
+        syncExecute(new Runnable(){
+            public void run() { 
+                fireAfterSaveEvent(new SaveEvent(beforeExit));
+            }
+        });
     }
     
     private Map<String, byte[]> collectToolsData() throws Throwable {
@@ -1401,13 +1414,22 @@ public class FrontEnd extends JFrame {
         return processPanel;
     }
     
+    private JDialog finalizeDialog;
     private void finalizeUI() {
-        JDialog finalizeDialog = new JDialog(this, ModalityType.MODELESS);
-        finalizeDialog.setUndecorated(true);
-        finalizeDialog.setContentPane(getProcessPanel());
-        finalizeDialog.pack();
-        finalizeDialog.setLocation(this.getX() + (this.getWidth() - finalizeDialog.getWidth()) / 2, this.getY() + (this.getHeight() - finalizeDialog.getHeight()) / 2);
-        finalizeDialog.setVisible(true);
+        syncExecute(new Runnable(){
+            public void run() {
+                if (finalizeDialog == null) {
+                    finalizeDialog = new JDialog(getActiveWindow(), ModalityType.MODELESS);
+                    finalizeDialog.setUndecorated(true);
+                    finalizeDialog.setContentPane(getProcessPanel());
+                    finalizeDialog.pack();
+                    finalizeDialog.setLocation(
+                            getActiveWindow().getX() + (getActiveWindow().getWidth() - finalizeDialog.getWidth()) / 2, 
+                            getActiveWindow().getY() + (getActiveWindow().getHeight() - finalizeDialog.getHeight()) / 2);
+                    finalizeDialog.setVisible(true);
+                }
+            }
+        });
     }
     
     private static ExecutorService cachedThreadPool;
@@ -1429,7 +1451,7 @@ public class FrontEnd extends JFrame {
     private static ExecutorService singleThreadExecutor;
     
     /**
-     * This is shutdown-safe tasks execution method, that should be used for critical tasks,
+     * This is synchronized tasks execution method, that should be used for critical tasks,
      * which need to be completed before application shuts down by user's request.
      * Thus, even if user does request shutdown, application will wait until all tasks
      * executed via this method are complete, or until user forces shutdown, whichever happen first.
@@ -1437,7 +1459,7 @@ public class FrontEnd extends JFrame {
      * 
      * @param task task to be executed before application shutdown
      */
-    public static void safeExecute(Runnable task) {
+    public static void syncExecute(Runnable task) {
         if (singleThreadExecutor == null) {
             singleThreadExecutor = Executors.newSingleThreadExecutor();
         }
@@ -1446,8 +1468,12 @@ public class FrontEnd extends JFrame {
     
     private void shutdown() {
         finalizeUI();
-        fireBeforeExitEvent();
-        safeExecute(new Runnable(){
+        syncExecute(new Runnable(){
+            public void run() { 
+                fireBeforeExitEvent();
+            }
+        });
+        syncExecute(new Runnable(){
             public void run() {
                 BackEnd.getInstance().shutdown(0);
             }
@@ -3045,7 +3071,7 @@ public class FrontEnd extends JFrame {
                             processModel.addElement("Transferring data to be imported...");
                             displayBottomPanel(label, panel);
                             autoscrollList(processList);
-                            safeExecute(new Runnable(){
+                            syncExecute(new Runnable(){
                                 public void run() {
                                     try {
                                         TransferData td = transferrer.importData(importOptions, importUnchangedDataCB.isSelected());
@@ -3209,7 +3235,11 @@ public class FrontEnd extends JFrame {
                                                             sb.append(")");
                                                         }
                                                         displayStatusBarMessage(sb.toString());
-                                                        fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass()));
+                                                        syncExecute(new Runnable(){
+                                                            public void run() { 
+                                                                fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass()));
+                                                            }
+                                                        });
                                                         Component[] c = new Component[] {
                                                                 new JLabel("Data have been successfully imported."),
                                                                 new JLabel("If you want to save this import configuration,"),
@@ -3269,11 +3299,11 @@ public class FrontEnd extends JFrame {
                 if (verbose) panel.add(processLabel, BorderLayout.CENTER);
                 final JLabel label = verbose ? new JLabel("Import data") : null;
                 if (verbose) displayBottomPanel(label, panel);
-                safeExecute(new Runnable(){
+                syncExecute(new Runnable(){
                     public void run() {
                         try {
                             ImportConfiguration importConfig = BackEnd.getInstance().getPopulatedImportConfigurations().get(configName);
-                            TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
+                            final TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
                             if (transferrer == null) {
                                 throw new Exception("It looks like transfer type used in this stored import configuration is no longer available (extension uninstalled?).");
                             }
@@ -3328,7 +3358,11 @@ public class FrontEnd extends JFrame {
                                     }
                                     sb.append(")");
                                     instance.displayStatusBarMessage(sb.toString());
-                                    fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass(), configName));
+                                    syncExecute(new Runnable(){
+                                        public void run() { 
+                                            fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass(), configName));
+                                        }
+                                    });
                                 } catch (GeneralSecurityException gse) {
                                     if (verbose) {
                                         processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
@@ -3554,7 +3588,7 @@ public class FrontEnd extends JFrame {
                             processModel.addElement("Compressing data to be exported...");
                             displayBottomPanel(label, panel);
                             autoscrollList(processList);
-                            safeExecute(new Runnable(){
+                            syncExecute(new Runnable(){
                                 public void run() {
                                     try {
                                         boolean exportAll = false;
@@ -3662,7 +3696,11 @@ public class FrontEnd extends JFrame {
                                                         sb.append(")");
                                                     }
                                                     displayStatusBarMessage(sb.toString());
-                                                    fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass()));
+                                                    syncExecute(new Runnable(){
+                                                        public void run() { 
+                                                            fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass()));
+                                                        }
+                                                    });
                                                     configsCB.setEditable(true);
                                                     Component[] c = new Component[] {
                                                             new JLabel("Data have been successfully exported."),
@@ -3735,7 +3773,7 @@ public class FrontEnd extends JFrame {
                 if (verbose) panel.add(processLabel, BorderLayout.CENTER);
                 final JLabel label = verbose ? new JLabel("Export data") : null;
                 if (verbose) displayBottomPanel(label, panel);
-                safeExecute(new Runnable(){
+                syncExecute(new Runnable(){
                     public void run() {
                         try {
                             DataCategory data = instance.collectData();
@@ -3744,7 +3782,7 @@ public class FrontEnd extends JFrame {
                                 instance.filterData(data, exportConfig.getSelectedIds(), exportConfig.getSelectedRecursiveIds());
                             }
                             TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
-                            TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
+                            final TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
                             if (transferrer == null) {
                                 throw new Exception("It looks like transfer type used in this stored export configuration is no longer available (extension uninstalled?).");
                             }
@@ -3771,7 +3809,11 @@ public class FrontEnd extends JFrame {
                                 }
                                 sb.append(")");
                                 instance.displayStatusBarMessage(sb.toString());
-                                fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
+                                syncExecute(new Runnable(){
+                                    public void run() { 
+                                        fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
+                                    }
+                                });
                             } else if (verbose) {
                                 label.setText("<html><font color=green>Data export - Completed</font></html>");
                                 processLabel.setText("Export discarded: data haven't changed since last export.");
@@ -4678,7 +4720,7 @@ public class FrontEnd extends JFrame {
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                            safeExecute(new Runnable(){
+                            syncExecute(new Runnable(){
                                 public void run() {
                                     try {
                                         boolean added = false;
@@ -5281,7 +5323,7 @@ public class FrontEnd extends JFrame {
     
     private void installLocalPackages(final AddOnFilesChooser addOnFileChooser, final PackType addOnType, final DefaultTableModel addOnModel) {
         if (addOnFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-            safeExecute(new Runnable(){
+            syncExecute(new Runnable(){
                 public void run() {
                     final Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
                     StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
