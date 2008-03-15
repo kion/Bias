@@ -28,6 +28,10 @@ import bias.utils.Validator;
  * @author kion
  */
 public class Synchronizer extends ToolExtension implements AfterSaveEventListener {
+    
+    // TODO [P1] add import-handling
+    
+    // TODO [P1] add option 'request user-confirmation before synchronization'
 
     private static final String PROPERTY_VERBOSE_MODE = "VERBOSE_MODE";
     private static final String PROPERTY_EXPORT_BEFORE_EXIT_ONLY = "EXPORT_BEFORE_EXIT_ONLY";

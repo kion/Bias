@@ -270,6 +270,8 @@ public class FrontEnd extends JFrame {
     
     private Map<String, Integer> depCounters;
     
+    private JCheckBox onlineShowAllPackagesCB;
+    
     private JTable onlineList;
     
     private DefaultTableModel extModel;
@@ -917,7 +919,7 @@ public class FrontEnd extends JFrame {
         if (skin != null) {
             String skinName = skin.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             if (!skinName.equals(currentSkin)) {
-                config.put(Constants.PROPERTY_SKIN, skinName);
+                config.setProperty(Constants.PROPERTY_SKIN, skinName);
                 configureSkin(skin);
                 skinChanged = true;
             } else {
@@ -1277,17 +1279,19 @@ public class FrontEnd extends JFrame {
     }
 
     private Properties collectProperties() {
-        config.put(Constants.PROPERTY_WINDOW_COORDINATE_X, 
+        config.setProperty(Constants.PROPERTY_WINDOW_COORDINATE_X, 
                 Constants.EMPTY_STR + getLocation().getX() / getToolkit().getScreenSize().getWidth());
-        config.put(Constants.PROPERTY_WINDOW_COORDINATE_Y, 
+        config.setProperty(Constants.PROPERTY_WINDOW_COORDINATE_Y, 
                 Constants.EMPTY_STR + getLocation().getY() / getToolkit().getScreenSize().getHeight());
-        config.put(Constants.PROPERTY_WINDOW_WIDTH, 
+        config.setProperty(Constants.PROPERTY_WINDOW_WIDTH, 
                 Constants.EMPTY_STR + getSize().getWidth() / getToolkit().getScreenSize().getHeight());
-        config.put(Constants.PROPERTY_WINDOW_HEIGHT, 
+        config.setProperty(Constants.PROPERTY_WINDOW_HEIGHT, 
                 Constants.EMPTY_STR + getSize().getHeight() / getToolkit().getScreenSize().getHeight());
+        config.setProperty(Constants.PROPERTY_SHOW_ALL_ONLINE_PACKS, 
+                Constants.EMPTY_STR + getOnlineShowAllPackagesCheckBox().isSelected());
         UUID lsid = getSelectedVisualEntryID();
         if (lsid != null) {
-            config.put(Constants.PROPERTY_LAST_SELECTED_ID, lsid.toString());
+            config.setProperty(Constants.PROPERTY_LAST_SELECTED_ID, lsid.toString());
         }
         return config;
     }
@@ -2119,6 +2123,20 @@ public class FrontEnd extends JFrame {
             });
         }
         return jLabelStatusBarMsg;
+    }
+
+    /**
+     * This method initializes onlineShowAllPackagesCB
+     * 
+     * @return javax.swing.JCheckBox
+     */
+    private JCheckBox getOnlineShowAllPackagesCheckBox() {
+        if (onlineShowAllPackagesCB == null) {
+            onlineShowAllPackagesCB = new JCheckBox("Show all packages (includes already installed packages with the same or older version into the list)");
+            String showAll = config.getProperty(Constants.PROPERTY_SHOW_ALL_ONLINE_PACKS);
+            onlineShowAllPackagesCB.setSelected(!Validator.isNullOrBlank(showAll) && Boolean.valueOf(showAll));
+        }
+        return onlineShowAllPackagesCB;
     }
 
     /**
@@ -4875,7 +4893,7 @@ public class FrontEnd extends JFrame {
                 JButton onlineRefreshButt = new JButton("Refresh");
                 onlineRefreshButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        refreshOnlinePackagesList(null);
+                        refreshOnlinePackagesList(null, getOnlineShowAllPackagesCheckBox().isSelected());
                     }
                 });
                 JButton onlineDetailsButt = new JButton("Package details");
@@ -5004,7 +5022,10 @@ public class FrontEnd extends JFrame {
                 onlineTopPanel.add(new JScrollPane(onlineList), BorderLayout.SOUTH);
                 onlinePanel.add(onlineTopPanel, BorderLayout.NORTH);
                 onlinePanel.add(onlineProgressPanel, BorderLayout.CENTER);
-                onlinePanel.add(onlineControlsPanel, BorderLayout.SOUTH);
+                JPanel p = new JPanel(new BorderLayout());
+                p.add(getOnlineShowAllPackagesCheckBox(), BorderLayout.NORTH);
+                p.add(onlineControlsPanel, BorderLayout.SOUTH);
+                onlinePanel.add(p, BorderLayout.SOUTH);
                 
                 addOnsPane.addTab("Online", uiIcons.getIconOnline(), onlinePanel);
                 
@@ -5299,7 +5320,7 @@ public class FrontEnd extends JFrame {
                 }
             }
         };
-        refreshOnlinePackagesList(updateTask);
+        refreshOnlinePackagesList(updateTask, getOnlineShowAllPackagesCheckBox().isSelected());
     }
     
     private boolean updatesAvailable() {
@@ -5407,8 +5428,7 @@ public class FrontEnd extends JFrame {
     
     private boolean onlineListRefreshed = false;
     
-    // TODO [P1] add option to forced (without version-check) list refresh
-    private void refreshOnlinePackagesList(final Runnable onFinishAction) {
+    private void refreshOnlinePackagesList(final Runnable onFinishAction, final boolean showAll) {
         while (getOnlineModel().getRowCount() > 0) {
             getOnlineModel().removeRow(0);
         }
@@ -5432,6 +5452,8 @@ public class FrontEnd extends JFrame {
                                     row = getPackRow(pack, Constants.ADDON_STATUS_NEW);
                                 } else if (!isInstalledAndUpToDate) {
                                     row = getPackRow(pack, Constants.ADDON_STATUS_UPDATE);
+                                } else if (showAll) {
+                                    row = getPackRow(pack, Constants.EMPTY_STR);
                                 }
                                 if (row != null) {
                                     getAvailableOnlinePackages().put(pack.getName(), pack);
@@ -5617,7 +5639,7 @@ public class FrontEnd extends JFrame {
                             }
                         }
                         getDepCounters().clear();
-                        refreshOnlinePackagesList(null);
+                        refreshOnlinePackagesList(null, getOnlineShowAllPackagesCheckBox().isSelected());
                     }
                     @Override
                     public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime) {
@@ -5703,7 +5725,7 @@ public class FrontEnd extends JFrame {
                         };
                         // refresh online packages list, if needed, first...
                         if (!onlineListRefreshed) {
-                            refreshOnlinePackagesList(task);
+                            refreshOnlinePackagesList(task, getOnlineShowAllPackagesCheckBox().isSelected());
                         } else {
                             task.run();
                         }

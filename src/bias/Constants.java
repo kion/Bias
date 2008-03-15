@@ -187,6 +187,7 @@ public class Constants {
     public static final String PROPERTY_WINDOW_COORDINATE_Y = "WINDOW_COORDINATE_Y";
     public static final String PROPERTY_WINDOW_WIDTH = "WINDOW_WIDTH";
     public static final String PROPERTY_WINDOW_HEIGHT = "WINDOW_HEIGHT";
+    public static final String PROPERTY_SHOW_ALL_ONLINE_PACKS = "SHOW_ALL_ONLINE_PACKS";
     public static final String PROPERTY_LAST_SELECTED_ID = "LAST_SELECTED_ID";
     public static final String PROPERTY_LAST_UPDATE_DATE = "LAST_UPDATE_DATE";
 
