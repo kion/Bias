@@ -1379,7 +1379,7 @@ public class FrontEnd extends JFrame {
             p.add(new JLabel(
                     Constants.HTML_PREFIX +
                     Constants.HTML_COLOR_HIGHLIGHT_INFO + 
-                    "Please, wait while Bias application performing finalizing tasks..." +
+                    "Please, wait while finalizing tasks are being performed..." +
                     Constants.HTML_COLOR_SUFFIX +
                     Constants.HTML_SUFFIX
                     ));
