@@ -72,15 +72,19 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     /* (non-Javadoc)
      * @see bias.event.AfterSaveEventListener#onEvent(bias.event.SaveEvent)
      */
-    public void onEvent(SaveEvent e) throws Throwable {
-        if (exportConfigs != null && !exportConfigs.isEmpty()) {
-            if (exportBeforeExitOnly && !e.isBeforeExit()) {
-                return;
+    public void onEvent(final SaveEvent e) throws Throwable {
+        FrontEnd.syncExecute(new Runnable(){
+            public void run() {
+                if (exportConfigs != null && !exportConfigs.isEmpty()) {
+                    if (exportBeforeExitOnly && !e.isBeforeExit()) {
+                        return;
+                    }
+                }
+                for (final String configName : getExportConfigs()) {
+                    FrontEnd.autoExport(configName, false, verbose);
+                }
             }
-            for (String configName : getExportConfigs()) {
-                FrontEnd.autoExport(configName, false, verbose);
-            }
-        }
+        });
     }
     
     private Collection<String> getExportConfigs() {

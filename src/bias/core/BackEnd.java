@@ -818,13 +818,48 @@ public class BackEnd {
         // addons/libs
         if (config.isExportAddOnsAndLibs()) {
             File addonsDir = new File(exportDir, Constants.ADDONS_DIR.getName());
-            FSUtils.duplicateFile(Constants.ADDONS_DIR, addonsDir);
+            if (!addonsDir.exists()) {
+                addonsDir.mkdir();
+            }
+            Collection<String> updatedFiles = new ArrayList<String>();
+            for (File file : Constants.ADDONS_DIR.listFiles()) {
+                if (file.getName().startsWith(Constants.UPDATE_FILE_PREFIX)) {
+                    File updatedFile = new File(Constants.ADDONS_DIR, file.getName().substring(Constants.UPDATE_FILE_PREFIX.length()));
+                    updatedFiles.add(updatedFile.getName());
+                    File exportFile = new File(addonsDir, updatedFile.getName());
+                    FSUtils.duplicateFile(file, exportFile);
+                } else {
+                    if (!updatedFiles.contains(file.getName())) {
+                        File exportFile = new File(addonsDir, file.getName());
+                        FSUtils.duplicateFile(file, exportFile);
+                    }
+                }
+            }
             File libsDir = new File(exportDir, Constants.LIBS_DIR.getName());
-            FSUtils.duplicateFile(Constants.LIBS_DIR, libsDir);
+            if (!libsDir.exists()) {
+                libsDir.mkdir();
+            }
+            updatedFiles.clear();
+            for (File file : Constants.LIBS_DIR.listFiles()) {
+                if (file.getName().startsWith(Constants.UPDATE_FILE_PREFIX)) {
+                    File updatedFile = new File(Constants.LIBS_DIR, file.getName().substring(Constants.UPDATE_FILE_PREFIX.length()));
+                    updatedFiles.add(updatedFile.getName());
+                    File exportFile = new File(libsDir, updatedFile.getName());
+                    FSUtils.duplicateFile(file, exportFile);
+                } else {
+                    if (!updatedFiles.contains(file.getName())) {
+                        File exportFile = new File(libsDir, file.getName());
+                        FSUtils.duplicateFile(file, exportFile);
+                    }
+                }
+            }
         }
         // app core
         if (config.isExportAppCore()) {
-            File localAppCoreFile = new File(Constants.ROOT_DIR, Constants.APP_CORE_FILE_NAME);
+            File localAppCoreFile = new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME);
+            if (!localAppCoreFile.exists()) {
+                localAppCoreFile = new File(Constants.ROOT_DIR, Constants.APP_CORE_FILE_NAME);
+            }
             File appCoreFile = new File(exportDir, Constants.APP_CORE_FILE_NAME);
             FSUtils.duplicateFile(localAppCoreFile, appCoreFile);
         }

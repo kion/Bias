@@ -4,6 +4,7 @@
 package bias.extension.FTPTransfer;
 
 import java.awt.Component;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,7 +19,7 @@ import javax.swing.JTextField;
 
 import bias.Constants;
 import bias.Preferences;
-import bias.extension.TransferExtension;
+import bias.extension.ObservableTransferExtension;
 import bias.extension.TransferOptions;
 import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
@@ -27,7 +28,7 @@ import bias.utils.Validator;
 /**
  * @author kion
  */
-public class FTPTransfer extends TransferExtension {
+public class FTPTransfer extends ObservableTransferExtension {
     
     private static final String TRANSFER_OPTION_FILEPATH = "FILEPATH";
     private static final String TRANSFER_OPTION_SERVER = "SERVER";
@@ -53,6 +54,9 @@ public class FTPTransfer extends TransferExtension {
      */
     @Override
     public void exportData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable {
+        long startTime = System.currentTimeMillis();
+        long transferredBytesNum = 0;
+        long elapsedTime = 0;
         Properties opts = PropertiesUtils.deserializeProperties(options);
         String server = opts.getProperty(TRANSFER_OPTION_SERVER);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
@@ -73,7 +77,19 @@ public class FTPTransfer extends TransferExtension {
         urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut * 1000);
         urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut * 1000);
         OutputStream os = urlc.getOutputStream();
-        os.write(data);
+        
+        ByteArrayInputStream bis = new ByteArrayInputStream(data);
+        byte[] buffer = new byte[1024];
+        int br;
+        while ((br = bis.read(buffer)) > 0) {
+            os.write(buffer, 0, br);
+            if (!transferMetaData) {
+                transferredBytesNum += br;
+                elapsedTime = System.currentTimeMillis() - startTime;
+                fireOnProgressEvent(transferredBytesNum, elapsedTime);
+            }
+        }
+        bis.close();
         os.close();
     }
 
@@ -82,6 +98,9 @@ public class FTPTransfer extends TransferExtension {
      */
     @Override
     public byte[] importData(byte[] options, boolean transferMetaData) throws Throwable {
+        long startTime = System.currentTimeMillis();
+        long transferredBytesNum = 0;
+        long elapsedTime = 0;
         Properties opts = PropertiesUtils.deserializeProperties(options);
         String server = opts.getProperty(TRANSFER_OPTION_SERVER);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
@@ -110,6 +129,11 @@ public class FTPTransfer extends TransferExtension {
         int br;
         while ((br = is.read(buffer)) > 0) {
             baos.write(buffer, 0, br);
+            if (!transferMetaData) {
+                transferredBytesNum += br;
+                elapsedTime = System.currentTimeMillis() - startTime;
+                fireOnProgressEvent(transferredBytesNum, elapsedTime);
+            }
         }
         baos.close();
         is.close();
@@ -162,8 +186,9 @@ public class FTPTransfer extends TransferExtension {
             if (!Validator.isNullOrBlank(text)) {
                 options.setProperty(TRANSFER_OPTION_PASSWORD, text);
             }
+            return new TransferOptions(PropertiesUtils.serializeProperties(options), filepathTF.getText());
         }
-        return new TransferOptions(PropertiesUtils.serializeProperties(options), filepathTF.getText());
+        return null;
     }
 
 }

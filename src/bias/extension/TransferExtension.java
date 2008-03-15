@@ -18,8 +18,6 @@ import bias.core.TransferData;
  */
 public abstract class TransferExtension implements Extension {
     
-    // TODO [P1] implement call-back support for progress observation ?...
-    
     private byte[] options;
     
     /**

@@ -3,7 +3,13 @@
  */
 package bias.extension;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.Properties;
 
 import javax.swing.JFileChooser;
@@ -11,13 +17,12 @@ import javax.swing.JFileChooser;
 import bias.Constants;
 import bias.gui.FrontEnd;
 import bias.gui.ZipFileChooser;
-import bias.utils.FSUtils;
 import bias.utils.PropertiesUtils;
 
 /**
  * @author kion
  */
-public class LocalTransfer extends TransferExtension {
+public class LocalTransfer extends ObservableTransferExtension {
 
     private static final String TRANSFER_OPTION_FILEPATH = "FILEPATH";
 
@@ -32,6 +37,9 @@ public class LocalTransfer extends TransferExtension {
      */
     @Override
     public void exportData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable {
+        long startTime = System.currentTimeMillis();
+        long transferredBytesNum = 0;
+        long elapsedTime = 0;
         Properties opts = PropertiesUtils.deserializeProperties(options);
         String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
         File file = new File(filePath);
@@ -44,7 +52,21 @@ public class LocalTransfer extends TransferExtension {
             file.getParentFile().mkdirs();
         }
         file.createNewFile();
-        FSUtils.writeFile(file, data);
+        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+        FileOutputStream fos = new FileOutputStream(file);
+        BufferedOutputStream bos = new BufferedOutputStream(fos);
+        byte[] buffer = new byte[1024];
+        int br;
+        while ((br = bais.read(buffer)) > 0) {
+            bos.write(buffer, 0, br);
+            if (!transferMetaData) {
+                transferredBytesNum += br;
+                elapsedTime = System.currentTimeMillis() - startTime;
+                fireOnProgressEvent(transferredBytesNum, elapsedTime);
+            }
+        }
+        bos.close();
+        bais.close();
     }
 
     /* (non-Javadoc)
@@ -52,13 +74,33 @@ public class LocalTransfer extends TransferExtension {
      */
     @Override
     public byte[] importData(byte[] options, boolean transferMetaData) throws Throwable {
+        long startTime = System.currentTimeMillis();
+        long transferredBytesNum = 0;
+        long elapsedTime = 0;
         Properties opts = PropertiesUtils.deserializeProperties(options);
         String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
         File file = new File(filePath);
         if (transferMetaData) {
             file = new File(file.getParentFile(), file.getName() + META_DATA_FILE_SUFIX);
         }
-        return FSUtils.readFile(file);
+        byte[] data = null;
+        FileInputStream fis = new FileInputStream(file);
+        BufferedInputStream bis = new BufferedInputStream(fis);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int br;
+        while ((br = bis.read(buffer)) > 0) {
+            baos.write(buffer, 0, br);
+            if (!transferMetaData) {
+                transferredBytesNum += br;
+                elapsedTime = System.currentTimeMillis() - startTime;
+                fireOnProgressEvent(transferredBytesNum, elapsedTime);
+            }
+        }
+        baos.close();
+        bis.close();
+        data = baos.toByteArray();
+        return data;
     }
     
     /* (non-Javadoc)
@@ -85,8 +127,9 @@ public class LocalTransfer extends TransferExtension {
                 filePath += ".zip";
             }
             options.setProperty(TRANSFER_OPTION_FILEPATH, filePath);
+            return new TransferOptions(PropertiesUtils.serializeProperties(options), filePath);
         }
-        return new TransferOptions(PropertiesUtils.serializeProperties(options), filePath);
+        return null;
     }
 
 }

@@ -155,10 +155,12 @@ import bias.extension.EntryExtension;
 import bias.extension.Extension;
 import bias.extension.ExtensionFactory;
 import bias.extension.MissingExtensionInformer;
+import bias.extension.ObservableTransferExtension;
 import bias.extension.ToolExtension;
 import bias.extension.ToolRepresentation;
 import bias.extension.TransferExtension;
 import bias.extension.TransferOptions;
+import bias.extension.TransferProgressListener;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
 import bias.skin.Skin;
 import bias.skin.UIIcons;
@@ -285,6 +287,8 @@ public class FrontEnd extends JFrame {
     private DefaultListModel icModel;
     
     private DefaultTableModel onlineModel;
+    
+    private JProgressBar transferProgressBar;
     
     private JProgressBar onlineSingleProgressBar;
     
@@ -542,11 +546,7 @@ public class FrontEnd extends JFrame {
         } else {
             getInstance().setVisible(true);
         }
-        syncExecute(new Runnable(){
-            public void run() { 
-                fireStartUpEvent();
-            }
-        });
+        fireStartUpEvent();
     }
     
     private static FrontEnd getInstance() {
@@ -1222,11 +1222,7 @@ public class FrontEnd extends JFrame {
     
     private void store(final boolean beforeExit) {
         if (beforeExit) finalizeUI();
-        syncExecute(new Runnable(){
-            public void run() { 
-                fireBeforeSaveEvent(new SaveEvent(beforeExit));
-            }
-        });
+        fireBeforeSaveEvent(new SaveEvent(beforeExit));
         syncExecute(new Runnable(){
             public void run() { 
                 BackEnd.getInstance().setConfig(collectProperties()); 
@@ -1260,11 +1256,7 @@ public class FrontEnd extends JFrame {
             }
         });
         displayStatusBarMessage("data saved");
-        syncExecute(new Runnable(){
-            public void run() { 
-                fireAfterSaveEvent(new SaveEvent(beforeExit));
-            }
-        });
+        fireAfterSaveEvent(new SaveEvent(beforeExit));
     }
     
     private Map<String, byte[]> collectToolsData() throws Throwable {
@@ -1472,11 +1464,7 @@ public class FrontEnd extends JFrame {
     
     private void shutdown() {
         finalizeUI();
-        syncExecute(new Runnable(){
-            public void run() { 
-                fireBeforeExitEvent();
-            }
-        });
+        fireBeforeExitEvent();
         syncExecute(new Runnable(){
             public void run() {
                 BackEnd.getInstance().shutdown(0);
@@ -3053,43 +3041,70 @@ public class FrontEnd extends JFrame {
                 int opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Import", JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
                     if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
-                        String configName = (String) configsCB.getSelectedItem();
-                        autoImport(configName, importUnchangedDataCB.isSelected(), true);
+                        final String configName = (String) configsCB.getSelectedItem();
+                        syncExecute(new Runnable(){
+                            public void run() {
+                                autoImport(configName, importUnchangedDataCB.isSelected(), true);
+                            }
+                        });
                     } else {
-                        JComboBox cb = new JComboBox();
+                        final JComboBox cb = new JComboBox();
                         for (String annotation : ExtensionFactory.getAnnotatedTransferExtensions().keySet()) {
                             cb.addItem(annotation);
                         }
                         opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose import type", JOptionPane.OK_CANCEL_OPTION);
                         if (opt == JOptionPane.OK_OPTION) {
-                            final String annotation = (String) cb.getSelectedItem();
-                            final TransferExtension transferrer = ExtensionFactory.getAnnotatedTransferExtensions().get(annotation);
-                            final TransferOptions importOptions = transferrer.configure(TRANSFER_TYPE.IMPORT);
-                            if (importOptions == null) {
-                                hideBottomPanel();
-                                throw new Exception("Invalid import configuration (null)!");
-                            }
-                            final byte[] transferOptions = importOptions.getOptions();
-                            if (transferOptions == null || transferOptions.length == 0) {
-                                hideBottomPanel();
-                                throw new Exception("Transfer options are missing! Import canceled.");
-                            }
-                            final String fileLocation = importOptions.getFileLocation();
-                            if (Validator.isNullOrBlank(fileLocation)) {
-                                hideBottomPanel();
-                                throw new Exception("Import file location is missing!");
-                            }
-                            final JPanel panel = new JPanel(new BorderLayout());
-                            final DefaultListModel processModel = new DefaultListModel();
-                            final JList processList = new JList(processModel);
-                            panel.add(processList, BorderLayout.CENTER);
-                            final JLabel label = new JLabel("Data import");
-                            processModel.addElement("Transferring data to be imported...");
-                            displayBottomPanel(label, panel);
-                            autoscrollList(processList);
                             syncExecute(new Runnable(){
                                 public void run() {
+                                    JPanel panel = new JPanel(new BorderLayout());
+                                    DefaultListModel processModel = new DefaultListModel();
+                                    JList processList = new JList(processModel);
+                                    panel.add(processList, BorderLayout.CENTER);
+                                    instance.getTransferProgressBar().setVisible(false);
+                                    panel.add(instance.getTransferProgressBar(), BorderLayout.SOUTH);
+                                    JLabel label = new JLabel("Data import");
+                                    processModel.addElement("Transferring data to be imported...");
+                                    displayBottomPanel(label, panel);
+                                    autoscrollList(processList);
                                     try {
+                                        final String annotation = (String) cb.getSelectedItem();
+                                        final TransferExtension transferrer = ExtensionFactory.getAnnotatedTransferExtensions().get(annotation);
+                                        final TransferOptions importOptions = transferrer.configure(TRANSFER_TYPE.IMPORT);
+                                        if (importOptions == null) {
+                                            hideBottomPanel();
+                                            return;
+                                        }
+                                        final byte[] transferOptions = importOptions.getOptions();
+                                        if (transferOptions == null || transferOptions.length == 0) {
+                                            hideBottomPanel();
+                                            throw new Exception("Transfer options are missing! Import canceled.");
+                                        }
+                                        final String fileLocation = importOptions.getFileLocation();
+                                        if (Validator.isNullOrBlank(fileLocation)) {
+                                            hideBottomPanel();
+                                            throw new Exception("Import file location is missing!");
+                                        }
+                                        byte[] metaBytes = transferrer.importData(transferOptions, true);
+                                        if (metaBytes != null) {
+                                            Properties metaData = PropertiesUtils.deserializeProperties(metaBytes);
+                                            String sizeStr = metaData.getProperty(Constants.META_DATA_FILESIZE);
+                                            if (!Validator.isNullOrBlank(sizeStr) && transferrer instanceof ObservableTransferExtension) {
+                                                final int size = Integer.valueOf(sizeStr);
+                                                instance.getTransferProgressBar().setMaximum(size);
+                                                instance.getTransferProgressBar().setVisible(true);
+                                                ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
+                                                    public void onProgress(long transferredBytesNum, long elapsedTime) {
+                                                        instance.getTransferProgressBar().setValue((int) transferredBytesNum);
+                                                        double estimationCoef = ((double) size) / ((double) transferredBytesNum);
+                                                        long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
+                                                        instance.getTransferProgressBar().setString( 
+                                                                FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(size)
+                                                                + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                                                + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
+                                                    }
+                                                });
+                                            }
+                                        }
                                         TransferData td = transferrer.importData(importOptions, importUnchangedDataCB.isSelected());
                                         byte[] importedData = td.getData();
                                         if (importedData == null) {
@@ -3251,11 +3266,7 @@ public class FrontEnd extends JFrame {
                                                             sb.append(")");
                                                         }
                                                         displayStatusBarMessage(sb.toString());
-                                                        syncExecute(new Runnable(){
-                                                            public void run() { 
-                                                                fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass()));
-                                                            }
-                                                        });
+                                                        fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass()));
                                                         Component[] c = new Component[] {
                                                                 new JLabel("Data have been successfully imported."),
                                                                 new JLabel("If you want to save this import configuration,"),
@@ -3309,107 +3320,121 @@ public class FrontEnd extends JFrame {
     
     public static void autoImport(final String configName, final boolean force, final boolean verbose) {
         if (instance != null) {
+            JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
+            JLabel processLabel = verbose ? new JLabel("Importing data...") : null;
+            JLabel label = verbose ? new JLabel("Import data") : null;
+            if (verbose) panel.add(processLabel, BorderLayout.CENTER);
+            instance.getTransferProgressBar().setVisible(false);
+            if (verbose) panel.add(instance.getTransferProgressBar(), BorderLayout.SOUTH);
+            if (verbose) displayBottomPanel(label, panel);
             try {
-                final JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
-                final JLabel processLabel = verbose ? new JLabel("Importing data...") : null;
-                if (verbose) panel.add(processLabel, BorderLayout.CENTER);
-                final JLabel label = verbose ? new JLabel("Import data") : null;
-                if (verbose) displayBottomPanel(label, panel);
-                syncExecute(new Runnable(){
-                    public void run() {
-                        try {
-                            ImportConfiguration importConfig = BackEnd.getInstance().getPopulatedImportConfigurations().get(configName);
-                            final TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
-                            if (transferrer == null) {
-                                throw new Exception("It looks like transfer type used in this stored import configuration is no longer available (extension uninstalled?).");
-                            }
-                            byte[] transferOptions = BackEnd.getInstance().getImportOptions(configName);
-                            TransferData td = transferrer.importData(new TransferOptions(transferOptions, importConfig.getFileLocation()), force);
-                            byte[] importedData = td.getData();
-                            if (importedData == null) {
-                                if (verbose) {
-                                    label.setText("<html><font color=green>Data import - Completed</font></html>");
-                                    processLabel.setText("Import discarded: data haven't changed since last import.");
+                ImportConfiguration importConfig = BackEnd.getInstance().getPopulatedImportConfigurations().get(configName);
+                final TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
+                if (transferrer == null) {
+                    throw new Exception("It looks like transfer type used in this stored import configuration is no longer available (extension uninstalled?).");
+                }
+                byte[] transferOptions = BackEnd.getInstance().getImportOptions(configName);
+                byte[] metaBytes = transferrer.importData(transferOptions, true);
+                if (metaBytes != null) {
+                    Properties metaData = PropertiesUtils.deserializeProperties(metaBytes);
+                    if (verbose) {
+                        String sizeStr = metaData.getProperty(Constants.META_DATA_FILESIZE);
+                        if (!Validator.isNullOrBlank(sizeStr) && transferrer instanceof ObservableTransferExtension) {
+                            final int size = Integer.valueOf(sizeStr);
+                            instance.getTransferProgressBar().setMaximum(size);
+                            instance.getTransferProgressBar().setVisible(true);
+                            ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
+                                public void onProgress(long transferredBytesNum, long elapsedTime) {
+                                    instance.getTransferProgressBar().setValue((int) transferredBytesNum);
+                                    double estimationCoef = ((double) size) / ((double) transferredBytesNum);
+                                    long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
+                                    instance.getTransferProgressBar().setString( 
+                                            FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(size)
+                                            + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                            + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
                                 }
-                            } else {
-                                try {
-                                    File importDir = new File(Constants.TMP_DIR, UUID.randomUUID().toString());
-                                    FSUtils.delete(importDir);
-                                    ArchUtils.extract(importedData, importDir);
-                                    DataCategory data = BackEnd.getInstance().importData(importDir, instance.getVisualEntriesIDs(), importConfig);
-                                    if (!data.getData().isEmpty()) {
-                                        instance.representData(data);
-                                    }
-                                    if (importConfig.isImportToolsData()) {
-                                        representTools();
-                                    }
-                                    if (importConfig.isImportImportExportConfigs()) {
-                                        initTransferrers();
-                                    }
-                                    if (importConfig.isImportPrefs()) {
-                                        Preferences.getInstance().init();
-                                        instance.applyPreferences();
-                                    }
-                                    if (importConfig.isImportGlobalConfig()) {
-                                        initGlobalSettings();
-                                        instance.applyGlobalSettings();
-                                    }
-                                    if (verbose) {
-                                        label.setText("<html><font color=green>Data import - Completed</font></html>");
-                                        processLabel.setText("Data have been successfully imported.");
-                                    }
-                                    StringBuffer sb = new StringBuffer("import done (" + configName);
-                                    Properties meta = td.getMetaData();
-                                    if (meta != null && !meta.isEmpty()) {
-                                        String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
-                                        if (!Validator.isNullOrBlank(timestamp)) {
-                                            sb.append(", ");
-                                            sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
-                                        }
-                                        String size = meta.getProperty(Constants.META_DATA_FILESIZE);
-                                        if (!Validator.isNullOrBlank(size)) {
-                                            sb.append(", ");
-                                            sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
-                                        }
-                                    }
-                                    sb.append(")");
-                                    instance.displayStatusBarMessage(sb.toString());
-                                    syncExecute(new Runnable(){
-                                        public void run() { 
-                                            fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass(), configName));
-                                        }
-                                    });
-                                } catch (GeneralSecurityException gse) {
-                                    if (verbose) {
-                                        processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
-                                        label.setText("<html><font color=red>Data import - Failed</font></html>");
-                                    }
-                                    gse.printStackTrace(System.err);
-                                } catch (Throwable t) {
-                                    String errMsg = "Failed to import data!";
-                                    if (t.getMessage() != null) {
-                                        errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
-                                    }
-                                    if (verbose) {
-                                        processLabel.setText(errMsg);
-                                        label.setText("<html><font color=red>Data import - Failed</font></html>");
-                                    }
-                                    t.printStackTrace(System.err);
-                                }
-                            }
-                        } catch (Throwable ex) {
-                            String errMsg = "Failed to import data!";
-                            if (ex.getMessage() != null) {
-                                errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
-                            }
-                            processLabel.setText(errMsg);
-                            label.setText("<html><font color=red>Data import - Failed</font></html>");
-                            ex.printStackTrace(System.err);
+                            });
                         }
                     }
-                });
-            } catch (Exception ex) {
-                displayErrorMessage("Failed to import data!", ex);
+                }
+                TransferData td = transferrer.importData(new TransferOptions(transferOptions, importConfig.getFileLocation()), force);
+                byte[] importedData = td.getData();
+                if (importedData == null) {
+                    panel.remove(instance.getTransferProgressBar());
+                    if (verbose) {
+                        label.setText("<html><font color=green>Data import - Completed</font></html>");
+                        processLabel.setText("Import discarded: data haven't changed since last import.");
+                    }
+                } else {
+                    try {
+                        File importDir = new File(Constants.TMP_DIR, UUID.randomUUID().toString());
+                        FSUtils.delete(importDir);
+                        ArchUtils.extract(importedData, importDir);
+                        DataCategory data = BackEnd.getInstance().importData(importDir, instance.getVisualEntriesIDs(), importConfig);
+                        if (!data.getData().isEmpty()) {
+                            instance.representData(data);
+                        }
+                        if (importConfig.isImportToolsData()) {
+                            representTools();
+                        }
+                        if (importConfig.isImportImportExportConfigs()) {
+                            initTransferrers();
+                        }
+                        if (importConfig.isImportPrefs()) {
+                            Preferences.getInstance().init();
+                            instance.applyPreferences();
+                        }
+                        if (importConfig.isImportGlobalConfig()) {
+                            initGlobalSettings();
+                            instance.applyGlobalSettings();
+                        }
+                        if (verbose) {
+                            label.setText("<html><font color=green>Data import - Completed</font></html>");
+                            processLabel.setText("Data have been successfully imported.");
+                        }
+                        StringBuffer sb = new StringBuffer("import done (" + configName);
+                        Properties meta = td.getMetaData();
+                        if (meta != null && !meta.isEmpty()) {
+                            String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
+                            if (!Validator.isNullOrBlank(timestamp)) {
+                                sb.append(", ");
+                                sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
+                            }
+                            String size = meta.getProperty(Constants.META_DATA_FILESIZE);
+                            if (!Validator.isNullOrBlank(size)) {
+                                sb.append(", ");
+                                sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
+                            }
+                        }
+                        sb.append(")");
+                        instance.displayStatusBarMessage(sb.toString());
+                        fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass(), configName));
+                    } catch (GeneralSecurityException gse) {
+                        if (verbose) {
+                            processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
+                            label.setText("<html><font color=red>Data import - Failed</font></html>");
+                        }
+                        gse.printStackTrace(System.err);
+                    } catch (Throwable t) {
+                        String errMsg = "Failed to import data!";
+                        if (t.getMessage() != null) {
+                            errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
+                        }
+                        if (verbose) {
+                            processLabel.setText(errMsg);
+                            label.setText("<html><font color=red>Data import - Failed</font></html>");
+                        }
+                        t.printStackTrace(System.err);
+                    }
+                }
+            } catch (Throwable ex) {
+                String errMsg = "Failed to import data!";
+                if (ex.getMessage() != null) {
+                    errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                }
+                processLabel.setText(errMsg);
+                label.setText("<html><font color=red>Data import - Failed</font></html>");
+                ex.printStackTrace(System.err);
             }
         }
     }
@@ -3489,8 +3514,12 @@ public class FrontEnd extends JFrame {
                 opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Export", JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
                     if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
-                        String configName = (String) configsCB.getSelectedItem();
-                        autoExport(configName, exportUnchangedDataCB.isSelected(), true);
+                        final String configName = (String) configsCB.getSelectedItem();
+                        syncExecute(new Runnable(){
+                            public void run() {
+                                autoExport(configName, exportUnchangedDataCB.isSelected(), true);
+                            }
+                        });
                     } else {
                         final DataCategory data = collectData();
                         filterData(data, BackEnd.getInstance().getStoredDataEntryIDs());
@@ -3603,16 +3632,18 @@ public class FrontEnd extends JFrame {
                             if (!Arrays.equals(passwordTF1.getPassword(), passwordTF2.getPassword())) {
                                 throw new Exception("Password confirmation failure!");
                             }
-                            final JPanel panel = new JPanel(new BorderLayout());
-                            final DefaultListModel processModel = new DefaultListModel();
-                            final JList processList = new JList(processModel);
-                            panel.add(processList, BorderLayout.CENTER);
-                            final JLabel label = new JLabel("Data export");
-                            processModel.addElement("Compressing data to be exported...");
-                            displayBottomPanel(label, panel);
-                            autoscrollList(processList);
                             syncExecute(new Runnable(){
                                 public void run() {
+                                    JPanel panel = new JPanel(new BorderLayout());
+                                    DefaultListModel processModel = new DefaultListModel();
+                                    JList processList = new JList(processModel);
+                                    panel.add(processList, BorderLayout.CENTER);
+                                    instance.getTransferProgressBar().setVisible(false);
+                                    panel.add(instance.getTransferProgressBar(), BorderLayout.SOUTH);
+                                    JLabel label = new JLabel("Data export");
+                                    processModel.addElement("Compressing data to be exported...");
+                                    displayBottomPanel(label, panel);
+                                    autoscrollList(processList);
                                     try {
                                         boolean exportAll = false;
                                         if (checkTreeManager != null) {
@@ -3659,7 +3690,7 @@ public class FrontEnd extends JFrame {
                                         exportConfig.setExportAddOnConfigs(exportAddOnConfigsCB.isSelected());
                                         exportConfig.setExportImportExportConfigs(exportImportExportConfigsCB.isSelected());
                                         exportConfig.setPassword(new String(passwordTF1.getPassword()));
-                                        TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
+                                        final TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
                                         processModel.addElement("Data to be exported have been successfully compressed.");
                                         autoscrollList(processList);
                                         JComboBox cb = new JComboBox();
@@ -3676,7 +3707,7 @@ public class FrontEnd extends JFrame {
                                             TransferOptions exportOptions = transferrer.configure(TRANSFER_TYPE.IMPORT);
                                             if (exportOptions == null) {
                                                 hideBottomPanel();
-                                                throw new Exception("Invalid export configuration (null)!");
+                                                return;
                                             }
                                             final byte[] transferOptions = exportOptions.getOptions();
                                             if (transferOptions == null || transferOptions.length == 0) {
@@ -3692,6 +3723,21 @@ public class FrontEnd extends JFrame {
                                                 exportConfig.setFileLocation(fileLocation);
                                                 processModel.addElement("Data is being transferred...");
                                                 autoscrollList(processList);
+                                                if (transferrer instanceof ObservableTransferExtension) {
+                                                    instance.getTransferProgressBar().setMaximum(td.getData().length);
+                                                    instance.getTransferProgressBar().setVisible(true);
+                                                    ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
+                                                        public void onProgress(long transferredBytesNum, long elapsedTime) {
+                                                            instance.getTransferProgressBar().setValue((int) transferredBytesNum);
+                                                            double estimationCoef = ((double) td.getData().length) / ((double) transferredBytesNum);
+                                                            long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
+                                                            instance.getTransferProgressBar().setString( 
+                                                                    FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(td.getData().length)
+                                                                    + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                                                    + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
+                                                        }
+                                                    });
+                                                }    
                                                 boolean exported = transferrer.exportData(td, new TransferOptions(transferOptions, exportConfig.getFileLocation()), exportUnchangedDataCB.isSelected());
                                                 if (!exported) {
                                                     label.setText("<html><font color=green>Data export - Completed</font></html>");
@@ -3719,11 +3765,7 @@ public class FrontEnd extends JFrame {
                                                         sb.append(")");
                                                     }
                                                     displayStatusBarMessage(sb.toString());
-                                                    syncExecute(new Runnable(){
-                                                        public void run() { 
-                                                            fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass()));
-                                                        }
-                                                    });
+                                                    fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass()));
                                                     configsCB.setEditable(true);
                                                     Component[] c = new Component[] {
                                                             new JLabel("Data have been successfully exported."),
@@ -3790,72 +3832,82 @@ public class FrontEnd extends JFrame {
     
     public static void autoExport(final String configName, final boolean force, final boolean verbose) {
         if (instance != null) {
+            JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
+            JLabel processLabel = verbose ? new JLabel("Exporting data...") : null;
+            JLabel label = verbose ? new JLabel("Export data") : null;
+            if (verbose) panel.add(processLabel, BorderLayout.CENTER);
+            instance.getTransferProgressBar().setVisible(false);
+            if (verbose) panel.add(instance.getTransferProgressBar(), BorderLayout.SOUTH);
+            if (verbose) displayBottomPanel(label, panel);
             try {
-                final JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
-                final JLabel processLabel = verbose ? new JLabel("Exporting data...") : null;
-                if (verbose) panel.add(processLabel, BorderLayout.CENTER);
-                final JLabel label = verbose ? new JLabel("Export data") : null;
-                if (verbose) displayBottomPanel(label, panel);
-                syncExecute(new Runnable(){
-                    public void run() {
-                        try {
-                            DataCategory data = instance.collectData();
-                            final ExportConfiguration exportConfig = BackEnd.getInstance().getPopulatedExportConfigurations().get(configName);
-                            if (!exportConfig.isExportAll()) {
-                                instance.filterData(data, exportConfig.getSelectedIds(), exportConfig.getSelectedRecursiveIds());
+                DataCategory data = instance.collectData();
+                final ExportConfiguration exportConfig = BackEnd.getInstance().getPopulatedExportConfigurations().get(configName);
+                if (!exportConfig.isExportAll()) {
+                    instance.filterData(data, exportConfig.getSelectedIds(), exportConfig.getSelectedRecursiveIds());
+                }
+                final TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
+                final TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
+                if (transferrer == null) {
+                    throw new Exception("It looks like transfer type used in this stored export configuration is no longer available (extension uninstalled?).");
+                }
+                byte[] transferOptions = BackEnd.getInstance().getExportOptions(configName);
+                if (verbose) {
+                    if (transferrer instanceof ObservableTransferExtension) {
+                        instance.getTransferProgressBar().setMaximum(td.getData().length);
+                        instance.getTransferProgressBar().setVisible(true);
+                        ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
+                            public void onProgress(long transferredBytesNum, long elapsedTime) {
+                                instance.getTransferProgressBar().setValue((int) transferredBytesNum);
+                                double estimationCoef = ((double) td.getData().length) / ((double) transferredBytesNum);
+                                long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
+                                instance.getTransferProgressBar().setString( 
+                                        FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(td.getData().length)
+                                        + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                        + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
                             }
-                            TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
-                            final TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
-                            if (transferrer == null) {
-                                throw new Exception("It looks like transfer type used in this stored export configuration is no longer available (extension uninstalled?).");
-                            }
-                            byte[] transferOptions = BackEnd.getInstance().getExportOptions(configName);
-                            boolean exported = transferrer.exportData(td, new TransferOptions(transferOptions, exportConfig.getFileLocation()), force);
-                            if (exported) {
-                                if (verbose) {
-                                    label.setText("<html><font color=green>Data export - Completed</font></html>");
-                                    processLabel.setText("Data have been successfully exported.");
-                                }
-                                StringBuffer sb = new StringBuffer("export done (" + configName);
-                                Properties meta = td.getMetaData();
-                                if (meta != null && !meta.isEmpty()) {
-                                    String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
-                                    if (!Validator.isNullOrBlank(timestamp)) {
-                                        sb.append(", ");
-                                        sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
-                                    }
-                                    String size = meta.getProperty(Constants.META_DATA_FILESIZE);
-                                    if (!Validator.isNullOrBlank(size)) {
-                                        sb.append(", ");
-                                        sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
-                                    }
-                                }
-                                sb.append(")");
-                                instance.displayStatusBarMessage(sb.toString());
-                                syncExecute(new Runnable(){
-                                    public void run() { 
-                                        fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
-                                    }
-                                });
-                            } else if (verbose) {
-                                label.setText("<html><font color=green>Data export - Completed</font></html>");
-                                processLabel.setText("Export discarded: data haven't changed since last export.");
-                            }
-                        } catch (Throwable ex) {
-                            String errMsg = "Failed to export data!";
-                            if (ex.getMessage() != null) {
-                                errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
-                            }
-                            if (verbose) {
-                                processLabel.setText(errMsg);
-                                label.setText("<html><font color=red>Data export - Failed</font></html>");
-                            }
-                            ex.printStackTrace(System.err);
+                        });
+                    }    
+                }
+                boolean exported = transferrer.exportData(td, new TransferOptions(transferOptions, exportConfig.getFileLocation()), force);
+                if (exported) {
+                    if (verbose) {
+                        label.setText("<html><font color=green>Data export - Completed</font></html>");
+                        processLabel.setText("Data have been successfully exported.");
+                    }
+                    StringBuffer sb = new StringBuffer("export done (" + configName);
+                    Properties meta = td.getMetaData();
+                    if (meta != null && !meta.isEmpty()) {
+                        String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
+                        if (!Validator.isNullOrBlank(timestamp)) {
+                            sb.append(", ");
+                            sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
+                        }
+                        String size = meta.getProperty(Constants.META_DATA_FILESIZE);
+                        if (!Validator.isNullOrBlank(size)) {
+                            sb.append(", ");
+                            sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
                         }
                     }
-                });
-            } catch (Exception ex) {
-                displayErrorMessage("Failed to export data!", ex);
+                    sb.append(")");
+                    instance.displayStatusBarMessage(sb.toString());
+                    fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
+                } else {
+                    panel.remove(instance.getTransferProgressBar());
+                    if (verbose) {
+                        label.setText("<html><font color=green>Data export - Completed</font></html>");
+                        processLabel.setText("Export discarded: data haven't changed since last export.");
+                    }
+                }
+            } catch (Throwable ex) {
+                String errMsg = "Failed to export data!";
+                if (ex.getMessage() != null) {
+                    errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                }
+                if (verbose) {
+                    processLabel.setText(errMsg);
+                    label.setText("<html><font color=red>Data export - Failed</font></html>");
+                }
+                ex.printStackTrace(System.err);
             }
         }
     }
@@ -5296,6 +5348,16 @@ public class FrontEnd extends JFrame {
             onlineModel.addColumn("Status");
         }
         return onlineModel;
+    }
+    
+    private JProgressBar getTransferProgressBar() {
+        if (transferProgressBar == null) {
+            transferProgressBar = new JProgressBar(SwingConstants.HORIZONTAL);
+            transferProgressBar.setStringPainted(true);
+            transferProgressBar.setMinimum(0);
+            transferProgressBar.setString(Constants.EMPTY_STR);
+        }
+        return transferProgressBar;
     }
     
     private JProgressBar getOnlineSingleProgressBar() {
