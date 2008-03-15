@@ -2055,8 +2055,6 @@ public class FrontEnd extends JFrame {
         });
     }
     
-    // TODO [P2] add some possibility to display 'processing' messages in status bar ?... 
-
     /**
      * This method initializes jContentPane
      * 
