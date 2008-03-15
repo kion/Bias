@@ -63,7 +63,7 @@ public class Constants {
     public static final String HTML_COLOR_NORMAL = "<font color=\"#000000\">";
     public static final String HTML_COLOR_HIGHLIGHT_LINK = "<font color=\"blue\">";
     public static final String HTML_COLOR_HIGHLIGHT_OK = "<font color=\"#00A000\">";
-    public static final String HTML_COLOR_HIGHLIGHT_INFO = "<font color=\"#BC6A28\">";
+    public static final String HTML_COLOR_HIGHLIGHT_INFO = "<font color=\"#0000AF\">";
     public static final String HTML_COLOR_HIGHLIGHT_ERROR = "<font color=\"#FA0000\">";
     public static final String HTML_COLOR_HIGHLIGHT_WARNING = "<font color=\"#FA0000\">";
     public static final String HTML_COLOR_SUFFIX = "</font>";

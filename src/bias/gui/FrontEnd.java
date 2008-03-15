@@ -7,6 +7,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
+import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -15,6 +16,7 @@ import java.awt.GridLayout;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.Window;
+import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -53,6 +55,8 @@ import java.util.Properties;
 import java.util.Stack;
 import java.util.UUID;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -66,6 +70,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -91,6 +96,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.border.LineBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
@@ -172,8 +178,6 @@ import bias.utils.Downloader.DownloadListener;
  */
 public class FrontEnd extends JFrame {
     
-    // TODO [P1] make use of classes in java.util.concurrent package instead of direct usage of Thread/Runnable
-
     // TODO [P3] internationalization
 
     private static final long serialVersionUID = 1L;
@@ -187,8 +191,7 @@ public class FrontEnd extends JFrame {
 
     private static final ImageIcon ICON_CLOSE = new ImageIcon(FrontEnd.class.getResource("/bias/res/close.png"));
 
-    // TODO [P1] make use of process-icon
-//    private static final ImageIcon ICON_PROCESS = new ImageIcon(FrontEnd.class.getResource("/bias/res/process.gif"));
+    private static final ImageIcon ICON_PROCESS = new ImageIcon(FrontEnd.class.getResource("/bias/res/process.gif"));
 
     private static final Placement[] PLACEMENTS = new Placement[] { 
             new Placement(JTabbedPane.TOP),
@@ -590,7 +593,7 @@ public class FrontEnd extends JFrame {
     private static JPanel memUsageIndicatorPanel = null;
     
     private void startMemoryUsageMonitoring() {
-        new Thread(new Runnable() {
+        execute(new Runnable() {
             public void run() {
                 while (Preferences.getInstance().showMemoryUsage) {
                     MemoryMXBean mmxb = ManagementFactory.getMemoryMXBean();
@@ -606,7 +609,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
             }
-        }).start();
+        });
     }
     
     // TODO [P2] GUI should contain information about hot-key-bindings (for example, in tooltip-text for button with appropriate action set)
@@ -1211,12 +1214,40 @@ public class FrontEnd extends JFrame {
         return extension;
     }
     
-    private void store(boolean beforeExit) throws Throwable {
+    private void store(boolean beforeExit) {
         fireBeforeSaveEvent(new SaveEvent(beforeExit));
-        BackEnd.getInstance().setConfig(collectProperties());
-        BackEnd.getInstance().setData(collectData());
-        BackEnd.getInstance().setToolsData(collectToolsData());
-        BackEnd.getInstance().store();
+        safeExecute(new Runnable(){
+            public void run() { 
+                BackEnd.getInstance().setConfig(collectProperties()); 
+            }
+        });
+        safeExecute(new Runnable(){
+            public void run() { 
+                try {
+                    BackEnd.getInstance().setData(collectData());
+                } catch (Throwable t) {
+                    displayErrorMessage("Failed to collect data!", t);
+                }
+            }
+        });
+        safeExecute(new Runnable(){
+            public void run() { 
+                try {
+                    BackEnd.getInstance().setToolsData(collectToolsData());
+                } catch (Throwable t) {
+                    displayErrorMessage("Failed to collect tools data!", t);
+                }
+            }
+        });
+        safeExecute(new Runnable(){
+            public void run() { 
+                try {
+                    BackEnd.getInstance().store();
+                } catch (Throwable t) {
+                    displayErrorMessage("Failed to save data!", t);
+                }
+            }
+        });
         displayStatusBarMessage("data saved");
         fireAfterSaveEvent(new SaveEvent(beforeExit));
     }
@@ -1330,23 +1361,104 @@ public class FrontEnd extends JFrame {
         return data;
     }
     
-    // TODO [P1] wait for running threads to complete before shutting down
+    private JPanel processPanel;
+    
+    private JPanel getProcessPanel() {
+        if (processPanel == null) {
+            processPanel = new JPanel(new BorderLayout());
+            JPanel p = new JPanel(new FlowLayout());
+            p.add(new JLabel(
+                    Constants.HTML_PREFIX +
+                    Constants.HTML_COLOR_HIGHLIGHT_INFO + 
+                    "Please, wait while Bias application performing finalizing tasks..." +
+                    Constants.HTML_COLOR_SUFFIX +
+                    Constants.HTML_SUFFIX
+                    ));
+            processPanel.add(p, BorderLayout.NORTH);
+            processPanel.add(new JLabel(ICON_PROCESS), BorderLayout.CENTER);
+            JPanel p2 = new JPanel(new FlowLayout());
+            JLabel fql = new JLabel(
+                    Constants.HTML_PREFIX + 
+                    "<u>" + 
+                    Constants.HTML_COLOR_HIGHLIGHT_WARNING + 
+                    "Force exit (all incomplete tasks will be aborted)" +
+                    Constants.HTML_COLOR_SUFFIX + 
+                    "</u>" + 
+                    Constants.HTML_SUFFIX
+                    );
+            fql.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            fql.addMouseListener(new MouseAdapter(){
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    singleThreadExecutor.shutdownNow();
+                    BackEnd.getInstance().shutdown(0);
+                }
+            });
+            p2.add(fql);
+            processPanel.add(p2, BorderLayout.SOUTH);
+            processPanel.setBorder(new LineBorder(Color.GRAY, 7, true));
+        }
+        return processPanel;
+    }
+    
+    private void finalizeUI() {
+        JDialog finalizeDialog = new JDialog(this, ModalityType.MODELESS);
+        finalizeDialog.setUndecorated(true);
+        finalizeDialog.setContentPane(getProcessPanel());
+        finalizeDialog.pack();
+        finalizeDialog.setLocation(this.getX() + (this.getWidth() - finalizeDialog.getWidth()) / 2, this.getY() + (this.getHeight() - finalizeDialog.getHeight()) / 2);
+        finalizeDialog.setVisible(true);
+    }
+    
+    private static ExecutorService cachedThreadPool;
+    
+    /**
+     * This method should be used for non-critical tasks execution.
+     * It does not guarantee that task main application thread will wait until this task is completed.
+     * Thus, if user requests application to shutdown, all tasks executed via this method will be interrupted. 
+     * 
+     * @param task task to be executed
+     */
+    public static void execute(Runnable task) {
+        if (cachedThreadPool == null) {
+            cachedThreadPool = Executors.newCachedThreadPool();
+        }
+        cachedThreadPool.execute(task);
+    }
+    
+    private static ExecutorService singleThreadExecutor;
+    
+    /**
+     * This is shutdown-safe tasks execution method, that should be used for critical tasks,
+     * which need to be completed before application shuts down by user's request.
+     * Thus, even if user does request shutdown, application will wait until all tasks
+     * executed via this method are complete, or until user forces shutdown, whichever happen first.
+     * All tasks are queued and executed one by one, shutdown-task is the last in the queue.
+     * 
+     * @param task task to be executed before application shutdown
+     */
+    public static void safeExecute(Runnable task) {
+        if (singleThreadExecutor == null) {
+            singleThreadExecutor = Executors.newSingleThreadExecutor();
+        }
+        singleThreadExecutor.execute(task);
+    }
+    
     private void shutdown() {
+        finalizeUI();
         fireBeforeExitEvent();
-        BackEnd.getInstance().shutdown(0);
+        safeExecute(new Runnable(){
+            public void run() {
+                BackEnd.getInstance().shutdown(0);
+            }
+        });
     }
     
     private void exitWithOptionalAutoSave() {
         if (Preferences.getInstance().autoSaveOnExit) {
-            try {
-                store(true);
-                shutdown();
-            } catch (Throwable t) {
-                displayErrorMessage("Failed to save!", t);
-            }
-        } else {
-            shutdown();
+            store(true);
         }
+        shutdown();
     }
     
     private void exit() {
@@ -1380,12 +1492,8 @@ public class FrontEnd extends JFrame {
                 JButton b = new JButton("Save changes before exit");
                 b.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        try {
-                            store(true);
-                            shutdown();
-                        } catch (Throwable t) {
-                            displayErrorMessage("Failed to save data!", t);
-                        }
+                        store(true);
+                        shutdown();
                     }
                 });
                 cs = new Component[]{l,b};
@@ -1901,7 +2009,7 @@ public class FrontEnd extends JFrame {
     }
     
     private void displayStatusBarMessage(final String message, final boolean isError) {
-        new Thread(new Runnable(){
+        execute(new Runnable(){
             public void run() {
                 final String timestamp = dateFormat.format(new Date()) + " # ";
                 getJLabelStatusBarMsg().setText(Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_OK) + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
@@ -1918,12 +2026,10 @@ public class FrontEnd extends JFrame {
                 timer.setRepeats(false);
                 timer.start();
             }
-        }).start();
+        });
     }
     
-    // TODO [P1] add some possibility to display 'processing' messages in status bar
-    //           (so, some before-exit-listeners can inform user about actions performed,
-    //            and it won't look that weird that exit is not performed immediately)
+    // TODO [P2] add some possibility to display 'processing' messages in status bar ?... 
 
     /**
      * This method initializes jContentPane
@@ -2939,7 +3045,7 @@ public class FrontEnd extends JFrame {
                             processModel.addElement("Transferring data to be imported...");
                             displayBottomPanel(label, panel);
                             autoscrollList(processList);
-                            Thread importThread = new Thread(new Runnable(){
+                            safeExecute(new Runnable(){
                                 public void run() {
                                     try {
                                         TransferData td = transferrer.importData(importOptions, importUnchangedDataCB.isSelected());
@@ -3146,7 +3252,6 @@ public class FrontEnd extends JFrame {
                                     }
                                 }
                             });
-                            importThread.start();
                         }
                     }
                 }
@@ -3164,7 +3269,7 @@ public class FrontEnd extends JFrame {
                 if (verbose) panel.add(processLabel, BorderLayout.CENTER);
                 final JLabel label = verbose ? new JLabel("Import data") : null;
                 if (verbose) displayBottomPanel(label, panel);
-                Thread importThread = new Thread(new Runnable(){
+                safeExecute(new Runnable(){
                     public void run() {
                         try {
                             ImportConfiguration importConfig = BackEnd.getInstance().getPopulatedImportConfigurations().get(configName);
@@ -3253,7 +3358,6 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                importThread.start();
             } catch (Exception ex) {
                 displayErrorMessage("Failed to import data!", ex);
             }
@@ -3450,7 +3554,7 @@ public class FrontEnd extends JFrame {
                             processModel.addElement("Compressing data to be exported...");
                             displayBottomPanel(label, panel);
                             autoscrollList(processList);
-                            Thread exportThread = new Thread(new Runnable(){
+                            safeExecute(new Runnable(){
                                 public void run() {
                                     try {
                                         boolean exportAll = false;
@@ -3614,7 +3718,6 @@ public class FrontEnd extends JFrame {
                                     }
                                 }
                             });
-                            exportThread.start();
                         }
                     }
                 }
@@ -3632,7 +3735,7 @@ public class FrontEnd extends JFrame {
                 if (verbose) panel.add(processLabel, BorderLayout.CENTER);
                 final JLabel label = verbose ? new JLabel("Export data") : null;
                 if (verbose) displayBottomPanel(label, panel);
-                Thread exportThread = new Thread(new Runnable(){
+                safeExecute(new Runnable(){
                     public void run() {
                         try {
                             DataCategory data = instance.collectData();
@@ -3686,7 +3789,6 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                exportThread.start();
             } catch (Exception ex) {
                 displayErrorMessage("Failed to export data!", ex);
             }
@@ -3861,11 +3963,7 @@ public class FrontEnd extends JFrame {
         }
 
         public void actionPerformed(ActionEvent evt) {
-            try {
-                store(false);
-            } catch (Throwable t) {
-                displayErrorMessage("Failed to save!", t);
-            }
+            store(false);
         }
     };
     
@@ -4580,7 +4678,7 @@ public class FrontEnd extends JFrame {
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                            Thread installThread = new Thread(new Runnable(){
+                            safeExecute(new Runnable(){
                                 public void run() {
                                     try {
                                         boolean added = false;
@@ -4612,7 +4710,6 @@ public class FrontEnd extends JFrame {
                                     }
                                 }
                             });
-                            installThread.start();
                         }
                     }
                 });
@@ -5184,7 +5281,7 @@ public class FrontEnd extends JFrame {
     
     private void installLocalPackages(final AddOnFilesChooser addOnFileChooser, final PackType addOnType, final DefaultTableModel addOnModel) {
         if (addOnFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-            Thread installThread = new Thread(new Runnable(){
+            safeExecute(new Runnable(){
                 public void run() {
                     final Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
                     StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
@@ -5237,7 +5334,6 @@ public class FrontEnd extends JFrame {
                     }
                 }
             });
-            installThread.start();
         }
     }
     
@@ -5631,7 +5727,7 @@ public class FrontEnd extends JFrame {
     }
 
     private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final String addOnName) {
-        Thread loadDetailsThread = new Thread(new Runnable(){
+        execute(new Runnable(){
             public void run() {
                 boolean loaded = false;
                 InputStream is = null;
@@ -5666,7 +5762,6 @@ public class FrontEnd extends JFrame {
                 }
             }
         });
-        loadDetailsThread.start();
     }
     
     private int findDataRowIndex(DefaultTableModel model, int colIdx, String data) {
