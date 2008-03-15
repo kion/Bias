@@ -31,10 +31,9 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     
     // TODO [P1] add import-handling
     
-    // TODO [P1] add option 'request user-confirmation before synchronization'
-
     private static final String PROPERTY_VERBOSE_MODE = "VERBOSE_MODE";
     private static final String PROPERTY_EXPORT_BEFORE_EXIT_ONLY = "EXPORT_BEFORE_EXIT_ONLY";
+    private static final String PROPERTY_REQUEST_CONFIRMATIONS = "REQUEST_CONFIRMATIONS";
     private static final String PROPERTY_EXPORT_CONFIGS = "EXPORT_CONFIGS";
     private static final String PROPERTY_VALUES_SEPARATOR = ",";
     
@@ -42,7 +41,11 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     
     private boolean exportBeforeExitOnly;
     
+    private boolean requestConfirmations;
+    
     private Collection<String> exportConfigs;
+    
+    private DefaultTableModel exportConfigsModel;
     
     public Synchronizer(byte[] data, byte[] settings) {
         super(data, settings);
@@ -58,6 +61,12 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             verbose = Boolean.valueOf(verboseStr);
         } else {
             verbose = false;
+        }
+        String rcStr = props.getProperty(PROPERTY_REQUEST_CONFIRMATIONS);
+        if (!Validator.isNullOrBlank(rcStr)) {
+            requestConfirmations = Boolean.valueOf(rcStr);
+        } else {
+            requestConfirmations = false;
         }
         String exportConfigsStr = props.getProperty(PROPERTY_EXPORT_CONFIGS);
         if (!Validator.isNullOrBlank(exportConfigsStr)) {
@@ -75,13 +84,43 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     public void onEvent(final SaveEvent e) throws Throwable {
         FrontEnd.syncExecute(new Runnable(){
             public void run() {
-                if (exportConfigs != null && !exportConfigs.isEmpty()) {
-                    if (exportBeforeExitOnly && !e.isBeforeExit()) {
-                        return;
+                try {
+                    if (exportConfigs != null && !exportConfigs.isEmpty()) {
+                        if (exportBeforeExitOnly && !e.isBeforeExit()) {
+                            return;
+                        }
                     }
-                }
-                for (final String configName : getExportConfigs()) {
-                    FrontEnd.autoExport(configName, false, verbose);
+                    Collection<String> exportConfigsToInvoke = null;
+                    if (requestConfirmations) {
+                        populateExportConfigsModel();
+                        int opt = JOptionPane.showConfirmDialog(
+                                FrontEnd.getActiveWindow(), 
+                                new Component[] {
+                                    new JLabel("Choose export configurations to invoke now:"),
+                                    new JScrollPane(new JTable(getExportConfigsModel()))
+                                }, 
+                                "Invoke export configurations", 
+                                JOptionPane.OK_CANCEL_OPTION);
+                        if (opt == JOptionPane.OK_OPTION) {
+                            exportConfigsToInvoke = new ArrayList<String>();
+                            int cnt = getExportConfigsModel().getRowCount();
+                            for (int i = 0; i < cnt; i++) {
+                                if ((Boolean) getExportConfigsModel().getValueAt(i, 0)) {
+                                    String configName = (String) getExportConfigsModel().getValueAt(i, 1);
+                                    exportConfigsToInvoke.add(configName);
+                                }
+                            }
+                        }
+                    } else {
+                        exportConfigsToInvoke = getExportConfigs();
+                    }
+                    if (exportConfigsToInvoke != null) {
+                        for (final String configName : exportConfigsToInvoke) {
+                            FrontEnd.autoExport(configName, false, verbose);
+                        }
+                    }
+                } catch (Exception ex) {
+                    FrontEnd.displayErrorMessage("Failed to invoke export configuration(s)!", ex);
                 }
             }
         });
@@ -107,28 +146,11 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                 getExportConfigs().add(config);
             }
         }
-        DefaultTableModel exportConfigsModel = new DefaultTableModel() {
-            private static final long serialVersionUID = 1L;
-            @Override
-            public boolean isCellEditable(int rowIndex, int mColIndex) {
-                return mColIndex == 0 ? true : false;
-            }
-            @Override
-            public Class<?> getColumnClass(int columnIndex) {
-                if (columnIndex == 0) {
-                    return Boolean.class;
-                } else {
-                    return super.getColumnClass(columnIndex);
-                }
-            }
-        };
-        exportConfigsModel.addColumn(Constants.EMPTY_STR);
-        exportConfigsModel.addColumn("Configuration");
-        for (String configName : BackEnd.getInstance().getExportConfigurations()) {
-            exportConfigsModel.addRow(new Object[]{ getExportConfigs().contains(configName), configName });
-        }
+        populateExportConfigsModel();
         JCheckBox sbeoCB = new JCheckBox("Export only before exit");
         sbeoCB.setSelected(exportBeforeExitOnly);
+        JCheckBox rcCB = new JCheckBox("Request action-confirmations from user");
+        rcCB.setSelected(requestConfirmations);
         JCheckBox vCB = new JCheckBox("Verbose mode");
         vCB.setSelected(verbose);
         
@@ -136,8 +158,9 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                 FrontEnd.getActiveWindow(), 
                 new Component[] {
                     new JLabel("Choose export configurations to invoke on save:"),
-                    new JScrollPane(new JTable(exportConfigsModel)),
+                    new JScrollPane(new JTable(getExportConfigsModel())),
                     sbeoCB,
+                    rcCB,
                     vCB
                 }, 
                 "Configuration", 
@@ -145,10 +168,10 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
 
         getExportConfigs().clear();
         StringBuffer sb = new StringBuffer();
-        int cnt = exportConfigsModel.getRowCount();
+        int cnt = getExportConfigsModel().getRowCount();
         for (int i = 0; i < cnt; i++) {
-            if ((Boolean) exportConfigsModel.getValueAt(i, 0)) {
-                String configName = (String) exportConfigsModel.getValueAt(i, 1);
+            if ((Boolean) getExportConfigsModel().getValueAt(i, 0)) {
+                String configName = (String) getExportConfigsModel().getValueAt(i, 1);
                 getExportConfigs().add(configName);
                 sb.append(configName);
                 if (i < cnt - 1) {
@@ -168,6 +191,13 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             exportBeforeExitOnly = false;
             props.remove(PROPERTY_EXPORT_BEFORE_EXIT_ONLY);
         }
+        if (rcCB.isSelected()) {
+            requestConfirmations = true;
+            props.setProperty(PROPERTY_REQUEST_CONFIRMATIONS, "" + true);
+        } else {
+            requestConfirmations = false;
+            props.remove(PROPERTY_REQUEST_CONFIRMATIONS);
+        }
         if (vCB.isSelected()) {
             verbose = true;
             props.setProperty(PROPERTY_VERBOSE_MODE, "" + true);
@@ -176,6 +206,38 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             props.remove(PROPERTY_VERBOSE_MODE);
         }
         return PropertiesUtils.serializeProperties(props);
+    }
+    
+    private void populateExportConfigsModel() throws Exception {
+        while (getExportConfigsModel().getRowCount() > 0) {
+            getExportConfigsModel().removeRow(0);
+        }
+        for (String configName : BackEnd.getInstance().getExportConfigurations()) {
+            getExportConfigsModel().addRow(new Object[]{ getExportConfigs().contains(configName), configName });
+        }
+    }
+    
+    private DefaultTableModel getExportConfigsModel() {
+        if (exportConfigsModel == null) {
+            exportConfigsModel = new DefaultTableModel() {
+                private static final long serialVersionUID = 1L;
+                @Override
+                public boolean isCellEditable(int rowIndex, int mColIndex) {
+                    return mColIndex == 0 ? true : false;
+                }
+                @Override
+                public Class<?> getColumnClass(int columnIndex) {
+                    if (columnIndex == 0) {
+                        return Boolean.class;
+                    } else {
+                        return super.getColumnClass(columnIndex);
+                    }
+                }
+            };
+            exportConfigsModel.addColumn(Constants.EMPTY_STR);
+            exportConfigsModel.addColumn("Configuration");
+        }
+        return exportConfigsModel;
     }
 
     /* (non-Javadoc)
