@@ -3568,28 +3568,35 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         });
-                        Component[] comps = new Component[]{
-                                exportPreferencesCB, 
-                                exportGlobalConfigCB, 
-                                exportDataEntryConfigsCB,
-                                exportOnlyRelatedDataEntryConfigsCB,
-                                exportToolsDataCB, 
-                                exportIconsCB,
-                                exportOnlyRelatedIconsCB,
-                                exportAppCoreCB,
-                                exportAddOnsCB, 
-                                exportAddOnConfigsCB,
-                                exportImportExportConfigsCB,
-                                dataTree != null ? recursiveExportInfoLabel : null,
-                                dataTree != null ? new JScrollPane(dataTree) : null,
-                                passwordL1,
-                                passwordTF1,
-                                passwordL2,
-                                passwordTF2
-                        };
+                        JPanel cbPanel = new JPanel(new GridLayout(11, 1));
+                        cbPanel.add(exportPreferencesCB);
+                        cbPanel.add(exportGlobalConfigCB);
+                        cbPanel.add(exportDataEntryConfigsCB);
+                        cbPanel.add(exportOnlyRelatedDataEntryConfigsCB);
+                        cbPanel.add(exportToolsDataCB);
+                        cbPanel.add(exportIconsCB);
+                        cbPanel.add(exportOnlyRelatedIconsCB);
+                        cbPanel.add(exportAppCoreCB);
+                        cbPanel.add(exportAddOnsCB);
+                        cbPanel.add(exportAddOnConfigsCB);
+                        cbPanel.add(exportImportExportConfigsCB);
+                        JPanel passPanel = new JPanel(new GridLayout(4, 1));
+                        passPanel.add(passwordL1);
+                        passPanel.add(passwordTF1);
+                        passPanel.add(passwordL2);
+                        passPanel.add(passwordTF2);
+                        JPanel exportPanel = new JPanel(new BorderLayout());
+                        exportPanel.add(cbPanel, BorderLayout.CENTER);
+                        exportPanel.add(passPanel, BorderLayout.SOUTH);
+                        if (dataTree != null) {
+                            JPanel treePanel = new JPanel(new BorderLayout());
+                            treePanel.add(recursiveExportInfoLabel, BorderLayout.NORTH);
+                            treePanel.add(new JScrollPane(dataTree), BorderLayout.CENTER);
+                            exportPanel.add(treePanel, BorderLayout.EAST);
+                        }
                         opt = JOptionPane.showConfirmDialog(
                                 FrontEnd.this, 
-                                comps,
+                                exportPanel,
                                 "Export data",
                                 JOptionPane.OK_CANCEL_OPTION);
                         if (opt == JOptionPane.OK_OPTION) {
