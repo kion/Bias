@@ -29,7 +29,9 @@ import bias.utils.Validator;
  */
 public class Synchronizer extends ToolExtension implements AfterSaveEventListener {
     
-    // TODO [P1] add import-handling
+    // TODO [P1] implement import-handling
+    
+    // TODO [P1] implement schedule-based events firing (for both import and export)
     
     private static final String PROPERTY_VERBOSE_MODE = "VERBOSE_MODE";
     private static final String PROPERTY_EXPORT_BEFORE_EXIT_ONLY = "EXPORT_BEFORE_EXIT_ONLY";
