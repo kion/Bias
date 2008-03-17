@@ -244,7 +244,7 @@
 				<attribute name="Bias-Add-On-Name" value="Synchronizer" />
 				<attribute name="Bias-Add-On-Type" value="Extension" />
 				<attribute name="Bias-Add-On-Version" value="${Synchronizer_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Event/Schedule-driven data synchronizer" />
+				<attribute name="Bias-Add-On-Description" value="Schedule/Event-driven data synchronizer" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 			</manifest>
 		</jar>

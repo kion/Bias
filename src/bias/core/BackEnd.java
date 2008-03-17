@@ -934,6 +934,17 @@ public class BackEnd {
         FSUtils.writeFile(new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
     }
     
+    public boolean unresolvedAddOnDependenciesPresent(AddOnInfo extension) throws Throwable {
+        if (extension.getDependencies() != null) {
+            for (Dependency dep : extension.getDependencies()) {
+                if (!getAddOns().contains(new AddOnInfo(dep.getName()))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
     private ImportConfiguration populateImportConfiguration(Properties props) {
         return new ImportConfiguration(
                 props.getProperty(Constants.OPTION_TRANSFER_PROVIDER),
@@ -1503,8 +1514,7 @@ public class BackEnd {
         return getAddOns(null);
     }
     
-    public Collection<AddOnInfo> getAddOns(PackType addOnType) throws Throwable {
-        Collection<AddOnInfo> addOns = new HashSet<AddOnInfo>();
+    private FilenameFilter getAddOnInfoFilenameFilter(PackType addOnType) {
         FilenameFilter ff = FILE_FILTER_ADDON_INFO;
         if (addOnType != null) {
             switch (addOnType) {
@@ -1522,6 +1532,43 @@ public class BackEnd {
                 break;
             }
         }
+        return ff;
+    }
+    
+    private String getAddOnInfoFilenameSuffix(PackType addOnType) {
+        String suffix = null;
+        if (addOnType != null) {
+            switch (addOnType) {
+            case EXTENSION:
+                suffix = Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX;
+                break;
+            case SKIN:
+                suffix = Constants.ADDON_SKIN_INFO_FILE_SUFFIX;
+                break;
+            case ICON_SET:
+                suffix = Constants.ADDON_ICONSET_INFO_FILE_SUFFIX;
+                break;
+            case LIBRARY:
+                suffix = Constants.ADDON_LIB_INFO_FILE_SUFFIX;
+                break;
+            }
+        }
+        return suffix;
+    }
+    
+    public AddOnInfo getAddOnInfo(String addOnName, PackType addOnType) throws Throwable {
+        AddOnInfo addOn = null;
+        String suffix = getAddOnInfoFilenameSuffix(addOnType);
+        File addOnInfoFile = new File(Constants.CONFIG_DIR, addOnName + suffix);
+        if (addOnInfoFile.exists()) {
+            addOn = readAddOnInfo(addOnInfoFile);
+        }
+        return addOn;
+    }
+    
+    public Collection<AddOnInfo> getAddOns(PackType addOnType) throws Throwable {
+        Collection<AddOnInfo> addOns = new HashSet<AddOnInfo>();
+        FilenameFilter ff = getAddOnInfoFilenameFilter(addOnType);
         for (File addOnInfoFile : Constants.CONFIG_DIR.listFiles(ff)) {
             File addOnDir = null;
             File addOnFile = null;

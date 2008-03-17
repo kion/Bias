@@ -105,7 +105,8 @@ public class ExtensionFactory {
                 } catch (Throwable t) {
                     System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
                     t.printStackTrace(System.err);
-                    extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_BROKEN);
+                    String status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(extension) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
+                    extensionStatuses.put(extension.getName(), status);
                 }
             }
         }
@@ -132,7 +133,8 @@ public class ExtensionFactory {
                 } catch (Throwable t) {
                     System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
                     t.printStackTrace(System.err);
-                    extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_BROKEN);
+                    String status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(extension) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
+                    extensionStatuses.put(extension.getName(), status);
                 }
             }
         }
@@ -164,7 +166,8 @@ public class ExtensionFactory {
                 } catch (Throwable t) {
                     System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
                     t.printStackTrace(System.err);
-                    extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_BROKEN);
+                    String status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(extension) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
+                    extensionStatuses.put(extension.getName(), status);
                 }
             }
         }

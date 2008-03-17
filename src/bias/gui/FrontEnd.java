@@ -306,7 +306,11 @@ public class FrontEnd extends JFrame {
     
     private JTable libsList;
     
-    private JTabbedPane addOnsPane;
+    private JTabbedPane addOnsPane = null;
+    
+    private JLabel processIconLabel = null;
+
+    private JLabel processMessageLabel = null;
 
     private JProgressBar memUsageProgressBar = null;
     
@@ -314,6 +318,8 @@ public class FrontEnd extends JFrame {
 
     private JFrame addOnsManagementDialog = null;
     
+    private JLabel dependenciesLabel = null;
+
     private JScrollPane detailsPane = null;
 
     private JTextPane detailsTextPane = null;
@@ -4464,6 +4470,9 @@ public class FrontEnd extends JFrame {
                 extList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 extList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
+                    // ensure entry extensions map has been initialized even if no data-entries have been initialized so far...
+                    ExtensionFactory.getAnnotatedEntryExtensionClasses();
+                    // ... now extensions can be listed
                     addOrReplaceTableModelAddOnRow(getExtensionsModel(), extension, true, 1, ExtensionFactory.getExtensionStatus(extension.getName()));
                 }
                 JButton extDetailsButt = new JButton("Extension details");
@@ -4481,7 +4490,8 @@ public class FrontEnd extends JFrame {
                                     if (addOnInfoFile.exists()) {
                                         URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                         URL addOnURL = addOnInfoFile.toURI().toURL();
-                                        loadAndDisplayPackageDetails(baseURL, addOnURL, extension);
+                                        AddOnInfo extInfo = BackEnd.getInstance().getAddOnInfo(extension, PackType.EXTENSION);
+                                        loadAndDisplayPackageDetails(baseURL, addOnURL, extInfo);
                                     } else {
                                         displayMessage("Detailed information is not provided with this extension.");
                                     }
@@ -4608,7 +4618,7 @@ public class FrontEnd extends JFrame {
                         // extension is broken
                         System.err.println("Skin [ " + skin.getName() + " ] failed to initialize!");
                         t.printStackTrace(System.err);
-                        status = Constants.ADDON_STATUS_BROKEN;
+                        status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(skin) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
                     }
                     addOrReplaceTableModelAddOnRow(getSkinModel(), skin, true, 1, status);
                 }
@@ -4630,7 +4640,8 @@ public class FrontEnd extends JFrame {
                                         if (addOnInfoFile.exists()) {
                                             URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                             URL addOnURL = addOnInfoFile.toURI().toURL();
-                                            loadAndDisplayPackageDetails(baseURL, addOnURL, skin);
+                                            AddOnInfo skinInfo = BackEnd.getInstance().getAddOnInfo(skin, PackType.SKIN);
+                                            loadAndDisplayPackageDetails(baseURL, addOnURL, skinInfo);
                                         } else {
                                             displayMessage("Detailed information is not provided with this Skin.");
                                         }
@@ -4766,7 +4777,8 @@ public class FrontEnd extends JFrame {
                                     if (addOnInfoFile.exists()) {
                                         URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                         URL addOnURL = addOnInfoFile.toURI().toURL();
-                                        loadAndDisplayPackageDetails(baseURL, addOnURL, ic);
+                                        AddOnInfo icInfo = BackEnd.getInstance().getAddOnInfo(ic, PackType.ICON_SET);
+                                        loadAndDisplayPackageDetails(baseURL, addOnURL, icInfo);
                                     } else {
                                         displayMessage("Detailed information is not provided with this IconSet.");
                                     }
@@ -4954,7 +4966,7 @@ public class FrontEnd extends JFrame {
                                 String fileName = pack.getName() + (pack.getVersion() != null ? Constants.VALUES_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_DETAILS_FILENAME_SUFFIX;
                                 final URL addOnURL = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
                                 try {
-                                    loadAndDisplayPackageDetails(BackEnd.getInstance().getRepositoryBaseURL(), addOnURL, pack.getName());
+                                    loadAndDisplayPackageDetails(BackEnd.getInstance().getRepositoryBaseURL(), addOnURL, pack);
                                 } catch (MalformedURLException ex) {
                                     displayErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
                                 }
@@ -5180,9 +5192,30 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Advanced", uiIcons.getIconPreferences(), advPanel);
                 
+                processIconLabel = new JLabel();
+                processMessageLabel = new JLabel();
+                JButton doneButt = new JButton("Done");
+                doneButt.addActionListener(new ActionListener(){
+                    public void actionPerformed(ActionEvent e) {
+                        addOnsManagementDialog.setVisible(false);
+                    }
+                });
+
+                JPanel bottomProcessPanel = new JPanel(new BorderLayout());
+                bottomProcessPanel.add(processMessageLabel, BorderLayout.NORTH);
+                bottomProcessPanel.add(processIconLabel, BorderLayout.CENTER);
+                
+                JPanel bottomPanel = new JPanel(new BorderLayout());
+                bottomPanel.add(bottomProcessPanel, BorderLayout.EAST);
+                bottomPanel.add(doneButt, BorderLayout.CENTER);
+
+                JPanel contentPane = new JPanel(new BorderLayout());
+                contentPane.add(addOnsPane, BorderLayout.CENTER);
+                contentPane.add(bottomPanel, BorderLayout.SOUTH);
+                
                 addOnsManagementDialog = new JFrame("Bias :: Add-Ons Management");
                 addOnsManagementDialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-                addOnsManagementDialog.add(addOnsPane);
+                addOnsManagementDialog.setContentPane(contentPane);
                 addOnsManagementDialog.pack();
                 int x = (getToolkit().getScreenSize().width - addOnsManagementDialog.getWidth()) / 2;
                 int y = (getToolkit().getScreenSize().height - addOnsManagementDialog.getHeight()) / 2;
@@ -5195,6 +5228,16 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private void showAddOnsManagementScreenProcessLabel(String message) {
+        processMessageLabel.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_INFO + "&nbsp;" + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+        processIconLabel.setIcon(ICON_PROCESS);
+    }
+
+    private void hideAddOnsManagementScreenProcessLabel() {
+        processMessageLabel.setText(null);
+        processIconLabel.setIcon(null);
+    }
+
     private JList getIconList() {
         if (icList == null) {
             icList = new JList(getIconListModel());
@@ -5367,7 +5410,7 @@ public class FrontEnd extends JFrame {
         }
         return onlineTotalProgressBar;
     }
-
+    
     private void downloadAndInstallAllUpdates(final Runnable onFinishAction) {
         Runnable updateTask = new Runnable(){
             public void run() {
@@ -5486,13 +5529,14 @@ public class FrontEnd extends JFrame {
     private boolean onlineListRefreshed = false;
     
     private void refreshOnlinePackagesList(final Runnable onCompleteAction, final boolean showAll) {
-        while (getOnlineModel().getRowCount() > 0) {
-            getOnlineModel().removeRow(0);
-        }
         try {
+            while (getOnlineModel().getRowCount() > 0) {
+                getOnlineModel().removeRow(0);
+            }
             URL addonsListURL = new URL(BackEnd.getInstance().getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             Downloader d = Downloader.createSingleFileDownloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
+            showAddOnsManagementScreenProcessLabel("refreshing online packages list...");
             d.setDownloadListener(new DownloadListener(){
                 @Override
                 public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
@@ -5533,6 +5577,10 @@ public class FrontEnd extends JFrame {
                 @Override
                 public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime) {
                     JOptionPane.showMessageDialog(getActiveWindow(), "Online packages list refresh canceled by user!");
+                }
+                @Override
+                public void onFinish(long downloadedBytesNum, long elapsedTime) {
+                    hideAddOnsManagementScreenProcessLabel();
                 }
             });
             d.start();
@@ -5586,6 +5634,7 @@ public class FrontEnd extends JFrame {
             final Long totalSize = new Long(tSize);
             if (!urlFileMap.isEmpty()) {
                 Downloader d = Downloader.createMultipleFilesDownloader(urlFileMap, Preferences.getInstance().preferredTimeOut);
+                showAddOnsManagementScreenProcessLabel("downloading/installing packages...");
                 d.setDownloadListener(new DownloadListener(){
                     private StringBuffer sb = new StringBuffer();
                     boolean success = true;
@@ -5687,6 +5736,7 @@ public class FrontEnd extends JFrame {
                     }
                     @Override
                     public void onFinish(long downloadedBytesNum, long elapsedTime) {
+                        hideAddOnsManagementScreenProcessLabel();
                         if (!Validator.isNullOrBlank(sb)) {
                             JOptionPane.showMessageDialog(
                                     getActiveWindow(), 
@@ -5845,7 +5895,15 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final String addOnName) {
+    private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final AddOnInfo addOnInfo) {
+        loadAndDisplayPackageDetails(baseURL, addOnURL, addOnInfo.getName(), addOnInfo.getDependencies());
+    }
+    
+    private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final Pack pack) {
+        loadAndDisplayPackageDetails(baseURL, addOnURL, pack.getName(), pack.getDependency());
+    }
+    
+    private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final String addOnName, final Collection<Dependency> dependencies) {
         execute(new Runnable(){
             public void run() {
                 boolean loaded = false;
@@ -5870,13 +5928,20 @@ public class FrontEnd extends JFrame {
                             // ignore
                         }
                     if (loaded) {
-                        JOptionPane op = new JOptionPane();
-                        op.setMessage(getDetailsPane(new String(baos.toByteArray()), baseURL));
-                        op.setMessageType(JOptionPane.INFORMATION_MESSAGE);
-                        final Dialog d = op.createDialog(getActiveWindow(), addOnName + " :: Details");
-                        d.setLocation(getActiveWindow().getLocation());
-                        d.setSize(getActiveWindow().getSize());
-                        d.setVisible(true);
+                        try {
+                            JOptionPane op = new JOptionPane();
+                            JPanel p = new JPanel(new BorderLayout());
+                            p.add(getDetailsPane(new String(baos.toByteArray()), baseURL), BorderLayout.CENTER);
+                            p.add(getDependenciesPanel(dependencies), BorderLayout.SOUTH);
+                            op.setMessage(p);
+                            op.setMessageType(JOptionPane.INFORMATION_MESSAGE);
+                            final Dialog d = op.createDialog(getActiveWindow(), addOnName + " :: Details");
+                            d.setLocation(getActiveWindow().getLocation());
+                            d.setSize(getActiveWindow().getSize());
+                            d.setVisible(true);
+                        } catch (Throwable t) {
+                            displayErrorMessage("Failed to display package details! " + getFailureDetails(t), t);
+                        }
                     }
                 }
             }
@@ -5913,6 +5978,34 @@ public class FrontEnd extends JFrame {
         ((HTMLDocument) detailsTextPane.getDocument()).setBase(baseURL);
         detailsTextPane.setText(detailsInfo);
         return detailsPane;
+    }
+    
+    private JLabel getDependenciesPanel(Collection<Dependency> dependencies) throws Throwable {
+        if (dependenciesLabel == null) {
+            dependenciesLabel = new JLabel();
+        }
+        StringBuffer text = new StringBuffer();
+        if (dependencies != null && !dependencies.isEmpty()) {
+            text.append("AddOn dependencies:<br/><ul>");
+            for (Dependency dep : dependencies) {
+                AddOnInfo dependentAddOnInfo = BackEnd.getInstance().getAddOnInfo(dep.getName(), dep.getType());
+                String status = dependentAddOnInfo != null && (dep.getVersion() == null || VersionComparator.getInstance().compare(dependentAddOnInfo.getVersion(), dep.getVersion()) >= 0) ? 
+                        Constants.HTML_COLOR_HIGHLIGHT_OK + "[Installed]" + Constants.HTML_COLOR_SUFFIX : Constants.HTML_COLOR_HIGHLIGHT_ERROR + "[Not installed]" + Constants.HTML_COLOR_SUFFIX; 
+                text.append(
+                        "<li>" + 
+                        dep.getType().value() + " '" + dep.getName() + "'" + 
+                        (Validator.isNullOrBlank(dep.getVersion()) ? Constants.BLANK_STR : " ver. " + dep.getVersion() + " or higher ") + 
+                        status + 
+                        "</li>");
+            }
+            text.append("</ul>");
+        }
+        if (Validator.isNullOrBlank(text)) {
+            dependenciesLabel.setText("AddOn has no dependencies.");
+        } else {
+            dependenciesLabel.setText(Constants.HTML_PREFIX + text.toString() + Constants.HTML_SUFFIX);
+        }
+        return dependenciesLabel;
     }
     
     private AboutAction displayAboutInfoAction = new AboutAction();
