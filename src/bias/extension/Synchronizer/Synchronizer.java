@@ -94,7 +94,6 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     
     public Synchronizer(byte[] data, byte[] settings) throws Exception {
         super(data, settings);
-        System.out.println("Constructing new synchronizer..."); // FIXME
         props = PropertiesUtils.deserializeProperties(getSettings());
         String verboseStr = props.getProperty(PROPERTY_EXPORT_VERBOSE_MODE);
         if (!Validator.isNullOrBlank(verboseStr)) {
@@ -133,10 +132,8 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         executor = new ScheduledThreadPoolExecutor(1);
         for (final Entry<String, Long> entry : getExportConfigs().entrySet()) {
             if (entry.getValue() > 0) {
-                System.out.println("sheduling export '" + entry.getKey() + "' (every " + FormatUtils.formatTimeDuration(entry.getValue() * 60 * 1000) + ")"); // FIXME
                 executor.scheduleAtFixedRate(new Runnable(){
                     public void run() {
-                        System.out.println("sheduled export..."); // FIXME
                         boolean export = !requestConfirmationsOnExport;
                         if (requestConfirmationsOnExport) {
                             export = JOptionPane.showConfirmDialog(
@@ -152,10 +149,8 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         }
         for (final Entry<String, Long> entry : getImportConfigs().entrySet()) {
             if (entry.getValue() > 0) {
-                System.out.println("sheduling import '" + entry.getKey() + "' (every " + FormatUtils.formatTimeDuration(entry.getValue() * 60 * 1000) + ")"); // FIXME
                 executor.scheduleAtFixedRate(new Runnable(){
                     public void run() {
-                        System.out.println("sheduled import..."); // FIXME
                         boolean importt = !requestConfirmationsOnImport;
                         if (requestConfirmationsOnImport) {
                             importt = JOptionPane.showConfirmDialog(
