@@ -199,7 +199,11 @@ public class PlainText extends EntryExtension {
         }
         String caretPos = settings.getProperty(PROPERTY_CARET_POSITION);
         if (!Validator.isNullOrBlank(caretPos)) {
-            getJTextPane().setCaretPosition(Integer.valueOf(caretPos));
+            try {
+                getJTextPane().setCaretPosition(Integer.valueOf(caretPos));
+            } catch (IllegalArgumentException iae) {
+                // ignore incorrect caret positioning
+            }
         }
         getJTextPane().getDocument().addUndoableEditListener(new UndoRedoManager(jTextPane));
         getJTextPane().getDocument().addDocumentListener(new DocumentListener(){
