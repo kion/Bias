@@ -5486,7 +5486,7 @@ public class FrontEnd extends JFrame {
     
     private boolean onlineListRefreshed = false;
     
-    private void refreshOnlinePackagesList(final Runnable onFinishAction, final boolean showAll) {
+    private void refreshOnlinePackagesList(final Runnable onCompleteAction, final boolean showAll) {
         while (getOnlineModel().getRowCount() > 0) {
             getOnlineModel().removeRow(0);
         }
@@ -5520,8 +5520,8 @@ public class FrontEnd extends JFrame {
                             }
                         }
                         onlineListRefreshed = true;
-                        if (onFinishAction != null) {
-                            onFinishAction.run();
+                        if (onCompleteAction != null) {
+                            onCompleteAction.run();
                         }
                     } catch (Throwable t) {
                         displayErrorMessage("Failed to parse downloaded list of available addons!", t);
