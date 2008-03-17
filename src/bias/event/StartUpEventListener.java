@@ -11,6 +11,6 @@ public interface StartUpEventListener extends EventListener {
     /**
      * Called whenever appropriate event happens.
      */
-    public void onEvent() throws Throwable;
+    public void onEvent(StartUpEvent e) throws Throwable;
 
 }

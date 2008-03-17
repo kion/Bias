@@ -11,6 +11,6 @@ public interface BeforeExitEventListener extends EventListener {
     /**
      * Called whenever appropriate event happens.
      */
-    public void onEvent() throws Throwable;
+    public void onEvent(ExitEvent e) throws Throwable;
 
 }

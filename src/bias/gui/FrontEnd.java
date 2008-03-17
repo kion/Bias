@@ -147,7 +147,9 @@ import bias.event.AfterSaveEventListener;
 import bias.event.BeforeExitEventListener;
 import bias.event.BeforeSaveEventListener;
 import bias.event.EventListener;
+import bias.event.ExitEvent;
 import bias.event.SaveEvent;
+import bias.event.StartUpEvent;
 import bias.event.StartUpEventListener;
 import bias.event.TransferEvent;
 import bias.event.TransferEventListener;
@@ -414,11 +416,11 @@ public class FrontEnd extends JFrame {
     public static void removeStartUpEventListener(StartUpEventListener l) {
         removeEventListener(startUpEventListeners, l);
     }
-    private static void fireStartUpEvent() {
+    private static void fireStartUpEvent(StartUpEvent e) {
         if (startUpEventListeners != null) {
             for (StartUpEventListener l : startUpEventListeners.values()) {
                 try {
-                    l.onEvent();
+                    l.onEvent(e);
                 } catch (Throwable t) {
                     displayErrorMessage("start-up event listener '" + l.getClass().getSimpleName() + "' failed!", t);
                 }
@@ -502,11 +504,11 @@ public class FrontEnd extends JFrame {
     public static void removeBeforeExitEventListener(StartUpEventListener l) {
         removeEventListener(beforeExitEventListeners, l);
     }
-    private static void fireBeforeExitEvent() {
+    private static void fireBeforeExitEvent(ExitEvent e) {
         if (beforeExitEventListeners != null) {
             for (BeforeExitEventListener l : beforeExitEventListeners.values()) {
                 try {
-                    l.onEvent();
+                    l.onEvent(e);
                 } catch (Throwable t) {
                     displayErrorMessage("before exit event listener '" + l.getClass().getSimpleName() + "' failed!", t);
                 }
@@ -546,7 +548,7 @@ public class FrontEnd extends JFrame {
         } else {
             getInstance().setVisible(true);
         }
-        fireStartUpEvent();
+        fireStartUpEvent(new StartUpEvent(!getInstance().isVisible()));
     }
     
     private static FrontEnd getInstance() {
@@ -555,7 +557,7 @@ public class FrontEnd extends JFrame {
             activateSkin();
             instance = new FrontEnd();
             instance.applyPreferences(true);
-            representTools();
+            initTools();
             initTransferrers();
         }
         return instance;
@@ -1034,7 +1036,8 @@ public class FrontEnd extends JFrame {
         return instance.addOnsManagementDialog.isVisible() ? instance.addOnsManagementDialog : instance;
     }
     
-    private static void representTools() {
+    // FIXME [P1] there should be only one instance of each tool-extension-class
+    private static void initTools() {
         Map<ToolExtension, String> extensions = null;
         try {
             extensions = ExtensionFactory.getAnnotatedToolExtensions();
@@ -1075,6 +1078,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    // FIXME [P1] there should be only one instance of each transfer-extension-class
     private static void initTransferrers() {
         Map<String, TransferExtension> extensions = null;
         try {
@@ -1448,7 +1452,8 @@ public class FrontEnd extends JFrame {
     
     /**
      * This is synchronized tasks execution method, that should be used for critical tasks,
-     * which need to be completed before application shuts down by user's request.
+     * which need to be completed before application shuts down by user's request,
+     * as well as for ones that have to be executed one by one (single task at a time).
      * Thus, even if user does request shutdown, application will wait until all tasks
      * executed via this method are complete, or until user forces shutdown, whichever happen first.
      * All tasks are queued and executed one by one, shutdown-task is the last in the queue.
@@ -1464,7 +1469,7 @@ public class FrontEnd extends JFrame {
     
     private void shutdown() {
         finalizeUI();
-        fireBeforeExitEvent();
+        fireBeforeExitEvent(new ExitEvent());
         syncExecute(new Runnable(){
             public void run() {
                 BackEnd.getInstance().shutdown(0);
@@ -3233,7 +3238,7 @@ public class FrontEnd extends JFrame {
                                                             representData(data);
                                                         }
                                                         if (importToolsDataCB.isSelected()) {
-                                                            representTools();
+                                                            initTools();
                                                         }
                                                         if (importImportExportConfigsCB.isSelected()) {
                                                             initTransferrers();
@@ -3375,7 +3380,7 @@ public class FrontEnd extends JFrame {
                             instance.representData(data);
                         }
                         if (importConfig.isImportToolsData()) {
-                            representTools();
+                            initTools();
                         }
                         if (importConfig.isImportImportExportConfigs()) {
                             initTransferrers();
@@ -5078,8 +5083,8 @@ public class FrontEnd extends JFrame {
                     }
                 });
                 onlineTopPanel.add(onlineFilterText, BorderLayout.CENTER);
-                onlineTopPanel.add(new JScrollPane(onlineList), BorderLayout.SOUTH);
-                onlinePanel.add(onlineTopPanel, BorderLayout.CENTER);
+                onlinePanel.add(onlineTopPanel, BorderLayout.NORTH);
+                onlinePanel.add(new JScrollPane(onlineList), BorderLayout.CENTER);
                 JPanel p = new JPanel(new BorderLayout());
                 p.add(onlineProgressPanel, BorderLayout.NORTH);
                 p.add(getOnlineShowAllPackagesCheckBox(), BorderLayout.CENTER);
@@ -5408,7 +5413,8 @@ public class FrontEnd extends JFrame {
             }
         }
     }
-    
+
+    // FIXME [P1] local packages should not be installable if dependencies can not be resolved
     private void installLocalPackages(final AddOnFilesChooser addOnFileChooser, final PackType addOnType, final DefaultTableModel addOnModel) {
         if (addOnFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
             syncExecute(new Runnable(){
