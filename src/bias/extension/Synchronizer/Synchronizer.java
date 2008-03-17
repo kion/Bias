@@ -50,6 +50,8 @@ import bias.utils.Validator;
  */
 public class Synchronizer extends ToolExtension implements AfterSaveEventListener, StartUpEventListener {
     
+    // TODO [P2] it should be possible to schedule same configuration execution more than once (in few actions) 
+    
     private static final String PROPERTY_IMPORT_VERBOSE_MODE = "IMPORT_VERBOSE_MODE";
     private static final String PROPERTY_EXPORT_VERBOSE_MODE = "EXPORT_VERBOSE_MODE";
     private static final String PROPERTY_IMPORT_REQUEST_CONFIRMATIONS = "IMPORT_REQUEST_CONFIRMATIONS";
