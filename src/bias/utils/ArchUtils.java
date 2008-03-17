@@ -92,7 +92,7 @@ public class ArchUtils {
         ZipOutputStream out = new ZipOutputStream(new FileOutputStream(destination));
         compress(source, source, out, md, fileNamesToSkipInCheckSumCalculation);
         out.close();
-        return md != null ? getHexString(md.digest()) : null;
+        return md != null ? FormatUtils.formatBytesAsHexString(md.digest()) : null;
     }
 
     private static void compress(File root, File in, ZipOutputStream out, MessageDigest md, Set<String> fileNamesToSkipInCheckSumCalculation) throws IOException {
@@ -127,14 +127,6 @@ public class ArchUtils {
             fin.close();
             out.closeEntry();
         }
-    }
-
-    private static String getHexString(byte[] bytes) {
-        String result = Constants.EMPTY_STR;
-        for (int i = 0; i < bytes.length; i++) {
-            result += Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1);
-        }
-        return result;
     }
 
 }

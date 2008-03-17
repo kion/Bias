@@ -6,6 +6,7 @@ package bias.extension.FTPTransfer;
 import java.awt.Component;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
@@ -123,21 +124,26 @@ public class FTPTransfer extends ObservableTransferExtension {
         URLConnection urlc = url.openConnection();
         urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut * 1000);
         urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut * 1000);
-        InputStream is = urlc.getInputStream();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int br;
-        while ((br = is.read(buffer)) > 0) {
-            baos.write(buffer, 0, br);
-            if (!transferMetaData) {
-                transferredBytesNum += br;
-                elapsedTime = System.currentTimeMillis() - startTime;
-                fireOnProgressEvent(transferredBytesNum, elapsedTime);
+        ByteArrayOutputStream baos = null;
+        try {
+            InputStream is = urlc.getInputStream();
+            baos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int br;
+            while ((br = is.read(buffer)) > 0) {
+                baos.write(buffer, 0, br);
+                if (!transferMetaData) {
+                    transferredBytesNum += br;
+                    elapsedTime = System.currentTimeMillis() - startTime;
+                    fireOnProgressEvent(transferredBytesNum, elapsedTime);
+                }
             }
+            baos.close();
+            is.close();
+        } catch (FileNotFoundException fnfe) {
+            
         }
-        baos.close();
-        is.close();
-        return baos.toByteArray();
+        return baos != null ? baos.toByteArray() : null;
     }
 
     /* (non-Javadoc)

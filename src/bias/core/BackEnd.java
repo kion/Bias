@@ -377,19 +377,20 @@ public class BackEnd {
     }
     
     public boolean isTransferFileLocationCheckSumChanged(TRANSFER_TYPE transferType, Class<? extends TransferExtension> transferExtClass, String fileLocation, String checkSum) throws Exception {
-        if (checkSum == null) return false;
-        File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
-        if (checkSumsFile.exists()) {
-            byte[] encryptedData = FSUtils.readFile(checkSumsFile);
-            byte[] decryptedData = decrypt(encryptedData);
-            Properties p = new Properties();
-            ByteArrayInputStream bais = new ByteArrayInputStream(decryptedData);
-            p.load(bais);
-            bais.close();
-            String storedCheckSum = p.getProperty(transferType.name() + Constants.VALUES_SEPARATOR + fileLocation);
-            if (!Validator.isNullOrBlank(storedCheckSum)) {
-                if (storedCheckSum.equals(checkSum)) {
-                    return false;
+        if (checkSum != null) {
+            File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
+            if (checkSumsFile.exists()) {
+                byte[] encryptedData = FSUtils.readFile(checkSumsFile);
+                byte[] decryptedData = decrypt(encryptedData);
+                Properties p = new Properties();
+                ByteArrayInputStream bais = new ByteArrayInputStream(decryptedData);
+                p.load(bais);
+                bais.close();
+                String storedCheckSum = p.getProperty(transferType.name() + Constants.VALUES_SEPARATOR + fileLocation);
+                if (!Validator.isNullOrBlank(storedCheckSum)) {
+                    if (storedCheckSum.equals(checkSum)) {
+                        return false;
+                    }
                 }
             }
         }
@@ -896,6 +897,7 @@ public class BackEnd {
                 fileNamesToSkipInCheckSumCalculation);
         Properties metaData = new Properties();
         metaData.setProperty(Constants.META_DATA_CHECKSUM, checkSum);
+        metaData.setProperty(Constants.META_DATA_USERNAME, Constants.USERNAME);
         metaData.setProperty(Constants.META_DATA_TIMESTAMP, "" + System.currentTimeMillis());
         metaData.setProperty(Constants.META_DATA_FILESIZE, "" + file.length());
         return new TransferData(FSUtils.readFile(file), metaData);

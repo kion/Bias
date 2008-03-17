@@ -3263,14 +3263,19 @@ public class FrontEnd extends JFrame {
                                                         Properties meta = td.getMetaData();
                                                         if (meta != null && !meta.isEmpty()) {
                                                             sb.append(" (");
-                                                            String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
-                                                            if (!Validator.isNullOrBlank(timestamp)) {
-                                                                sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
-                                                            }
                                                             String size = meta.getProperty(Constants.META_DATA_FILESIZE);
                                                             if (!Validator.isNullOrBlank(size)) {
-                                                                sb.append(", ");
                                                                 sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
+                                                            }
+                                                            String user = meta.getProperty(Constants.META_DATA_USERNAME);
+                                                            if (!Validator.isNullOrBlank(user)) {
+                                                                sb.append(", ");
+                                                                sb.append("modified by " + user);
+                                                            }
+                                                            String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
+                                                            if (!Validator.isNullOrBlank(timestamp)) {
+                                                                sb.append(", ");
+                                                                sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
                                                             }
                                                             sb.append(")");
                                                         }
@@ -3401,18 +3406,23 @@ public class FrontEnd extends JFrame {
                             label.setText("<html><font color=green>Data import - Completed</font></html>");
                             processLabel.setText("Data have been successfully imported.");
                         }
-                        StringBuffer sb = new StringBuffer("import done (" + configName);
+                        StringBuffer sb = new StringBuffer("import done ('" + configName + "'");
                         Properties meta = td.getMetaData();
                         if (meta != null && !meta.isEmpty()) {
-                            String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
-                            if (!Validator.isNullOrBlank(timestamp)) {
-                                sb.append(", ");
-                                sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
-                            }
                             String size = meta.getProperty(Constants.META_DATA_FILESIZE);
                             if (!Validator.isNullOrBlank(size)) {
                                 sb.append(", ");
                                 sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
+                            }
+                            String user = meta.getProperty(Constants.META_DATA_USERNAME);
+                            if (!Validator.isNullOrBlank(user)) {
+                                sb.append(", ");
+                                sb.append("modified by " + user);
+                            }
+                            String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
+                            if (!Validator.isNullOrBlank(timestamp)) {
+                                sb.append(", ");
+                                sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
                             }
                         }
                         sb.append(")");
@@ -3762,14 +3772,14 @@ public class FrontEnd extends JFrame {
                                                     Properties meta = td.getMetaData();
                                                     if (meta != null && !meta.isEmpty()) {
                                                         sb.append(" (");
-                                                        String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
-                                                        if (!Validator.isNullOrBlank(timestamp)) {
-                                                            sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
-                                                        }
                                                         String size = meta.getProperty(Constants.META_DATA_FILESIZE);
                                                         if (!Validator.isNullOrBlank(size)) {
-                                                            sb.append(", ");
                                                             sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
+                                                        }
+                                                        String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
+                                                        if (!Validator.isNullOrBlank(timestamp)) {
+                                                            sb.append(", ");
+                                                            sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
                                                         }
                                                         sb.append(")");
                                                     }
@@ -3883,18 +3893,18 @@ public class FrontEnd extends JFrame {
                         label.setText("<html><font color=green>Data export - Completed</font></html>");
                         processLabel.setText("Data have been successfully exported.");
                     }
-                    StringBuffer sb = new StringBuffer("export done (" + configName);
+                    StringBuffer sb = new StringBuffer("export done ('" + configName + "'");
                     Properties meta = td.getMetaData();
                     if (meta != null && !meta.isEmpty()) {
-                        String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
-                        if (!Validator.isNullOrBlank(timestamp)) {
-                            sb.append(", ");
-                            sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
-                        }
                         String size = meta.getProperty(Constants.META_DATA_FILESIZE);
                         if (!Validator.isNullOrBlank(size)) {
                             sb.append(", ");
                             sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
+                        }
+                        String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
+                        if (!Validator.isNullOrBlank(timestamp)) {
+                            sb.append(", ");
+                            sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
                         }
                     }
                     sb.append(")");

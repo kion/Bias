@@ -56,6 +56,8 @@ public class Constants {
         TMP_DIR.mkdir();
     }
     
+    public static final String USERNAME = System.getProperty("user.name");
+    
     public static final String MAIN_REPOSITORY_KEY = "Main Repository";
     public static final String MAIN_REPOSITORY_VALUE = "http://bias.sourceforge.net/repository/";
     
@@ -193,6 +195,7 @@ public class Constants {
     public static final String PROPERTY_LAST_UPDATE_DATE = "LAST_UPDATE_DATE";
 
     public static final String META_DATA_CHECKSUM = "CHECKSUM";
+    public static final String META_DATA_USERNAME = "USERNAME";
     public static final String META_DATA_TIMESTAMP = "TIMESTAMP";
     public static final String META_DATA_FILESIZE = "FILESIZE";
 

@@ -78,4 +78,12 @@ public class FormatUtils {
         return lenStr.toString();
     }
     
+    public static String formatBytesAsHexString(byte[] bytes) {
+        String result = Constants.EMPTY_STR;
+        for (int i = 0; i < bytes.length; i++) {
+            result += Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1);
+        }
+        return result;
+    }
+
 }

@@ -176,26 +176,28 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                 try {
                     if (importConfigs != null && !importConfigs.isEmpty()) {
                         DefaultTableModel model = getConfirmImportPopulatedConfigsModel();
-                        boolean importt = !requestConfirmationsOnImport;
-                        if (requestConfirmationsOnImport) {
-                            int opt = JOptionPane.showConfirmDialog(
-                                    FrontEnd.getActiveWindow(), 
-                                    new Component[] {
-                                        new JLabel("Choose import actions to invoke now:"),
-                                        new JScrollPane(new JTable(model))
-                                    }, 
-                                    "Invoke import actions", 
-                                    JOptionPane.OK_CANCEL_OPTION);
-                            if (opt == JOptionPane.OK_OPTION) {
-                                importt = true;
+                        if (model.getRowCount() > 0) {
+                            boolean importt = !requestConfirmationsOnImport;
+                            if (requestConfirmationsOnImport) {
+                                int opt = JOptionPane.showConfirmDialog(
+                                        FrontEnd.getActiveWindow(), 
+                                        new Component[] {
+                                            new JLabel("Choose import actions to invoke now:"),
+                                            new JScrollPane(new JTable(model))
+                                        }, 
+                                        "Invoke import actions", 
+                                        JOptionPane.OK_CANCEL_OPTION);
+                                if (opt == JOptionPane.OK_OPTION) {
+                                    importt = true;
+                                }
                             }
-                        }
-                        if (importt) {
-                            int cnt = model.getRowCount();
-                            for (int i = 0; i < cnt; i++) {
-                                if ((Boolean) model.getValueAt(i, 0)) {
-                                    String configName = (String) model.getValueAt(i, 1);
-                                    FrontEnd.autoImport(configName, false, verboseImport);
+                            if (importt) {
+                                int cnt = model.getRowCount();
+                                for (int i = 0; i < cnt; i++) {
+                                    if ((Boolean) model.getValueAt(i, 0)) {
+                                        String configName = (String) model.getValueAt(i, 1);
+                                        FrontEnd.autoImport(configName, false, verboseImport);
+                                    }
                                 }
                             }
                         }
@@ -216,26 +218,28 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                 try {
                     if (exportConfigs != null && !exportConfigs.isEmpty()) {
                         DefaultTableModel model = getConfirmExportPopulatedConfigsModel();
-                        boolean export = !requestConfirmationsOnExport;
-                        if (requestConfirmationsOnExport) {
-                            int opt = JOptionPane.showConfirmDialog(
-                                    FrontEnd.getActiveWindow(), 
-                                    new Component[] {
-                                        new JLabel("Choose export actions to invoke now:"),
-                                        new JScrollPane(new JTable(model))
-                                    }, 
-                                    "Invoke export actions", 
-                                    JOptionPane.OK_CANCEL_OPTION);
-                            if (opt == JOptionPane.OK_OPTION) {
-                                export = true;
+                        if (model.getRowCount() > 0) {
+                            boolean export = !requestConfirmationsOnExport;
+                            if (requestConfirmationsOnExport) {
+                                int opt = JOptionPane.showConfirmDialog(
+                                        FrontEnd.getActiveWindow(), 
+                                        new Component[] {
+                                            new JLabel("Choose export actions to invoke now:"),
+                                            new JScrollPane(new JTable(model))
+                                        }, 
+                                        "Invoke export actions", 
+                                        JOptionPane.OK_CANCEL_OPTION);
+                                if (opt == JOptionPane.OK_OPTION) {
+                                    export = true;
+                                }
                             }
-                        }
-                        if (export) {
-                            int cnt = model.getRowCount();
-                            for (int i = 0; i < cnt; i++) {
-                                if ((Boolean) model.getValueAt(i, 0)) {
-                                    String configName = (String) model.getValueAt(i, 1);
-                                    FrontEnd.autoExport(configName, false, verboseExport);
+                            if (export) {
+                                int cnt = model.getRowCount();
+                                for (int i = 0; i < cnt; i++) {
+                                    if ((Boolean) model.getValueAt(i, 0)) {
+                                        String configName = (String) model.getValueAt(i, 1);
+                                        FrontEnd.autoExport(configName, false, verboseExport);
+                                    }
                                 }
                             }
                         }
@@ -322,7 +326,9 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                     JComboBox configsCB = getConfigChooser(BackEnd.getInstance().getExportConfigurations(), getExportConfigs().keySet());
                     if (configsCB.getItemCount() > 0) {
                         typeCB.removeItem(INVOKATION_TYPE_ON_STARTUP);
-                        typeCB.addItem(INVOKATION_TYPE_ON_SAVE);
+                        if (typeCB.getItemCount() == 1) {
+                            typeCB.addItem(INVOKATION_TYPE_ON_SAVE);
+                        }
                         int opt = JOptionPane.showConfirmDialog(
                                 FrontEnd.getActiveWindow(), 
                                 new Component[]{
@@ -377,7 +383,9 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                     JComboBox configsCB = getConfigChooser(BackEnd.getInstance().getImportConfigurations(), getImportConfigs().keySet());
                     if (configsCB.getItemCount() > 0) {
                         typeCB.removeItem(INVOKATION_TYPE_ON_SAVE);
-                        typeCB.addItem(INVOKATION_TYPE_ON_STARTUP);
+                        if (typeCB.getItemCount() == 1) {
+                            typeCB.addItem(INVOKATION_TYPE_ON_STARTUP);
+                        }
                         int opt = JOptionPane.showConfirmDialog(
                                 FrontEnd.getActiveWindow(), 
                                 new Component[]{
