@@ -266,7 +266,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
      */
     @Override
     public byte[] configure() throws Throwable {
-        // TODO [P1] optimization: initialize configuration screen once, then just reuse it
+        // TODO [P2] optimization: initialize configuration screen once, then just reuse it
         String oldExportConfigsStr = props.getProperty(PROPERTY_EXPORT_CONFIGS);
         String oldImportConfigsStr = props.getProperty(PROPERTY_IMPORT_CONFIGS);
         
