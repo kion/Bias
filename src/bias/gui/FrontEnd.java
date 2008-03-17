@@ -1036,7 +1036,6 @@ public class FrontEnd extends JFrame {
         return instance.addOnsManagementDialog.isVisible() ? instance.addOnsManagementDialog : instance;
     }
     
-    // FIXME [P1] there should be only one instance of each tool-extension-class
     private static void initTools() {
         Map<ToolExtension, String> extensions = null;
         try {
@@ -1078,7 +1077,6 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    // FIXME [P1] there should be only one instance of each transfer-extension-class
     private static void initTransferrers() {
         Map<String, TransferExtension> extensions = null;
         try {
@@ -4466,22 +4464,7 @@ public class FrontEnd extends JFrame {
                 extList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 extList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
-                    String status;
-                    try {
-                        String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
-                                                + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
-                        // extension class load test
-                        Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
-                        // extension instantiation test
-                        ExtensionFactory.newExtension(extClass);
-                        status = Constants.ADDON_STATUS_LOADED;
-                    } catch (Throwable t) {
-                        // extension is broken
-                        System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
-                        t.printStackTrace(System.err);
-                        status = Constants.ADDON_STATUS_BROKEN;
-                    }
-                    addOrReplaceTableModelAddOnRow(getExtensionsModel(), extension, true, 1, status);
+                    addOrReplaceTableModelAddOnRow(getExtensionsModel(), extension, true, 1, ExtensionFactory.getExtensionStatus(extension.getName()));
                 }
                 JButton extDetailsButt = new JButton("Extension details");
                 extDetailsButt.addActionListener(new ActionListener(){
@@ -4623,7 +4606,7 @@ public class FrontEnd extends JFrame {
                         status = Constants.ADDON_STATUS_LOADED;
                     } catch (Throwable t) {
                         // extension is broken
-                        System.err.println("Extension [ " + skin.getName() + " ] failed to initialize!");
+                        System.err.println("Skin [ " + skin.getName() + " ] failed to initialize!");
                         t.printStackTrace(System.err);
                         status = Constants.ADDON_STATUS_BROKEN;
                     }

@@ -4,6 +4,7 @@
 package bias.extension;
 
 import java.lang.reflect.Constructor;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -24,6 +25,8 @@ public class ExtensionFactory {
     private static Map<ToolExtension, String> annotatedToolTypes = null;
     private static Map<String, TransferExtension> annotatedTransferTypes = null;
     private static Map<String, TransferExtension> transferTypes = null;
+
+    private static Map<String, String> extensionStatuses = new HashMap<String, String>();
     
     private ExtensionFactory() {
         // hidden default constructor
@@ -91,15 +94,18 @@ public class ExtensionFactory {
                     String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
                                             + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
                     Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
-                    // extension instantiation test
                     if (EntryExtension.class.isAssignableFrom(extClass)) {
+                        // extension instantiation test
+                        newEntryExtension(extClass);
                         // extension is ok, add it to the list
                         String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
                         annotatedEntryTypes.put(annotationStr, (Class<? extends EntryExtension>) extClass);
+                        extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
                     }
                 } catch (Throwable t) {
-                    // ignore broken extensions
+                    System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
                     t.printStackTrace(System.err);
+                    extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_BROKEN);
                 }
             }
         }
@@ -121,9 +127,12 @@ public class ExtensionFactory {
                         // extension is ok, add it to the list
                         String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
                         annotatedToolTypes.put(ext, annotationStr);
+                        extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
                     }
                 } catch (Throwable t) {
-                    // ignore, broken extensions just won't be returned
+                    System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
+                    t.printStackTrace(System.err);
+                    extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_BROKEN);
                 }
             }
         }
@@ -150,15 +159,22 @@ public class ExtensionFactory {
                         String annotationStr = extension.getName() + " [" + (extension.getDescription() != null ? extension.getDescription() : "No description") + "]";
                         annotatedTransferTypes.put(annotationStr, ext);
                         transferTypes.put(extClass.getSimpleName(), ext);
+                        extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
                     }
                 } catch (Throwable t) {
-                    // ignore, broken extensions just won't be returned
+                    System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
+                    t.printStackTrace(System.err);
+                    extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_BROKEN);
                 }
             }
         }
         return annotatedTransferTypes;
     }
     
+    public static String getExtensionStatus(String extName) {
+        return extensionStatuses.get(extName);
+    }
+
     public static TransferExtension getTransferExtension(String name) throws Throwable {
         if (transferTypes == null) {
             getAnnotatedTransferExtensions();

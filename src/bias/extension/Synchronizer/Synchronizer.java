@@ -243,7 +243,8 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     @Override
     public byte[] configure() throws Throwable {
         // TODO [P1] optimization: initialize configuration screen once, then just reuse it
-        Properties oldProps = new Properties(props); 
+        String oldExportConfigsStr = props.getProperty(PROPERTY_EXPORT_CONFIGS);
+        String oldImportConfigsStr = props.getProperty(PROPERTY_IMPORT_CONFIGS);
         
         final JLabel tuL = new JLabel("Choose time unit:");
         final JComboBox tuCB = new JComboBox();
@@ -264,15 +265,14 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         schedulePanel.add(pL);
         schedulePanel.add(pS);
         
-        JLabel typeL = new JLabel("Choose invokation type:");
+        final JLabel typeL = new JLabel("Choose invokation type:");
         
-        final JComboBox exportTypeCB = new JComboBox();
-        exportTypeCB.addItem(INVOKATION_TYPE_ON_SAVE);
-        exportTypeCB.addItem(INVOKATION_TYPE_SCHEDULED);
-        exportTypeCB.setSelectedIndex(0);
-        exportTypeCB.addItemListener(new ItemListener(){
+        final JComboBox typeCB = new JComboBox();
+        typeCB.addItem(INVOKATION_TYPE_SCHEDULED);
+        typeCB.setSelectedIndex(0);
+        typeCB.addItemListener(new ItemListener(){
             public void itemStateChanged(ItemEvent e) {
-                if (exportTypeCB.getSelectedItem().equals(INVOKATION_TYPE_SCHEDULED)) {
+                if (typeCB.getSelectedItem().equals(INVOKATION_TYPE_SCHEDULED)) {
                     tuL.setEnabled(true);
                     tuCB.setEnabled(true);
                     pL.setEnabled(true);
@@ -286,35 +286,10 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             }
         });
         
-        final JPanel exportConfigPanel = new JPanel(new BorderLayout());
-        exportConfigPanel.add(typeL, BorderLayout.NORTH);
-        exportConfigPanel.add(exportTypeCB, BorderLayout.CENTER);
-        exportConfigPanel.add(schedulePanel, BorderLayout.SOUTH);
-        
-        final JComboBox importTypeCB = new JComboBox();
-        importTypeCB.addItem(INVOKATION_TYPE_ON_STARTUP);
-        importTypeCB.addItem(INVOKATION_TYPE_SCHEDULED);
-        importTypeCB.setSelectedIndex(0);
-        importTypeCB.addItemListener(new ItemListener(){
-            public void itemStateChanged(ItemEvent e) {
-                if (importTypeCB.getSelectedItem().equals(INVOKATION_TYPE_SCHEDULED)) {
-                    tuL.setEnabled(true);
-                    tuCB.setEnabled(true);
-                    pL.setEnabled(true);
-                    pS.setEnabled(true);
-                } else {
-                    tuL.setEnabled(false);
-                    tuCB.setEnabled(false);
-                    pL.setEnabled(false);
-                    pS.setEnabled(false);
-                }
-            }
-        });
-        
-        final JPanel importConfigPanel = new JPanel(new BorderLayout());
-        importConfigPanel.add(typeL, BorderLayout.NORTH);
-        importConfigPanel.add(exportTypeCB, BorderLayout.CENTER);
-        importConfigPanel.add(schedulePanel, BorderLayout.SOUTH);
+        final JPanel configPanel = new JPanel(new BorderLayout());
+        configPanel.add(typeL, BorderLayout.NORTH);
+        configPanel.add(typeCB, BorderLayout.CENTER);
+        configPanel.add(schedulePanel, BorderLayout.SOUTH);
         
         JButton addExportConfigButt = new JButton("Add export action...");
         addExportConfigButt.addActionListener(new ActionListener(){
@@ -322,22 +297,20 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                 try {
                     JComboBox configsCB = getConfigChooser(BackEnd.getInstance().getExportConfigurations(), getExportConfigs().keySet());
                     if (configsCB.getItemCount() > 0) {
-                        tuL.setEnabled(false);
-                        tuCB.setEnabled(false);
-                        pL.setEnabled(false);
-                        pS.setEnabled(false);
+                        typeCB.removeItem(INVOKATION_TYPE_ON_STARTUP);
+                        typeCB.addItem(INVOKATION_TYPE_ON_SAVE);
                         int opt = JOptionPane.showConfirmDialog(
                                 FrontEnd.getActiveWindow(), 
                                 new Component[]{
                                     new JLabel("Choose export configuration:"),
                                     configsCB,
-                                    exportConfigPanel
+                                    configPanel
                                 },
                                 "Add export action",
                                 JOptionPane.OK_CANCEL_OPTION);
                         if (opt == JOptionPane.OK_OPTION) {
                             String config = (String) configsCB.getSelectedItem();
-                            long period = exportTypeCB.getSelectedItem().equals(INVOKATION_TYPE_ON_SAVE) ? 0 : ((Number) pS.getValue()).longValue();
+                            long period = typeCB.getSelectedItem().equals(INVOKATION_TYPE_ON_SAVE) ? 0 : ((Number) pS.getValue()).longValue();
                             if (period != 0) {
                                 switch ((TIME_UNIT) tuCB.getSelectedItem()) {
                                 case Minute:
@@ -379,22 +352,20 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                 try {
                     JComboBox configsCB = getConfigChooser(BackEnd.getInstance().getImportConfigurations(), getImportConfigs().keySet());
                     if (configsCB.getItemCount() > 0) {
-                        tuL.setEnabled(true);
-                        tuCB.setEnabled(true);
-                        pL.setEnabled(true);
-                        pS.setEnabled(true);
+                        typeCB.removeItem(INVOKATION_TYPE_ON_SAVE);
+                        typeCB.addItem(INVOKATION_TYPE_ON_STARTUP);
                         int opt = JOptionPane.showConfirmDialog(
                                 FrontEnd.getActiveWindow(), 
                                 new Component[]{
                                     new JLabel("Choose import configuration:"),
                                     configsCB,
-                                    importConfigPanel
+                                    configPanel
                                 },
                                 "Add import action",
                                 JOptionPane.OK_CANCEL_OPTION);
                         if (opt == JOptionPane.OK_OPTION) {
                             String config = (String) configsCB.getSelectedItem();
-                            long period = importTypeCB.getSelectedItem().equals(INVOKATION_TYPE_ON_STARTUP) ? 0 : ((Number) pS.getValue()).longValue();
+                            long period = typeCB.getSelectedItem().equals(INVOKATION_TYPE_ON_STARTUP) ? 0 : ((Number) pS.getValue()).longValue();
                             if (period != 0) {
                                 switch ((TIME_UNIT) tuCB.getSelectedItem()) {
                                 case Minute:
@@ -536,9 +507,15 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             verboseImport = false;
             props.remove(PROPERTY_IMPORT_VERBOSE_MODE);
         }
-        if (!oldProps.equals(props)) {
+
+        String exportConfigsStr = props.getProperty(PROPERTY_EXPORT_CONFIGS);
+        String importConfigsStr = props.getProperty(PROPERTY_IMPORT_CONFIGS);
+        boolean unchanged = oldExportConfigsStr == null ? exportConfigsStr == null : oldExportConfigsStr.equals(exportConfigsStr);
+        if (unchanged) unchanged = oldImportConfigsStr == null ? importConfigsStr == null : oldImportConfigsStr.equals(importConfigsStr);
+        if (!unchanged) {
             initSchedules();
         }
+        
         return PropertiesUtils.serializeProperties(props);
     }
     
