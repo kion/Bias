@@ -5734,7 +5734,6 @@ public class FrontEnd extends JFrame {
         };
         final JTable addOnList = new JTable(addOnModel);
         
-        // FIXME [P1] local packages should not be installable if dependencies can not be resolved
         TableModelListener dependencyResolver = new TableModelListener(){
             public void tableChanged(final TableModelEvent e) {
                 if (e.getColumn() == 0) {
