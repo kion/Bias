@@ -5397,7 +5397,6 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    // FIXME [P1] local packages should not be installable if dependencies can not be resolved
     private void installLocalPackages(final AddOnFilesChooser addOnFileChooser, final PackType addOnType, final DefaultTableModel addOnModel) {
         if (addOnFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
             syncExecute(new Runnable(){
@@ -5735,6 +5734,7 @@ public class FrontEnd extends JFrame {
         };
         final JTable addOnList = new JTable(addOnModel);
         
+        // FIXME [P1] local packages should not be installable if dependencies can not be resolved
         TableModelListener dependencyResolver = new TableModelListener(){
             public void tableChanged(final TableModelEvent e) {
                 if (e.getColumn() == 0) {
