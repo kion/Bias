@@ -60,9 +60,9 @@ public class FormatUtils {
                         long weeks = days / 7;
                         if (weeks > 0) {
                             days = days % 7;
-                            list.add(weeks + " w ");
+                            list.add(weeks + (weeks > 1 ? " weeks " : " week "));
                         }
-                        if (days > 0) list.add(days + " d ");
+                        if (days > 0) list.add(days + (days > 1 ? " days " : " day "));
                     }
                     if (hr > 0) list.add(hr + " hr ");
                 }
