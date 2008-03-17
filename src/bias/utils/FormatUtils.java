@@ -6,6 +6,8 @@ package bias.utils;
 import java.util.LinkedList;
 import java.util.List;
 
+import bias.Constants;
+
 
 /**
  * @author kion
@@ -37,6 +39,11 @@ public class FormatUtils {
     }
     
     public static String formatTimeDuration(long duration) {
+        return formatTimeDuration(duration, "none");
+    }
+    
+    public static String formatTimeDuration(long duration, String emptyValueStr) {
+        if (emptyValueStr == null) emptyValueStr = Constants.EMPTY_STR;
         List<String> list = new LinkedList<String>();
         StringBuffer lenStr = new StringBuffer();
         long sec = duration/1000;
@@ -50,15 +57,20 @@ public class FormatUtils {
                     long days = hr / 24;
                     if (days > 0) {
                         hr = hr % 24;
-                        list.add(days + " d ");
+                        long weeks = days / 7;
+                        if (weeks > 0) {
+                            days = days % 7;
+                            list.add(weeks + " w ");
+                        }
+                        if (days > 0) list.add(days + " d ");
                     }
-                    list.add(hr + " hr ");
+                    if (hr > 0) list.add(hr + " hr ");
                 }
-                list.add(min + " min ");
+                if (min > 0) list.add(min + " min ");
             }
-            list.add(sec + " sec ");
+            if (sec > 0) list.add(sec + " sec ");
         } else {
-            list.add("none");
+            list.add(emptyValueStr);
         }
         for (String s : list) {
             lenStr.append(s);
