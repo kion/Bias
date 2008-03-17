@@ -33,6 +33,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableModel;
 
+import bias.Constants;
 import bias.core.BackEnd;
 import bias.event.AfterSaveEventListener;
 import bias.event.SaveEvent;
@@ -170,52 +171,80 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
      * @see bias.event.StartUpEventListener#onEvent(bias.event.StartUpEvent)
      */
     public void onEvent(StartUpEvent e) throws Throwable {
-        // TODO [P1] implement
+        FrontEnd.syncExecute(new Runnable(){
+            public void run() {
+                try {
+                    if (importConfigs != null && !importConfigs.isEmpty()) {
+                        DefaultTableModel model = getConfirmImportPopulatedConfigsModel();
+                        boolean importt = !requestConfirmationsOnImport;
+                        if (requestConfirmationsOnImport) {
+                            int opt = JOptionPane.showConfirmDialog(
+                                    FrontEnd.getActiveWindow(), 
+                                    new Component[] {
+                                        new JLabel("Choose import actions to invoke now:"),
+                                        new JScrollPane(new JTable(model))
+                                    }, 
+                                    "Invoke import actions", 
+                                    JOptionPane.OK_CANCEL_OPTION);
+                            if (opt == JOptionPane.OK_OPTION) {
+                                importt = true;
+                            }
+                        }
+                        if (importt) {
+                            int cnt = model.getRowCount();
+                            for (int i = 0; i < cnt; i++) {
+                                if ((Boolean) model.getValueAt(i, 0)) {
+                                    String configName = (String) model.getValueAt(i, 1);
+                                    FrontEnd.autoImport(configName, false, verboseImport);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    FrontEnd.displayErrorMessage("Failed to invoke import action(s)!", ex);
+                }
+            }
+        });
     }
 
     /* (non-Javadoc)
      * @see bias.event.AfterSaveEventListener#onEvent(bias.event.SaveEvent)
      */
     public void onEvent(final SaveEvent e) throws Throwable {
-        // TODO [P1] implement
-//        FrontEnd.syncExecute(new Runnable(){
-//            public void run() {
-//                try {
-//                    if (exportConfigs != null && !exportConfigs.isEmpty()) {
-//                        Collection<String> exportConfigsToInvoke = null;
-//                        if (requestConfirmations) {
-//                            int opt = JOptionPane.showConfirmDialog(
-//                                    FrontEnd.getActiveWindow(), 
-//                                    new Component[] {
-//                                        new JLabel("Choose export configurations to invoke now:"),
-//                                        new JScrollPane(new JTable(getExportConfigsModel()))
-//                                    }, 
-//                                    "Invoke export configurations", 
-//                                    JOptionPane.OK_CANCEL_OPTION);
-//                            if (opt == JOptionPane.OK_OPTION) {
-//                                exportConfigsToInvoke = new ArrayList<String>();
-//                                int cnt = getExportConfigsModel().getRowCount();
-//                                for (int i = 0; i < cnt; i++) {
-//                                    if ((Boolean) getExportConfigsModel().getValueAt(i, 0)) {
-//                                        String configName = (String) getExportConfigsModel().getValueAt(i, 0);
-//                                        exportConfigsToInvoke.add(configName);
-//                                    }
-//                                }
-//                            }
-//                        } else {
-//                            exportConfigsToInvoke = getExportConfigs().keySet();
-//                        }
-//                        if (exportConfigsToInvoke != null) {
-//                            for (final String configName : exportConfigsToInvoke) {
-//                                FrontEnd.autoExport(configName, false, verbose);
-//                            }
-//                        }
-//                    }
-//                } catch (Exception ex) {
-//                    FrontEnd.displayErrorMessage("Failed to invoke export configuration(s)!", ex);
-//                }
-//            }
-//        });
+        FrontEnd.syncExecute(new Runnable(){
+            public void run() {
+                try {
+                    if (exportConfigs != null && !exportConfigs.isEmpty()) {
+                        DefaultTableModel model = getConfirmExportPopulatedConfigsModel();
+                        boolean export = !requestConfirmationsOnExport;
+                        if (requestConfirmationsOnExport) {
+                            int opt = JOptionPane.showConfirmDialog(
+                                    FrontEnd.getActiveWindow(), 
+                                    new Component[] {
+                                        new JLabel("Choose export actions to invoke now:"),
+                                        new JScrollPane(new JTable(model))
+                                    }, 
+                                    "Invoke export actions", 
+                                    JOptionPane.OK_CANCEL_OPTION);
+                            if (opt == JOptionPane.OK_OPTION) {
+                                export = true;
+                            }
+                        }
+                        if (export) {
+                            int cnt = model.getRowCount();
+                            for (int i = 0; i < cnt; i++) {
+                                if ((Boolean) model.getValueAt(i, 0)) {
+                                    String configName = (String) model.getValueAt(i, 1);
+                                    FrontEnd.autoExport(configName, false, verboseExport);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    FrontEnd.displayErrorMessage("Failed to invoke export action(s)!", ex);
+                }
+            }
+        });
     }
     
     private Map<String, Long> getExportConfigs() {
@@ -572,6 +601,40 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             importActionsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         }
         return importActionsTable;
+    }
+    
+    private DefaultTableModel getConfirmExportPopulatedConfigsModel() {
+        return createConfirmPopulatedConfigsModel(getExportConfigs());
+    }
+    
+    private DefaultTableModel getConfirmImportPopulatedConfigsModel() {
+        return createConfirmPopulatedConfigsModel(getImportConfigs());
+    }
+    
+    private DefaultTableModel createConfirmPopulatedConfigsModel(Map<String, Long> configs) {
+        DefaultTableModel model = new DefaultTableModel() {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public boolean isCellEditable(int rowIndex, int mColIndex) {
+                return mColIndex == 0 ? true : false;
+            }
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 0) {
+                    return Boolean.class;
+                } else {
+                    return super.getColumnClass(columnIndex);
+                }
+            }
+        };
+        model.addColumn(Constants.EMPTY_STR);
+        model.addColumn("Configuration");
+        for (Entry<String, Long> config : configs.entrySet()) {
+            if (config.getValue() == 0) {
+                model.addRow(new Object[]{ Boolean.TRUE, config.getKey() });
+            }
+        }
+        return model;
     }
     
     private DefaultTableModel getExportConfigsModel() {
