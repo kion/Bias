@@ -1238,7 +1238,6 @@ public class BackEnd {
         renameTransferConfiguration(oldName, newName, TRANSFER_TYPE.EXPORT);
     }
     
-    // FIXME [P1] it seems that transfer does not work after renaming...
     private void renameTransferConfiguration(String oldName, String newName, TRANSFER_TYPE transferType) throws Exception {
         Map<String, Properties> configs = transferType == TRANSFER_TYPE.IMPORT ? importConfigs : exportConfigs;
         Map<String, String> configIDs = transferType == TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;
@@ -1246,8 +1245,8 @@ public class BackEnd {
         config.setProperty(Constants.OPTION_CONFIG_NAME, newName);
         File oldTransferOptionsFile = new File(Constants.CONFIG_DIR, configIDs.get(oldName) + Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX);
         byte[] transferOptions = FSUtils.readFile(oldTransferOptionsFile);
-        storeTransferConfigurationAndOptions(newName, config, transferOptions, transferType);
-        oldTransferOptionsFile.delete();
+        byte[] decryptedOptions = decrypt(transferOptions);
+        storeTransferConfigurationAndOptions(newName, config, decryptedOptions, transferType);
         removeTransferConfiguration(oldName, transferType);
     }
     
