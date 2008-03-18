@@ -735,9 +735,11 @@ public class FrontEnd extends JFrame {
     }
     
     private void applyGlobalSettings() {
-        String lsid = config.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
-        if (lsid != null) {
-            this.switchToVisualEntry(getJTabbedPane(), UUID.fromString(lsid), new LinkedList<Component>());
+        if (getSelectedVisualEntryID() == null) {
+            String lsid = config.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
+            if (lsid != null) {
+                this.switchToVisualEntry(getJTabbedPane(), UUID.fromString(lsid), new LinkedList<Component>());
+            }
         }
         
         // TODO [P3] would be nice to have window state (maximized: both/vert/horiz) restored on load
@@ -1115,6 +1117,7 @@ public class FrontEnd extends JFrame {
         return panel;
     }
     
+    // FIXME [P1] selected entry should always be preserved on import
     private boolean tabsInitialized;
     private void representData(DataCategory data) {
         UUID id = getSelectedVisualEntryID();
@@ -1128,12 +1131,12 @@ public class FrontEnd extends JFrame {
             try {
                 getJTabbedPane().setSelectedIndex(data.getActiveIndex());
             } catch (IndexOutOfBoundsException ioobe) {
-                // simply ignore incorrect index settings (this may happen on import and is allowable)
+                // simply ignore incorrect index settings
             }
             currentTabPane = getJTabbedPane();
         }
         if (id != null) {
-            switchToVisualEntry(id);
+            switchToVisualEntry(id, false);
         }
         initTabContent();
         handleNavigationHistory();

@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,8 +51,6 @@ import bias.utils.Validator;
  */
 public class Synchronizer extends ToolExtension implements AfterSaveEventListener, StartUpEventListener {
     
-    // TODO [P2] it should be possible to schedule same configuration execution more than once (in few actions) 
-    
     private static final String PROPERTY_IMPORT_VERBOSE_MODE = "IMPORT_VERBOSE_MODE";
     private static final String PROPERTY_EXPORT_VERBOSE_MODE = "EXPORT_VERBOSE_MODE";
     private static final String PROPERTY_IMPORT_REQUEST_CONFIRMATIONS = "IMPORT_REQUEST_CONFIRMATIONS";
@@ -81,9 +80,9 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     
     private boolean requestConfirmationsOnImport;
     
-    private Map<String, Long> exportConfigs;
+    private Map<String, Collection<Long>> exportConfigs;
     
-    private Map<String, Long> importConfigs;
+    private Map<String, Collection<Long>> importConfigs;
     
     private DefaultTableModel exportConfigsModel;
     
@@ -133,38 +132,42 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             executor.shutdownNow();
         }
         executor = new ScheduledThreadPoolExecutor(1);
-        for (final Entry<String, Long> entry : getExportConfigs().entrySet()) {
-            if (entry.getValue() > 0) {
-                executor.scheduleAtFixedRate(new Runnable(){
-                    public void run() {
-                        boolean export = !requestConfirmationsOnExport;
-                        if (requestConfirmationsOnExport) {
-                            export = JOptionPane.showConfirmDialog(
-                                    FrontEnd.getActiveWindow(), 
-                                    "Do you want to perform sheduled export '" + entry.getKey() + "' now?", 
-                                    "Scheduled export confirmation", 
-                                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        for (final Entry<String, Collection<Long>> entry : getExportConfigs().entrySet()) {
+            for (Long period : entry.getValue()) {
+                if (period > 0) {
+                    executor.scheduleAtFixedRate(new Runnable(){
+                        public void run() {
+                            boolean export = !requestConfirmationsOnExport;
+                            if (requestConfirmationsOnExport) {
+                                export = JOptionPane.showConfirmDialog(
+                                        FrontEnd.getActiveWindow(), 
+                                        "Do you want to perform sheduled export '" + entry.getKey() + "' now?", 
+                                        "Scheduled export confirmation", 
+                                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+                            }
+                            if (export) FrontEnd.autoExport(entry.getKey(), false, verboseExport);
                         }
-                        if (export) FrontEnd.autoExport(entry.getKey(), false, verboseExport);
-                    }
-                }, entry.getValue(), entry.getValue(), TimeUnit.MINUTES);
+                    }, period, period, TimeUnit.MINUTES);
+                }
             }
         }
-        for (final Entry<String, Long> entry : getImportConfigs().entrySet()) {
-            if (entry.getValue() > 0) {
-                executor.scheduleAtFixedRate(new Runnable(){
-                    public void run() {
-                        boolean importt = !requestConfirmationsOnImport;
-                        if (requestConfirmationsOnImport) {
-                            importt = JOptionPane.showConfirmDialog(
-                                    FrontEnd.getActiveWindow(), 
-                                    "Do you want to perform sheduled import '" + entry.getKey() + "' now?", 
-                                    "Scheduled import confirmation", 
-                                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        for (final Entry<String, Collection<Long>> entry : getImportConfigs().entrySet()) {
+            for (Long period : entry.getValue()) {
+                if (period > 0) {
+                    executor.scheduleAtFixedRate(new Runnable(){
+                        public void run() {
+                            boolean importt = !requestConfirmationsOnImport;
+                            if (requestConfirmationsOnImport) {
+                                importt = JOptionPane.showConfirmDialog(
+                                        FrontEnd.getActiveWindow(), 
+                                        "Do you want to perform sheduled import '" + entry.getKey() + "' now?", 
+                                        "Scheduled import confirmation", 
+                                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+                            }
+                            if (importt) FrontEnd.autoImport(entry.getKey(), false, verboseImport);
                         }
-                        if (importt) FrontEnd.autoImport(entry.getKey(), false, verboseImport);
-                    }
-                }, entry.getValue(), entry.getValue(), TimeUnit.MINUTES);
+                    }, period, period, TimeUnit.MINUTES);
+                }
             }
         }
     }
@@ -253,16 +256,16 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         });
     }
     
-    private Map<String, Long> getExportConfigs() {
+    private Map<String, Collection<Long>> getExportConfigs() {
         if (exportConfigs == null) {
-            exportConfigs = new HashMap<String, Long>();
+            exportConfigs = new HashMap<String, Collection<Long>>();
         }
         return exportConfigs;             
     }
     
-    private Map<String, Long> getImportConfigs() {
+    private Map<String, Collection<Long>> getImportConfigs() {
         if (importConfigs == null) {
-            importConfigs = new HashMap<String, Long>();
+            importConfigs = new HashMap<String, Collection<Long>>();
         }
         return importConfigs;             
     }
@@ -325,7 +328,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         addExportConfigButt.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
                 try {
-                    JComboBox configsCB = getConfigChooser(BackEnd.getInstance().getExportConfigurations(), getExportConfigs().keySet());
+                    JComboBox configsCB = getConfigChooser(BackEnd.getInstance().getExportConfigurations());
                     if (configsCB.getItemCount() > 0) {
                         typeCB.removeItem(INVOKATION_TYPE_ON_STARTUP);
                         if (typeCB.getItemCount() == 1) {
@@ -358,7 +361,12 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                                     break;
                                 }
                             }
-                            getExportConfigs().put(config, period);
+                            Collection<Long> periods = getExportConfigs().get(config);
+                            if (periods == null) {
+                                periods = new ArrayList<Long>();
+                                getExportConfigs().put(config, periods);
+                            }
+                            periods.add(period);
                             getExportConfigsModel().addRow(new Object[] { config, period == 0 ? INVOKATION_TYPE_ON_SAVE : "Every " + FormatUtils.formatTimeDuration(period * 60 * 1000) });
                         }
                     }
@@ -382,7 +390,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         addImportConfigButt.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
                 try {
-                    JComboBox configsCB = getConfigChooser(BackEnd.getInstance().getImportConfigurations(), getImportConfigs().keySet());
+                    JComboBox configsCB = getConfigChooser(BackEnd.getInstance().getImportConfigurations());
                     if (configsCB.getItemCount() > 0) {
                         typeCB.removeItem(INVOKATION_TYPE_ON_SAVE);
                         if (typeCB.getItemCount() == 1) {
@@ -415,7 +423,12 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                                     break;
                                 }
                             }
-                            getImportConfigs().put(config, period);
+                            Collection<Long> periods = getImportConfigs().get(config);
+                            if (periods == null) {
+                                periods = new ArrayList<Long>();
+                                getImportConfigs().put(config, periods);
+                            }
+                            periods.add(period);
                             getImportConfigsModel().addRow(new Object[] { config, period == 0 ? INVOKATION_TYPE_ON_STARTUP : "Every " + FormatUtils.formatTimeDuration(period * 60 * 1000) });
                         }
                     }
@@ -487,11 +500,18 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             props.remove(PROPERTY_EXPORT_CONFIGS);
         } else {
             StringBuffer sb = new StringBuffer();
-            Iterator<Entry<String, Long>> it = getExportConfigs().entrySet().iterator();
-            while (it.hasNext()) {
-                Entry<String, Long> entry = it.next();
-                sb.append(entry.getKey() + SCHEDULE_VALUE_SEPARATOR + entry.getValue());
-                if (it.hasNext()) {
+            Iterator<Entry<String, Collection<Long>>> it1 = getExportConfigs().entrySet().iterator();
+            while (it1.hasNext()) {
+                Entry<String, Collection<Long>> entry = it1.next();
+                Iterator<Long> it2 = entry.getValue().iterator();
+                while (it2.hasNext()) {
+                    Long period = it2.next();
+                    sb.append(entry.getKey() + SCHEDULE_VALUE_SEPARATOR + period);
+                    if (it2.hasNext()) {
+                        sb.append(PROPERTY_VALUES_SEPARATOR);
+                    }
+                }
+                if (it1.hasNext()) {
                     sb.append(PROPERTY_VALUES_SEPARATOR);
                 }
             }
@@ -502,11 +522,18 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             props.remove(PROPERTY_IMPORT_CONFIGS);
         } else {
             StringBuffer sb = new StringBuffer();
-            Iterator<Entry<String, Long>> it = getImportConfigs().entrySet().iterator();
-            while (it.hasNext()) {
-                Entry<String, Long> entry = it.next();
-                sb.append(entry.getKey() + SCHEDULE_VALUE_SEPARATOR + entry.getValue());
-                if (it.hasNext()) {
+            Iterator<Entry<String, Collection<Long>>> it1 = getImportConfigs().entrySet().iterator();
+            while (it1.hasNext()) {
+                Entry<String, Collection<Long>> entry = it1.next();
+                Iterator<Long> it2 = entry.getValue().iterator();
+                while (it2.hasNext()) {
+                    Long period = it2.next();
+                    sb.append(entry.getKey() + SCHEDULE_VALUE_SEPARATOR + period);
+                    if (it2.hasNext()) {
+                        sb.append(PROPERTY_VALUES_SEPARATOR);
+                    }
+                }
+                if (it1.hasNext()) {
                     sb.append(PROPERTY_VALUES_SEPARATOR);
                 }
             }
@@ -559,41 +586,51 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             String[] configs = exportConfigsStr.split(PROPERTY_VALUES_SEPARATOR);
             for (String config : configs) {
                 String[] cfg = config.split(SCHEDULE_VALUE_SEPARATOR);
-                getExportConfigs().put(cfg[0], Long.valueOf(cfg[1]));
+                Collection<Long> periods = getExportConfigs().get(cfg[0]);
+                if (periods == null) {
+                    periods = new ArrayList<Long>();
+                    getExportConfigs().put(cfg[0], periods);
+                }
+                periods.add(Long.valueOf(cfg[1]));
             }
         }
-        populateConfigsModel(getExportConfigsModel(), getExportConfigs());
+        populateConfigsModel(getExportConfigsModel(), getExportConfigs(), INVOKATION_TYPE_ON_SAVE);
 
         String importConfigsStr = props.getProperty(PROPERTY_IMPORT_CONFIGS);
         if (!Validator.isNullOrBlank(importConfigsStr)) {
             String[] configs = importConfigsStr.split(PROPERTY_VALUES_SEPARATOR);
             for (String config : configs) {
                 String[] cfg = config.split(SCHEDULE_VALUE_SEPARATOR);
-                getImportConfigs().put(cfg[0], Long.valueOf(cfg[1]));
+                Collection<Long> periods = getImportConfigs().get(cfg[0]);
+                if (periods == null) {
+                    periods = new ArrayList<Long>();
+                    getImportConfigs().put(cfg[0], periods);
+                }
+                periods.add(Long.valueOf(cfg[1]));
             }
         }
-        populateConfigsModel(getImportConfigsModel(), getImportConfigs());
+        populateConfigsModel(getImportConfigsModel(), getImportConfigs(), INVOKATION_TYPE_ON_STARTUP);
     }
     
-    private JComboBox getConfigChooser(Collection<String> configs, Collection<String> excludes) {
+    private JComboBox getConfigChooser(Collection<String> configs) {
         JComboBox cb = new JComboBox();
         for (String config : configs) {
-            if (!excludes.contains(config)) {
-                cb.addItem(config);
-            }
+            cb.addItem(config);
         }
         if (cb.getItemCount() > 0) cb.setSelectedIndex(0);
         return cb;
     }
     
-    private void populateConfigsModel(DefaultTableModel model, Map<String, Long> configs) throws Exception {
+    private void populateConfigsModel(DefaultTableModel model, Map<String, Collection<Long>> configs, String eventStr) throws Exception {
         while (model.getRowCount() > 0) {
             model.removeRow(0);
         }
-        for (Entry<String, Long> config : configs.entrySet()) {
+        for (Entry<String, Collection<Long>> config : configs.entrySet()) {
             String name = config.getKey();
-            String period = config.getValue() == 0 ? INVOKATION_TYPE_ON_SAVE : "Every " + FormatUtils.formatTimeDuration(config.getValue() * 60 * 1000);
-            model.addRow(new Object[]{ name, period });
+            for (Long period : config.getValue()) {
+                String periodStr = period == 0 ? eventStr : "Every " + FormatUtils.formatTimeDuration(period * 60 * 1000);
+                model.addRow(new Object[]{ name, periodStr });
+            }
         }
     }
     
@@ -621,7 +658,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         return createConfirmPopulatedConfigsModel(getImportConfigs());
     }
     
-    private DefaultTableModel createConfirmPopulatedConfigsModel(Map<String, Long> configs) {
+    private DefaultTableModel createConfirmPopulatedConfigsModel(Map<String, Collection<Long>> configs) {
         DefaultTableModel model = new DefaultTableModel() {
             private static final long serialVersionUID = 1L;
             @Override
@@ -639,9 +676,11 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         };
         model.addColumn(Constants.EMPTY_STR);
         model.addColumn("Configuration");
-        for (Entry<String, Long> config : configs.entrySet()) {
-            if (config.getValue() == 0) {
-                model.addRow(new Object[]{ Boolean.TRUE, config.getKey() });
+        for (Entry<String, Collection<Long>> config : configs.entrySet()) {
+            for (Long period : config.getValue()) {
+                if (period == 0) {
+                    model.addRow(new Object[]{ Boolean.TRUE, config.getKey() });
+                }
             }
         }
         return model;
