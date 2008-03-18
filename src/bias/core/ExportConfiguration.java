@@ -16,7 +16,6 @@ public class ExportConfiguration extends TransferConfiguration {
     private Collection<UUID> selectedIds = new LinkedList<UUID>();
     private Collection<UUID> selectedRecursiveIds = new LinkedList<UUID>();
     private boolean exportPreferences;
-    private boolean exportGlobalConfig;
     private boolean exportDataEntryConfigs;
     private boolean exportOnlyRelatedDataEntryConfigs;
     private boolean exportToolsData; 
@@ -34,7 +33,6 @@ public class ExportConfiguration extends TransferConfiguration {
             String fileLocation,
             boolean exportAll,
             boolean exportPreferences, 
-            boolean exportGlobalConfig, 
             boolean exportDataEntryConfigs, 
             boolean exportOnlyRelatedDataEntryConfigs,
             boolean exportToolsData, 
@@ -50,7 +48,6 @@ public class ExportConfiguration extends TransferConfiguration {
         this.selectedIds = new LinkedList<UUID>();
         this.selectedRecursiveIds = new LinkedList<UUID>();
         this.exportPreferences = exportPreferences;
-        this.exportGlobalConfig = exportGlobalConfig;
         this.exportDataEntryConfigs = exportDataEntryConfigs;
         this.exportOnlyRelatedDataEntryConfigs = exportOnlyRelatedDataEntryConfigs;
         this.exportToolsData = exportToolsData;
@@ -92,14 +89,6 @@ public class ExportConfiguration extends TransferConfiguration {
 
     public void setExportPreferences(boolean exportPreferences) {
         this.exportPreferences = exportPreferences;
-    }
-
-    public boolean isExportGlobalConfig() {
-        return exportGlobalConfig;
-    }
-
-    public void setExportGlobalConfig(boolean exportGlobalConfig) {
-        this.exportGlobalConfig = exportGlobalConfig;
     }
 
     public boolean isExportDataEntryConfigs() {

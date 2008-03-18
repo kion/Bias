@@ -168,6 +168,7 @@ import bias.skin.Skin;
 import bias.skin.UIIcons;
 import bias.utils.AppManager;
 import bias.utils.ArchUtils;
+import bias.utils.CommonUtils;
 import bias.utils.Downloader;
 import bias.utils.FSUtils;
 import bias.utils.FormatUtils;
@@ -545,7 +546,7 @@ public class FrontEnd extends JFrame {
     }
 
     public static void startup() {
-        getInstance().displayStatusBarMessage("loaded & ready");
+        displayStatusBarMessage("loaded & ready");
         if (Preferences.getInstance().startHidden) {
             showSysTrayIcon();
             if (!sysTrayIconVisible) {
@@ -562,6 +563,7 @@ public class FrontEnd extends JFrame {
             preInit();
             activateSkin();
             instance = new FrontEnd();
+            Preferences.getInstance().init();
             instance.applyPreferences(true);
             initTools();
             initTransferrers();
@@ -600,8 +602,8 @@ public class FrontEnd extends JFrame {
                 memUsageIndicatorPanel.setVisible(false);
             }
         }
-        instance.handleAutoUpdate(isStartingUp);
-        instance.displayStatusBarMessage("preferences applied");
+        handleAutoUpdate(isStartingUp);
+        displayStatusBarMessage("preferences applied");
     }
     
     private static JPanel memUsageIndicatorPanel = null;
@@ -735,11 +737,9 @@ public class FrontEnd extends JFrame {
     }
     
     private void applyGlobalSettings() {
-        if (getSelectedVisualEntryID() == null) {
-            String lsid = config.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
-            if (lsid != null) {
-                this.switchToVisualEntry(getJTabbedPane(), UUID.fromString(lsid), new LinkedList<Component>());
-            }
+        String lsid = config.getProperty(Constants.PROPERTY_LAST_SELECTED_ID);
+        if (lsid != null) {
+            this.switchToVisualEntry(getJTabbedPane(), UUID.fromString(lsid), new LinkedList<Component>());
         }
         
         // TODO [P3] would be nice to have window state (maximized: both/vert/horiz) restored on load
@@ -1117,9 +1117,9 @@ public class FrontEnd extends JFrame {
         return panel;
     }
     
-    // FIXME [P1] selected entry should always be preserved on import
     private boolean tabsInitialized;
     private void representData(DataCategory data) {
+        int rootActiveIdx = getJTabbedPane().getSelectedIndex();
         UUID id = getSelectedVisualEntryID();
         if (data.getPlacement() != null) {
             getJTabbedPane().setTabPlacement(data.getPlacement());
@@ -1133,6 +1133,9 @@ public class FrontEnd extends JFrame {
             } catch (IndexOutOfBoundsException ioobe) {
                 // simply ignore incorrect index settings
             }
+            currentTabPane = getJTabbedPane();
+        } else if (rootActiveIdx != -1) { 
+            getJTabbedPane().setSelectedIndex(rootActiveIdx);
             currentTabPane = getJTabbedPane();
         }
         if (id != null) {
@@ -1860,7 +1863,7 @@ public class FrontEnd extends JFrame {
     }
     
     public static void displayErrorMessage(Throwable t) {
-        JOptionPane.showMessageDialog(getActiveWindow(), getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), CommonUtils.getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
         t.printStackTrace(System.err);
     }
 
@@ -1882,17 +1885,6 @@ public class FrontEnd extends JFrame {
         tabPane.addChangeListener(tabChangeListener);
         tabPane.addMouseListener(tabMoveListener);
         tabPane.addMouseMotionListener(tabMoveListener);
-    }
-
-    private static String getFailureDetails(Throwable t) {
-        StringBuffer msg = new StringBuffer();
-        while (t != null) {
-            if (t.getMessage() != null) {
-                msg.append(Constants.NEW_LINE + t.getMessage());
-            }
-            t = t.getCause();
-        }
-        return msg.toString();
     }
 
     private MouseListener tabClickListener = new MouseAdapter() {
@@ -2030,31 +2022,33 @@ public class FrontEnd extends JFrame {
         return statusBarMessagesList;
     }
     
-    public void displayStatusBarErrorMessage(final String message) {
+    public static void displayStatusBarErrorMessage(final String message) {
         displayStatusBarMessage(message, true);
     }
     
-    public void displayStatusBarMessage(final String message) {
+    public static void displayStatusBarMessage(final String message) {
         displayStatusBarMessage(message, false);
     }
     
-    private void displayStatusBarMessage(final String message, final boolean isError) {
+    private static void displayStatusBarMessage(final String message, final boolean isError) {
         execute(new Runnable(){
             public void run() {
-                final String timestamp = dateFormat.format(new Date()) + " # ";
-                getJLabelStatusBarMsg().setText(Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_OK) + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                ((DefaultListModel) getStatusBarMessagesList().getModel()).addElement(timestamp + message);
-                if (getJPanel2().isVisible()) {
-                    autoscrollList(getStatusBarMessagesList());
-                }
-                ActionListener al = new ActionListener(){
-                    public void actionPerformed(ActionEvent ae){
-                        getJLabelStatusBarMsg().setText(Constants.HTML_PREFIX + "&nbsp;" + timestamp + Constants.HTML_COLOR_NORMAL + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                if (instance != null) {
+                    final String timestamp = dateFormat.format(new Date()) + " # ";
+                    instance.getJLabelStatusBarMsg().setText(Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_OK) + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                    ((DefaultListModel) instance.getStatusBarMessagesList().getModel()).addElement(timestamp + message);
+                    if (instance.getJPanel2().isVisible()) {
+                        instance.autoscrollList(instance.getStatusBarMessagesList());
                     }
-                };
-                Timer timer = new Timer(500, al);
-                timer.setRepeats(false);
-                timer.start();
+                    ActionListener al = new ActionListener(){
+                        public void actionPerformed(ActionEvent ae){
+                            instance.getJLabelStatusBarMsg().setText(Constants.HTML_PREFIX + "&nbsp;" + timestamp + Constants.HTML_COLOR_NORMAL + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                        }
+                    };
+                    Timer timer = new Timer(500, al);
+                    timer.setRepeats(false);
+                    timer.start();
+                }
             }
         });
     }
@@ -3133,7 +3127,7 @@ public class FrontEnd extends JFrame {
                                                 autoscrollList(processList);
                                                 String oe = "Overwrite existing";
                                                 
-                                                JPanel p1 = new JPanel(new GridLayout(6, 2));
+                                                JPanel p1 = new JPanel(new GridLayout(5, 2));
                                                 
                                                 JCheckBox importDataEntriesCB = new JCheckBox("Import data entries");
                                                 p1.add(importDataEntriesCB);
@@ -3153,12 +3147,6 @@ public class FrontEnd extends JFrame {
                                                 p1.add(overwritePreferencesCB);
                                                 createDependentCheckboxChangeListener(importPreferencesCB, overwritePreferencesCB);
                                                 
-                                                JCheckBox importGlobalConfigCB = new JCheckBox("Import global config"); 
-                                                p1.add(importGlobalConfigCB);
-                                                JCheckBox overwriteGlobalConfigCB = new JCheckBox(oe); 
-                                                p1.add(overwriteGlobalConfigCB);
-                                                createDependentCheckboxChangeListener(importGlobalConfigCB, overwriteGlobalConfigCB);
-
                                                 JCheckBox importToolsDataCB = new JCheckBox("Import tools data"); 
                                                 p1.add(importToolsDataCB);
                                                 JCheckBox overwriteToolsDataCB = new JCheckBox(oe); 
@@ -3226,8 +3214,6 @@ public class FrontEnd extends JFrame {
                                                         importConfig.setOverwriteDataEntryConfigs(overwriteDataEntryConfigsCB.isSelected());
                                                         importConfig.setImportPrefs(importPreferencesCB.isSelected());
                                                         importConfig.setOverwritePrefs(overwritePreferencesCB.isSelected());
-                                                        importConfig.setImportGlobalConfig(importGlobalConfigCB.isSelected());
-                                                        importConfig.setOverwriteGlobalConfig(overwriteGlobalConfigCB.isSelected());
                                                         importConfig.setImportToolsData(importToolsDataCB.isSelected());
                                                         importConfig.setOverwriteToolsData(overwriteToolsDataCB.isSelected());
                                                         importConfig.setImportIcons(importIconsCB.isSelected());
@@ -3253,10 +3239,6 @@ public class FrontEnd extends JFrame {
                                                         if (importPreferencesCB.isSelected()) {
                                                             Preferences.getInstance().init();
                                                             applyPreferences();
-                                                        }
-                                                        if (importGlobalConfigCB.isSelected()) {
-                                                            initGlobalSettings();
-                                                            applyGlobalSettings();
                                                         }
                                                         configsCB.setEditable(true);
                                                         label.setText("<html><font color=green>Data import - Completed</font></html>");
@@ -3330,7 +3312,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable ex) {
-                displayErrorMessage("Failed to import: " + getFailureDetails(ex), ex);
+                displayErrorMessage("Failed to import: " + CommonUtils.getFailureDetails(ex), ex);
             }
         }
     };
@@ -3401,10 +3383,6 @@ public class FrontEnd extends JFrame {
                             Preferences.getInstance().init();
                             instance.applyPreferences();
                         }
-                        if (importConfig.isImportGlobalConfig()) {
-                            initGlobalSettings();
-                            instance.applyGlobalSettings();
-                        }
                         if (verbose) {
                             label.setText("<html><font color=green>Data import - Completed</font></html>");
                             processLabel.setText("Data have been successfully imported.");
@@ -3429,7 +3407,7 @@ public class FrontEnd extends JFrame {
                             }
                         }
                         sb.append(")");
-                        instance.displayStatusBarMessage(sb.toString());
+                        displayStatusBarMessage(sb.toString());
                         fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass(), configName));
                     } catch (GeneralSecurityException gse) {
                         if (verbose) {
@@ -3591,7 +3569,6 @@ public class FrontEnd extends JFrame {
                             checkTreeManager = null;
                         }
                         final JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
-                        final JCheckBox exportGlobalConfigCB = new JCheckBox("Export global config"); 
                         final JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
                         final JCheckBox exportOnlyRelatedDataEntryConfigsCB = new JCheckBox("Export data entry configs related to exported data entries only"); 
                         createDependentCheckboxChangeListener(exportDataEntryConfigsCB, exportOnlyRelatedDataEntryConfigsCB);
@@ -3619,9 +3596,8 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         });
-                        JPanel cbPanel = new JPanel(new GridLayout(11, 1));
+                        JPanel cbPanel = new JPanel(new GridLayout(10, 1));
                         cbPanel.add(exportPreferencesCB);
-                        cbPanel.add(exportGlobalConfigCB);
                         cbPanel.add(exportDataEntryConfigsCB);
                         cbPanel.add(exportOnlyRelatedDataEntryConfigsCB);
                         cbPanel.add(exportToolsDataCB);
@@ -3701,7 +3677,6 @@ public class FrontEnd extends JFrame {
                                         }
                                         ExportConfiguration exportConfig = new ExportConfiguration();
                                         exportConfig.setExportPreferences(exportPreferencesCB.isSelected()); 
-                                        exportConfig.setExportGlobalConfig(exportGlobalConfigCB.isSelected()); 
                                         exportConfig.setExportDataEntryConfigs(exportDataEntryConfigsCB.isSelected());
                                         exportConfig.setExportOnlyRelatedDataEntryConfigs(exportOnlyRelatedDataEntryConfigsCB.isSelected());
                                         exportConfig.setExportToolsData(exportToolsDataCB.isSelected());
@@ -3847,7 +3822,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable t) {
-                displayErrorMessage("Failed to export: " + getFailureDetails(t), t);
+                displayErrorMessage("Failed to export: " + CommonUtils.getFailureDetails(t), t);
             }
         }
     };
@@ -3911,7 +3886,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                     sb.append(")");
-                    instance.displayStatusBarMessage(sb.toString());
+                    displayStatusBarMessage(sb.toString());
                     fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
                 } else {
                     panel.remove(instance.getTransferProgressBar());
@@ -4509,7 +4484,7 @@ public class FrontEnd extends JFrame {
                                         displayMessage("Detailed information is not provided with this extension.");
                                     }
                                 } catch (MalformedURLException ex) {
-                                    displayErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                    displayErrorMessage("Invalid URL! " + CommonUtils.getFailureDetails(ex), ex);
                                 }
                             } catch (Throwable t) {
                                 displayErrorMessage("Failed to display Extensions details!", t);
@@ -4582,7 +4557,7 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         } catch (Throwable ex) {
-                            displayErrorMessage("Failed to uninstall extension(s)! " + getFailureDetails(ex), ex);
+                            displayErrorMessage("Failed to uninstall extension(s)! " + CommonUtils.getFailureDetails(ex), ex);
                         }
                     }
                 });
@@ -4659,7 +4634,7 @@ public class FrontEnd extends JFrame {
                                             displayMessage("Detailed information is not provided with this Skin.");
                                         }
                                     } catch (MalformedURLException ex) {
-                                        displayErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                        displayErrorMessage("Invalid URL! " + CommonUtils.getFailureDetails(ex), ex);
                                     }
                                 }
                             } catch (Throwable t) {
@@ -4753,7 +4728,7 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         } catch (Throwable ex) {
-                            displayErrorMessage("Failed to uninstall skin(s)! " + getFailureDetails(ex), ex);
+                            displayErrorMessage("Failed to uninstall skin(s)! " + CommonUtils.getFailureDetails(ex), ex);
                         }
                     }
                 });
@@ -4796,7 +4771,7 @@ public class FrontEnd extends JFrame {
                                         displayMessage("Detailed information is not provided with this IconSet.");
                                     }
                                 } catch (MalformedURLException ex) {
-                                    displayErrorMessage("Invalid URL! " + getFailureDetails(ex), ex);
+                                    displayErrorMessage("Invalid URL! " + CommonUtils.getFailureDetails(ex), ex);
                                 }
                             } catch (Throwable t) {
                                 displayErrorMessage("Failed to display IconSet details!", t);
@@ -4836,7 +4811,7 @@ public class FrontEnd extends JFrame {
                                             displayErrorMessage("Nothing to install!");
                                         }
                                     } catch (Throwable t) {
-                                        displayErrorMessage("Failed to install icon(s)! " + getFailureDetails(t), t);
+                                        displayErrorMessage("Failed to install icon(s)! " + CommonUtils.getFailureDetails(t), t);
                                     }
                                 }
                             });
@@ -4859,7 +4834,7 @@ public class FrontEnd extends JFrame {
                                 displayMessage("Icon(s) have been successfully removed!");
                             }
                         } catch (Throwable t) {
-                            displayErrorMessage("Failed to remove icon(s)! " + getFailureDetails(t), t);
+                            displayErrorMessage("Failed to remove icon(s)! " + CommonUtils.getFailureDetails(t), t);
                         }
                     }
                 });
@@ -4898,7 +4873,7 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         } catch (Throwable ex) {
-                            displayErrorMessage("Failed to uninstall IsonSet(s)! " + getFailureDetails(ex), ex);
+                            displayErrorMessage("Failed to uninstall IsonSet(s)! " + CommonUtils.getFailureDetails(ex), ex);
                         }
                     }
                 });
@@ -4952,7 +4927,7 @@ public class FrontEnd extends JFrame {
                                     }
                                 }
                             } catch (Throwable t) {
-                                displayErrorMessage("Failed to handle/resolve dependencies! " + getFailureDetails(t), t);
+                                displayErrorMessage("Failed to handle/resolve dependencies! " + CommonUtils.getFailureDetails(t), t);
                             }
                         }
                     }
@@ -4981,10 +4956,10 @@ public class FrontEnd extends JFrame {
                                 try {
                                     loadAndDisplayPackageDetails(BackEnd.getInstance().getRepositoryBaseURL(), addOnURL, pack);
                                 } catch (MalformedURLException ex) {
-                                    displayErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
+                                    displayErrorMessage("Failure while resolving repository URL! " + CommonUtils.getFailureDetails(ex), ex);
                                 }
                             } catch (Exception ex) {
-                                displayErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
+                                displayErrorMessage("Failure while resolving repository URL! " + CommonUtils.getFailureDetails(ex), ex);
                             }
                         }
                     }
@@ -5166,7 +5141,7 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         } catch (Throwable t) {
-                            displayErrorMessage("Failed to detect unused librarires! " + getFailureDetails(t), t);
+                            displayErrorMessage("Failed to detect unused librarires! " + CommonUtils.getFailureDetails(t), t);
                         }
                     }
                 });
@@ -5187,7 +5162,7 @@ public class FrontEnd extends JFrame {
                             cleanButt.setEnabled(false);
                             cleanLabel.setVisible(false);
                         } catch (Throwable t) {
-                            displayErrorMessage("Failed to uninstall unused librarires! " + getFailureDetails(t), t);
+                            displayErrorMessage("Failed to uninstall unused librarires! " + CommonUtils.getFailureDetails(t), t);
                         }
                     }
                 });
@@ -5466,7 +5441,7 @@ public class FrontEnd extends JFrame {
                             proposedAddOnsToInstall.put(installedAddOn, file);
                         } catch (Throwable t) {
                             error = true;
-                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failure on reading add-on's info from file '" + file.getName() + "': " + getFailureDetails(t) + Constants.HTML_COLOR_SUFFIX + "</li>");
+                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failure on reading add-on's info from file '" + file.getName() + "': " + CommonUtils.getFailureDetails(t) + Constants.HTML_COLOR_SUFFIX + "</li>");
                             t.printStackTrace(System.err);
                         }
                     }
@@ -5598,7 +5573,7 @@ public class FrontEnd extends JFrame {
             });
             d.start();
         } catch (Exception ex) {
-            displayErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
+            displayErrorMessage("Failure while resolving repository URL! " + CommonUtils.getFailureDetails(ex), ex);
         }
     }
     
@@ -5773,7 +5748,7 @@ public class FrontEnd extends JFrame {
                 d.start();
             }    
         } catch (Exception ex) {
-            displayErrorMessage("Failure while resolving repository URL! " + getFailureDetails(ex), ex);
+            displayErrorMessage("Failure while resolving repository URL! " + CommonUtils.getFailureDetails(ex), ex);
         }
     }
     
@@ -5839,7 +5814,7 @@ public class FrontEnd extends JFrame {
                                         }
                                     }
                                 } catch (Throwable t) {
-                                    displayErrorMessage("Failed to handle/resolve dependencies! " + getFailureDetails(t), t);
+                                    displayErrorMessage("Failed to handle/resolve dependencies! " + CommonUtils.getFailureDetails(t), t);
                                 }
                             }
                         };
@@ -5932,7 +5907,7 @@ public class FrontEnd extends JFrame {
                     }
                     loaded = true;
                 } catch (Throwable t) {
-                    displayErrorMessage("Failed to load package details page! " + getFailureDetails(t), t);
+                    displayErrorMessage("Failed to load package details page! " + CommonUtils.getFailureDetails(t), t);
                 } finally {
                         try {
                             if (is != null) is.close();
@@ -5953,7 +5928,7 @@ public class FrontEnd extends JFrame {
                             d.setSize(getActiveWindow().getSize());
                             d.setVisible(true);
                         } catch (Throwable t) {
-                            displayErrorMessage("Failed to display package details! " + getFailureDetails(t), t);
+                            displayErrorMessage("Failed to display package details! " + CommonUtils.getFailureDetails(t), t);
                         }
                     }
                 }

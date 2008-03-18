@@ -42,6 +42,7 @@ import bias.event.StartUpEvent;
 import bias.event.StartUpEventListener;
 import bias.extension.ToolExtension;
 import bias.gui.FrontEnd;
+import bias.utils.CommonUtils;
 import bias.utils.FormatUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
@@ -137,15 +138,22 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                 if (period > 0) {
                     executor.scheduleAtFixedRate(new Runnable(){
                         public void run() {
-                            boolean export = !requestConfirmationsOnExport;
-                            if (requestConfirmationsOnExport) {
-                                export = JOptionPane.showConfirmDialog(
-                                        FrontEnd.getActiveWindow(), 
-                                        "Do you want to perform sheduled export '" + entry.getKey() + "' now?", 
-                                        "Scheduled export confirmation", 
-                                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+                            try {
+                                boolean export = !requestConfirmationsOnExport;
+                                if (requestConfirmationsOnExport) {
+                                    export = JOptionPane.showConfirmDialog(
+                                            FrontEnd.getActiveWindow(), 
+                                            "Do you want to perform sheduled export '" + entry.getKey() + "' now?", 
+                                            "Scheduled export confirmation", 
+                                            JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+                                }
+                                if (!BackEnd.getInstance().getExportConfigurations().contains(entry.getKey())) {
+                                    throw new Exception("Configuration does not exist anymore!");
+                                }
+                                if (export) FrontEnd.autoExport(entry.getKey(), false, verboseExport);
+                            } catch (Throwable t) {
+                                FrontEnd.displayStatusBarErrorMessage("Failed to perform export ('" + entry.getKey() + "')! " + CommonUtils.getFailureDetails(t));
                             }
-                            if (export) FrontEnd.autoExport(entry.getKey(), false, verboseExport);
                         }
                     }, period, period, TimeUnit.MINUTES);
                 }
@@ -156,15 +164,22 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                 if (period > 0) {
                     executor.scheduleAtFixedRate(new Runnable(){
                         public void run() {
-                            boolean importt = !requestConfirmationsOnImport;
-                            if (requestConfirmationsOnImport) {
-                                importt = JOptionPane.showConfirmDialog(
-                                        FrontEnd.getActiveWindow(), 
-                                        "Do you want to perform sheduled import '" + entry.getKey() + "' now?", 
-                                        "Scheduled import confirmation", 
-                                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+                            try {
+                                boolean importt = !requestConfirmationsOnImport;
+                                if (requestConfirmationsOnImport) {
+                                    importt = JOptionPane.showConfirmDialog(
+                                            FrontEnd.getActiveWindow(), 
+                                            "Do you want to perform sheduled import '" + entry.getKey() + "' now?", 
+                                            "Scheduled import confirmation", 
+                                            JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+                                }
+                                if (!BackEnd.getInstance().getImportConfigurations().contains(entry.getKey())) { 
+                                    throw new Exception("Configuration does not exist anymore!");
+                                }
+                                if (importt) FrontEnd.autoImport(entry.getKey(), false, verboseImport);
+                            } catch (Throwable t) {
+                                FrontEnd.displayStatusBarErrorMessage("Failed to perform import ('" + entry.getKey() + "')! " + CommonUtils.getFailureDetails(t));
                             }
-                            if (importt) FrontEnd.autoImport(entry.getKey(), false, verboseImport);
                         }
                     }, period, period, TimeUnit.MINUTES);
                 }

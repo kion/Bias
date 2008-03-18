@@ -14,8 +14,6 @@ public class ImportConfiguration extends TransferConfiguration {
     private boolean overwriteDataEntryConfigs;
     private boolean importPrefs;
     private boolean overwritePrefs;
-    private boolean importGlobalConfig;
-    private boolean overwriteGlobalConfig;
     private boolean importToolsData;
     private boolean overwriteToolsData;
     private boolean importIcons;
@@ -39,8 +37,6 @@ public class ImportConfiguration extends TransferConfiguration {
             boolean overwriteDataEntryConfigs, 
             boolean importPrefs,
             boolean overwritePrefs, 
-            boolean importGlobalConfig, 
-            boolean overwriteGlobalConfig, 
             boolean importToolsData, 
             boolean overwriteToolsData, 
             boolean importIcons,
@@ -60,8 +56,6 @@ public class ImportConfiguration extends TransferConfiguration {
         this.overwriteDataEntryConfigs = overwriteDataEntryConfigs;
         this.importPrefs = importPrefs;
         this.overwritePrefs = overwritePrefs;
-        this.importGlobalConfig = importGlobalConfig;
-        this.overwriteGlobalConfig = overwriteGlobalConfig;
         this.importToolsData = importToolsData;
         this.overwriteToolsData = overwriteToolsData;
         this.importIcons = importIcons;
@@ -121,22 +115,6 @@ public class ImportConfiguration extends TransferConfiguration {
 
     public void setOverwritePrefs(boolean overwritePrefs) {
         this.overwritePrefs = overwritePrefs;
-    }
-
-    public boolean isImportGlobalConfig() {
-        return importGlobalConfig;
-    }
-
-    public void setImportGlobalConfig(boolean importGlobalConfig) {
-        this.importGlobalConfig = importGlobalConfig;
-    }
-
-    public boolean isOverwriteGlobalConfig() {
-        return overwriteGlobalConfig;
-    }
-
-    public void setOverwriteGlobalConfig(boolean overwriteGlobalConfig) {
-        this.overwriteGlobalConfig = overwriteGlobalConfig;
     }
 
     public boolean isImportToolsData() {

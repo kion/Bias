@@ -501,18 +501,6 @@ public class BackEnd {
                     }
                 }
             }
-            // global config
-            if (config.isImportGlobalConfig()) {
-                File globalConfFile = new File(configDir, Constants.GLOBAL_CONFIG_FILE);
-                if (globalConfFile.exists()) {
-                    File localGlobalConfFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
-                    if (!localGlobalConfFile.exists() || config.isOverwriteGlobalConfig()) {
-                        FSUtils.duplicateFile(globalConfFile, localGlobalConfFile);
-                        // reload global config file
-                        loadConfig();
-                    }
-                }
-            }
             // data entry configs
             if (config.isImportDataEntryConfigs()) {
                 for (File configFile : configDir.listFiles(FILE_FILTER_DATA_ENTRY_CONFIG)) {
@@ -780,10 +768,6 @@ public class BackEnd {
         if (config.isExportPreferences()) {
             FSUtils.writeFile(new File(configDir, Constants.PREFERENCES_FILE), Preferences.getInstance().serialize());
         }
-        // global config file
-        if (config.isExportGlobalConfig()) {
-            this.config.store(new FileOutputStream(new File(configDir, Constants.GLOBAL_CONFIG_FILE)), null);
-        }
         // icons
         if (config.isExportIcons()) {
             if (!icons.isEmpty()) {
@@ -957,8 +941,6 @@ public class BackEnd {
                 Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_DATA_ENTRY_CONFIGS)),
                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES)),
                 Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_PREFERENCES)),
-                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG)),
-                Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_GLOBAL_CONFIG)),
                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA)),
                 Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_TOOLS_DATA)),
                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ICONS)),
@@ -981,7 +963,6 @@ public class BackEnd {
                 props.getProperty(Constants.OPTION_FILE_LOCATION),
                 exportAll,
                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES)), 
-                Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG)), 
                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS)), 
                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_ONLY_RELATED_DATA_ENTRY_CONFIGS)), 
                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_TOOLS_DATA)), 
@@ -1026,8 +1007,6 @@ public class BackEnd {
         props.setProperty(Constants.OPTION_OVERWRITE_DATA_ENTRY_CONFIGS, "" + config.isOverwriteDataEntryConfigs());
         props.setProperty(Constants.OPTION_PROCESS_PREFERENCES, "" + config.isImportPrefs());
         props.setProperty(Constants.OPTION_OVERWRITE_PREFERENCES, "" + config.isOverwritePrefs());
-        props.setProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG, "" + config.isImportGlobalConfig());
-        props.setProperty(Constants.OPTION_OVERWRITE_GLOBAL_CONFIG, "" + config.isOverwriteGlobalConfig());
         props.setProperty(Constants.OPTION_PROCESS_TOOLS_DATA, "" + config.isImportToolsData());
         props.setProperty(Constants.OPTION_OVERWRITE_TOOLS_DATA, "" + config.isOverwriteToolsData());
         props.setProperty(Constants.OPTION_PROCESS_ICONS, "" + config.isImportIcons());
@@ -1049,7 +1028,6 @@ public class BackEnd {
         props.setProperty(Constants.OPTION_TRANSFER_PROVIDER, config.getTransferProvider());
         props.setProperty(Constants.OPTION_FILE_LOCATION, config.getFileLocation());
         props.setProperty(Constants.OPTION_PROCESS_PREFERENCES, "" + config.isExportPreferences()); 
-        props.setProperty(Constants.OPTION_PROCESS_GLOBAL_CONFIG, "" + config.isExportGlobalConfig()); 
         props.setProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS, "" + config.isExportDataEntryConfigs()); 
         props.setProperty(Constants.OPTION_PROCESS_ONLY_RELATED_DATA_ENTRY_CONFIGS, "" + config.isExportOnlyRelatedDataEntryConfigs()); 
         props.setProperty(Constants.OPTION_PROCESS_TOOLS_DATA, "" + config.isExportToolsData()); 
@@ -1260,6 +1238,7 @@ public class BackEnd {
         renameTransferConfiguration(oldName, newName, TRANSFER_TYPE.EXPORT);
     }
     
+    // FIXME [P1] it seems that transfer does not work after renaming...
     private void renameTransferConfiguration(String oldName, String newName, TRANSFER_TYPE transferType) throws Exception {
         Map<String, Properties> configs = transferType == TRANSFER_TYPE.IMPORT ? importConfigs : exportConfigs;
         Map<String, String> configIDs = transferType == TRANSFER_TYPE.IMPORT ? importConfigIDs : exportConfigIDs;
