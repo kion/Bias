@@ -47,7 +47,7 @@ public abstract class TransferExtension implements Extension {
         TransferData td = new TransferData(null, null);
         String checkSum = null;
         Properties meta = null;
-        byte[] metaBytes = importData(options.getOptions(), true);
+        byte[] metaBytes = readData(options.getOptions(), true);
         if (metaBytes != null && metaBytes.length != 0) {
             ByteArrayInputStream bais = new ByteArrayInputStream(metaBytes);
             meta = new Properties();
@@ -56,7 +56,7 @@ public abstract class TransferExtension implements Extension {
             checkSum = meta.getProperty(Constants.META_DATA_CHECKSUM);
         }
         if (force || BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, this.getClass(), options.getFileLocation(), checkSum)) {
-            byte[] data = importData(options.getOptions(), false);
+            byte[] data = readData(options.getOptions(), false);
             BackEnd.getInstance().storeTransferFileLocationCheckSum(TRANSFER_TYPE.IMPORT, this.getClass(), options.getFileLocation(), checkSum);
             td.setData(data);
             td.setMetaData(meta);
@@ -65,14 +65,14 @@ public abstract class TransferExtension implements Extension {
     }
 
     /**
-     * Imports data using provided import options.
-     * Should be overridden to perform import for certain transfer-extension's instance.
+     * Reads data using provided transfer options.
+     * Should be overridden by certain transfer-extension class.
      * 
      * @param transferMetaData defines whether meta- (true) or main-data (false) should be transferred 
      * 
-     * @return imported data
+     * @return data read
      */
-    public abstract byte[] importData(byte[] options, boolean transferMetaData) throws Throwable;
+    public abstract byte[] readData(byte[] options, boolean transferMetaData) throws Throwable;
 
     /**
      * Exports given data using provided export options.
@@ -92,8 +92,8 @@ public abstract class TransferExtension implements Extension {
                 meta.store(baos, null);
                 baos.close();
             }
-            if (baos != null) exportData(baos.toByteArray(), options.getOptions(), true);
-            exportData(td.getData(), options.getOptions(), false);
+            if (baos != null) writeData(baos.toByteArray(), options.getOptions(), true);
+            writeData(td.getData(), options.getOptions(), false);
             BackEnd.getInstance().storeTransferFileLocationCheckSum(TRANSFER_TYPE.EXPORT, this.getClass(), options.getFileLocation(), checkSum);
             return true;
         }
@@ -101,13 +101,13 @@ public abstract class TransferExtension implements Extension {
     }
 
     /**
-     * Exports given data using provided export options.
-     * Should be overridden to perform export for certain transfer-extension's instance.
+     * Writes given data using provided transfer options.
+     * Should be overridden by certain transfer-extension class.
      * 
      * @param transferMetaData defines whether meta- (true) or main-data (false) should be transferred
      *  
      */
-    public abstract void exportData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable;
+    public abstract void writeData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable;
 
     /**
      * Performs general transfer-extension configuration.

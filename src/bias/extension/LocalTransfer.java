@@ -33,10 +33,10 @@ public class LocalTransfer extends ObservableTransferExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.TransferExtension#exportData(byte[], byte[], boolean)
+     * @see bias.extension.TransferExtension#writeData(byte[], byte[], boolean)
      */
     @Override
-    public void exportData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable {
+    public void writeData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable {
         long startTime = System.currentTimeMillis();
         long transferredBytesNum = 0;
         long elapsedTime = 0;
@@ -70,10 +70,10 @@ public class LocalTransfer extends ObservableTransferExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.TransferExtension#importData(byte[], boolean)
+     * @see bias.extension.TransferExtension#readData(byte[], boolean)
      */
     @Override
-    public byte[] importData(byte[] options, boolean transferMetaData) throws Throwable {
+    public byte[] readData(byte[] options, boolean transferMetaData) throws Throwable {
         byte[] data = null;
         long startTime = System.currentTimeMillis();
         long transferredBytesNum = 0;

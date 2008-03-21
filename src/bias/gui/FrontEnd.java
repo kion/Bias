@@ -3090,7 +3090,7 @@ public class FrontEnd extends JFrame {
                                             hideBottomPanel();
                                             throw new Exception("Import file location is missing!");
                                         }
-                                        byte[] metaBytes = transferrer.importData(transferOptions, true);
+                                        byte[] metaBytes = transferrer.readData(transferOptions, true);
                                         if (metaBytes != null) {
                                             Properties metaData = PropertiesUtils.deserializeProperties(metaBytes);
                                             String sizeStr = metaData.getProperty(Constants.META_DATA_FILESIZE);
@@ -3333,7 +3333,7 @@ public class FrontEnd extends JFrame {
                     throw new Exception("It looks like transfer type used in this stored import configuration is no longer available (extension uninstalled?).");
                 }
                 byte[] transferOptions = BackEnd.getInstance().getImportOptions(configName);
-                byte[] metaBytes = transferrer.importData(transferOptions, true);
+                byte[] metaBytes = transferrer.readData(transferOptions, true);
                 if (metaBytes != null) {
                     Properties metaData = PropertiesUtils.deserializeProperties(metaBytes);
                     if (verbose) {
