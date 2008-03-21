@@ -150,6 +150,8 @@ public class Preferences {
     
     /* PREFERENCES DECLARATION SECTION */
     
+    // TODO [P1] introduce 'use system temporary folder' preference (?)
+    
     @PreferenceAnnotation(
             title = "Preferred date-time format:",
             description = "Defines preferred format for date-time rendering")
