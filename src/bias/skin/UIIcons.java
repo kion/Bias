@@ -18,10 +18,8 @@ public class UIIcons {
     public static final ImageIcon ICON_EXPORT = new ImageIcon(UIIcons.class.getResource("/bias/res/export.png"));
     public static final ImageIcon ICON_DELETE = new ImageIcon(UIIcons.class.getResource("/bias/res/delete.png"));
     public static final ImageIcon ICON_CATEGORY = new ImageIcon(UIIcons.class.getResource("/bias/res/add_category.png"));
-    public static final ImageIcon ICON_ROOT_CATEGORY = new ImageIcon(UIIcons.class.getResource("/bias/res/add_root_category.png"));
     public static final ImageIcon ICON_ADJUST_CATEGORY = new ImageIcon(UIIcons.class.getResource("/bias/res/adjust_category.png"));
     public static final ImageIcon ICON_ENTRY = new ImageIcon(UIIcons.class.getResource("/bias/res/add_entry.png"));
-    public static final ImageIcon ICON_ROOT_ENTRY = new ImageIcon(UIIcons.class.getResource("/bias/res/add_root_entry.png"));
     public static final ImageIcon ICON_ADJUST_ENTRY = new ImageIcon(UIIcons.class.getResource("/bias/res/adjust_entry.png"));
     public static final ImageIcon ICON_CHANGE_PASSWORD = new ImageIcon(UIIcons.class.getResource("/bias/res/change_password.png"));
     public static final ImageIcon ICON_SAVE = new ImageIcon(UIIcons.class.getResource("/bias/res/save.png"));
@@ -40,10 +38,8 @@ public class UIIcons {
     private ImageIcon iconSave;
     private ImageIcon iconImport;
     private ImageIcon iconExport;
-    private ImageIcon iconRootCategory;
     private ImageIcon iconAdjustCategory;
     private ImageIcon iconCategory;
-    private ImageIcon iconRootEntry;
     private ImageIcon iconAdjustEntry;
     private ImageIcon iconEntry;
     private ImageIcon iconChangePassword;
@@ -69,10 +65,8 @@ public class UIIcons {
         this.iconSave = ICON_SAVE;
         this.iconImport = ICON_IMPORT; 
         this.iconExport = ICON_EXPORT; 
-        this.iconRootCategory = ICON_ROOT_CATEGORY; 
         this.iconAdjustCategory = ICON_ADJUST_CATEGORY; 
         this.iconCategory = ICON_CATEGORY;
-        this.iconRootEntry = ICON_ROOT_ENTRY; 
         this.iconAdjustEntry = ICON_ADJUST_ENTRY; 
         this.iconEntry = ICON_ENTRY;
         this.iconChangePassword = ICON_CHANGE_PASSWORD;
@@ -95,10 +89,8 @@ public class UIIcons {
             ImageIcon iconSave, 
             ImageIcon iconImport, 
             ImageIcon iconExport, 
-            ImageIcon iconRootCategory, 
             ImageIcon iconCategory, 
             ImageIcon iconAdjustCategory, 
-            ImageIcon iconRootEntry, 
             ImageIcon iconEntry, 
             ImageIcon iconAdjustEntry, 
             ImageIcon iconDelete,
@@ -118,10 +110,8 @@ public class UIIcons {
         this.iconSave = iconSave;
         this.iconImport = iconImport;
         this.iconExport = iconExport;
-        this.iconRootCategory = iconRootCategory;
         this.iconCategory = iconCategory;
         this.iconAdjustCategory = iconAdjustCategory;
-        this.iconRootEntry = iconRootEntry;
         this.iconEntry = iconEntry;
         this.iconAdjustEntry = iconAdjustEntry;
         this.iconDelete = iconDelete;
@@ -266,22 +256,6 @@ public class UIIcons {
 
     public void setIconPreferences(ImageIcon iconPreferences) {
         this.iconPreferences = iconPreferences;
-    }
-
-    public ImageIcon getIconRootCategory() {
-        return iconRootCategory;
-    }
-
-    public void setIconRootCategory(ImageIcon iconRootCategory) {
-        this.iconRootCategory = iconRootCategory;
-    }
-
-    public ImageIcon getIconRootEntry() {
-        return iconRootEntry;
-    }
-
-    public void setIconRootEntry(ImageIcon iconRootEntry) {
-        this.iconRootEntry = iconRootEntry;
     }
 
     public ImageIcon getIconSave() {

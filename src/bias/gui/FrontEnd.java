@@ -335,8 +335,6 @@ public class FrontEnd extends JFrame {
 
     private JToolBar jToolBar3 = null;
 
-    private JButton jButton = null;
-
     private JButton jButton1 = null;
 
     private JButton jButton2 = null;
@@ -390,8 +388,6 @@ public class FrontEnd extends JFrame {
     private JButton jButton9 = null;
 
     private JButton jButton10 = null;
-
-    private JButton jButton3 = null;
 
     private static boolean unusedAddOnDataAndConfigFilesCleanedUp = false;
     
@@ -2161,10 +2157,8 @@ public class FrontEnd extends JFrame {
             jToolBar.add(getJButton2());
             jToolBar.add(getJButton12());
             jToolBar.addSeparator();
-            jToolBar.add(getJButton3());
             jToolBar.add(getJButton4());
             jToolBar.add(getJButton17());
-            jToolBar.add(getJButton());
             jToolBar.add(getJButton5());
             jToolBar.add(getJButton18());
             jToolBar.add(getJButton1());
@@ -2190,19 +2184,6 @@ public class FrontEnd extends JFrame {
             jToolBar3.setFloatable(false);
         }
         return jToolBar3;
-    }
-
-    /**
-     * This method initializes jButton
-     * 
-     * @return javax.swing.JButton
-     */
-    private JButton getJButton() {
-        if (jButton == null) {
-            jButton = new JButton(addRootEntryAction);
-            jButton.setText(Constants.EMPTY_STR);
-        }
-        return jButton;
     }
 
     /**
@@ -2516,19 +2497,6 @@ public class FrontEnd extends JFrame {
         return jButton10;
     }
 
-    /**
-     * This method initializes jButton3
-     * 
-     * @return javax.swing.JButton
-     */
-    private JButton getJButton3() {
-        if (jButton3 == null) {
-            jButton3 = new JButton(addRootCategoryAction);
-            jButton3.setText(Constants.EMPTY_STR);
-        }
-        return jButton3;
-    }
-
     private JButton getJButton4() {
         if (jButton4 == null) {
             jButton4 = new JButton(addCategoryAction);
@@ -2569,141 +2537,6 @@ public class FrontEnd extends JFrame {
         return result;
     }
 
-    // TODO [P1] usability: move this action to 'add-category' action as 'add-to-root' checkbox (?)
-    private AddRootCategoryAction addRootCategoryAction = new AddRootCategoryAction();
-    private class AddRootCategoryAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
-        
-        public AddRootCategoryAction() {
-            putValue(Action.NAME, "addRootCategory");
-            putValue(Action.SHORT_DESCRIPTION, "add root category");
-            putValue(Action.SMALL_ICON, uiIcons.getIconRootCategory());
-        }
-        
-        public void actionPerformed(ActionEvent evt) {
-            try {
-                if (getJTabbedPane().getTabCount() == 0) {
-                    if (defineRootPlacement()) {
-                        addRootCategoryAction();
-                    }
-                } else {
-                    addRootCategoryAction();
-                }
-            } catch (Exception ex) {
-                displayErrorMessage(ex);
-            }
-        }
-    };
-
-    private void addRootCategoryAction() {
-        JLabel pLabel = new JLabel("Choose tabs placement:");
-        JComboBox placementsChooser = new JComboBox();
-        for (Placement placement : PLACEMENTS) {
-            placementsChooser.addItem(placement);
-        }
-        JLabel icLabel = new JLabel("Choose icon:");
-        JComboBox iconChooser = new JComboBox();
-        iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
-        for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-            iconChooser.addItem(icon);
-        }
-        JLabel cLabel = new JLabel("Caption:");
-        String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser, cLabel },
-                "New root category:", JOptionPane.QUESTION_MESSAGE);
-        if (categoryCaption != null) {
-            JTabbedPane categoryTabPane = new JTabbedPane();
-            categoryTabPane.setName(UUID.randomUUID().toString());
-            categoryTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
-            addTabPaneListeners(categoryTabPane);
-            getJTabbedPane().addTab(categoryCaption, categoryTabPane);
-            getJTabbedPane().setSelectedComponent(categoryTabPane);
-            ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
-            if (icon != null) {
-            	getJTabbedPane().setIconAt(getJTabbedPane().getSelectedIndex(), icon);
-            }
-            displayStatusBarMessage("root category '" + categoryCaption + "' added");
-        }
-    }
-
-    // TODO [P1] usability: move this action to 'add-entry' action as 'add-to-root' checkbox (?)
-    private AddRootEntryAction addRootEntryAction = new AddRootEntryAction();
-    private class AddRootEntryAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
-        
-        public AddRootEntryAction() {
-            putValue(Action.NAME, "addRootEntry");
-            putValue(Action.SHORT_DESCRIPTION, "add root entry");
-            putValue(Action.SMALL_ICON, uiIcons.getIconRootEntry());
-        }
-
-        public void actionPerformed(ActionEvent evt) {
-            try {
-                Map<String, Class<? extends EntryExtension>> extensions = ExtensionFactory.getAnnotatedEntryExtensionClasses();
-                if (extensions.isEmpty()) {
-                    displayMessage(
-                            "You have no any extensions installed currently." + Constants.NEW_LINE +
-                            "You can't add entries before you have at least one extension installed.");
-                } else {
-                    if (getJTabbedPane().getTabCount() == 0) {
-                        if (defineRootPlacement()) {
-                            addRootEntryAction(extensions);
-                        }
-                    } else {
-                        addRootEntryAction(extensions);
-                    }
-                }
-            } catch (Throwable t) {
-                displayErrorMessage("Unable to add entry." + Constants.NEW_LINE +
-                        "Some extension(s) may be broken." + Constants.NEW_LINE +
-                        "Try to open extensions management dialog, " +
-                        "it will autodetect and remove broken extensions." + Constants.NEW_LINE +
-                        "After that, try to add entry again.", t);
-            }
-        }
-    };
-
-    private void addRootEntryAction(Map<String, Class<? extends EntryExtension>> extensions) throws Throwable {
-        JLabel entryTypeLabel = new JLabel("Type:");
-        JComboBox entryTypeComboBox = new JComboBox();
-        for (String entryType : extensions.keySet()) {
-            entryTypeComboBox.addItem(entryType);
-        }
-        if (lastAddedEntryType != null) {
-            entryTypeComboBox.setSelectedItem(lastAddedEntryType);
-        }
-        entryTypeComboBox.setEditable(false);
-        JLabel icLabel = new JLabel("Choose icon:");
-        JComboBox iconChooser = new JComboBox();
-        iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
-        for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-            iconChooser.addItem(icon);
-        }
-        JLabel cLabel = new JLabel("Caption:");
-        String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser, cLabel },
-                "New entry:", JOptionPane.QUESTION_MESSAGE);
-        if (caption != null) {
-            String typeDescription = (String) entryTypeComboBox.getSelectedItem();
-            lastAddedEntryType = typeDescription;
-            Class<? extends EntryExtension> type = extensions.get(typeDescription);
-            byte[] defSettings = BackEnd.getInstance().getAddOnSettings(type.getName(), PackType.EXTENSION);
-            if (defSettings == null) {
-                // extension's first time usage
-                configureExtension(type.getName(), true);
-            }
-            EntryExtension extension = ExtensionFactory.newEntryExtension(type);
-            if (extension != null) {
-                JPanel p = getEntryExtensionPanel(extension.getId(), extension);
-                getJTabbedPane().addTab(caption, p);
-                getJTabbedPane().setSelectedComponent(p);
-                ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
-                if (icon != null) {
-                    getJTabbedPane().setIconAt(getJTabbedPane().getSelectedIndex(), icon);
-                }
-                displayStatusBarMessage("root entry '" + caption + "' added");
-            }
-        }
-    }
-    
     private ChangePasswordAction changePasswordAction = new ChangePasswordAction();
     private class ChangePasswordAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
@@ -2779,8 +2612,11 @@ public class FrontEnd extends JFrame {
                             return;
                         }
                     }
+                    JCheckBox addToRootCB = null;
                     if (getJTabbedPane().getTabCount() == 0 || getJTabbedPane().getSelectedIndex() == -1) {
                         currentTabPane = getJTabbedPane();
+                    } else {
+                        addToRootCB = new JCheckBox("Add entry to the root level");
                     }
                     JLabel entryTypeLabel = new JLabel("Type:");
                     JComboBox entryTypeComboBox = new JComboBox();
@@ -2798,8 +2634,11 @@ public class FrontEnd extends JFrame {
                         iconChooser.addItem(icon);
                     }
                     JLabel cLabel = new JLabel("Caption:");
-                    String caption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { entryTypeLabel, entryTypeComboBox, icLabel, iconChooser, cLabel },
-                            "New entry:", JOptionPane.QUESTION_MESSAGE);
+                    String caption = JOptionPane.showInputDialog(
+                            FrontEnd.this, 
+                            new Component[] { addToRootCB, entryTypeLabel, entryTypeComboBox, icLabel, iconChooser, cLabel },
+                            "New entry", 
+                            JOptionPane.QUESTION_MESSAGE);
                     if (caption != null) {
                         String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                         lastAddedEntryType = typeDescription;
@@ -2812,11 +2651,12 @@ public class FrontEnd extends JFrame {
                         EntryExtension extension = ExtensionFactory.newEntryExtension(type);
                         if (extension != null) {
                             JPanel p = getEntryExtensionPanel(extension.getId(), extension);
-                            currentTabPane.addTab(caption, p);
-                            currentTabPane.setSelectedComponent(p);
+                            JTabbedPane tabPane = (addToRootCB != null && addToRootCB.isSelected()) || currentTabPane == null ? getJTabbedPane() : currentTabPane;
+                            tabPane.addTab(caption, p);
+                            tabPane.setSelectedComponent(p);
                             ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
                             if (icon != null) {
-                                currentTabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
+                                tabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
                             }
                             displayStatusBarMessage("entry '" + caption + "' added");
                         }
@@ -4029,8 +3869,11 @@ public class FrontEnd extends JFrame {
                         return;
                     }
                 }
+                JCheckBox addToRootCB = null;
                 if (getJTabbedPane().getTabCount() == 0 || getJTabbedPane().getSelectedIndex() == -1) {
                     currentTabPane = getJTabbedPane();
+                } else {
+                    addToRootCB = new JCheckBox("Add category to the root level");
                 }
                 JLabel pLabel = new JLabel("Choose tabs placement:");
                 JComboBox placementsChooser = new JComboBox();
@@ -4044,15 +3887,19 @@ public class FrontEnd extends JFrame {
                     iconChooser.addItem(icon);
                 }
                 JLabel cLabel = new JLabel("Caption:");
-                String categoryCaption = JOptionPane.showInputDialog(FrontEnd.this, new Component[] { pLabel, placementsChooser, icLabel, iconChooser, cLabel },
-                        "New category:", JOptionPane.QUESTION_MESSAGE);
+                String categoryCaption = JOptionPane.showInputDialog(
+                        FrontEnd.this, 
+                        new Component[] { addToRootCB, pLabel, placementsChooser, icLabel, iconChooser, cLabel },
+                        "New category", 
+                        JOptionPane.QUESTION_MESSAGE);
                 if (categoryCaption != null) {
                     JTabbedPane categoryTabPane = new JTabbedPane();
                     UUID id = UUID.randomUUID();
                     categoryTabPane.setName(id.toString());
                     categoryTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
                     addTabPaneListeners(categoryTabPane);
-                    currentTabPane.addTab(categoryCaption, categoryTabPane);
+                    JTabbedPane tabPane = (addToRootCB != null && addToRootCB.isSelected()) || currentTabPane == null ? getJTabbedPane() : currentTabPane;
+                    tabPane.addTab(categoryCaption, categoryTabPane);
                     JTabbedPane parentTabPane = ((JTabbedPane) categoryTabPane.getParent());
                     parentTabPane.setSelectedComponent(categoryTabPane);
                     ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
