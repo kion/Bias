@@ -34,7 +34,7 @@ public class FTPTransfer extends ObservableTransferExtension {
     private static final String TRANSFER_OPTION_FILEPATH = "FILEPATH";
     private static final String TRANSFER_OPTION_SERVER = "SERVER";
     private static final String TRANSFER_OPTION_USERNAME = "USERNAME";
-    private static final String TRANSFER_OPTION_PASSWORD = "TRANSFER_PASSWORD";
+    private static final String TRANSFER_OPTION_PASSWORD = "PASSWORD";
 
     private static final String META_DATA_FILE_SUFIX = ".metadata";
 

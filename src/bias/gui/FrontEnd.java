@@ -5344,6 +5344,7 @@ public class FrontEnd extends JFrame {
                 private static final long serialVersionUID = 1L;
                 @Override
                 public boolean isCellEditable(int rowIndex, int mColIndex) {
+                    // TODO [P1] make libraries available for manual installation ?...
                     return mColIndex == 0 
                                     && (!getValueAt(rowIndex, 1).equals(PackType.LIBRARY.value()) 
                                     || getValueAt(rowIndex, 7).equals(Constants.ADDON_STATUS_UPDATE)) ? true : false;
