@@ -2569,6 +2569,7 @@ public class FrontEnd extends JFrame {
         return result;
     }
 
+    // TODO [P1] usability: move this action to 'add-category' action as 'add-to-root' checkbox (?)
     private AddRootCategoryAction addRootCategoryAction = new AddRootCategoryAction();
     private class AddRootCategoryAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
@@ -2624,6 +2625,7 @@ public class FrontEnd extends JFrame {
         }
     }
 
+    // TODO [P1] usability: move this action to 'add-entry' action as 'add-to-root' checkbox (?)
     private AddRootEntryAction addRootEntryAction = new AddRootEntryAction();
     private class AddRootEntryAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
