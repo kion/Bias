@@ -5578,6 +5578,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    // TODO [P1] discard addon installation if at least one of it's dependencies failed to install ?...
     private void downloadAndInstallOnlinePackages(final Runnable onFinishAction) {
         try {
             final Map<URL, Pack> urlPackageMap = new HashMap<URL, Pack>();
