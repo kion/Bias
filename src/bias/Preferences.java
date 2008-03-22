@@ -151,6 +151,8 @@ public class Preferences {
     /* PREFERENCES DECLARATION SECTION */
     
     // TODO [P1] introduce 'use system temporary folder' preference (?)
+    //           or even use system temporary folder by default and introduce 'extra secure mode' preference
+    //           which, being enabled, will switch app to internal (in working dir) temp folder usage 
     
     @PreferenceAnnotation(
             title = "Preferred date-time format:",
