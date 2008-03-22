@@ -18,6 +18,9 @@ import bias.core.TransferData;
  */
 public abstract class TransferExtension implements Extension {
     
+    // TODO [P1] add checkAvailability method to be able to check if transfer is possible (connection available)
+    //           before export-data archiving procedure is started (to avoid excessive CPU/Memory utilization)
+    
     private byte[] options;
     
     /**
