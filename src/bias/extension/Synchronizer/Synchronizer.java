@@ -52,7 +52,7 @@ import bias.utils.Validator;
  */
 public class Synchronizer extends ToolExtension implements AfterSaveEventListener, StartUpEventListener {
     
-    // TODO [P1] implement scheduled actions performed periodically at fixed day time (e.g. every day at 18:00) 
+    // TODO [P2] implement scheduled actions performed periodically at fixed day time (e.g. every day at 18:00) 
     
     private static final String PROPERTY_IMPORT_VERBOSE_MODE = "IMPORT_VERBOSE_MODE";
     private static final String PROPERTY_EXPORT_VERBOSE_MODE = "EXPORT_VERBOSE_MODE";
