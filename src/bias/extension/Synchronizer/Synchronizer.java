@@ -54,6 +54,9 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     
     // TODO [P2] implement scheduled actions performed periodically at fixed day time (e.g. every day at 18:00) 
     
+    // TODO [P2] optionally, show pop-up messages about import that just have been performed 
+    //           (useful for background imports in 'minimized to system tray' mode) 
+    
     private static final String PROPERTY_IMPORT_VERBOSE_MODE = "IMPORT_VERBOSE_MODE";
     private static final String PROPERTY_EXPORT_VERBOSE_MODE = "EXPORT_VERBOSE_MODE";
     private static final String PROPERTY_IMPORT_REQUEST_CONFIRMATIONS = "IMPORT_REQUEST_CONFIRMATIONS";
