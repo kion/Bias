@@ -3281,6 +3281,8 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    // TODO [P1] force save before export ?...
+    
     private ExportAction exportAction = new ExportAction();
     private class ExportAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
