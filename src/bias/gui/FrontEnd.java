@@ -2834,10 +2834,7 @@ public class FrontEnd extends JFrame {
         });
     }
     
-    // TODO [P1] import should be done without complete tabs refresh (on background)
-    //           to avoid focus loosing and user distraction (only changed tabs should be refreshed) 
-    //           (instead of cases when currently active item needs to be refreshed - 
-    //           in such cases user should decide what to do (leave current version, or overwrite with imported one))
+    // TODO [P1] when import wants to overwrite currently edited entry - ask users's confirmation ?...
     
     private ImportAction importAction = new ImportAction();
     private class ImportAction extends AbstractAction {
