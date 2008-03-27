@@ -8,8 +8,8 @@ package bias.extension;
  */
 public abstract class ObservableTransferExtension extends TransferExtension {
     
-    public ObservableTransferExtension(byte[] options) {
-        super(options);
+    public ObservableTransferExtension(byte[] settings) {
+        super(settings);
     }
 
     private TransferProgressListener listener;
