@@ -183,6 +183,9 @@ import bias.utils.Downloader.DownloadListener;
  */
 public class FrontEnd extends JFrame {
     
+    // TODO [P1] some tasks may be executed in non-single-thread queue, 
+    //           inspect all the tasks and perform changes needed
+    
     // TODO [P3] internationalization
 
     private static final long serialVersionUID = 1L;
@@ -1015,8 +1018,8 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private void representTool(ToolExtension tool) throws Throwable {
-        getJPanelIndicators().setVisible(false);
+    private boolean representTool(ToolExtension tool) throws Throwable {
+        boolean hasButton = false;
         JPanel panel = indicatorAreas.get(tool.getClass());
         JButton toolButt = null;
         ToolRepresentation tr = tool.getRepresentation();
@@ -1025,6 +1028,7 @@ public class FrontEnd extends JFrame {
         if (tr != null) {
             toolButt = tr.getButton();
             if (toolButt != null) {
+                hasButton = true;
                 if (Validator.isNullOrBlank(toolButt.getToolTipText())) {
                     toolButt.setToolTipText(ExtensionFactory.getAnnotatedToolExtensions().get(tool));
                 }
@@ -1053,7 +1057,7 @@ public class FrontEnd extends JFrame {
         if (toolButt != null && removeButton) {
             getJToolBar3().remove(toolButt);
         }
-        getJPanelIndicators().setVisible(true);
+        return hasButton;
     }
     
     public static Window getActiveWindow() {
@@ -1070,9 +1074,10 @@ public class FrontEnd extends JFrame {
             displayErrorMessage("Failed to initialize tools! ", t);
         }
         if (extensions != null) {
+            boolean buttonsPresent = false;
+            instance.getJPanelIndicators().setVisible(false);
             instance.getJToolBar3().removeAll();
             tools = new LinkedHashMap<Class<? extends ToolExtension>, ToolExtension>();
-            int toolCnt = 0;
             for (Entry<ToolExtension, String> ext : extensions.entrySet()) {
                 ToolExtension tool = ext.getKey();
                 try {
@@ -1080,14 +1085,14 @@ public class FrontEnd extends JFrame {
                                             + Constants.PACKAGE_PATH_SEPARATOR + tool.getClass().getSimpleName();
                     tool.setSettings(BackEnd.getInstance().getAddOnSettings(fullExtName, PackType.EXTENSION));
                     tool.setData(BackEnd.getInstance().getToolData(fullExtName));
-                    instance.representTool(tool);
+                    buttonsPresent = instance.representTool(tool);
                     tools.put(tool.getClass(), tool);
-                    toolCnt++;
                 } catch (Throwable t) {
                     displayErrorMessage("Failed to initialize tool '" + tool.getClass().getCanonicalName() + "'", t);
                 }
             }
-            if (toolCnt != 0) {
+            instance.getJPanelIndicators().setVisible(true);
+            if (buttonsPresent) {
                 instance.getJPanel5().setVisible(true);
             }
         }
@@ -5304,54 +5309,59 @@ public class FrontEnd extends JFrame {
         if (addOnFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
             syncExecute(new Runnable(){
                 public void run() {
-                    final Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
-                    StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
-                    boolean error = false;
-                    for (File file : addOnFileChooser.getSelectedFiles()) {
-                        try {
-                            AddOnInfo installedAddOn = BackEnd.getInstance().getAddOnInfoAndDependencies(file, addOnType);
-                            proposedAddOnsToInstall.put(installedAddOn, file);
-                        } catch (Throwable t) {
-                            error = true;
-                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failure on reading add-on's info from file '" + file.getName() + "': " + CommonUtils.getFailureDetails(t) + Constants.HTML_COLOR_SUFFIX + "</li>");
-                            t.printStackTrace(System.err);
+                    try {
+                        showAddOnsManagementScreenProcessLabel("installing packages...");
+                        final Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
+                        StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
+                        boolean error = false;
+                        for (File file : addOnFileChooser.getSelectedFiles()) {
+                            try {
+                                AddOnInfo installedAddOn = BackEnd.getInstance().getAddOnInfoAndDependencies(file, addOnType);
+                                proposedAddOnsToInstall.put(installedAddOn, file);
+                            } catch (Throwable t) {
+                                error = true;
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failure on reading add-on's info from file '" + file.getName() + "': " + CommonUtils.getFailureDetails(t) + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                t.printStackTrace(System.err);
+                            }
                         }
-                    }
-                    if (error) {
-                        sb.append("</ul>" + Constants.HTML_SUFFIX);
-                        JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
-                    }
-                    if (!proposedAddOnsToInstall.isEmpty()) {
-                        Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
-                        proposedAddOnsToInstall.keySet().retainAll(confirmedAddOnsToInstall);
+                        if (error) {
+                            sb.append("</ul>" + Constants.HTML_SUFFIX);
+                            JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
+                        }
                         if (!proposedAddOnsToInstall.isEmpty()) {
-                            // check if there're dependency-packages present...
-                            boolean depsPresent = false;
-                            for (Integer i : getDepCounters().values()) {
-                                if (i > 0) {
-                                    depsPresent = true;
-                                    break;
+                            Collection<AddOnInfo> confirmedAddOnsToInstall = confirmAddOnsInstallation(proposedAddOnsToInstall.keySet());
+                            proposedAddOnsToInstall.keySet().retainAll(confirmedAddOnsToInstall);
+                            if (!proposedAddOnsToInstall.isEmpty()) {
+                                // check if there're dependency-packages present...
+                                boolean depsPresent = false;
+                                for (Integer i : getDepCounters().values()) {
+                                    if (i > 0) {
+                                        depsPresent = true;
+                                        break;
+                                    }
+                                }
+                                // ... and if yes...
+                                if (depsPresent) {
+                                    // ... remember currently active tab...
+                                    final int activeTabIdx = addOnsPane.getSelectedIndex();
+                                    // ... then switch to "Online" tab...
+                                    addOnsPane.setSelectedIndex(3);
+                                    // ... download dependency-packages...
+                                    downloadAndInstallOnlinePackages(new Runnable(){
+                                        public void run() {
+                                            // ... then switch back to the previously active tab...
+                                            addOnsPane.setSelectedIndex(activeTabIdx);
+                                            // ... and finally, install local packages...
+                                            installLocalPackages(proposedAddOnsToInstall, addOnType, addOnModel);
+                                        }
+                                    });
+                                } else {
+                                    installLocalPackages(proposedAddOnsToInstall, addOnType, addOnModel);
                                 }
                             }
-                            // ... and if yes...
-                            if (depsPresent) {
-                                // ... remember currently active tab...
-                                final int activeTabIdx = addOnsPane.getSelectedIndex();
-                                // ... then switch to "Online" tab...
-                                addOnsPane.setSelectedIndex(3);
-                                // ... download dependency-packages...
-                                downloadAndInstallOnlinePackages(new Runnable(){
-                                    public void run() {
-                                        // ... then switch back to the previously active tab...
-                                        addOnsPane.setSelectedIndex(activeTabIdx);
-                                        // ... and finally, install local packages...
-                                        installLocalPackages(proposedAddOnsToInstall, addOnType, addOnModel);
-                                    }
-                                });
-                            } else {
-                                installLocalPackages(proposedAddOnsToInstall, addOnType, addOnModel);
-                            }
                         }
+                    } finally {
+                        hideAddOnsManagementScreenProcessLabel();
                     }
                 }
             });
