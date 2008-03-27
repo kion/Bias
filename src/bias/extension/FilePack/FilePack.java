@@ -22,13 +22,18 @@ import java.util.Map.Entry;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.RowFilter;
 import javax.swing.SortOrder;
 import javax.swing.RowSorter.SortKey;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
 import javax.swing.table.DefaultTableModel;
@@ -303,6 +308,16 @@ public class FilePack extends EntryExtension {
 				                }
 				            });
 				            jTable1.setRowSorter(sorter);
+			                JPanel topPanel = new JPanel(new BorderLayout());
+			                topPanel.add(new JLabel("Filter:"), BorderLayout.CENTER);
+			                final JTextField filterText = new JTextField();
+			                filterText.addCaretListener(new CaretListener(){
+			                    public void caretUpdate(CaretEvent e) {
+			                        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
+			                    }
+			                });
+			                topPanel.add(filterText, BorderLayout.SOUTH);
+	                        jPanel1.add(topPanel, BorderLayout.NORTH);
 
 						}
 					}

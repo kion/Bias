@@ -113,7 +113,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     private void initSettings() throws Exception {
         if (getSettings() != null && !Arrays.equals(getSettings(), settings)) {
             settings = getSettings();
-            props = PropertiesUtils.deserializeProperties(settings);
+            props.putAll(PropertiesUtils.deserializeProperties(settings));
             String verboseStr = props.getProperty(PROPERTY_EXPORT_VERBOSE_MODE);
             if (!Validator.isNullOrBlank(verboseStr)) {
                 verboseExport = Boolean.valueOf(verboseStr);
@@ -308,6 +308,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     @Override
     public byte[] configure() throws Throwable {
         // TODO [P2] optimization: initialize configuration screen once, then just reuse it
+        props = new Properties();
         initSettings();
         String oldExportConfigsStr = props.getProperty(PROPERTY_EXPORT_CONFIGS);
         String oldImportConfigsStr = props.getProperty(PROPERTY_IMPORT_CONFIGS);
