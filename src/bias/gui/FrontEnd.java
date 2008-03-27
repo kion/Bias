@@ -2834,8 +2834,6 @@ public class FrontEnd extends JFrame {
         });
     }
     
-    // TODO [P1] when import wants to overwrite currently edited entry - ask users's confirmation ?...
-    
     private ImportAction importAction = new ImportAction();
     private class ImportAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
