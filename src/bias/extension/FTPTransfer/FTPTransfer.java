@@ -54,11 +54,11 @@ public class FTPTransfer extends ObservableTransferExtension {
      * @see bias.extension.TransferExtension#writeData(byte[], byte[], boolean)
      */
     @Override
-    public void writeData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable {
+    public void writeData(byte[] data, byte[] settings, boolean transferMetaData) throws Throwable {
         long startTime = System.currentTimeMillis();
         long transferredBytesNum = 0;
         long elapsedTime = 0;
-        Properties opts = PropertiesUtils.deserializeProperties(options);
+        Properties opts = PropertiesUtils.deserializeProperties(settings);
         String server = opts.getProperty(TRANSFER_OPTION_SERVER);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
         String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);
@@ -98,11 +98,11 @@ public class FTPTransfer extends ObservableTransferExtension {
      * @see bias.extension.TransferExtension#readData(byte[], boolean)
      */
     @Override
-    public byte[] readData(byte[] options, boolean transferMetaData) throws Throwable {
+    public byte[] readData(byte[] settings, boolean transferMetaData) throws Throwable {
         long startTime = System.currentTimeMillis();
         long transferredBytesNum = 0;
         long elapsedTime = 0;
-        Properties opts = PropertiesUtils.deserializeProperties(options);
+        Properties opts = PropertiesUtils.deserializeProperties(settings);
         String server = opts.getProperty(TRANSFER_OPTION_SERVER);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
         String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);
@@ -141,7 +141,7 @@ public class FTPTransfer extends ObservableTransferExtension {
             baos.close();
             is.close();
         } catch (FileNotFoundException fnfe) {
-            
+            // ignore
         }
         return baos != null ? baos.toByteArray() : null;
     }
@@ -156,9 +156,9 @@ public class FTPTransfer extends ObservableTransferExtension {
         JTextField serverTF = new JTextField();
         JLabel filepathL = new JLabel("Path to file on server");
         JTextField filepathTF = new JTextField();
-        JLabel usernameL = new JLabel("Username to login");
+        JLabel usernameL = new JLabel("Username");
         JTextField usernameTF = new JTextField();
-        JLabel passwordL = new JLabel("Password to login");
+        JLabel passwordL = new JLabel("Password");
         JTextField passwordTF = new JPasswordField();
         int opt = JOptionPane.showConfirmDialog(
                 FrontEnd.getActiveWindow(), 

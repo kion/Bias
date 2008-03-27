@@ -36,11 +36,11 @@ public class LocalTransfer extends ObservableTransferExtension {
      * @see bias.extension.TransferExtension#writeData(byte[], byte[], boolean)
      */
     @Override
-    public void writeData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable {
+    public void writeData(byte[] data, byte[] settings, boolean transferMetaData) throws Throwable {
         long startTime = System.currentTimeMillis();
         long transferredBytesNum = 0;
         long elapsedTime = 0;
-        Properties opts = PropertiesUtils.deserializeProperties(options);
+        Properties opts = PropertiesUtils.deserializeProperties(settings);
         String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
         File file = new File(filePath);
         if (transferMetaData) {
@@ -73,12 +73,12 @@ public class LocalTransfer extends ObservableTransferExtension {
      * @see bias.extension.TransferExtension#readData(byte[], boolean)
      */
     @Override
-    public byte[] readData(byte[] options, boolean transferMetaData) throws Throwable {
+    public byte[] readData(byte[] settings, boolean transferMetaData) throws Throwable {
         byte[] data = null;
         long startTime = System.currentTimeMillis();
         long transferredBytesNum = 0;
         long elapsedTime = 0;
-        Properties opts = PropertiesUtils.deserializeProperties(options);
+        Properties opts = PropertiesUtils.deserializeProperties(settings);
         String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
         File file = new File(filePath);
         if (transferMetaData) {

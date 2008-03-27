@@ -80,6 +80,24 @@
 	</target>
 
 	<!-- ================================= 
+          target: Build_Extension_SMBTransfer
+         ================================= -->
+	<target name="Build_Extension_SMBTransfer" description="SMBTransfer Add-On">
+		<delete dir="build" includes="SMBTransfer*.jar" />
+		<jar basedir="bin" destfile="build/SMBTransfer_${SMBTransfer_Version}.jar" includes="bias/extension/SMBTransfer/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/SMBTransfer_${SMBTransfer_Version}.html" />
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="SMBTransfer" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="${SMBTransfer_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Import/Export through SMB (CIFS)" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${SMBTransfer_Dependencies}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<!-- ================================= 
           target: Build_Extension_FilePack
          ================================= -->
 	<target name="Build_Extension_FilePack" description="FilePack Add-On">
