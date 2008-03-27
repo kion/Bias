@@ -978,15 +978,18 @@ public class FrontEnd extends JFrame {
                 if (ToolExtension.class.isAssignableFrom(extensionClass)) {
                     extensionInstance = tools.get(extensionClass);
                     settings = ((ToolExtension) extensionInstance).configure();
+                    ((ToolExtension) extensionInstance).setSettings(settings);
                 } else if (TransferExtension.class.isAssignableFrom(extensionClass)) {
                     extensionInstance = transferrers.get(extensionClass);
                     settings = ((TransferExtension) extensionInstance).configure();
+                    ((TransferExtension) extensionInstance).setSettings(settings);
                 } else if (EntryExtension.class.isAssignableFrom(extensionClass)) {
                     extensionInstance = ExtensionFactory.newEntryExtension(extensionClass);
                     if (extSettings == null) {
                         extSettings = new byte[]{};
                     }
                     settings = ((EntryExtension) extensionInstance).configure(extSettings);
+                    ((EntryExtension) extensionInstance).setSettings(settings);
                 }
                 if (!Arrays.equals(extSettings, settings)) {
                     if (settings == null) {
@@ -994,29 +997,7 @@ public class FrontEnd extends JFrame {
                     }
                     BackEnd.getInstance().storeAddOnSettings(extension, PackType.EXTENSION, settings);
                     if (extensionInstance instanceof ToolExtension) {
-                        getJPanelIndicators().setVisible(false);
-                        JPanel panel = indicatorAreas.get(extensionClass);
-                        ToolRepresentation tr = ((ToolExtension) extensionInstance).getRepresentation();
-                        boolean removeIndicator = false;
-                        if (tr != null) {
-                            JComponent indicator = tr.getIndicator();
-                            if (indicator != null) {
-                                if (panel == null) {
-                                    panel = createStatusBarIndicatorArea((Class<? extends ToolExtension>) extensionInstance.getClass());
-                                }
-                                panel.add(indicator);
-                                getJPanelIndicators().add(panel);
-                            } else {
-                                removeIndicator = true;
-                            }
-                        } else {
-                            removeIndicator = true;
-                        }
-                        if (panel != null && removeIndicator) {
-                            panel.remove(1);
-                            getJPanelIndicators().remove(panel);
-                        }
-                        getJPanelIndicators().setVisible(true);
+                        representTool((ToolExtension) extensionInstance);
                     }
                 }
             } catch (Throwable t) {
@@ -1032,6 +1013,47 @@ public class FrontEnd extends JFrame {
                             "</ul></html>", t);
             }
         }
+    }
+    
+    private void representTool(ToolExtension tool) throws Throwable {
+        getJPanelIndicators().setVisible(false);
+        JPanel panel = indicatorAreas.get(tool.getClass());
+        JButton toolButt = null;
+        ToolRepresentation tr = tool.getRepresentation();
+        boolean removeIndicator = false;
+        boolean removeButton = false;
+        if (tr != null) {
+            toolButt = tr.getButton();
+            if (toolButt != null) {
+                if (Validator.isNullOrBlank(toolButt.getToolTipText())) {
+                    toolButt.setToolTipText(ExtensionFactory.getAnnotatedToolExtensions().get(tool));
+                }
+                getJToolBar3().add(toolButt);
+            } else {
+                removeButton = true;
+            }
+            JComponent indicator = tr.getIndicator();
+            if (indicator != null) {
+                if (panel == null) {
+                    panel = createStatusBarIndicatorArea((Class<? extends ToolExtension>) tool.getClass());
+                }
+                panel.add(indicator);
+                getJPanelIndicators().add(panel);
+            } else {
+                removeIndicator = true;
+            }
+        } else {
+            removeIndicator = true;
+            removeButton = true;
+        }
+        if (panel != null && removeIndicator) {
+            panel.remove(1);
+            getJPanelIndicators().remove(panel);
+        }
+        if (toolButt != null && removeButton) {
+            getJToolBar3().remove(toolButt);
+        }
+        getJPanelIndicators().setVisible(true);
     }
     
     public static Window getActiveWindow() {
@@ -1054,21 +1076,11 @@ public class FrontEnd extends JFrame {
             for (Entry<ToolExtension, String> ext : extensions.entrySet()) {
                 ToolExtension tool = ext.getKey();
                 try {
-                    ToolRepresentation representation = tool.getRepresentation();
-                    if (representation != null) {
-                        JButton toolButt = representation.getButton();
-                        if (toolButt != null) {
-                            if (Validator.isNullOrBlank(toolButt.getToolTipText())) {
-                                toolButt.setToolTipText(ext.getValue());
-                            }
-                            instance.getJToolBar3().add(toolButt);
-                        }
-                        JComponent indicator = representation.getIndicator();
-                        if (indicator != null) {
-                            JPanel panel = instance.createStatusBarIndicatorArea(tool.getClass());
-                            panel.add(indicator, BorderLayout.CENTER);
-                        }
-                    }
+                    String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + tool.getClass().getSimpleName() 
+                                            + Constants.PACKAGE_PATH_SEPARATOR + tool.getClass().getSimpleName();
+                    tool.setSettings(BackEnd.getInstance().getAddOnSettings(fullExtName, PackType.EXTENSION));
+                    tool.setData(BackEnd.getInstance().getToolData(fullExtName));
+                    instance.representTool(tool);
                     tools.put(tool.getClass(), tool);
                     toolCnt++;
                 } catch (Throwable t) {
@@ -1093,6 +1105,9 @@ public class FrontEnd extends JFrame {
             for (Entry<String, TransferExtension> ext : extensions.entrySet()) {
                 TransferExtension transferrer = ext.getValue();
                 try {
+                    String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + transferrer.getClass().getSimpleName() 
+                                            + Constants.PACKAGE_PATH_SEPARATOR + transferrer.getClass().getSimpleName();
+                    transferrer.setSettings(BackEnd.getInstance().getAddOnSettings(fullExtName, PackType.EXTENSION));
                     transferrers.put(transferrer.getClass(), transferrer);
                 } catch (Throwable t) {
                     displayErrorMessage("Failed to initialize transferrer '" + transferrer.getClass().getCanonicalName() + "'", t);

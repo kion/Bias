@@ -19,6 +19,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -114,19 +115,28 @@ public class SimpleSearch extends ToolExtension {
     
     private Class<? extends EntryExtension> filterClass = null;
     
-    @SuppressWarnings("unchecked")
+    private byte[] settings;
+    
     public SimpleSearch(byte[] data, byte[] settings) {
         super(data, settings);
-        Properties props = PropertiesUtils.deserializeProperties(getSettings());
-        if (!props.isEmpty()) {
-            String searchExpression = props.getProperty(PROP_SEARCH_EXPRESSION);
-            boolean isCaseSensitive = Boolean.parseBoolean(props.getProperty((PROP_IS_CASE_SENSITIVE)));
-            boolean isRegularExpression = Boolean.parseBoolean(props.getProperty((PROP_IS_REGULAR_EXPRESSION)));
-            lastSearchCriteria = new SearchCriteria(searchExpression, isCaseSensitive, isRegularExpression);
-            try {
-                filterClass = (Class<? extends EntryExtension>) Class.forName(props.getProperty((PROP_FILTER_TYPE)));
-            } catch (Exception ex) {
-                // ignore, last searched type may not exist any longer
+        initSettings();
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void initSettings() {
+        if (getSettings() != null && !Arrays.equals(getSettings(), settings)) {
+            settings = getSettings();
+            Properties props = PropertiesUtils.deserializeProperties(settings);
+            if (!props.isEmpty()) {
+                String searchExpression = props.getProperty(PROP_SEARCH_EXPRESSION);
+                boolean isCaseSensitive = Boolean.parseBoolean(props.getProperty((PROP_IS_CASE_SENSITIVE)));
+                boolean isRegularExpression = Boolean.parseBoolean(props.getProperty((PROP_IS_REGULAR_EXPRESSION)));
+                lastSearchCriteria = new SearchCriteria(searchExpression, isCaseSensitive, isRegularExpression);
+                try {
+                    filterClass = (Class<? extends EntryExtension>) Class.forName(props.getProperty((PROP_FILTER_TYPE)));
+                } catch (Exception ex) {
+                    // ignore, last searched type may not exist any longer
+                }
             }
         }
     }
@@ -172,6 +182,7 @@ public class SimpleSearch extends ToolExtension {
     private ActionListener al = new ActionListener(){
         public void actionPerformed(ActionEvent e) {
             try {
+                initSettings();
                 final JLabel searchExpressionL = new JLabel("search expression:");
                 final JTextField searchExpressionTF = new JTextField();
                 final Color normal = searchExpressionTF.getForeground();

@@ -41,25 +41,28 @@ public abstract class EntryExtension extends JComponent implements Extension {
         this.settings = settings;
     }
 
-    /**
-     * @return the id
-     */
     public UUID getId() {
         return id;
     }
 
-    /**
-     * @return the data
-     */
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
     public byte[] getData() {
         return data;
     }
 
-    /**
-     * @return the settings
-     */
+    public void setData(byte[] data) {
+        this.data = data;
+    }
+
     public byte[] getSettings() {
         return settings;
+    }
+
+    public void setSettings(byte[] settings) {
+        this.settings = settings;
     }
 
     /**

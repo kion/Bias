@@ -21,25 +21,26 @@ public abstract class TransferExtension implements Extension {
     // TODO [P1] add checkAvailability method to be able to check if transfer is possible (connection available)
     //           before export-data archiving procedure is started (to avoid excessive CPU/Memory utilization)
     
-    private byte[] options;
+    private byte[] settings;
     
     /**
-     * The only allowed constructor that is aware of initialization data and options.
+     * The only allowed constructor that is aware of initialization data and settings.
      * 
-     * @param options extension instance options
+     * @param settings extension instance settings
      */
-    public TransferExtension(byte[] options) {
-        this.options = options;
+    public TransferExtension(byte[] settings) {
+        this.settings = settings;
     }
 
-    /**
-     * @return the options
-     */
-    public byte[] getOptions() {
-        return options;
-    }
-    
     // TODO [P2] optimization (memory usage): looks like it's better to use Input/Output streams instead of byte arrays during transfer
+
+    public byte[] getSettings() {
+        return settings;
+    }
+
+    public void setSettings(byte[] settings) {
+        this.settings = settings;
+    }
 
     /**
      * Imports data using provided import options.
@@ -68,14 +69,14 @@ public abstract class TransferExtension implements Extension {
     }
 
     /**
-     * Reads data using provided transfer options.
+     * Reads data using provided transfer settings.
      * Should be overridden by certain transfer-extension class.
      * 
      * @param transferMetaData defines whether meta- (true) or main-data (false) should be transferred 
      * 
      * @return data read
      */
-    public abstract byte[] readData(byte[] options, boolean transferMetaData) throws Throwable;
+    public abstract byte[] readData(byte[] settings, boolean transferMetaData) throws Throwable;
 
     /**
      * Exports given data using provided export options.
@@ -104,21 +105,20 @@ public abstract class TransferExtension implements Extension {
     }
 
     /**
-     * Writes given data using provided transfer options.
+     * Writes given data using provided transfer settings.
      * Should be overridden by certain transfer-extension class.
      * 
      * @param transferMetaData defines whether meta- (true) or main-data (false) should be transferred
      *  
      */
-    public abstract void writeData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable;
+    public abstract void writeData(byte[] data, byte[] settings, boolean transferMetaData) throws Throwable;
 
     /**
      * Performs general transfer-extension configuration.
-     * Should be overridden to return options for certain transfer-extension.
+     * Should be overridden to return settings for certain transfer-extension.
      * By default returns null (no configuration).
      * 
-     * @param options initial options
-     * @return options byte array containing serialized configuration options
+     * @return settings byte array containing serialized configuration settings
      */
     public byte[] configure() throws Throwable {
         return null;

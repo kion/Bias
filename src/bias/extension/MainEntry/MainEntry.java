@@ -4,6 +4,7 @@
 package bias.extension.MainEntry;
 
 import java.awt.Component;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -35,25 +36,35 @@ public class MainEntry extends ToolExtension implements BeforeSaveEventListener 
     
     private boolean switchOnlyBeforeExit;
     
+    private byte[] settings;
+    
     public MainEntry(byte[] data, byte[] settings) {
         super(data, settings);
-        String idStr = PropertiesUtils.deserializeProperties(getSettings()).getProperty(PROPERTY_MAIN_ENTRY_UUID);
-        if (!Validator.isNullOrBlank(idStr)) {
-            mainEntryId = UUID.fromString(idStr);
-        }
-        String sbeoStr = PropertiesUtils.deserializeProperties(getSettings()).getProperty(PROPERTY_SWITCH_BEFORE_EXIT_ONLY);
-        if (!Validator.isNullOrBlank(sbeoStr)) {
-            switchOnlyBeforeExit = Boolean.valueOf(sbeoStr);
-        } else {
-            switchOnlyBeforeExit = false;
-        }
+        initSettings();
         FrontEnd.addBeforeSaveEventListener(this);
+    }
+    
+    private void initSettings() {
+        if (getSettings() != null && !Arrays.equals(getSettings(), settings)) {
+            settings = getSettings();
+            String idStr = PropertiesUtils.deserializeProperties(settings).getProperty(PROPERTY_MAIN_ENTRY_UUID);
+            if (!Validator.isNullOrBlank(idStr)) {
+                mainEntryId = UUID.fromString(idStr);
+            }
+            String sbeoStr = PropertiesUtils.deserializeProperties(settings).getProperty(PROPERTY_SWITCH_BEFORE_EXIT_ONLY);
+            if (!Validator.isNullOrBlank(sbeoStr)) {
+                switchOnlyBeforeExit = Boolean.valueOf(sbeoStr);
+            } else {
+                switchOnlyBeforeExit = false;
+            }
+        }
     }
     
     /* (non-Javadoc)
      * @see bias.event.BeforeSaveEventListener#onEvent(bias.event.SaveEvent)
      */
     public void onEvent(SaveEvent e) throws Throwable {
+        initSettings();
         if (mainEntryId != null) {
             if (switchOnlyBeforeExit && !e.isBeforeExit()) {
                 return;
@@ -66,7 +77,8 @@ public class MainEntry extends ToolExtension implements BeforeSaveEventListener 
      * @see bias.extension.ToolExtension#configure()
      */
     public byte[] configure() throws Throwable {
-        Properties props = PropertiesUtils.deserializeProperties(getSettings());
+        initSettings();
+        Properties props = PropertiesUtils.deserializeProperties(settings);
         JLabel meLabel = new JLabel("Main entry (to switch to before save):");
         JComboBox meCB = new JComboBox();
         meCB.addItem(Constants.EMPTY_STR);

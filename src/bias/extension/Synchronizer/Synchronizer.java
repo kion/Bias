@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -78,6 +79,8 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     
     private Properties props;
     
+    private byte[] settings;
+    
     private boolean verboseExport;
     
     private boolean requestConfirmationsOnExport;
@@ -102,37 +105,44 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     
     public Synchronizer(byte[] data, byte[] settings) throws Exception {
         super(data, settings);
-        props = PropertiesUtils.deserializeProperties(getSettings());
-        String verboseStr = props.getProperty(PROPERTY_EXPORT_VERBOSE_MODE);
-        if (!Validator.isNullOrBlank(verboseStr)) {
-            verboseExport = Boolean.valueOf(verboseStr);
-        } else {
-            verboseExport = false;
-        }
-        String rcStr = props.getProperty(PROPERTY_EXPORT_REQUEST_CONFIRMATIONS);
-        if (!Validator.isNullOrBlank(rcStr)) {
-            requestConfirmationsOnExport = Boolean.valueOf(rcStr);
-        } else {
-            requestConfirmationsOnExport = false;
-        }
-        verboseStr = props.getProperty(PROPERTY_IMPORT_VERBOSE_MODE);
-        if (!Validator.isNullOrBlank(verboseStr)) {
-            verboseImport = Boolean.valueOf(verboseStr);
-        } else {
-            verboseImport = false;
-        }
-        rcStr = props.getProperty(PROPERTY_IMPORT_REQUEST_CONFIRMATIONS);
-        if (!Validator.isNullOrBlank(rcStr)) {
-            requestConfirmationsOnImport = Boolean.valueOf(rcStr);
-        } else {
-            requestConfirmationsOnImport = false;
-        }
-        initActionConfigs(props);
-        initSchedules();
+        initSettings();
         FrontEnd.addAfterSaveEventListener(this);
         FrontEnd.addStartUpEventListener(this);
     }
     
+    private void initSettings() throws Exception {
+        if (getSettings() != null && !Arrays.equals(getSettings(), settings)) {
+            settings = getSettings();
+            props = PropertiesUtils.deserializeProperties(settings);
+            String verboseStr = props.getProperty(PROPERTY_EXPORT_VERBOSE_MODE);
+            if (!Validator.isNullOrBlank(verboseStr)) {
+                verboseExport = Boolean.valueOf(verboseStr);
+            } else {
+                verboseExport = false;
+            }
+            String rcStr = props.getProperty(PROPERTY_EXPORT_REQUEST_CONFIRMATIONS);
+            if (!Validator.isNullOrBlank(rcStr)) {
+                requestConfirmationsOnExport = Boolean.valueOf(rcStr);
+            } else {
+                requestConfirmationsOnExport = false;
+            }
+            verboseStr = props.getProperty(PROPERTY_IMPORT_VERBOSE_MODE);
+            if (!Validator.isNullOrBlank(verboseStr)) {
+                verboseImport = Boolean.valueOf(verboseStr);
+            } else {
+                verboseImport = false;
+            }
+            rcStr = props.getProperty(PROPERTY_IMPORT_REQUEST_CONFIRMATIONS);
+            if (!Validator.isNullOrBlank(rcStr)) {
+                requestConfirmationsOnImport = Boolean.valueOf(rcStr);
+            } else {
+                requestConfirmationsOnImport = false;
+            }
+            initActionConfigs(props);
+            initSchedules();
+        }
+    }
+
     private void initSchedules() {
         if (executor != null) {
             executor.shutdownNow();
@@ -199,6 +209,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         FrontEnd.syncExecute(new Runnable(){
             public void run() {
                 try {
+                    initSettings();
                     if (importConfigs != null && !importConfigs.isEmpty()) {
                         DefaultTableModel model = getConfirmImportPopulatedConfigsModel();
                         if (model.getRowCount() > 0) {
@@ -241,6 +252,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         FrontEnd.syncExecute(new Runnable(){
             public void run() {
                 try {
+                    initSettings();
                     if (exportConfigs != null && !exportConfigs.isEmpty()) {
                         DefaultTableModel model = getConfirmExportPopulatedConfigsModel();
                         if (model.getRowCount() > 0) {
@@ -296,6 +308,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     @Override
     public byte[] configure() throws Throwable {
         // TODO [P2] optimization: initialize configuration screen once, then just reuse it
+        initSettings();
         String oldExportConfigsStr = props.getProperty(PROPERTY_EXPORT_CONFIGS);
         String oldImportConfigsStr = props.getProperty(PROPERTY_IMPORT_CONFIGS);
         

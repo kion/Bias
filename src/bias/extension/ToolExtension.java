@@ -32,20 +32,22 @@ public abstract class ToolExtension implements Extension {
         this.settings = settings;
     }
 
-    /**
-     * @return the data
-     */
     public byte[] getData() {
         return data;
     }
 
-    /**
-     * @return the settings
-     */
+    public void setData(byte[] data) {
+        this.data = data;
+    }
+
     public byte[] getSettings() {
         return settings;
     }
-    
+
+    public void setSettings(byte[] settings) {
+        this.settings = settings;
+    }
+
     /**
      * Serializes tool-extension's settings to array of bytes
      * Should be overridden to return settings for certain tool-extension's instance.

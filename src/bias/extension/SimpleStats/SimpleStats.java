@@ -9,6 +9,7 @@ import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -64,7 +65,9 @@ public class SimpleStats extends ToolExtension {
     
     private Date startDate;
     
-    private Properties settings;
+    private Properties properties;
+    
+    private byte[] settings;
     
     private boolean showUpTime = false;
     
@@ -76,12 +79,19 @@ public class SimpleStats extends ToolExtension {
         if (getData() != null) {
             dates = new String(getData()).split(SEPARATOR);
         }
-        this.settings = PropertiesUtils.deserializeProperties(settings);
-        String showUpTimeStr = this.settings.getProperty(PROPERTY_SHOW_UPTIME);
-        showUpTime = Boolean.valueOf(showUpTimeStr);
-        applySettings();
+        initSettings();
     }
 
+    private void initSettings() {
+        if (getSettings() != null && !Arrays.equals(getSettings(), settings)) {
+            settings = getSettings();
+            properties = PropertiesUtils.deserializeProperties(settings);
+            String showUpTimeStr = properties.getProperty(PROPERTY_SHOW_UPTIME);
+            showUpTime = Boolean.valueOf(showUpTimeStr);
+        }
+        applySettings();
+    }
+    
     /* (non-Javadoc)
      * @see bias.extension.ToolExtension#getRepresentation()
      */
@@ -97,13 +107,7 @@ public class SimpleStats extends ToolExtension {
     }
     
     private JLabel getIndicator() {
-        if (showUpTime) {
-            if (label == null) {
-                label = new JLabel("UpTime: ...");
-            }
-        } else {
-            label = null;
-        }
+        initSettings();
         return label;
     }
     
@@ -113,8 +117,8 @@ public class SimpleStats extends ToolExtension {
                 while (showUpTime) {
                     try {
                         Thread.sleep(5000);
-                        if (getIndicator() != null) {
-                            getIndicator().setText("UpTime: " + calculateSessionLength(startDate.getTime(), new Date().getTime()));
+                        if (label != null) {
+                            label.setText("UpTime: " + calculateSessionLength(startDate.getTime(), new Date().getTime()));
                         }
                     } catch (InterruptedException e) {
                         // ignore
@@ -275,17 +279,18 @@ public class SimpleStats extends ToolExtension {
      */
     public byte[] serializeSettings() throws Throwable {
         if (showUpTime) {
-            settings.setProperty(PROPERTY_SHOW_UPTIME, "" + true);
+            properties.setProperty(PROPERTY_SHOW_UPTIME, "" + true);
         } else {
-            settings.remove(PROPERTY_SHOW_UPTIME);
+            properties.remove(PROPERTY_SHOW_UPTIME);
         }
-        return PropertiesUtils.serializeProperties(settings);
+        return PropertiesUtils.serializeProperties(properties);
     }
 
     /* (non-Javadoc)
      * @see bias.extension.ToolExtension#configure()
      */
     public byte[] configure() throws Throwable {
+        initSettings();
         final JCheckBox showUpTime = new JCheckBox("Show UpTime in statusbar", this.showUpTime);
         showUpTime.addChangeListener(new ChangeListener(){
             public void stateChanged(ChangeEvent e) {
@@ -303,16 +308,22 @@ public class SimpleStats extends ToolExtension {
         });
         JOptionPane.showMessageDialog(FrontEnd.getActiveWindow(), new Component[]{ showUpTime, clearButt }, "Configuration", JOptionPane.PLAIN_MESSAGE);
         if (this.showUpTime) {
-            this.settings.setProperty(PROPERTY_SHOW_UPTIME, "" + true);
+            properties.setProperty(PROPERTY_SHOW_UPTIME, "" + true);
         } else {
-            this.settings.remove(PROPERTY_SHOW_UPTIME);
+            properties.remove(PROPERTY_SHOW_UPTIME);
         }
-        return PropertiesUtils.serializeProperties(this.settings);
+        settings = PropertiesUtils.serializeProperties(properties);
+        return settings;
     }
     
     private void applySettings() {
-        if (SimpleStats.this.showUpTime) {
-            showUpTime();
+        if (showUpTime) {
+            if (label == null) {
+                label = new JLabel("UpTime: ...");
+                showUpTime();
+            }
+        } else {
+            label = null;
         }
     }
 
