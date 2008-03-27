@@ -3301,8 +3301,6 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    // TODO [P1] force save before export ?...
-    
     private ExportAction exportAction = new ExportAction();
     private class ExportAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
@@ -3315,6 +3313,9 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent e) {
             try {
+                // force (auto) save before export
+                instance.store(false);
+                // now perform export actually
                 final JComboBox configsCB = new JComboBox();
                 configsCB.addItem(Constants.EMPTY_STR);
                 for (String configName : BackEnd.getInstance().getPopulatedExportConfigurations().keySet()) {
@@ -3753,7 +3754,7 @@ public class FrontEnd extends JFrame {
                     displayStatusBarMessage(sb.toString());
                     fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
                 } else {
-                    panel.remove(instance.getTransferProgressBar());
+                    if (panel != null) panel.remove(instance.getTransferProgressBar());
                     if (verbose) {
                         label.setText("<html><font color=green>Data export - Completed</font></html>");
                         processLabel.setText("Export discarded: data haven't changed since last export.");
