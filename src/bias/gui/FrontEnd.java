@@ -183,9 +183,6 @@ import bias.utils.Downloader.DownloadListener;
  */
 public class FrontEnd extends JFrame {
     
-    // TODO [P1] some tasks may be executed in non-single-thread queue, 
-    //           inspect all the tasks and perform changes needed
-    
     // TODO [P3] internationalization
 
     private static final long serialVersionUID = 1L;
@@ -1475,6 +1472,9 @@ public class FrontEnd extends JFrame {
     }
     
     private static ExecutorService singleThreadExecutor;
+    
+    // TODO [P1] some tasks may be executed in non-single-thread queue, 
+    //           inspect all the tasks and perform changes needed
     
     /**
      * This is synchronized tasks execution method, that should be used for critical tasks,
