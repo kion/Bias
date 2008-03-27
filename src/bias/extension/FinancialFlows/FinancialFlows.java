@@ -305,14 +305,6 @@ public class FinancialFlows extends EntryExtension {
         return searchData;
     }
     
-    /* (non-Javadoc)
-     * @see bias.extension.EntryExtension#configure(byte[])
-     */
-    public byte[] configure(byte[] settings) throws Throwable {
-        // TODO [P2] implement (income/outcome types management, currency settings and so on should be here)
-        return null;
-    }
-
     private void populateSearchData(Collection<String> searchData, JTable table) {
         for (int i = 0; i < table.getModel().getRowCount(); i++) {
             searchData.add(table.getModel().getValueAt(i, COLUMN_AMOUNT_IDX).toString());
