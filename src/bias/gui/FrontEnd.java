@@ -1154,7 +1154,7 @@ public class FrontEnd extends JFrame {
             getJTabbedPane().setSelectedIndex(rootActiveIdx);
             currentTabPane = getJTabbedPane();
         }
-        if (id != null) {
+        if (id != null && !id.equals(getSelectedVisualEntryID())) {
             switchToVisualEntry(id, false);
         }
         initTabContent();
