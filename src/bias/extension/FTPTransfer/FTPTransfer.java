@@ -46,19 +46,36 @@ public class FTPTransfer extends ObservableTransferExtension {
     
     private static final int DEFAULT_PORT = 21;
     
-    public FTPTransfer(byte[] options) {
-        super(options);
+    public FTPTransfer(byte[] settings) {
+        super(settings);
     }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.TransferExtension#checkConnection(byte[])
+     */
+    @Override
+    public void checkConnection(byte[] options) throws Throwable {
+        Properties opts = PropertiesUtils.deserializeProperties(options);
+        String server = opts.getProperty(TRANSFER_OPTION_SERVER);
+        String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
+        String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);
+        String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
+        URL url = new URL(PROTOCOL_PREFIX + username + ":" + password + "@" + server + filePath + ";type=i");
+        URLConnection urlc = url.openConnection();
+        urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut * 1000);
+        urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut * 1000);
+        urlc.connect();
+    };
 
     /* (non-Javadoc)
      * @see bias.extension.TransferExtension#writeData(byte[], byte[], boolean)
      */
     @Override
-    public void writeData(byte[] data, byte[] settings, boolean transferMetaData) throws Throwable {
+    public void writeData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable {
         long startTime = System.currentTimeMillis();
         long transferredBytesNum = 0;
         long elapsedTime = 0;
-        Properties opts = PropertiesUtils.deserializeProperties(settings);
+        Properties opts = PropertiesUtils.deserializeProperties(options);
         String server = opts.getProperty(TRANSFER_OPTION_SERVER);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
         String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);
@@ -98,11 +115,11 @@ public class FTPTransfer extends ObservableTransferExtension {
      * @see bias.extension.TransferExtension#readData(byte[], boolean)
      */
     @Override
-    public byte[] readData(byte[] settings, boolean transferMetaData) throws Throwable {
+    public byte[] readData(byte[] options, boolean transferMetaData) throws Throwable {
         long startTime = System.currentTimeMillis();
         long transferredBytesNum = 0;
         long elapsedTime = 0;
-        Properties opts = PropertiesUtils.deserializeProperties(settings);
+        Properties opts = PropertiesUtils.deserializeProperties(options);
         String server = opts.getProperty(TRANSFER_OPTION_SERVER);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
         String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);

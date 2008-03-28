@@ -18,9 +18,6 @@ import bias.core.TransferData;
  */
 public abstract class TransferExtension implements Extension {
     
-    // TODO [P1] add checkAvailability method to be able to check if transfer is possible (connection available)
-    //           before export-data archiving procedure is started (to avoid excessive CPU/Memory utilization)
-    
     private byte[] settings;
     
     /**
@@ -32,7 +29,7 @@ public abstract class TransferExtension implements Extension {
         this.settings = settings;
     }
 
-    // TODO [P2] optimization (memory usage): looks like it's better to use Input/Output streams instead of byte arrays during transfer
+    // TODO [P1] refactoring & optimization (memory usage): looks like it's better to use Input/Output streams instead of byte arrays during transfer
 
     public byte[] getSettings() {
         return settings;
@@ -41,10 +38,19 @@ public abstract class TransferExtension implements Extension {
     public void setSettings(byte[] settings) {
         this.settings = settings;
     }
+    
+    /**
+     * Checks if connection is available for certain transfer-extension class instance using transfer options provided.
+     * Should be overridden by certain transfer-extension class.
+     * 
+     * @throws Throwable if failure occurred while trying to establish connection 
+     */
+    public void checkConnection(byte[] options) throws Throwable {};
 
     /**
      * Imports data using provided import options.
      * This template method imports metadata first, then imports actual data
+     * 
      * @return TransferData instance representing imported data and it's metadata, or null if data is up to date and import has been discarded
      */
     public TransferData importData(TransferOptions options, boolean force) throws Throwable {
@@ -69,18 +75,18 @@ public abstract class TransferExtension implements Extension {
     }
 
     /**
-     * Reads data using provided transfer settings.
+     * Reads data using provided transfer options.
      * Should be overridden by certain transfer-extension class.
      * 
      * @param transferMetaData defines whether meta- (true) or main-data (false) should be transferred 
-     * 
      * @return data read
      */
-    public abstract byte[] readData(byte[] settings, boolean transferMetaData) throws Throwable;
+    public abstract byte[] readData(byte[] options, boolean transferMetaData) throws Throwable;
 
     /**
      * Exports given data using provided export options.
      * This template method exports metadata first, then exports actual data
+     * 
      * @return boolean true if data have been successfully exported, or false if data is up to date and export has been discarded
      */
     public boolean exportData(TransferData td, TransferOptions options, boolean force) throws Throwable {
@@ -105,13 +111,13 @@ public abstract class TransferExtension implements Extension {
     }
 
     /**
-     * Writes given data using provided transfer settings.
+     * Writes given data using provided transfer options.
      * Should be overridden by certain transfer-extension class.
      * 
      * @param transferMetaData defines whether meta- (true) or main-data (false) should be transferred
      *  
      */
-    public abstract void writeData(byte[] data, byte[] settings, boolean transferMetaData) throws Throwable;
+    public abstract void writeData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable;
 
     /**
      * Performs general transfer-extension configuration.

@@ -47,6 +47,28 @@ public class SMBTransfer extends ObservableTransferExtension {
     }
 
     /* (non-Javadoc)
+     * @see bias.extension.TransferExtension#checkConnection(byte[])
+     */
+    @Override
+    public void checkConnection(byte[] options) throws Throwable {
+        Properties opts = PropertiesUtils.deserializeProperties(options);
+        String server = opts.getProperty(TRANSFER_OPTION_HOST);
+        String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
+        String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);
+        String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
+        String url = PROTOCOL_PREFIX + server + filePath;
+
+        Config.setProperty("jcifs.smb.client.responseTimeout", "" + (Preferences.getInstance().preferredTimeOut * 1000));
+
+        NtlmPasswordAuthentication auth = null;
+        if (!Validator.isNullOrBlank(username) && !Validator.isNullOrBlank(password)) {
+            auth = new NtlmPasswordAuthentication(server, username, password);
+        }
+        SmbFile file = new SmbFile(url, auth);
+        file.getInputStream().close();
+    };
+
+    /* (non-Javadoc)
      * @see bias.extension.TransferExtension#configure(bias.Constants.TRANSFER_TYPE)
      */
     @Override
@@ -101,11 +123,11 @@ public class SMBTransfer extends ObservableTransferExtension {
      * @see bias.extension.TransferExtension#readData(byte[], boolean)
      */
     @Override
-    public byte[] readData(byte[] settings, boolean transferMetaData) throws Throwable {
+    public byte[] readData(byte[] options, boolean transferMetaData) throws Throwable {
         long startTime = System.currentTimeMillis();
         long transferredBytesNum = 0;
         long elapsedTime = 0;
-        Properties opts = PropertiesUtils.deserializeProperties(settings);
+        Properties opts = PropertiesUtils.deserializeProperties(options);
         String server = opts.getProperty(TRANSFER_OPTION_HOST);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
         String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);
@@ -153,11 +175,11 @@ public class SMBTransfer extends ObservableTransferExtension {
      * @see bias.extension.TransferExtension#writeData(byte[], byte[], boolean)
      */
     @Override
-    public void writeData(byte[] data, byte[] settings, boolean transferMetaData) throws Throwable {
+    public void writeData(byte[] data, byte[] options, boolean transferMetaData) throws Throwable {
         long startTime = System.currentTimeMillis();
         long transferredBytesNum = 0;
         long elapsedTime = 0;
-        Properties opts = PropertiesUtils.deserializeProperties(settings);
+        Properties opts = PropertiesUtils.deserializeProperties(options);
         String server = opts.getProperty(TRANSFER_OPTION_HOST);
         String username = opts.getProperty(TRANSFER_OPTION_USERNAME);
         String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);

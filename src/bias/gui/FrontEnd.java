@@ -3228,7 +3228,7 @@ public class FrontEnd extends JFrame {
                 TransferData td = transferrer.importData(new TransferOptions(transferOptions, importConfig.getFileLocation()), force);
                 byte[] importedData = td.getData();
                 if (importedData == null) {
-                    panel.remove(instance.getTransferProgressBar());
+                    if (panel != null) panel.remove(instance.getTransferProgressBar());
                     if (verbose) {
                         label.setText("<html><font color=green>Data import - Completed</font></html>");
                         processLabel.setText("Import discarded: data haven't changed since last import.");
@@ -3283,28 +3283,31 @@ public class FrontEnd extends JFrame {
                             processLabel.setText("Failed to import data! Error details: It seems that you have typed wrong password...");
                             label.setText("<html><font color=red>Data import - Failed</font></html>");
                         }
+                        displayStatusBarErrorMessage("Failed to import data! Wrong password.");
                         gse.printStackTrace(System.err);
                     } catch (Throwable t) {
+                        String errMsg = "Failed to import data!";
+                        if (t.getMessage() != null) {
+                            errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
+                        }
                         if (verbose) {
-                            String errMsg = "Failed to import data!";
-                            if (t.getMessage() != null) {
-                                errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
-                            }
                             processLabel.setText(errMsg);
                             label.setText("<html><font color=red>Data import - Failed</font></html>");
                         }
+                        displayStatusBarErrorMessage(errMsg);
                         t.printStackTrace(System.err);
                     }
                 }
             } catch (Throwable ex) {
+                String errMsg = "Failed to import data!";
+                if (ex.getMessage() != null) {
+                    errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                }
                 if (verbose) {
-                    String errMsg = "Failed to import data!";
-                    if (ex.getMessage() != null) {
-                        errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
-                    }
                     processLabel.setText(errMsg);
                     label.setText("<html><font color=red>Data import - Failed</font></html>");
                 }
+                displayStatusBarErrorMessage(errMsg);
                 ex.printStackTrace(System.err);
             }
         }
@@ -3716,12 +3719,13 @@ public class FrontEnd extends JFrame {
                 if (!exportConfig.isExportAll()) {
                     instance.filterData(data, exportConfig.getSelectedIds(), exportConfig.getSelectedRecursiveIds());
                 }
-                final TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
+                byte[] transferOptions = BackEnd.getInstance().getExportOptions(configName);
                 final TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
                 if (transferrer == null) {
                     throw new Exception("It looks like transfer type used in this stored export configuration is no longer available (extension uninstalled?).");
                 }
-                byte[] transferOptions = BackEnd.getInstance().getExportOptions(configName);
+                transferrer.checkConnection(transferOptions);
+                final TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
                 if (verbose) {
                     if (transferrer instanceof ObservableTransferExtension) {
                         instance.getTransferProgressBar().setMaximum(td.getData().length);
@@ -3770,14 +3774,15 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable ex) {
+                String errMsg = "Failed to export data!";
+                if (ex.getMessage() != null) {
+                    errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                }
                 if (verbose) {
-                    String errMsg = "Failed to export data!";
-                    if (ex.getMessage() != null) {
-                        errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
-                    }
                     processLabel.setText(errMsg);
                     label.setText("<html><font color=red>Data export - Failed</font></html>");
                 }
+                displayStatusBarErrorMessage(errMsg);
                 ex.printStackTrace(System.err);
             }
         }
