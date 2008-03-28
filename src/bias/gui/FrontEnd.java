@@ -3398,201 +3398,202 @@ public class FrontEnd extends JFrame {
                             }
                         });
                     } else {
-                        final DataCategory data = collectData();
-                        filterData(data, BackEnd.getInstance().getStoredDataEntryIDs());
-                        final Collection<UUID> selectedEntries = new LinkedList<UUID>();
-                        final Collection<UUID> selectedRecursiveEntries = new LinkedList<UUID>();
-                        final JTree dataTree;
-                        final CheckTreeManager checkTreeManager;
-                        if (!data.getData().isEmpty()) {
-                            dataTree = buildDataTree(data);
-                            checkTreeManager = new CheckTreeManager(dataTree);
-                            checkTreeManager.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
-                                public void valueChanged(TreeSelectionEvent e) {
-                                    TreePath selectedPath = dataTree.getSelectionPath();
-                                    if (selectedPath != null) {
-                                        DefaultMutableTreeNode node = ((DefaultMutableTreeNode) selectedPath.getLastPathComponent());
-                                        if (dataTree.isCollapsed(selectedPath) && !node.isLeaf()) {
-                                            boolean isSelected = checkTreeManager.getSelectionModel().isPathSelected(selectedPath, true);
-                                            if (isSelected) {
-                                                Collection<DefaultMutableTreeNode> childs = new LinkedList<DefaultMutableTreeNode>();
-                                                for (int i = 0; i < node.getChildCount(); i++) {
-                                                    childs.add((DefaultMutableTreeNode) node.getChildAt(i));
+                        JComboBox cb = new JComboBox();
+                        for (String annotation : ExtensionFactory.getAnnotatedTransferExtensions().keySet()) {
+                            cb.addItem(annotation);
+                        }
+                        opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose export type", JOptionPane.OK_CANCEL_OPTION);
+                        if (opt != JOptionPane.OK_OPTION) {
+                            hideBottomPanel();
+                        } else {
+                            String annotation = (String) cb.getSelectedItem();
+                            final TransferExtension transferrer = ExtensionFactory.getAnnotatedTransferExtensions().get(annotation);
+                            TransferOptions exportOptions = transferrer.configure(TRANSFER_TYPE.IMPORT);
+                            if (exportOptions == null) {
+                                hideBottomPanel();
+                                return;
+                            }
+                            final byte[] transferOptions = exportOptions.getOptions();
+                            if (transferOptions == null || transferOptions.length == 0) {
+                                hideBottomPanel();
+                                throw new Exception("Transfer options are missing! Import canceled.");
+                            }
+                            final String fileLocation = exportOptions.getFileLocation();
+                            if (Validator.isNullOrBlank(fileLocation)) {
+                                hideBottomPanel();
+                                throw new Exception("Export file location is missing!");
+                            }
+                            transferrer.checkConnection(transferOptions);
+                            final DataCategory data = collectData();
+                            filterData(data, BackEnd.getInstance().getStoredDataEntryIDs());
+                            final Collection<UUID> selectedEntries = new LinkedList<UUID>();
+                            final Collection<UUID> selectedRecursiveEntries = new LinkedList<UUID>();
+                            final JTree dataTree;
+                            final CheckTreeManager checkTreeManager;
+                            if (!data.getData().isEmpty()) {
+                                dataTree = buildDataTree(data);
+                                checkTreeManager = new CheckTreeManager(dataTree);
+                                checkTreeManager.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener(){
+                                    public void valueChanged(TreeSelectionEvent e) {
+                                        TreePath selectedPath = dataTree.getSelectionPath();
+                                        if (selectedPath != null) {
+                                            DefaultMutableTreeNode node = ((DefaultMutableTreeNode) selectedPath.getLastPathComponent());
+                                            if (dataTree.isCollapsed(selectedPath) && !node.isLeaf()) {
+                                                boolean isSelected = checkTreeManager.getSelectionModel().isPathSelected(selectedPath, true);
+                                                if (isSelected) {
+                                                    Collection<DefaultMutableTreeNode> childs = new LinkedList<DefaultMutableTreeNode>();
+                                                    for (int i = 0; i < node.getChildCount(); i++) {
+                                                        childs.add((DefaultMutableTreeNode) node.getChildAt(i));
+                                                    }
+                                                    categoriesToExportRecursively.put(node, childs);
+                                                    node.removeAllChildren();
                                                 }
-                                                categoriesToExportRecursively.put(node, childs);
-                                                node.removeAllChildren();
+                                            }
+                                        }
+                                        if (selectedPath != null) {
+                                            boolean isSelected = checkTreeManager.getSelectionModel().isPathSelected(selectedPath, true);
+                                            if (!isSelected) {
+                                                DefaultMutableTreeNode node = ((DefaultMutableTreeNode) selectedPath.getLastPathComponent());
+                                                if (dataTree.isCollapsed(selectedPath) && node.isLeaf()) {
+                                                    Collection<DefaultMutableTreeNode> childs = categoriesToExportRecursively.get(node);
+                                                    if (childs != null) {
+                                                        for (DefaultMutableTreeNode child : childs) {
+                                                            node.add(child);
+                                                        }
+                                                        categoriesToExportRecursively.remove(node);
+                                                    }
+                                                }
                                             }
                                         }
                                     }
-                                    if (selectedPath != null) {
-                                        boolean isSelected = checkTreeManager.getSelectionModel().isPathSelected(selectedPath, true);
-                                        if (!isSelected) {
-                                            DefaultMutableTreeNode node = ((DefaultMutableTreeNode) selectedPath.getLastPathComponent());
-                                            if (dataTree.isCollapsed(selectedPath) && node.isLeaf()) {
-                                                Collection<DefaultMutableTreeNode> childs = categoriesToExportRecursively.get(node);
-                                                if (childs != null) {
-                                                    for (DefaultMutableTreeNode child : childs) {
-                                                        node.add(child);
-                                                    }
-                                                    categoriesToExportRecursively.remove(node);
-                                                }
-                                            }
-                                        }
+                                });
+                            } else {
+                                dataTree = null;
+                                checkTreeManager = null;
+                            }
+                            final JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
+                            final JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
+                            final JCheckBox exportOnlyRelatedDataEntryConfigsCB = new JCheckBox("Export data entry configs related to exported data entries only"); 
+                            createDependentCheckboxChangeListener(exportDataEntryConfigsCB, exportOnlyRelatedDataEntryConfigsCB);
+                            final JCheckBox exportToolsDataCB = new JCheckBox("Export tools data"); 
+                            final JCheckBox exportIconsCB = new JCheckBox("Export icons");
+                            final JCheckBox exportOnlyRelatedIconsCB = new JCheckBox("Export icons related to exported data entries only");
+                            createDependentCheckboxChangeListener(exportIconsCB, exportOnlyRelatedIconsCB);
+                            final JCheckBox exportAppCoreCB = new JCheckBox("Export application core"); 
+                            final JCheckBox exportAddOnsCB = new JCheckBox("Export addons and libraries"); 
+                            final JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
+                            final JCheckBox exportImportExportConfigsCB = new JCheckBox("Export import/export configs");
+                            final JLabel passwordL1 = new JLabel("Encrypt exported data using password:");
+                            final JPasswordField passwordTF1 = new JPasswordField();
+                            final String cpText = "Confirm password:";
+                            final JLabel passwordL2 = new JLabel(cpText);
+                            final JPasswordField passwordTF2 = new JPasswordField();
+                            passwordTF2.addCaretListener(new CaretListener(){
+                                public void caretUpdate(CaretEvent e) {
+                                    if (!Arrays.equals(passwordTF1.getPassword(), passwordTF2.getPassword())) {
+                                        passwordL2.setText(cpText + " [INVALID]");
+                                        passwordL2.setForeground(Color.RED);
+                                    } else {
+                                        passwordL2.setText(cpText + " [DONE]");
+                                        passwordL2.setForeground(Color.BLUE);
                                     }
                                 }
                             });
-                        } else {
-                            dataTree = null;
-                            checkTreeManager = null;
-                        }
-                        final JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
-                        final JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
-                        final JCheckBox exportOnlyRelatedDataEntryConfigsCB = new JCheckBox("Export data entry configs related to exported data entries only"); 
-                        createDependentCheckboxChangeListener(exportDataEntryConfigsCB, exportOnlyRelatedDataEntryConfigsCB);
-                        final JCheckBox exportToolsDataCB = new JCheckBox("Export tools data"); 
-                        final JCheckBox exportIconsCB = new JCheckBox("Export icons");
-                        final JCheckBox exportOnlyRelatedIconsCB = new JCheckBox("Export icons related to exported data entries only");
-                        createDependentCheckboxChangeListener(exportIconsCB, exportOnlyRelatedIconsCB);
-                        final JCheckBox exportAppCoreCB = new JCheckBox("Export application core"); 
-                        final JCheckBox exportAddOnsCB = new JCheckBox("Export addons and libraries"); 
-                        final JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
-                        final JCheckBox exportImportExportConfigsCB = new JCheckBox("Export import/export configs");
-                        final JLabel passwordL1 = new JLabel("Encrypt exported data using password:");
-                        final JPasswordField passwordTF1 = new JPasswordField();
-                        final String cpText = "Confirm password:";
-                        final JLabel passwordL2 = new JLabel(cpText);
-                        final JPasswordField passwordTF2 = new JPasswordField();
-                        passwordTF2.addCaretListener(new CaretListener(){
-                            public void caretUpdate(CaretEvent e) {
+                            JPanel cbPanel = new JPanel(new GridLayout(10, 1));
+                            cbPanel.add(exportPreferencesCB);
+                            cbPanel.add(exportDataEntryConfigsCB);
+                            cbPanel.add(exportOnlyRelatedDataEntryConfigsCB);
+                            cbPanel.add(exportToolsDataCB);
+                            cbPanel.add(exportIconsCB);
+                            cbPanel.add(exportOnlyRelatedIconsCB);
+                            cbPanel.add(exportAppCoreCB);
+                            cbPanel.add(exportAddOnsCB);
+                            cbPanel.add(exportAddOnConfigsCB);
+                            cbPanel.add(exportImportExportConfigsCB);
+                            JPanel passPanel = new JPanel(new GridLayout(4, 1));
+                            passPanel.add(passwordL1);
+                            passPanel.add(passwordTF1);
+                            passPanel.add(passwordL2);
+                            passPanel.add(passwordTF2);
+                            JPanel exportPanel = new JPanel(new BorderLayout());
+                            exportPanel.add(cbPanel, BorderLayout.CENTER);
+                            exportPanel.add(passPanel, BorderLayout.SOUTH);
+                            if (dataTree != null) {
+                                JPanel treePanel = new JPanel(new BorderLayout());
+                                treePanel.add(recursiveExportInfoLabel, BorderLayout.NORTH);
+                                treePanel.add(new JScrollPane(dataTree), BorderLayout.CENTER);
+                                exportPanel.add(treePanel, BorderLayout.EAST);
+                            }
+                            opt = JOptionPane.showConfirmDialog(
+                                    FrontEnd.this, 
+                                    exportPanel,
+                                    "Export data",
+                                    JOptionPane.OK_CANCEL_OPTION);
+                            if (opt == JOptionPane.OK_OPTION) {
                                 if (!Arrays.equals(passwordTF1.getPassword(), passwordTF2.getPassword())) {
-                                    passwordL2.setText(cpText + " [INVALID]");
-                                    passwordL2.setForeground(Color.RED);
-                                } else {
-                                    passwordL2.setText(cpText + " [DONE]");
-                                    passwordL2.setForeground(Color.BLUE);
+                                    throw new Exception("Password confirmation failure!");
                                 }
-                            }
-                        });
-                        JPanel cbPanel = new JPanel(new GridLayout(10, 1));
-                        cbPanel.add(exportPreferencesCB);
-                        cbPanel.add(exportDataEntryConfigsCB);
-                        cbPanel.add(exportOnlyRelatedDataEntryConfigsCB);
-                        cbPanel.add(exportToolsDataCB);
-                        cbPanel.add(exportIconsCB);
-                        cbPanel.add(exportOnlyRelatedIconsCB);
-                        cbPanel.add(exportAppCoreCB);
-                        cbPanel.add(exportAddOnsCB);
-                        cbPanel.add(exportAddOnConfigsCB);
-                        cbPanel.add(exportImportExportConfigsCB);
-                        JPanel passPanel = new JPanel(new GridLayout(4, 1));
-                        passPanel.add(passwordL1);
-                        passPanel.add(passwordTF1);
-                        passPanel.add(passwordL2);
-                        passPanel.add(passwordTF2);
-                        JPanel exportPanel = new JPanel(new BorderLayout());
-                        exportPanel.add(cbPanel, BorderLayout.CENTER);
-                        exportPanel.add(passPanel, BorderLayout.SOUTH);
-                        if (dataTree != null) {
-                            JPanel treePanel = new JPanel(new BorderLayout());
-                            treePanel.add(recursiveExportInfoLabel, BorderLayout.NORTH);
-                            treePanel.add(new JScrollPane(dataTree), BorderLayout.CENTER);
-                            exportPanel.add(treePanel, BorderLayout.EAST);
-                        }
-                        opt = JOptionPane.showConfirmDialog(
-                                FrontEnd.this, 
-                                exportPanel,
-                                "Export data",
-                                JOptionPane.OK_CANCEL_OPTION);
-                        if (opt == JOptionPane.OK_OPTION) {
-                            if (!Arrays.equals(passwordTF1.getPassword(), passwordTF2.getPassword())) {
-                                throw new Exception("Password confirmation failure!");
-                            }
-                            syncExecute(new Runnable(){
-                                public void run() {
-                                    JPanel panel = new JPanel(new BorderLayout());
-                                    DefaultListModel processModel = new DefaultListModel();
-                                    JList processList = new JList(processModel);
-                                    panel.add(processList, BorderLayout.CENTER);
-                                    instance.getTransferProgressBar().setVisible(false);
-                                    panel.add(instance.getTransferProgressBar(), BorderLayout.SOUTH);
-                                    JLabel label = new JLabel("Data export");
-                                    processModel.addElement("Compressing data to be exported...");
-                                    displayBottomPanel(label, panel);
-                                    autoscrollList(processList);
-                                    try {
-                                        boolean exportAll = false;
-                                        if (checkTreeManager != null) {
-                                            TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
-                                            if (checkedPaths != null) {
-                                                Iterator<DefaultMutableTreeNode> it = categoriesToExportRecursively.keySet().iterator();
-                                                while (it.hasNext()) {
-                                                    DefaultMutableTreeNode node = it.next();
-                                                    if (node.isRoot()) {
-                                                        exportAll = true;
-                                                        break;
-                                                    } else {
-                                                        selectedRecursiveEntries.add(nodeEntries.get(node).getId());
-                                                    }
-                                                }
-                                                if (!exportAll) {
-                                                    for (TreePath tp : checkedPaths) {
-                                                        DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
-                                                        for (Object o : tp.getPath()) {
-                                                            DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
-                                                            Recognizable entry = nodeEntries.get(node);
-                                                            if (entry != null) {
-                                                                selectedEntries.add(entry.getId());
-                                                            }
-                                                            if (node.equals(lastNodeInPath)) {
-                                                                selectDescenantEntries(node, selectedEntries);
-                                                            }
+                                syncExecute(new Runnable(){
+                                    public void run() {
+                                        JPanel panel = new JPanel(new BorderLayout());
+                                        DefaultListModel processModel = new DefaultListModel();
+                                        JList processList = new JList(processModel);
+                                        panel.add(processList, BorderLayout.CENTER);
+                                        instance.getTransferProgressBar().setVisible(false);
+                                        panel.add(instance.getTransferProgressBar(), BorderLayout.SOUTH);
+                                        JLabel label = new JLabel("Data export");
+                                        processModel.addElement("Compressing data to be exported...");
+                                        displayBottomPanel(label, panel);
+                                        autoscrollList(processList);
+                                        try {
+                                            boolean exportAll = false;
+                                            if (checkTreeManager != null) {
+                                                TreePath[] checkedPaths = checkTreeManager.getSelectionModel().getSelectionPaths();
+                                                if (checkedPaths != null) {
+                                                    Iterator<DefaultMutableTreeNode> it = categoriesToExportRecursively.keySet().iterator();
+                                                    while (it.hasNext()) {
+                                                        DefaultMutableTreeNode node = it.next();
+                                                        if (node.isRoot()) {
+                                                            exportAll = true;
+                                                            break;
+                                                        } else {
+                                                            selectedRecursiveEntries.add(nodeEntries.get(node).getId());
                                                         }
                                                     }
-                                                    filterData(data, selectedEntries, selectedRecursiveEntries);
+                                                    if (!exportAll) {
+                                                        for (TreePath tp : checkedPaths) {
+                                                            DefaultMutableTreeNode lastNodeInPath = (DefaultMutableTreeNode) tp.getLastPathComponent();
+                                                            for (Object o : tp.getPath()) {
+                                                                DefaultMutableTreeNode node = (DefaultMutableTreeNode) o;
+                                                                Recognizable entry = nodeEntries.get(node);
+                                                                if (entry != null) {
+                                                                    selectedEntries.add(entry.getId());
+                                                                }
+                                                                if (node.equals(lastNodeInPath)) {
+                                                                    selectDescenantEntries(node, selectedEntries);
+                                                                }
+                                                            }
+                                                        }
+                                                        filterData(data, selectedEntries, selectedRecursiveEntries);
+                                                    }
                                                 }
                                             }
-                                        }
-                                        ExportConfiguration exportConfig = new ExportConfiguration();
-                                        exportConfig.setExportPreferences(exportPreferencesCB.isSelected()); 
-                                        exportConfig.setExportDataEntryConfigs(exportDataEntryConfigsCB.isSelected());
-                                        exportConfig.setExportOnlyRelatedDataEntryConfigs(exportOnlyRelatedDataEntryConfigsCB.isSelected());
-                                        exportConfig.setExportToolsData(exportToolsDataCB.isSelected());
-                                        exportConfig.setExportIcons(exportIconsCB.isSelected());
-                                        exportConfig.setExportOnlyRelatedIcons(exportOnlyRelatedIconsCB.isSelected());
-                                        exportConfig.setExportAppCore(exportAppCoreCB.isSelected());
-                                        exportConfig.setExportAddOnsAndLibs(exportAddOnsCB.isSelected());
-                                        exportConfig.setExportAddOnConfigs(exportAddOnConfigsCB.isSelected());
-                                        exportConfig.setExportImportExportConfigs(exportImportExportConfigsCB.isSelected());
-                                        exportConfig.setPassword(new String(passwordTF1.getPassword()));
-                                        final TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
-                                        processModel.addElement("Data to be exported have been successfully compressed.");
-                                        autoscrollList(processList);
-                                        JComboBox cb = new JComboBox();
-                                        for (String annotation : ExtensionFactory.getAnnotatedTransferExtensions().keySet()) {
-                                            cb.addItem(annotation);
-                                        }
-                                        opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose export type", JOptionPane.OK_CANCEL_OPTION);
-                                        if (opt != JOptionPane.OK_OPTION) {
-                                            hideBottomPanel();
-                                        } else {    
-                                            String annotation = (String) cb.getSelectedItem();
-                                            final TransferExtension transferrer = ExtensionFactory.getAnnotatedTransferExtensions().get(annotation);
+                                            ExportConfiguration exportConfig = new ExportConfiguration();
                                             exportConfig.setTransferProvider(transferrer.getClass().getSimpleName());
-                                            TransferOptions exportOptions = transferrer.configure(TRANSFER_TYPE.IMPORT);
-                                            if (exportOptions == null) {
-                                                hideBottomPanel();
-                                                return;
-                                            }
-                                            final byte[] transferOptions = exportOptions.getOptions();
-                                            if (transferOptions == null || transferOptions.length == 0) {
-                                                hideBottomPanel();
-                                                throw new Exception("Transfer options are missing! Import canceled.");
-                                            }
-                                            final String fileLocation = exportOptions.getFileLocation();
-                                            if (Validator.isNullOrBlank(fileLocation)) {
-                                                hideBottomPanel();
-                                                throw new Exception("Export file location is missing!");
-                                            }
+                                            exportConfig.setExportPreferences(exportPreferencesCB.isSelected()); 
+                                            exportConfig.setExportDataEntryConfigs(exportDataEntryConfigsCB.isSelected());
+                                            exportConfig.setExportOnlyRelatedDataEntryConfigs(exportOnlyRelatedDataEntryConfigsCB.isSelected());
+                                            exportConfig.setExportToolsData(exportToolsDataCB.isSelected());
+                                            exportConfig.setExportIcons(exportIconsCB.isSelected());
+                                            exportConfig.setExportOnlyRelatedIcons(exportOnlyRelatedIconsCB.isSelected());
+                                            exportConfig.setExportAppCore(exportAppCoreCB.isSelected());
+                                            exportConfig.setExportAddOnsAndLibs(exportAddOnsCB.isSelected());
+                                            exportConfig.setExportAddOnConfigs(exportAddOnConfigsCB.isSelected());
+                                            exportConfig.setExportImportExportConfigs(exportImportExportConfigsCB.isSelected());
+                                            exportConfig.setPassword(new String(passwordTF1.getPassword()));
+                                            final TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
+                                            processModel.addElement("Data to be exported have been successfully compressed.");
+                                            autoscrollList(processList);
                                             try {
                                                 exportConfig.setFileLocation(fileLocation);
                                                 processModel.addElement("Data is being transferred...");
@@ -3683,18 +3684,18 @@ public class FrontEnd extends JFrame {
                                                 label.setText("<html><font color=red>Data export - Failed</font></html>");
                                                 ex.printStackTrace(System.err);
                                             }
+                                        } catch (Throwable ex) {
+                                            processModel.addElement("Failed to export data!");
+                                            if (ex.getMessage() != null) {
+                                                processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
+                                            }
+                                            autoscrollList(processList);
+                                            label.setText("<html><font color=red>Data export - Failed</font></html>");
+                                            ex.printStackTrace(System.err);
                                         }
-                                    } catch (Throwable ex) {
-                                        processModel.addElement("Failed to export data!");
-                                        if (ex.getMessage() != null) {
-                                            processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
-                                        }
-                                        autoscrollList(processList);
-                                        label.setText("<html><font color=red>Data export - Failed</font></html>");
-                                        ex.printStackTrace(System.err);
                                     }
-                                }
-                            });
+                                });
+                            }
                         }
                     }
                 }
