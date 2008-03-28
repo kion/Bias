@@ -3285,11 +3285,11 @@ public class FrontEnd extends JFrame {
                         }
                         gse.printStackTrace(System.err);
                     } catch (Throwable t) {
-                        String errMsg = "Failed to import data!";
-                        if (t.getMessage() != null) {
-                            errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
-                        }
                         if (verbose) {
+                            String errMsg = "Failed to import data!";
+                            if (t.getMessage() != null) {
+                                errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
+                            }
                             processLabel.setText(errMsg);
                             label.setText("<html><font color=red>Data import - Failed</font></html>");
                         }
@@ -3297,12 +3297,14 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable ex) {
-                String errMsg = "Failed to import data!";
-                if (ex.getMessage() != null) {
-                    errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                if (verbose) {
+                    String errMsg = "Failed to import data!";
+                    if (ex.getMessage() != null) {
+                        errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                    }
+                    processLabel.setText(errMsg);
+                    label.setText("<html><font color=red>Data import - Failed</font></html>");
                 }
-                processLabel.setText(errMsg);
-                label.setText("<html><font color=red>Data import - Failed</font></html>");
                 ex.printStackTrace(System.err);
             }
         }
@@ -3768,11 +3770,11 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable ex) {
-                String errMsg = "Failed to export data!";
-                if (ex.getMessage() != null) {
-                    errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
-                }
                 if (verbose) {
+                    String errMsg = "Failed to export data!";
+                    if (ex.getMessage() != null) {
+                        errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                    }
                     processLabel.setText(errMsg);
                     label.setText("<html><font color=red>Data export - Failed</font></html>");
                 }
