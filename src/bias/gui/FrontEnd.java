@@ -2047,23 +2047,30 @@ public class FrontEnd extends JFrame {
     }
     
     private static void displayStatusBarMessage(final String message, final boolean isError) {
-        execute(new Runnable(){
+        syncExecute(new Runnable(){
             public void run() {
                 if (instance != null) {
                     final String timestamp = dateFormat.format(new Date()) + " # ";
-                    instance.getJLabelStatusBarMsg().setText(Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_OK) + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                    ((DefaultListModel) instance.getStatusBarMessagesList().getModel()).addElement(timestamp + message);
+                    String iaText = Constants.BLANK_STR + timestamp;
+                    for (int i = 0; i < iaText.length(); i++) {
+                        instance.getJLabelStatusBarMsg().setText(iaText.substring(0, i));
+                        try {
+                            Thread.sleep(25);
+                        } catch (InterruptedException e) {
+                            // ignore
+                        }
+                    }
+                    String msg = Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_OK) + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX;
+                    instance.getJLabelStatusBarMsg().setText(msg);
+                    try {
+                        Thread.sleep(250);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
+                    ((DefaultListModel) instance.getStatusBarMessagesList().getModel()).addElement(msg);
                     if (instance.getJPanel2().isVisible()) {
                         instance.autoscrollList(instance.getStatusBarMessagesList());
                     }
-                    ActionListener al = new ActionListener(){
-                        public void actionPerformed(ActionEvent ae){
-                            instance.getJLabelStatusBarMsg().setText(Constants.HTML_PREFIX + "&nbsp;" + timestamp + Constants.HTML_COLOR_NORMAL + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                        }
-                    };
-                    Timer timer = new Timer(500, al);
-                    timer.setRepeats(false);
-                    timer.start();
                 }
             }
         });
