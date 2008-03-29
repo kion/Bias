@@ -29,8 +29,6 @@ public abstract class TransferExtension implements Extension {
         this.settings = settings;
     }
 
-    // TODO [P1] refactoring & optimization (memory usage): looks like it's better to use Input/Output streams instead of byte arrays during transfer
-
     public byte[] getSettings() {
         return settings;
     }
