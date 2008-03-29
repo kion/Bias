@@ -3619,8 +3619,6 @@ public class FrontEnd extends JFrame {
                                                     processModel.addElement("Export discarded: data haven't changed since last export.");
                                                     autoscrollList(processList);
                                                 } else {
-                                                    processModel.addElement("Data has been successfully transferred.");
-                                                    autoscrollList(processList);
                                                     label.setText("<html><font color=green>Data export - Completed</font></html>");
                                                     processModel.addElement("Data have been successfully transferred.");
                                                     autoscrollList(processList);
