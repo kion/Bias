@@ -194,6 +194,8 @@ public class FrontEnd extends JFrame {
      */
     private static final ImageIcon ICON_APP = new ImageIcon(FrontEnd.class.getResource("/bias/res/app_icon.png"));
 
+    private static final ImageIcon ICON_LOGO = new ImageIcon(FrontEnd.class.getResource("/bias/res/app_logo.png"));
+    
     private static final ImageIcon ICON_CLOSE = new ImageIcon(FrontEnd.class.getResource("/bias/res/close.png"));
 
     private static final ImageIcon ICON_PROCESS = new ImageIcon(FrontEnd.class.getResource("/bias/res/process.gif"));
@@ -5911,7 +5913,10 @@ public class FrontEnd extends JFrame {
                             title1Label, link1Label, 
                             title2Label, link2Label,
                             title3Label, link3Label
-                            });
+                            },
+                    "About Bias...",
+                    JOptionPane.PLAIN_MESSAGE,
+                    ICON_LOGO);
         }
     };
     
