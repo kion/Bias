@@ -5872,7 +5872,7 @@ public class FrontEnd extends JFrame {
             for (Dependency dep : dependencies) {
                 AddOnInfo dependentAddOnInfo = BackEnd.getInstance().getAddOnInfo(dep.getName(), dep.getType());
                 String status = dependentAddOnInfo != null && (dep.getVersion() == null || VersionComparator.getInstance().compare(dependentAddOnInfo.getVersion(), dep.getVersion()) >= 0) ? 
-                        Constants.HTML_COLOR_HIGHLIGHT_OK + "[Installed]" + Constants.HTML_COLOR_SUFFIX : Constants.HTML_COLOR_HIGHLIGHT_ERROR + "[Not installed]" + Constants.HTML_COLOR_SUFFIX; 
+                        Constants.HTML_COLOR_HIGHLIGHT_OK + "[Registered/installed]" + Constants.HTML_COLOR_SUFFIX : Constants.HTML_COLOR_HIGHLIGHT_ERROR + "[Not registered/installed]" + Constants.HTML_COLOR_SUFFIX; 
                 text.append(
                         "<li>" + 
                         dep.getType().value() + " '" + dep.getName() + "'" + 
