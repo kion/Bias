@@ -26,7 +26,7 @@ public class SyntheticaSkin extends Skin {
       laf = new SyntheticaBlackMoonLookAndFeel();
       UIManager.setLookAndFeel(laf);
 //      SyntheticaLookAndFeel.setWindowsDecorated(false);
-//      SyntheticaLookAndFeel.setFont("Dialog", 12);
+      SyntheticaLookAndFeel.setFont("SansSerif", 12);
       SyntheticaLookAndFeel.setAntiAliasEnabled(true);
 //      SyntheticaLookAndFeel.setToolbarSeparatorDimension(new Dimension(1,32));
 //      SyntheticaLookAndFeel.setExtendedFileChooserEnabled(false);
