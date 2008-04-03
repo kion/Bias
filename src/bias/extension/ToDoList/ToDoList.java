@@ -160,7 +160,7 @@ public class ToDoList extends EntryExtension {
         initGUI();
         parseData();
         String selRow = props.getProperty(PROPERTY_SELECTED_ROW);
-        if (!Validator.isNullOrBlank(selRow)) {
+        if (!Validator.isNullOrBlank(selRow) && todoEntriesTable.getRowCount() > 0 && todoEntriesTable.getRowCount() > Integer.valueOf(selRow)) {
             todoEntriesTable.setRowSelectionInterval(Integer.valueOf(selRow), Integer.valueOf(selRow));
         }
         String divLoc = props.getProperty(PROPERTY_DIVIDER_LOCATION);

@@ -1712,8 +1712,17 @@ public class FrontEnd extends JFrame {
                 entryPath.addLast(entry);
                 if (filterClass == null) {
                     entries.put(id, new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath), ENTRY_TYPE.ENTRY));
-                } else if (((JPanel) c).getComponent(0).getClass().getName().equals(filterClass.getName())) {
-                    entries.put(id, new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath), ENTRY_TYPE.ENTRY));
+                } else {
+                    JPanel p = ((JPanel) c);
+                    try {
+                        initEntryPanelContent(p);
+                    } catch (Throwable t) {
+                        // skip broken entries, just print error message
+                        t.printStackTrace(System.err);
+                    }
+                    if (p.getComponent(0).getClass().getName().equals(filterClass.getName())) {
+                        entries.put(id, new VisualEntryDescriptor(entry, new LinkedList<Recognizable>(entryPath), ENTRY_TYPE.ENTRY));
+                    }
                 }
                 entryPath.removeLast();
             }
@@ -2010,11 +2019,7 @@ public class FrontEnd extends JFrame {
             if (c instanceof JPanel) {
                 try {
                     final JPanel p = ((JPanel) c);
-                    final String id = p.getName();
-                    if (p.getComponentCount() == 0) {
-                        EntryExtension ee = initEntryExtension(id);
-                        p.add(ee, BorderLayout.CENTER);
-                    }
+                    initEntryPanelContent(p);
                 } catch (Throwable t) {
                     displayErrorMessage("Failed to initialize extension!", t);
                 }
@@ -2022,6 +2027,14 @@ public class FrontEnd extends JFrame {
                 currentTabPane = (JTabbedPane) c;
                 initTabContent();
             }
+        }
+    }
+    
+    private void initEntryPanelContent(JPanel p) throws Throwable {
+        if (p.getComponentCount() == 0) {
+            final String id = p.getName();
+            EntryExtension ee = initEntryExtension(id);
+            p.add(ee, BorderLayout.CENTER);
         }
     }
     
