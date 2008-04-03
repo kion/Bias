@@ -654,10 +654,10 @@ public class FrontEnd extends JFrame {
         getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK), forwardAction.getValue(Action.NAME));
         getJPanel().getActionMap().put(forwardAction.getValue(Action.NAME), forwardAction);
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_MASK + InputEvent.SHIFT_MASK), backToFirstAction.getValue(Action.NAME));
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.ALT_MASK), backToFirstAction.getValue(Action.NAME));
         getJPanel().getActionMap().put(backToFirstAction.getValue(Action.NAME), backToFirstAction);
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK + InputEvent.SHIFT_MASK), forwardToLastAction.getValue(Action.NAME));
+        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.ALT_MASK), forwardToLastAction.getValue(Action.NAME));
         getJPanel().getActionMap().put(forwardToLastAction.getValue(Action.NAME), forwardToLastAction);
         
     }
