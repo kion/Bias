@@ -359,24 +359,6 @@
 	</target>
 
 	<!-- ================================= 
-          target: Build_Skin_FHSkin             
-         ================================= -->
-	<target name="Build_Skin_FHSkin" description="FH Skin">
-		<delete dir="build" includes="FHSkin*.jar" />
-		<jar basedir="bin" destfile="build/FHSkin_${FHSkin_Version}.jar" includes="bias/skin/FHSkin/** bias/res/FHSkin/**">
-			<fileset dir="res" includes="META-INF/ADDON-INFO/FHSkin_${FHSkin_Version}.html" />
-			<manifest>
-				<attribute name="Bias-Add-On-Name" value="FHSkin" />
-				<attribute name="Bias-Add-On-Type" value="Skin" />
-				<attribute name="Bias-Add-On-Version" value="${FHSkin_Version}" />
-				<attribute name="Bias-Add-On-Description" value="FH Skin" />
-				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
-				<attribute name="Bias-Add-On-Dependencies" value="${FHSkin_Dependencies}" />
-			</manifest>
-		</jar>
-	</target>
-
-	<!-- ================================= 
           target: Build_Skin_LiquidSkin             
          ================================= -->
 	<target name="Build_Skin_LiquidSkin" description="Liquid Skin">

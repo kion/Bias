@@ -21,9 +21,6 @@
 	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Look-&amp;-Feel" file-size="100000">
 		<dependency type="Library" name="Looks"/>
 	</pack>
-	<pack type="Skin" name="FHSkin" version="0.1.1" author="R. Kasianenko" description="FHSkin Look-&amp;-Feel" file-size="100000">
-		<dependency type="Library" name="FHLAF"/>
-	</pack>
 	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNodeSkin Look-&amp;-Feel" file-size="100000">
 		<dependency type="Library" name="InfoNodeLF"/>
 	</pack>
@@ -65,7 +62,6 @@
 	<pack type="Library" name="LipstikLF" version="1.0" author="Michal Buczko" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
 	<pack type="Library" name="Squareness" version="2.3.0" author="Robert F. Beeger" description="Minimalistic and flat looking Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
 	<pack type="Library" name="TinyLAF" version="1.3.04" author="Hans Bickel" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
-	<pack type="Library" name="FHLAF" version="1.02" author="Stefan Harsan Fárr" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
 	<pack type="Library" name="LiquidLnF" version="2.9.1" author="evickroy" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
 	<pack type="Library" name="Synthetica" version="2.2.0" author="JAVASOFT Software Engineering" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
 	<pack type="Library" name="SyntheticaBlackMoonTheme" version="2.2.0" author="JAVASOFT Software Engineering" description="BlackMoon theme for Synthetica Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
