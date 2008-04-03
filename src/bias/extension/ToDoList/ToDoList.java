@@ -80,7 +80,6 @@ public class ToDoList extends EntryExtension {
     
     // TODO [P2] column widths should be stored as relative (% of whole table width) values
     
-    private static final ImageIcon ICON_CONFIG = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "config.png"));
     private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "add.png"));
     private static final ImageIcon ICON_DELETE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "del.png"));
 
@@ -124,8 +123,6 @@ public class ToDoList extends EntryExtension {
     
     private SimpleDateFormat sdf = new SimpleDateFormat(dateTimeFormat);
     
-    private byte[] settings = null;
-    
     private String[] priorities = null;
     
     private String[] statuses = null;
@@ -155,8 +152,7 @@ public class ToDoList extends EntryExtension {
     }
     
     private void initialize() {
-        settings = getSettings();
-        applySettings(settings);
+        applySettings(getSettings());
         initGUI();
         parseData();
         String selRow = props.getProperty(PROPERTY_SELECTED_ROW);
@@ -203,7 +199,11 @@ public class ToDoList extends EntryExtension {
         }
     }
     
-    private void applySettings(byte[] settings) {
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#applySettings(byte[])
+     */
+    @Override
+    public void applySettings(byte[] settings) {
         props = PropertiesUtils.deserializeProperties(settings);
         String priorities = props.getProperty(PROPERTY_PRIORITIES);
         String statuses = props.getProperty(PROPERTY_STATUSES);
@@ -460,21 +460,6 @@ public class ToDoList extends EntryExtension {
     private JToolBar initToolBar() {
         JToolBar toolbar = new JToolBar();
         toolbar.setFloatable(false);
-        JButton buttConf = new JButton(ICON_CONFIG);
-        buttConf.setToolTipText("configure list");
-        buttConf.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    byte[] oldSettings = settings;
-                    settings = configure(settings);
-                    if (!Arrays.equals(oldSettings, settings)) {
-                        applySettings(settings);
-                    }
-                } catch (Throwable t) {
-                    FrontEnd.displayErrorMessage(t);
-                }
-            }
-        });
         JButton buttAdd = new JButton(ICON_ADD);
         buttAdd.setToolTipText("add entry");
         buttAdd.addActionListener(new ActionListener(){
@@ -510,7 +495,6 @@ public class ToDoList extends EntryExtension {
                 }
             }
         });
-        toolbar.add(buttConf);
         toolbar.add(buttAdd);
         toolbar.add(buttDel);
         return toolbar;
@@ -625,7 +609,6 @@ public class ToDoList extends EntryExtension {
      * @see bias.extension.Extension#serializeSettings()
      */
     public byte[] serializeSettings() throws Throwable {
-        Properties props = PropertiesUtils.deserializeProperties(settings);
         for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
             if (sortByColumn[i] != -1 && sortOrder[i] != null) {
                 props.setProperty(PROPERTY_SORT_BY_COLUMN + i, "" + sortByColumn[i]);
@@ -724,8 +707,9 @@ public class ToDoList extends EntryExtension {
                 dateTimeFormat = dateTimeFormatTF.getText().trim();
                 props.setProperty(PROPERTY_DATE_TIME_FORMAT, dateTimeFormat);
             }
+            return PropertiesUtils.serializeProperties(props);
         }
-        return PropertiesUtils.serializeProperties(props);
+        return null;
     }
     
     private static class FormatChangeListener implements CaretListener {

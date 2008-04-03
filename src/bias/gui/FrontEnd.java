@@ -351,6 +351,8 @@ public class FrontEnd extends JFrame {
 
     private JButton jButton18 = null;
 
+    private JButton jButton19 = null;
+
     private JButton jButton11 = null;
 
     private JButton jButton13 = null;
@@ -927,11 +929,24 @@ public class FrontEnd extends JFrame {
         if (skin != null) {
             String skinName = skin.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             if (!skinName.equals(currentSkin)) {
-                config.setProperty(Constants.PROPERTY_SKIN, skinName);
+                currentSkin = skinName;
+                config.setProperty(Constants.PROPERTY_SKIN, currentSkin);
                 configureSkin(skin);
                 skinChanged = true;
             } else {
                 skinChanged = configureSkin(skin);
+            }
+            if (skinChanged) {
+                if (activeSkin.equals(currentSkin)) {
+                    // if skin is the same, but configuration changed,
+                    // apply settings immediately
+                    activateSkin();
+                    SwingUtilities.updateComponentTreeUI(this);
+                    if (addOnsManagementDialog != null) SwingUtilities.updateComponentTreeUI(addOnsManagementDialog);
+                    skinChanged = false;
+                } else {
+                    displayMessage("Bias should be restarted to changes take effect.");
+                }
             }
         } else if (currentSkin != null) {
             config.remove(Constants.PROPERTY_SKIN);
@@ -991,6 +1006,7 @@ public class FrontEnd extends JFrame {
                         extSettings = new byte[]{};
                     }
                     settings = ((EntryExtension) extensionInstance).configure(extSettings);
+                    if (settings == null && extSettings.length > 0) settings = extSettings;
                     ((EntryExtension) extensionInstance).setSettings(settings);
                 }
                 if (!Arrays.equals(extSettings, settings)) {
@@ -1588,6 +1604,28 @@ public class FrontEnd extends JFrame {
             }
         }
         return tabPane.getName() == null ? null : UUID.fromString(tabPane.getName());
+    }
+
+    public static EntryExtension getSelectedExtensionEntry() {
+        if (instance != null) {
+            return instance.getSelectedExtensionEntry(instance.getJTabbedPane());
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private EntryExtension getSelectedExtensionEntry(JTabbedPane tabPane) {
+        if (tabPane.getTabCount() > 0) {
+            if (tabPane.getSelectedIndex() != -1) {
+                Component c = tabPane.getSelectedComponent();
+                if (c instanceof JTabbedPane) {
+                    return getSelectedExtensionEntry((JTabbedPane) c);
+                } else if (c instanceof JPanel) {
+                    return (EntryExtension) ((JPanel) c).getComponent(0);
+                }
+            }
+        }
+        return null;
     }
 
     public static String getSelectedVisualEntryCaption() {
@@ -2203,6 +2241,7 @@ public class FrontEnd extends JFrame {
             jToolBar.add(getJButton17());
             jToolBar.add(getJButton5());
             jToolBar.add(getJButton18());
+            jToolBar.add(getJButton19());
             jToolBar.add(getJButton1());
             jToolBar.addSeparator();
             jToolBar.add(getJButton11());
@@ -2265,6 +2304,19 @@ public class FrontEnd extends JFrame {
             jButton18.setText(Constants.EMPTY_STR);
         }
         return jButton18;
+    }
+
+    /**
+     * This method initializes jButton19
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton19() {
+        if (jButton19 == null) {
+            jButton19 = new JButton(configEntryAction);
+            jButton19.setText(Constants.EMPTY_STR);
+        }
+        return jButton19;
     }
 
     /**
@@ -2800,6 +2852,45 @@ public class FrontEnd extends JFrame {
                 }
             } catch (Exception ex) {
                 displayErrorMessage("Failed to adjust entry!", ex);
+            }
+        }
+    };
+
+    private ConfigEntryAction configEntryAction = new ConfigEntryAction();
+    private class ConfigEntryAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public ConfigEntryAction() {
+            putValue(Action.NAME, "configEntry");
+            putValue(Action.SHORT_DESCRIPTION, "configure entry");
+            putValue(Action.SMALL_ICON, uiIcons.getIconConfigure());
+        }
+        
+        public void actionPerformed(ActionEvent evt) {
+            try {
+                EntryExtension ext = getSelectedExtensionEntry();
+                if (ext != null) {
+                    DataEntry de = new DataEntry();
+                    de.setId(ext.getId());
+                    de.setType(ext.getClass().getSimpleName());
+                    BackEnd.getInstance().loadDataEntrySettings(de);
+                    // check if runtime configuration differs from stored one...
+                    byte[] runtimeSettings = ext.serializeSettings();
+                    if (!Arrays.equals(de.getSettings(), runtimeSettings)) {
+                        // ... and if yes, store it before proceeding further
+                        de.setSettings(runtimeSettings);
+                        BackEnd.getInstance().storeDataEntrySettings(de);
+                    }
+                    byte[] oldSettings = de.getSettings();
+                    byte[] newSettings = ext.configure(oldSettings);
+                    if (newSettings != null) {
+                        ext.applySettings(newSettings);
+                        de.setSettings(newSettings);
+                        BackEnd.getInstance().storeDataEntrySettings(de);
+                    }
+                }
+            } catch (Throwable t) {
+                displayErrorMessage("Failed to configure/apply/store entry settings! " + CommonUtils.getFailureDetails(t), t);
             }
         }
     };
@@ -4501,7 +4592,7 @@ public class FrontEnd extends JFrame {
                 skinList.setRowSorter(skinSorter);
                 skinList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 skinList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                getSkinModel().insertRow(0, new Object[]{Boolean.FALSE, DEFAULT_SKIN,Constants.EMPTY_STR,Constants.EMPTY_STR,"Default Skin"});
+                getSkinModel().insertRow(0, new Object[]{Boolean.FALSE, DEFAULT_SKIN, Constants.EMPTY_STR, Constants.EMPTY_STR, "Default Skin"});
                 for (AddOnInfo skin : BackEnd.getInstance().getAddOns(PackType.SKIN)) {
                     String status;
                     try {

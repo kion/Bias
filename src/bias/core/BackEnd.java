@@ -1340,7 +1340,7 @@ public class BackEnd {
         FSUtils.duplicateFile(appCoreUpdateFile, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME));
     }
     
-    private void loadDataEntrySettings(DataEntry dataEntry) throws Exception {
+    public void loadDataEntrySettings(DataEntry dataEntry) throws Exception {
         if (dataEntry != null) {
             byte[] settings = null;
             File dataEntryConfigFile = new File(Constants.CONFIG_DIR, dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX);
@@ -1354,7 +1354,7 @@ public class BackEnd {
         }
     }
 
-    private void storeDataEntrySettings(DataEntry dataEntry) throws Exception {
+    public void storeDataEntrySettings(DataEntry dataEntry) throws Exception {
         if (dataEntry != null && dataEntry.getSettings() != null) {
             byte[] defSettings = getAddOnSettings(dataEntry.getType(), PackType.EXTENSION);
             File deConfigFile = new File(Constants.CONFIG_DIR, dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX);

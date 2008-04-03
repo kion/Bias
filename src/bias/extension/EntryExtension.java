@@ -88,9 +88,16 @@ public abstract class EntryExtension extends JComponent implements Extension {
     }
 
     /**
-     * Configures extension.
-     * Should be overridden to return settings for certain extension.
-     * By default returns null (no configuration).
+     * Performs configuration of either specific extension's instance or extension in general.
+     * Should be overridden to return settings for certain extension (or it's instance).
+     * By default returns null (no configuration / no changes made).
+     * Note: this method is called from 2 places:
+     *       1) AddOns-management screen, in case user wants to perform general extension configuration
+     *          (so, settings returned by this method in this case will be treated as default ones 
+     *          and will be applied to each extension instance (entry) that has no it's own settings)
+     *       2) Main tool-bar, in case user wants to perform specific extension instance (entry) configuration
+     *          (so, settings returned by this method in this case will be simply passed to applySettings() method, 
+     *          so appropriate changes can be performed in the business-layer of the entry)
      * 
      * @param settings initial settings
      * @return settings byte array containing serialized configuration settings
@@ -98,6 +105,18 @@ public abstract class EntryExtension extends JComponent implements Extension {
     public byte[] configure(byte[] settings) throws Throwable {
         return null;
     }
+    
+    /**
+     * Applies settings specified.
+     * Should be overridden to apply settings for certain extension instance.
+     * Note: this method is called after each configure() method call, 
+     * in case of specific extension instance configuration 
+     * (thus, if configure() is called for general extension configuration,
+     * this method won't be called).
+     * 
+     * @param settings settings to be applied
+     */
+    public void applySettings(byte[] settings) {}
 
     /**
      * Returns extension's search data.

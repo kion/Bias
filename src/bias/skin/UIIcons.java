@@ -9,31 +9,34 @@ import javax.swing.ImageIcon;
  * @author kion
  */
 public class UIIcons {
+    
+    // TODO [P1] add more icons for different controls that has no icons currently (buttons on add-ons management dialog etc)
 
     /**
      * Default control icons
      */
-    public static final ImageIcon ICON_ABOUT = new ImageIcon(UIIcons.class.getResource("/bias/res/about.png"));
-    public static final ImageIcon ICON_IMPORT = new ImageIcon(UIIcons.class.getResource("/bias/res/import.png"));
-    public static final ImageIcon ICON_EXPORT = new ImageIcon(UIIcons.class.getResource("/bias/res/export.png"));
-    public static final ImageIcon ICON_DELETE = new ImageIcon(UIIcons.class.getResource("/bias/res/delete.png"));
-    public static final ImageIcon ICON_CATEGORY = new ImageIcon(UIIcons.class.getResource("/bias/res/add_category.png"));
-    public static final ImageIcon ICON_ADJUST_CATEGORY = new ImageIcon(UIIcons.class.getResource("/bias/res/adjust_category.png"));
-    public static final ImageIcon ICON_ENTRY = new ImageIcon(UIIcons.class.getResource("/bias/res/add_entry.png"));
-    public static final ImageIcon ICON_ADJUST_ENTRY = new ImageIcon(UIIcons.class.getResource("/bias/res/adjust_entry.png"));
-    public static final ImageIcon ICON_CHANGE_PASSWORD = new ImageIcon(UIIcons.class.getResource("/bias/res/change_password.png"));
-    public static final ImageIcon ICON_SAVE = new ImageIcon(UIIcons.class.getResource("/bias/res/save.png"));
-    public static final ImageIcon ICON_EXIT = new ImageIcon(UIIcons.class.getResource("/bias/res/exit.png"));
-    public static final ImageIcon ICON_BACKTOFIRST = new ImageIcon(UIIcons.class.getResource("/bias/res/back_to_first.png"));
-    public static final ImageIcon ICON_BACK = new ImageIcon(UIIcons.class.getResource("/bias/res/back.png"));
-    public static final ImageIcon ICON_FORWARD = new ImageIcon(UIIcons.class.getResource("/bias/res/forward.png"));
-    public static final ImageIcon ICON_FORWARDTOLAST = new ImageIcon(UIIcons.class.getResource("/bias/res/forward_to_last.png"));
-    public static final ImageIcon ICON_ADDONS = new ImageIcon(UIIcons.class.getResource("/bias/res/addons.png"));
-    public static final ImageIcon ICON_PREFERENCES = new ImageIcon(UIIcons.class.getResource("/bias/res/prefs.png"));
-    public static final ImageIcon ICON_EXTENSIONS = new ImageIcon(UIIcons.class.getResource("/bias/res/extensions.png"));
-    public static final ImageIcon ICON_SKINS = new ImageIcon(UIIcons.class.getResource("/bias/res/skins.png"));
-    public static final ImageIcon ICON_ICONS = new ImageIcon(UIIcons.class.getResource("/bias/res/icons.png"));
-    public static final ImageIcon ICON_ONLINE = new ImageIcon(UIIcons.class.getResource("/bias/res/online.png"));
+    private static final ImageIcon ICON_ABOUT = new ImageIcon(UIIcons.class.getResource("/bias/res/about.png"));
+    private static final ImageIcon ICON_IMPORT = new ImageIcon(UIIcons.class.getResource("/bias/res/import.png"));
+    private static final ImageIcon ICON_EXPORT = new ImageIcon(UIIcons.class.getResource("/bias/res/export.png"));
+    private static final ImageIcon ICON_DELETE = new ImageIcon(UIIcons.class.getResource("/bias/res/delete.png"));
+    private static final ImageIcon ICON_CATEGORY = new ImageIcon(UIIcons.class.getResource("/bias/res/add_category.png"));
+    private static final ImageIcon ICON_ADJUST_CATEGORY = new ImageIcon(UIIcons.class.getResource("/bias/res/adjust_category.png"));
+    private static final ImageIcon ICON_ENTRY = new ImageIcon(UIIcons.class.getResource("/bias/res/add_entry.png"));
+    private static final ImageIcon ICON_ADJUST_ENTRY = new ImageIcon(UIIcons.class.getResource("/bias/res/adjust_entry.png"));
+    private static final ImageIcon ICON_CONFIGURE = new ImageIcon(UIIcons.class.getResource("/bias/res/configure.png"));
+    private static final ImageIcon ICON_CHANGE_PASSWORD = new ImageIcon(UIIcons.class.getResource("/bias/res/change_password.png"));
+    private static final ImageIcon ICON_SAVE = new ImageIcon(UIIcons.class.getResource("/bias/res/save.png"));
+    private static final ImageIcon ICON_EXIT = new ImageIcon(UIIcons.class.getResource("/bias/res/exit.png"));
+    private static final ImageIcon ICON_BACKTOFIRST = new ImageIcon(UIIcons.class.getResource("/bias/res/back_to_first.png"));
+    private static final ImageIcon ICON_BACK = new ImageIcon(UIIcons.class.getResource("/bias/res/back.png"));
+    private static final ImageIcon ICON_FORWARD = new ImageIcon(UIIcons.class.getResource("/bias/res/forward.png"));
+    private static final ImageIcon ICON_FORWARDTOLAST = new ImageIcon(UIIcons.class.getResource("/bias/res/forward_to_last.png"));
+    private static final ImageIcon ICON_ADDONS = new ImageIcon(UIIcons.class.getResource("/bias/res/addons.png"));
+    private static final ImageIcon ICON_PREFERENCES = new ImageIcon(UIIcons.class.getResource("/bias/res/prefs.png"));
+    private static final ImageIcon ICON_EXTENSIONS = new ImageIcon(UIIcons.class.getResource("/bias/res/extensions.png"));
+    private static final ImageIcon ICON_SKINS = new ImageIcon(UIIcons.class.getResource("/bias/res/skins.png"));
+    private static final ImageIcon ICON_ICONS = new ImageIcon(UIIcons.class.getResource("/bias/res/icons.png"));
+    private static final ImageIcon ICON_ONLINE = new ImageIcon(UIIcons.class.getResource("/bias/res/online.png"));
 
     private ImageIcon iconSave;
     private ImageIcon iconImport;
@@ -41,6 +44,7 @@ public class UIIcons {
     private ImageIcon iconAdjustCategory;
     private ImageIcon iconCategory;
     private ImageIcon iconAdjustEntry;
+    private ImageIcon iconConfigure;
     private ImageIcon iconEntry;
     private ImageIcon iconChangePassword;
     private ImageIcon iconDelete;
@@ -68,6 +72,7 @@ public class UIIcons {
         this.iconAdjustCategory = ICON_ADJUST_CATEGORY; 
         this.iconCategory = ICON_CATEGORY;
         this.iconAdjustEntry = ICON_ADJUST_ENTRY; 
+        this.iconConfigure = ICON_CONFIGURE; 
         this.iconEntry = ICON_ENTRY;
         this.iconChangePassword = ICON_CHANGE_PASSWORD;
         this.iconDelete = ICON_DELETE;
@@ -93,6 +98,7 @@ public class UIIcons {
             ImageIcon iconAdjustCategory, 
             ImageIcon iconEntry, 
             ImageIcon iconAdjustEntry, 
+            ImageIcon iconConfigure, 
             ImageIcon iconDelete,
             ImageIcon iconChangePassword,
             ImageIcon iconExit, 
@@ -114,6 +120,7 @@ public class UIIcons {
         this.iconAdjustCategory = iconAdjustCategory;
         this.iconEntry = iconEntry;
         this.iconAdjustEntry = iconAdjustEntry;
+        this.iconConfigure = iconConfigure;
         this.iconDelete = iconDelete;
         this.iconChangePassword = iconChangePassword;
         this.iconExit = iconExit;
@@ -288,6 +295,14 @@ public class UIIcons {
 
     public void setIconAdjustEntry(ImageIcon iconAdjustEntry) {
         this.iconAdjustEntry = iconAdjustEntry;
+    }
+
+    public ImageIcon getIconConfigure() {
+        return iconConfigure;
+    }
+
+    public void setIconConfigure(ImageIcon iconConfigure) {
+        this.iconConfigure = iconConfigure;
     }
 
     public ImageIcon getIconOnline() {

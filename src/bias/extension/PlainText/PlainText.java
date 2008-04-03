@@ -64,6 +64,8 @@ public class PlainText extends EntryExtension {
 
     private boolean dataChanged = false;
     
+    private Properties settings;
+    
     private JScrollPane jScrollPane = null;
     private JTextPane jTextPane = null;
     private JToolBar jToolBar = null;
@@ -80,7 +82,7 @@ public class PlainText extends EntryExtension {
     }
 
     /* (non-Javadoc)
-     * @see bias.extension.Extension#configure(byte[])
+     * @see bias.extension.EntryExtension#configure(byte[])
      */
     @Override
     public byte[] configure(byte[] settings) throws Throwable {
@@ -95,20 +97,42 @@ public class PlainText extends EntryExtension {
             selValue = "" + DEFAULT_FONT_SIZE;
         }
         fsCb.setSelectedItem(selValue);
-        JOptionPane.showMessageDialog(
+        int opt = JOptionPane.showConfirmDialog(
                 FrontEnd.getActiveWindow(), 
                 new Component[]{fsLb, fsCb}, 
                 "Settings for " + this.getClass().getSimpleName() + " extension", 
-                JOptionPane.INFORMATION_MESSAGE);
-        newSettings.setProperty(PROPERTY_FONT_SIZE, (String) fsCb.getSelectedItem());
-        return PropertiesUtils.serializeProperties(newSettings);
+                JOptionPane.OK_CANCEL_OPTION);
+        if (opt == JOptionPane.OK_OPTION) {
+            newSettings.setProperty(PROPERTY_FONT_SIZE, (String) fsCb.getSelectedItem());
+            return PropertiesUtils.serializeProperties(newSettings);
+        }
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#applySettings(byte[])
+     */
+    @Override
+    public void applySettings(byte[] settings) {
+        this.settings = PropertiesUtils.deserializeProperties(settings);
+        String cfs = this.settings.getProperty(PROPERTY_FONT_SIZE);
+        if (cfs != null) {
+            currentFontSize = Integer.valueOf(cfs);
+        } else {
+            currentFontSize = DEFAULT_FONT_SIZE;
+        }
+        setFontSize(new ActionEvent(getJTextPane(), ActionEvent.ACTION_PERFORMED, "Font size"));
+        if (currentFontSize == FONT_SIZES[FONT_SIZES.length-1]) {
+            getJButton1().setEnabled(false);
+        } else if (currentFontSize == FONT_SIZES[0]) {
+            getJButton2().setEnabled(false);
+        }
     }
 
     /* (non-Javadoc)
      * @see bias.extension.Extension#serializeSettings()
      */
     public byte[] serializeSettings() throws Throwable {
-        Properties settings = new Properties();
         settings.setProperty(PROPERTY_FONT_SIZE, "" + currentFontSize);
         JScrollBar sb = getJScrollPane().getVerticalScrollBar();
         if (sb != null && sb.getValue() != 0) {
@@ -166,19 +190,7 @@ public class PlainText extends EntryExtension {
         if (getData() != null) {
             getJTextPane().setText(new String(getData()));
         }
-        Properties settings = PropertiesUtils.deserializeProperties(getSettings());
-        String cfs = settings.getProperty(PROPERTY_FONT_SIZE);
-        if (cfs != null) {
-            currentFontSize = Integer.valueOf(cfs);
-        } else {
-            currentFontSize = DEFAULT_FONT_SIZE;
-        }
-        setFontSize(new ActionEvent(getJTextPane(), ActionEvent.ACTION_PERFORMED, "Font size"));
-        if (currentFontSize == FONT_SIZES[FONT_SIZES.length-1]) {
-            getJButton1().setEnabled(false);
-        } else if (currentFontSize == FONT_SIZES[0]) {
-            getJButton2().setEnabled(false);
-        }
+        applySettings(getSettings());
         JScrollBar sb = getJScrollPane().getVerticalScrollBar();
         if (sb != null) {
             String val = settings.getProperty(PROPERTY_SCROLLBAR_VERT);
