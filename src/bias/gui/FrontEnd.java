@@ -3190,6 +3190,7 @@ public class FrontEnd extends JFrame {
     
     public static void autoImport(final String configName, final boolean force, final boolean verbose) {
         if (instance != null) {
+            instance.resetTransferProgressBar();
             JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
             JLabel processLabel = verbose ? new JLabel("Importing data...") : null;
             JLabel label = verbose ? new JLabel("Import data") : null;
@@ -3313,6 +3314,14 @@ public class FrontEnd extends JFrame {
                 ex.printStackTrace(System.err);
             }
         }
+    }
+    
+    private void resetTransferProgressBar() {
+        instance.getTransferProgressBar().setValue(0);
+        instance.getTransferProgressBar().setString( 
+                FormatUtils.formatByteSize(0) + " / unknown"
+                + ", elapsed time: " + FormatUtils.formatTimeDuration(0) 
+                + ", estimated time left: unknown");
     }
     
     private ExportAction exportAction = new ExportAction();
@@ -3707,6 +3716,7 @@ public class FrontEnd extends JFrame {
     
     public static void autoExport(final String configName, final boolean force, final boolean verbose) {
         if (instance != null) {
+            instance.resetTransferProgressBar();
             JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
             JLabel processLabel = verbose ? new JLabel("Exporting data...") : null;
             JLabel label = verbose ? new JLabel("Export data") : null;
