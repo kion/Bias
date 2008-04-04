@@ -13,10 +13,10 @@ import bias.Constants;
 /**
  * @author kion
  */
-public class AddOnFilesChooser extends JFileChooser {
+public class AddOnFileChooser extends JFileChooser {
     private static final long serialVersionUID = 1L;
 
-    public AddOnFilesChooser() {
+    public AddOnFileChooser() {
         super();
         setMultiSelectionEnabled(true);
         setFileSelectionMode(JFileChooser.FILES_ONLY);

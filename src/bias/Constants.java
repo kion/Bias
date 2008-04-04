@@ -24,7 +24,6 @@ public class Constants {
     public static final File ROOT_DIR = Launcher.getRootDir();
     public static final File ADDONS_DIR = new File(ROOT_DIR, "addons");
     public static final File ADDON_INFO_DIR = new File(ADDONS_DIR, DIRNAME_ADDON_INFO);
-    public static final File LIBS_DIR = new File(ROOT_DIR, "libs");
     public static final File CONFIG_DIR = new File(ROOT_DIR, "conf");
     public static final File DATA_DIR = new File(ROOT_DIR, "data");
     public static final File ATTACHMENTS_DIR = new File(ROOT_DIR, "atts");
@@ -34,9 +33,6 @@ public class Constants {
     static {
         if (!ADDONS_DIR.exists()) {
             ADDONS_DIR.mkdir();
-        }
-        if (!LIBS_DIR.exists()) {
-            LIBS_DIR.mkdir();
         }
         if (!CONFIG_DIR.exists()) {
             CONFIG_DIR.mkdir();

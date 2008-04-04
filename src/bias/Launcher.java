@@ -29,7 +29,6 @@ public class Launcher {
 
     private static File rootDir;
     private static File addonsDir;
-    private static File libsDir;
     private static File configDir;
     
     public static File getRootDir() {
@@ -48,7 +47,6 @@ public class Launcher {
         URL jarFileURL = new URL(jarFilePath);
         rootDir = new File(jarFileURL.toURI()).getParentFile();
         addonsDir = new File(rootDir, "addons");
-        libsDir = new File(rootDir, "libs");
         configDir = new File(rootDir, "conf");
 
         JLabel label = new JLabel("password:");
@@ -85,15 +83,9 @@ public class Launcher {
             byte[] cpData = FSUtils.readFile(uninstallConfigFile);
             if (cpData != null) {
                 for (String cpEntry : new String(cpData).split(PROPERTY_VALUES_SEPARATOR)) {
-                    File dir;
-                    if (cpEntry.endsWith(Constants.LIB_JAR_FILE_SUFFIX)) {
-                        dir = libsDir;
-                    } else {
-                        dir = addonsDir;
-                    }
-                    File uninstallAddOnFile = new File(dir, cpEntry);
+                    File uninstallAddOnFile = new File(addonsDir, cpEntry);
                     FSUtils.delete(uninstallAddOnFile);
-                    File uninstallUpdateAddOnFile = new File(dir, UPDATE_FILE_PREFIX + cpEntry);
+                    File uninstallUpdateAddOnFile = new File(addonsDir, UPDATE_FILE_PREFIX + cpEntry);
                     FSUtils.delete(uninstallUpdateAddOnFile);
                 }
             }
@@ -109,17 +101,14 @@ public class Launcher {
         }
         addClassPathURL(FILE_PROTOCOL_PREFIX + appCoreFile.getAbsolutePath());
         // update addons and libs if updates found and add them to classpath
-        File[] dirs = new File[] { addonsDir, libsDir };
-        for (File dir : dirs) {
-            if (dir.exists() && dir.isDirectory()) {
-                for (File file : dir.listFiles()) {
-                    if (file.getName().startsWith(UPDATE_FILE_PREFIX)) {
-                        File updatedFile = new File(dir, file.getName().substring(UPDATE_FILE_PREFIX.length()));
-                        FSUtils.duplicateFile(file, updatedFile);
-                        FSUtils.delete(file);
-                    }
-                    addClassPathURL(FILE_PROTOCOL_PREFIX + file.getAbsolutePath());
+        if (addonsDir.exists() && addonsDir.isDirectory()) {
+            for (File file : addonsDir.listFiles()) {
+                if (file.getName().startsWith(UPDATE_FILE_PREFIX)) {
+                    File updatedFile = new File(addonsDir, file.getName().substring(UPDATE_FILE_PREFIX.length()));
+                    FSUtils.duplicateFile(file, updatedFile);
+                    FSUtils.delete(file);
                 }
+                addClassPathURL(FILE_PROTOCOL_PREFIX + file.getAbsolutePath());
             }
         }
     }

@@ -573,6 +573,7 @@ public class BackEnd {
         }
         // addons/libs
         if (config.isImportAddOnsAndLibs()) {
+            // TODO [P1] addon-info directory should be imported as well !
             File addOnsDir = new File(importDir, Constants.ADDONS_DIR.getName());
             if (addOnsDir.exists()) {
                 for (File addOnFile : addOnsDir.listFiles()) {
@@ -582,18 +583,6 @@ public class BackEnd {
                     } else if (config.isUpdateInstalledAddOnsAndLibs()) {
                         localAddOnFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + addOnFile.getName());
                         FSUtils.duplicateFile(addOnFile, localAddOnFile);
-                    }
-                }
-            }
-            File libsDir = new File(importDir, Constants.LIBS_DIR.getName());
-            if (libsDir.exists()) {
-                for (File libFile : libsDir.listFiles()) {
-                    File localLibFile = new File(Constants.LIBS_DIR, libFile.getName());
-                    if (!localLibFile.exists()) {
-                        FSUtils.duplicateFile(libFile, localLibFile);
-                    } else if (config.isUpdateInstalledAddOnsAndLibs()) {
-                        localLibFile = new File(Constants.LIBS_DIR, Constants.UPDATE_FILE_PREFIX + libFile.getName());
-                        FSUtils.duplicateFile(libFile, localLibFile);
                     }
                 }
             }
@@ -802,6 +791,7 @@ public class BackEnd {
         }
         // addons/libs
         if (config.isExportAddOnsAndLibs()) {
+            // TODO [P1] addon-info directory should be imported as well !
             File addonsDir = new File(exportDir, Constants.ADDONS_DIR.getName());
             if (!addonsDir.exists()) {
                 addonsDir.mkdir();
@@ -816,24 +806,6 @@ public class BackEnd {
                 } else {
                     if (!updatedFiles.contains(file.getName())) {
                         File exportFile = new File(addonsDir, file.getName());
-                        FSUtils.duplicateFile(file, exportFile);
-                    }
-                }
-            }
-            File libsDir = new File(exportDir, Constants.LIBS_DIR.getName());
-            if (!libsDir.exists()) {
-                libsDir.mkdir();
-            }
-            updatedFiles.clear();
-            for (File file : Constants.LIBS_DIR.listFiles()) {
-                if (file.getName().startsWith(Constants.UPDATE_FILE_PREFIX)) {
-                    File updatedFile = new File(Constants.LIBS_DIR, file.getName().substring(Constants.UPDATE_FILE_PREFIX.length()));
-                    updatedFiles.add(updatedFile.getName());
-                    File exportFile = new File(libsDir, updatedFile.getName());
-                    FSUtils.duplicateFile(file, exportFile);
-                } else {
-                    if (!updatedFiles.contains(file.getName())) {
-                        File exportFile = new File(libsDir, file.getName());
                         FSUtils.duplicateFile(file, exportFile);
                     }
                 }
@@ -1550,20 +1522,17 @@ public class BackEnd {
         Collection<AddOnInfo> addOns = new HashSet<AddOnInfo>();
         FilenameFilter ff = getAddOnInfoFilenameFilter(addOnType);
         for (File addOnInfoFile : Constants.CONFIG_DIR.listFiles(ff)) {
-            File addOnDir = null;
+            File addOnDir = Constants.ADDONS_DIR;
             File addOnFile = null;
             String suffix = null;
             if (addOnInfoFile.getName().endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX)) {
-                addOnDir = Constants.ADDONS_DIR;
                 suffix = Constants.EXTENSION_JAR_FILE_SUFFIX;
             } else if (addOnInfoFile.getName().endsWith(Constants.ADDON_SKIN_INFO_FILE_SUFFIX)) {
-                addOnDir = Constants.ADDONS_DIR;
                 suffix = Constants.SKIN_JAR_FILE_SUFFIX;
             } else if (addOnInfoFile.getName().endsWith(Constants.ADDON_LIB_INFO_FILE_SUFFIX)) {
-                addOnDir = Constants.LIBS_DIR;
                 suffix = Constants.LIB_JAR_FILE_SUFFIX;
             }
-            if (addOnDir != null) {
+            if (suffix != null) {
                 addOnFile = new File(addOnDir, addOnInfoFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR) + suffix);
             }
             if (addOnFile == null || addOnFile.exists()) {
@@ -1715,37 +1684,24 @@ public class BackEnd {
         return addOnInfo;
     }
     
-    public void installLibrary(File addOnFile, AddOnInfo libInfo) throws Throwable {
-        installAddOn(addOnFile, PackType.LIBRARY, libInfo);
-    }
-    
     public AddOnInfo installAddOn(File addOnFile, PackType addOnType) throws Throwable {
-        return installAddOn(addOnFile, addOnType, null);
-    }
-    
-    private AddOnInfo installAddOn(File addOnFile, PackType addOnType, AddOnInfo addOnInfo) throws Throwable {
-        if (addOnInfo == null) {
-            addOnInfo = getAddOnInfoAndDependencies(addOnFile, addOnType, true);
-        }
+        AddOnInfo addOnInfo = getAddOnInfoAndDependencies(addOnFile, addOnType, true);
         boolean update = false;
         String status = Constants.ADDON_STATUS_INSTALLED;
         if (getAddOns(addOnType).contains(addOnInfo) || loadedAddOns.contains(addOnInfo)) {
             update = true;
             status = Constants.ADDON_STATUS_UPDATED;
         }
-        File dir = null;
+        File dir = Constants.ADDONS_DIR;
         String fileSuffix = null;
         switch (addOnType) {
         case EXTENSION:
-            dir = Constants.ADDONS_DIR;
             fileSuffix = Constants.EXTENSION_JAR_FILE_SUFFIX;
             break;
         case SKIN:
-            dir = Constants.ADDONS_DIR;
             fileSuffix = Constants.SKIN_JAR_FILE_SUFFIX;
             break;
         case LIBRARY:
-            dir = Constants.LIBS_DIR;
             fileSuffix = Constants.LIB_JAR_FILE_SUFFIX;
             break;
         }
