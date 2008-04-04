@@ -791,7 +791,7 @@ public class BackEnd {
         }
         // addons/libs
         if (config.isExportAddOnsAndLibs()) {
-            // TODO [P1] addon-info directory should be imported as well !
+            // TODO [P1] addon-info directory should be exported as well !
             File addonsDir = new File(exportDir, Constants.ADDONS_DIR.getName());
             if (!addonsDir.exists()) {
                 addonsDir.mkdir();
