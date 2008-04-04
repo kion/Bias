@@ -4544,7 +4544,6 @@ public class FrontEnd extends JFrame {
                             }
                             if (selected) {
                                 if (confirmedUninstall()) {
-                                    boolean modified = false;
                                     int i = 0;
                                     while  (i < getExtensionsModel().getRowCount()) {
                                         if ((Boolean) getExtensionsModel().getValueAt(i, 0)) {
@@ -4554,14 +4553,10 @@ public class FrontEnd extends JFrame {
                                                                         + extension + Constants.PACKAGE_PATH_SEPARATOR + extension;
                                             BackEnd.getInstance().uninstallAddOn(extFullClassName, PackType.EXTENSION);
                                             getExtensionsModel().removeRow(i);
-                                            modified = true;
                                             i = 0;
                                         } else {
                                             i++;
                                         }
-                                    }
-                                    if (modified) {
-                                        displayStatusBarMessage("add-ons configuration changed");
                                     }
                                 }
                             }
@@ -4660,9 +4655,7 @@ public class FrontEnd extends JFrame {
                             String skin = (String) skinList.getValueAt(idx, 1);
                             if (DEFAULT_SKIN.equals(skin)) {
                                 try {
-                                    if(setActiveSkin(null)) {
-                                        displayStatusBarMessage("add-ons configuration changed");
-                                    }
+                                    setActiveSkin(null);
                                     skinList.repaint();
                                 } catch (Throwable t) {
                                     displayErrorMessage("Failed to (re)activate Skin!", t);
@@ -4678,9 +4671,7 @@ public class FrontEnd extends JFrame {
                                         String fullSkinClassName = 
                                             Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
                                                                     + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
-                                        if(setActiveSkin(fullSkinClassName)) {
-                                            displayStatusBarMessage("add-ons configuration changed");
-                                        }
+                                        setActiveSkin(fullSkinClassName);
                                         skinList.repaint();
                                     } catch (Throwable t) {
                                         displayErrorMessage("Failed to (re)activate Skin!", t);
@@ -4709,7 +4700,6 @@ public class FrontEnd extends JFrame {
                             }
                             if (selected) {
                                 if (confirmedUninstall()) {
-                                    boolean modified = false;
                                     String currentSkin = config.getProperty(Constants.PROPERTY_SKIN);
                                     int i = 0;
                                     while  (i < getSkinModel().getRowCount()) {
@@ -4725,14 +4715,10 @@ public class FrontEnd extends JFrame {
                                                 //... unset it (default one will be used)
                                                 config.remove(Constants.PROPERTY_SKIN);
                                             }
-                                            modified = true;
                                             i = 0;
                                         } else {
                                             i++;
                                         }
-                                    }
-                                    if (modified) {
-                                        displayStatusBarMessage("add-ons configuration changed");
                                     }
                                 }
                             }
@@ -5559,7 +5545,6 @@ public class FrontEnd extends JFrame {
     }
     
     private void installLocalPackages(Map<AddOnInfo, File> proposedAddOnsToInstall, PackType addOnType, DefaultTableModel addOnModel) {
-        boolean modified = false;
         StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
         for (Entry<AddOnInfo, File> addons : proposedAddOnsToInstall.entrySet()) {
             try {
@@ -5574,14 +5559,10 @@ public class FrontEnd extends JFrame {
                     addOnModel.addRow(getAddOnInfoRow(lib ? null : Boolean.FALSE, installedAddOn, status));
                 }
                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Add-On '" + installedAddOn.getName() + Constants.BLANK_STR + installedAddOn.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                modified = true;
             } catch (Throwable t) {
                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install add-on '" + addons.getKey().getName() + Constants.BLANK_STR + addons.getKey().getVersion() + "' from file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                 t.printStackTrace(System.err);
             }
-        }
-        if (modified) {
-            displayStatusBarMessage("add-ons configuration changed");
         }
         sb.append("</ul>" + Constants.HTML_SUFFIX);
         JOptionPane.showMessageDialog(getActiveWindow(), new JScrollPane(new JLabel(sb.toString())));
@@ -5728,7 +5709,6 @@ public class FrontEnd extends JFrame {
                     public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
                         Pack pack = urlPackageMap.get(url);
                         try {
-                            boolean modified = false;
                             if (pack.getType() == PackType.ICON_SET) {
                                 Collection<ImageIcon> icons = BackEnd.getInstance().addIcons(file);
                                 if (!icons.isEmpty()) {
@@ -5761,11 +5741,9 @@ public class FrontEnd extends JFrame {
                                 String status = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY).get(libInfo);
                                 addOrReplaceTableModelAddOnRow(getLibModel(), libInfo, false, 0, status);
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                modified = true;
                             } else if (pack.getType() == PackType.APP_CORE) {
                                 BackEnd.getInstance().installAppCoreUpdate(file);
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "AppCore '" + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                modified = true;
                             } else {
                                 PackType addOnType = PackType.fromValue(pack.getType().value());
                                 AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
@@ -5779,10 +5757,6 @@ public class FrontEnd extends JFrame {
                                     model.addRow(getAddOnInfoRow(Boolean.FALSE, installedAddOn, status));
                                 }
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.value() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                modified = true;
-                            }
-                            if (modified) {
-                                displayStatusBarMessage("add-ons configuration changed");
                             }
                         } catch (Throwable t) {
                             sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install " + pack.getType() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' from downloaded file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
