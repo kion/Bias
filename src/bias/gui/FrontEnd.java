@@ -5157,7 +5157,6 @@ public class FrontEnd extends JFrame {
                 cleanLabel.setVisible(false);
                 detectButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
-                        // TODO [P2] sub-dependencies should be detected recursively (so there's no need to click on button few times)
                         try {
                             Collection<String> deps = new ArrayList<String>();
                             for (AddOnInfo addOnInfo : BackEnd.getInstance().getAddOns()) {
