@@ -1875,6 +1875,7 @@ public class BackEnd {
     
     public Collection<ImageIcon> addIcons(File file) throws Throwable {
         Map<ImageIcon, String> icons = new LinkedHashMap<ImageIcon, String>();
+        Map<String, byte[]> iconBytes = new LinkedHashMap<String, byte[]>();
         if (file != null && file.exists() && !file.isDirectory()) {
             try {
                 if (file.getName().matches(Constants.JAR_FILE_PATTERN)) {
@@ -1888,54 +1889,84 @@ public class BackEnd {
                         String iconSetDescription = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION);
                         aoi = new AddOnInfo(iconSetName, iconSetVersion, iconSetAuthor, iconSetDescription);
                     }
-                    File destination = new File(Constants.ADDON_INFO_DIR, aoi.getName());
-                    if (destination.exists()) {
-                        FSUtils.delete(destination);
+                    File destination = null;
+                    if (aoi != null && !Validator.isNullOrBlank(aoi.getName())) {
+                        destination = new File(Constants.ADDON_INFO_DIR, aoi.getName());
+                        if (destination.exists()) {
+                            FSUtils.delete(destination);
+                        }
                     }
+                    byte[] iconsetRegBytes = null;
                     JarEntry entry;                     
                     while ((entry = in.getNextJarEntry()) != null) {
                         String name = entry.getName();
                         if (!name.equals(Constants.JAR_FILE_ADDON_INFO_DIR_PATH) && name.startsWith(Constants.JAR_FILE_ADDON_INFO_DIR_PATH)) {
-                            if (name.endsWith(Constants.PATH_SEPARATOR)) {
-                                name = name.substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
-                                if (!Validator.isNullOrBlank(name)) {
-                                    File dir = new File(destination, name);
-                                    dir.mkdirs();
+                            if (destination != null) {
+                                if (name.endsWith(Constants.PATH_SEPARATOR)) {
+                                    name = name.substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
+                                    if (!Validator.isNullOrBlank(name)) {
+                                        File dir = new File(destination, name);
+                                        dir.mkdirs();
+                                    }
+                                } else {
+                                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                    byte[] buffer = new byte[1024];
+                                    int br;
+                                    while ((br = in.read(buffer)) > 0) {
+                                        baos.write(buffer, 0, br);
+                                    }
+                                    baos.close();
+                                    name = entry.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
+                                    name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
+                                    File f = new File(destination, name);
+                                    File dir = f.getParentFile();
+                                    if (!dir.exists()) {
+                                        dir.mkdirs();
+                                    }
+                                    f.createNewFile();
+                                    FSUtils.writeFile(f, baos.toByteArray());
                                 }
-                            } else {
-                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            }
+                        } else {
+                            if (!name.endsWith(Constants.PATH_SEPARATOR)) {
+                                ByteArrayOutputStream out = new ByteArrayOutputStream();
                                 byte[] buffer = new byte[1024];
                                 int br;
                                 while ((br = in.read(buffer)) > 0) {
-                                    baos.write(buffer, 0, br);
+                                    out.write(buffer, 0, br);
                                 }
-                                baos.close();
-                                name = entry.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
-                                name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
-                                File f = new File(destination, name);
-                                File dir = f.getParentFile();
-                                if (!dir.exists()) {
-                                    dir.mkdirs();
+                                out.close();
+                                byte[] bytes = out.toByteArray();
+                                if (name.equals(Constants.JAR_FILE_ICONSET_REG_PATH)) {
+                                    iconsetRegBytes = bytes;
+                                } else {
+                                    iconBytes.put(entry.getName(), bytes);
                                 }
-                                f.createNewFile();
-                                FSUtils.writeFile(f, baos.toByteArray());
                             }
-                        } else {
-                            ByteArrayOutputStream out = new ByteArrayOutputStream();
-                            byte[] buffer = new byte[1024];
-                            int br;
-                            while ((br = in.read(buffer)) > 0) {
-                                out.write(buffer, 0, br);
+                        }
+                    }
+                    in.close();
+                    if (iconsetRegBytes != null) {
+                        String[] iconsList = new String(iconsetRegBytes).split(Constants.NEW_LINE);
+                        for (String iconId : iconsList) {
+                            if (!Validator.isNullOrBlank(iconId)) {
+                                String iconName = iconId + Constants.ICON_FILE_SUFFIX;
+                                if (iconBytes.keySet().contains(iconName)) {
+                                    ImageIcon icon = addIcon(iconName, new ByteArrayInputStream(iconBytes.get(iconName)));
+                                    if (icon != null) {
+                                        icons.put(icon, icon.getDescription());
+                                    }
+                                }
                             }
-                            out.close();
-                            byte[] bytes = out.toByteArray();
-                            ImageIcon icon = addIcon(entry.getName(), new ByteArrayInputStream(bytes));
+                        }
+                    } else {
+                        for (Entry<String, byte[]> e : iconBytes.entrySet()) {
+                            ImageIcon icon = addIcon(e.getKey(), new ByteArrayInputStream(e.getValue()));
                             if (icon != null) {
                                 icons.put(icon, icon.getDescription());
                             }
                         }
                     }
-                    in.close();
                     if (aoi != null) {
                         storeIconSet(aoi, icons.values());
                     }
@@ -1971,6 +2002,7 @@ public class BackEnd {
     }
     
     private ImageIcon addIcon(String idStr, InputStream is) throws IOException {
+        idStr = idStr.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
         ImageIcon icon = null;
         BufferedImage image = ImageIO.read(is);
         if (image != null) {
@@ -1981,7 +2013,7 @@ public class BackEnd {
                     // try to get id from entry name
                     id = UUID.fromString(idStr);
                 } catch (Exception ex) {
-                    // ignore, if id can't be generated from entry name, it will be autogenerated
+                    // ignore, if id can't be generated from entry name, it will be auto-generated
                 }
                 if (id == null) {
                     id = UUID.randomUUID();
@@ -1992,7 +2024,7 @@ public class BackEnd {
                 byte[] iconBytes = baos.toByteArray();
                 File iconFile = new File(Constants.ICONS_DIR, id.toString() + Constants.ICON_FILE_SUFFIX);
                 FSUtils.writeFile(iconFile, iconBytes);
-                this.icons.put(id, iconBytes);
+                if (this.icons.put(id, iconBytes) != null) return null;
             }
         }
         return icon;

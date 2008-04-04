@@ -106,6 +106,7 @@ public class Constants {
     public static final String JAR_FILE_PATTERN = "(?i).+\\.jar$";
     public static final String JAR_FILE_PATTERN_DESCRIPTION = "Java Archive (JAR) file";
     public static final String JAR_FILE_ADDON_INFO_DIR_PATH = "META-INF/ADDON-INFO/";
+    public static final String JAR_FILE_ICONSET_REG_PATH = "META-INF/iconset.reg";
 
     public static final String ZIP_FILE_PATTERN = "(?i).+\\.zip$";
     public static final String ZIP_FILE_PATTERN_DESCRIPTION = "ZIP archive file";
