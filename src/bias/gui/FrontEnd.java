@@ -2100,6 +2100,7 @@ public class FrontEnd extends JFrame {
     }
     
     private static void displayStatusBarMessage(final String message, final boolean isError) {
+        // TODO [P2] this should be synchronized by status bar only (not whole application)
         syncExecute(new Runnable(){
             public void run() {
                 if (instance != null) {
@@ -2107,9 +2108,19 @@ public class FrontEnd extends JFrame {
                     String iaText = Constants.BLANK_STR + timestamp;
                     for (int i = 0; i < iaText.length(); i++) {
                         instance.getJLabelStatusBarMsg().setText(iaText.substring(0, i));
+                        try {
+                            Thread.sleep(25);
+                        } catch (InterruptedException e) {
+                            // ignore
+                        }
                     }
                     String msg = Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_OK) + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX;
                     instance.getJLabelStatusBarMsg().setText(msg);
+                    try {
+                        Thread.sleep(250);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
                     ((DefaultListModel) instance.getStatusBarMessagesList().getModel()).addElement(msg);
                     if (instance.getJPanel2().isVisible()) {
                         instance.autoscrollList(instance.getStatusBarMessagesList());
@@ -2118,7 +2129,6 @@ public class FrontEnd extends JFrame {
             }
         });
     }
-    
     /**
      * This method initializes jContentPane
      * 
