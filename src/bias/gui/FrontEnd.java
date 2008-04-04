@@ -4921,6 +4921,7 @@ public class FrontEnd extends JFrame {
                     public void tableChanged(TableModelEvent e) {
                         if (e.getColumn() == 0) {
                             try {
+                                // FIXME [P1] dependencies resolution functionality is broken !!!
                                 Pack pack = getAvailableOnlinePackages().get((String) getOnlineModel().getValueAt(e.getFirstRow(), 2));
                                 if (pack.getDependency() != null && !pack.getDependency().isEmpty()) {
                                     for (Dependency dep : pack.getDependency()) {
