@@ -4917,42 +4917,47 @@ public class FrontEnd extends JFrame {
                 onlineSorter.setSortsOnUpdates(true);
                 onlineList.setRowSorter(onlineSorter);
                 onlineList.getColumnModel().getColumn(0).setPreferredWidth(30);
+                final Map<String, Boolean> states = new HashMap<String, Boolean>();
                 TableModelListener dependencyResolver = new TableModelListener(){
                     public void tableChanged(TableModelEvent e) {
                         if (e.getColumn() == 0) {
                             try {
-                                // FIXME [P1] dependencies resolution functionality is broken !!!
-                                Pack pack = getAvailableOnlinePackages().get((String) getOnlineModel().getValueAt(e.getFirstRow(), 2));
-                                if (pack.getDependency() != null && !pack.getDependency().isEmpty()) {
-                                    for (Dependency dep : pack.getDependency()) {
-                                        if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
-                                            int idx = findDataRowIndex(getOnlineModel(), 2, dep.getName());
-                                            if (idx == -1) {
-                                                getOnlineModel().setValueAt(Boolean.FALSE, e.getFirstRow(), e.getColumn());
-                                                throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
-                                                                        dep.getType().value() + " '" + dep.getName() + "' " + 
-                                                                        (dep.getVersion() != null ? 
-                                                                        " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
-                                                                        " is not available!");
-                                            } else {
-                                                synchronized (FrontEnd.this) {
-                                                    Integer counter = getDepCounters().get(dep.getName());
-                                                    if (counter == null) {
-                                                        counter = 0;
-                                                    }
-                                                    if ((Boolean) getOnlineModel().getValueAt(e.getFirstRow(), e.getColumn())) {
-                                                        counter++;
-                                                        if (counter == 1) {
-                                                            getOnlineModel().setValueAt(Boolean.TRUE, idx, 0);
+                                Boolean lastState = states.get(getOnlineModel().getValueAt(e.getFirstRow(), 2));
+                                if (lastState == null) lastState = false;
+                                if ((Boolean) getOnlineModel().getValueAt(e.getFirstRow(), 0) != lastState) {
+                                    Pack pack = getAvailableOnlinePackages().get((String) getOnlineModel().getValueAt(e.getFirstRow(), 2));
+                                    if (pack.getDependency() != null && !pack.getDependency().isEmpty()) {
+                                        for (Dependency dep : pack.getDependency()) {
+                                            if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
+                                                int idx = findDataRowIndex(getOnlineModel(), 2, dep.getName());
+                                                if (idx == -1) {
+                                                    getOnlineModel().setValueAt(Boolean.FALSE, e.getFirstRow(), 0);
+                                                    throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
+                                                                            dep.getType().value() + " '" + dep.getName() + "' " + 
+                                                                            (dep.getVersion() != null ? 
+                                                                            " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
+                                                                            " is not available!");
+                                                } else {
+                                                    synchronized (FrontEnd.this) {
+                                                        Integer counter = getDepCounters().get(dep.getName());
+                                                        if (counter == null) {
+                                                            counter = 0;
                                                         }
-                                                    } else {
-                                                        counter--;
-                                                        if (counter == 0) {
-                                                            getOnlineModel().setValueAt(Boolean.FALSE, idx, 0);
+                                                        if ((Boolean) getOnlineModel().getValueAt(e.getFirstRow(), 0)) {
+                                                            counter++;
+                                                            if (counter == 1) {
+                                                                getOnlineModel().setValueAt(Boolean.TRUE, idx, 0);
+                                                            }
+                                                        } else {
+                                                            counter--;
+                                                            if (counter == 0) {
+                                                                getOnlineModel().setValueAt(Boolean.FALSE, idx, 0);
+                                                            }
                                                         }
+                                                        getDepCounters().put(dep.getName(), counter);
                                                     }
-                                                    getDepCounters().put(dep.getName(), counter);
                                                 }
+                                                states.put((String) getOnlineModel().getValueAt(e.getFirstRow(), 2), (Boolean) getOnlineModel().getValueAt(e.getFirstRow(), 0));
                                             }
                                         }
                                     }
@@ -5152,6 +5157,7 @@ public class FrontEnd extends JFrame {
                 cleanLabel.setVisible(false);
                 detectButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
+                        // TODO [P2] sub-dependencies should be detected recursively (so there's no need to click on button few times)
                         try {
                             Collection<String> deps = new ArrayList<String>();
                             for (AddOnInfo addOnInfo : BackEnd.getInstance().getAddOns()) {
@@ -5822,76 +5828,82 @@ public class FrontEnd extends JFrame {
         final JTable addOnList = new JTable(addOnModel);
         
         onlineListRefreshed = false;
+        final Map<String, Boolean> states = new HashMap<String, Boolean>();
         TableModelListener dependencyResolver = new TableModelListener(){
             private DefaultTableModel model;
             private int idx;
             public void tableChanged(final TableModelEvent e) {
                 if (e.getColumn() == 0) {
-                    final AddOnInfo pack = proposedAddOnsToInstall.get(addOnModel.getValueAt(e.getFirstRow(), 1));
-                    if (pack.getDependencies() != null && !pack.getDependencies().isEmpty()) {
-                        try {
-                            for (final Dependency dep : pack.getDependencies()) {
-                                if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
-                                    model = addOnModel;
-                                    // search for dependency in list of addons to be installed...
-                                    idx = findDataRowIndex(model, 1, dep.getName());
-                                    
-                                    Runnable task = new Runnable(){
-                                        public void run() {
-                                            try {
-                                                if (idx == -1) {
-                                                    model = getOnlineModel();
-                                                    idx = findDataRowIndex(model, 2, dep.getName());
-                                                }
-                                                if (idx == -1) {
-                                                    addOnModel.setValueAt(Boolean.FALSE, e.getFirstRow(), e.getColumn());
-                                                    throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
-                                                                            dep.getType().value() + " '" + dep.getName() + "' " + 
-                                                                            (dep.getVersion() != null ? 
-                                                                            " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
-                                                                            " is not available!");
-                                                } else {
-                                                    synchronized (FrontEnd.this) {
-                                                        Integer counter = getDepCounters().get(dep.getName());
-                                                        if (counter == null) {
-                                                            counter = 0;
-                                                        }
-                                                        if ((Boolean) addOnModel.getValueAt(e.getFirstRow(), e.getColumn())) {
-                                                            counter++;
-                                                            if (counter == 1) {
-                                                                model.setValueAt(Boolean.TRUE, idx, 0);
-                                                            }
-                                                        } else {
-                                                            counter--;
-                                                            if (counter == 0) {
-                                                                model.setValueAt(Boolean.FALSE, idx, 0);
-                                                            }
-                                                        }
-                                                        getDepCounters().put(dep.getName(), counter);
+                    try {
+                        Boolean lastState = states.get(addOnModel.getValueAt(e.getFirstRow(), 1));
+                        if (lastState == null) lastState = false;
+                        if ((Boolean) addOnModel.getValueAt(e.getFirstRow(), 0) != lastState) {
+                            final AddOnInfo pack = proposedAddOnsToInstall.get(addOnModel.getValueAt(e.getFirstRow(), 1));
+                            if (pack.getDependencies() != null && !pack.getDependencies().isEmpty()) {
+                                for (final Dependency dep : pack.getDependencies()) {
+                                    if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
+                                        model = addOnModel;
+                                        // search for dependency in list of addons to be installed...
+                                        idx = findDataRowIndex(model, 1, dep.getName());
+                                        
+                                        Runnable task = new Runnable(){
+                                            public void run() {
+                                                try {
+                                                    if (idx == -1) {
+                                                        model = getOnlineModel();
+                                                        idx = findDataRowIndex(model, 2, dep.getName());
                                                     }
+                                                    if (idx == -1) {
+                                                        addOnModel.setValueAt(Boolean.FALSE, e.getFirstRow(), 0);
+                                                        throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
+                                                                                dep.getType().value() + " '" + dep.getName() + "' " + 
+                                                                                (dep.getVersion() != null ? 
+                                                                                " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
+                                                                                " is not available!");
+                                                    } else {
+                                                        synchronized (FrontEnd.this) {
+                                                            Integer counter = getDepCounters().get(dep.getName());
+                                                            if (counter == null) {
+                                                                counter = 0;
+                                                            }
+                                                            if ((Boolean) addOnModel.getValueAt(e.getFirstRow(), 0)) {
+                                                                counter++;
+                                                                if (counter == 1) {
+                                                                    model.setValueAt(Boolean.TRUE, idx, 0);
+                                                                }
+                                                            } else {
+                                                                counter--;
+                                                                if (counter == 0) {
+                                                                    model.setValueAt(Boolean.FALSE, idx, 0);
+                                                                }
+                                                            }
+                                                            getDepCounters().put(dep.getName(), counter);
+                                                        }
+                                                    }
+                                                    states.put((String) addOnModel.getValueAt(e.getFirstRow(), 1), (Boolean) addOnModel.getValueAt(e.getFirstRow(), 0));
+                                                } catch (Throwable t) {
+                                                    displayErrorMessage("Failed to handle/resolve dependencies! " + CommonUtils.getFailureDetails(t), t);
                                                 }
-                                            } catch (Throwable t) {
-                                                displayErrorMessage("Failed to handle/resolve dependencies! " + CommonUtils.getFailureDetails(t), t);
                                             }
-                                        }
-                                    };
-                                    
-                                    if (idx == -1) {
-                                        // ... if not found - search in online list 
-                                        // (refresh online packages list, if needed, first, then try to resolve dependencies)
-                                        if (!onlineListRefreshed) {
-                                            refreshOnlinePackagesList(task, getOnlineShowAllPackagesCheckBox().isSelected());
+                                        };
+                                        
+                                        if (idx == -1) {
+                                            // ... if not found - search in online list 
+                                            // (refresh online packages list, if needed, first, then try to resolve dependencies)
+                                            if (!onlineListRefreshed) {
+                                                refreshOnlinePackagesList(task, getOnlineShowAllPackagesCheckBox().isSelected());
+                                            } else {
+                                                task.run();
+                                            }
                                         } else {
                                             task.run();
                                         }
-                                    } else {
-                                        task.run();
                                     }
                                 }
                             }
-                        } catch (Throwable t) {
-                            displayErrorMessage("Failed to handle/resolve dependencies! " + CommonUtils.getFailureDetails(t), t);
                         }
+                    } catch (Throwable t) {
+                        displayErrorMessage("Failed to handle/resolve dependencies! " + CommonUtils.getFailureDetails(t), t);
                     }
                 }
             }
