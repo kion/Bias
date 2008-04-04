@@ -3,14 +3,13 @@
  */
 package bias.extension;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.Properties;
 
 import bias.Constants;
 import bias.Constants.TRANSFER_TYPE;
 import bias.core.BackEnd;
 import bias.core.TransferData;
+import bias.utils.PropertiesUtils;
 
 
 /**
@@ -46,6 +45,21 @@ public abstract class TransferExtension implements Extension {
     public void checkConnection(byte[] options) throws Throwable {};
 
     /**
+     * Checks if checksum for the import defined by specified options and meta-data has changed since last import.
+     * This method is useful when import is to be performed - it allows to check if data to be imported
+     * have changed since last time it had been imported (and if not, import can be simply discarded to avoid excessiveness).
+     *  
+     * @return boolean true if checksum has changed, false - otherwise
+     */
+    public boolean importCheckSumChanged(TransferOptions options, byte[] metaDataBytes) throws Throwable {
+        String checkSum = null;
+        if (metaDataBytes != null && metaDataBytes.length != 0) {
+            checkSum = PropertiesUtils.deserializeProperties(metaDataBytes).getProperty(Constants.META_DATA_CHECKSUM);
+        }
+        return BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, this.getClass(), options.getFileLocation(), checkSum);
+    }
+
+    /**
      * Imports data using provided import options.
      * This template method imports metadata first, then imports actual data
      * 
@@ -57,10 +71,7 @@ public abstract class TransferExtension implements Extension {
         Properties meta = null;
         byte[] metaBytes = readData(options.getOptions(), true);
         if (metaBytes != null && metaBytes.length != 0) {
-            ByteArrayInputStream bais = new ByteArrayInputStream(metaBytes);
-            meta = new Properties();
-            meta.load(bais);
-            bais.close();
+            meta = PropertiesUtils.deserializeProperties(metaBytes);
             checkSum = meta.getProperty(Constants.META_DATA_CHECKSUM);
         }
         if (force || BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, this.getClass(), options.getFileLocation(), checkSum)) {
@@ -82,6 +93,21 @@ public abstract class TransferExtension implements Extension {
     public abstract byte[] readData(byte[] options, boolean transferMetaData) throws Throwable;
 
     /**
+     * Checks if checksum for the export defined by specified options and transfer-data has changed since last export.
+     * This method is useful when export is to be performed - it allows to check if data to be exported
+     * have changed since last time it had been exported (and if not, export can be simply discarded to avoid excessiveness).
+     *  
+     * @return boolean true if checksum has changed, false - otherwise
+     */
+    public boolean exportCheckSumChanged(TransferOptions options, TransferData td) throws Throwable {
+        String checkSum = null;
+        if (td.getMetaData() != null) {
+            checkSum = td.getMetaData().getProperty(Constants.META_DATA_CHECKSUM);
+        }
+        return BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.EXPORT, this.getClass(), options.getFileLocation(), checkSum);
+    }
+
+    /**
      * Exports given data using provided export options.
      * This template method exports metadata first, then exports actual data
      * 
@@ -94,13 +120,7 @@ public abstract class TransferExtension implements Extension {
             checkSum = meta.getProperty(Constants.META_DATA_CHECKSUM);
         }
         if (force || BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.EXPORT, this.getClass(), options.getFileLocation(), checkSum)) {
-            ByteArrayOutputStream baos = null;
-            if (meta != null) {
-                baos = new ByteArrayOutputStream();
-                meta.store(baos, null);
-                baos.close();
-            }
-            if (baos != null) writeData(baos.toByteArray(), options.getOptions(), true);
+            if (meta != null) writeData(PropertiesUtils.serializeProperties(meta), options.getOptions(), true);
             writeData(td.getData(), options.getOptions(), false);
             BackEnd.getInstance().storeTransferFileLocationCheckSum(TRANSFER_TYPE.EXPORT, this.getClass(), options.getFileLocation(), checkSum);
             return true;
