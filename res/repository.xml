@@ -58,7 +58,7 @@
 	<pack type="Library" name="JCIFS" version="1.2.18" author="The JCIFS Project" description="Open Source client library that implements the CIFS/SMB networking protocol in 100% Java" file-size="100000" />
 	<pack type="Library" name="Looks" version="2.1.4" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
 	<pack type="Library" name="PgsLAF" version="1.0.1" author="pago" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
-	<pack type="Library" name="Substance" version="4.2.02" author="Kirill Grouchnikov and contributors" description="Substance Look-And-Feel Provider Library" file-size="100000" />
+	<pack type="Library" name="Substance" version="4.2.02" author="Kirill Grouchnikov and contributors" description="Substance Look-&amp;-Feel Provider Library" file-size="100000" />
 	<pack type="Library" name="LipstikLF" version="1.0" author="Michal Buczko" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
 	<pack type="Library" name="Squareness" version="2.3.0" author="Robert F. Beeger" description="Minimalistic and flat looking Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
 	<pack type="Library" name="TinyLAF" version="1.3.04" author="Hans Bickel" description="Look-&amp;-Feel for Java/Swing applications" file-size="100000" />
