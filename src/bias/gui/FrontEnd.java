@@ -3107,11 +3107,6 @@ public class FrontEnd extends JFrame {
                                                     instance.getStatusBarProgressBar().setMaximum(size);
                                                     ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
                                                         public void onProgress(long transferredBytesNum, long elapsedTime) {
-                                                            try { // FIXME
-                                                                Thread.sleep(20);
-                                                            } catch (InterruptedException e) {
-                                                                e.printStackTrace();
-                                                            }
                                                             instance.getStatusBarProgressBar().setValue((int) transferredBytesNum);
                                                             double estimationCoef = ((double) size) / ((double) transferredBytesNum);
                                                             long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
@@ -3361,11 +3356,6 @@ public class FrontEnd extends JFrame {
                             instance.getStatusBarProgressBar().setMaximum(size);
                             ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
                                 public void onProgress(long transferredBytesNum, long elapsedTime) {
-                                    try { // FIXME
-                                        Thread.sleep(20);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
                                     instance.getStatusBarProgressBar().setValue((int) transferredBytesNum);
                                     double estimationCoef = ((double) size) / ((double) transferredBytesNum);
                                     long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
@@ -3743,11 +3733,6 @@ public class FrontEnd extends JFrame {
                                                     instance.getStatusBarProgressBar().setMaximum(td.getData().length);
                                                     ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
                                                         public void onProgress(long transferredBytesNum, long elapsedTime) {
-                                                            try { // FIXME
-                                                                Thread.sleep(20);
-                                                            } catch (InterruptedException e) {
-                                                                e.printStackTrace();
-                                                            }
                                                             instance.getStatusBarProgressBar().setValue((int) transferredBytesNum);
                                                             double estimationCoef = ((double) td.getData().length) / ((double) transferredBytesNum);
                                                             long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
@@ -3876,11 +3861,6 @@ public class FrontEnd extends JFrame {
                         instance.getStatusBarProgressBar().setMaximum(td.getData().length);
                         ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
                             public void onProgress(long transferredBytesNum, long elapsedTime) {
-                                try { // FIXME
-                                    Thread.sleep(20);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
                                 instance.getStatusBarProgressBar().setValue((int) transferredBytesNum);
                                 double estimationCoef = ((double) td.getData().length) / ((double) transferredBytesNum);
                                 long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
