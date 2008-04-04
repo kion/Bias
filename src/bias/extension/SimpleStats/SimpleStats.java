@@ -278,6 +278,7 @@ public class SimpleStats extends ToolExtension {
      * @see bias.extension.Extension#serializeSettings()
      */
     public byte[] serializeSettings() throws Throwable {
+        if (properties == null) properties = new Properties();
         if (showUpTime) {
             properties.setProperty(PROPERTY_SHOW_UPTIME, "" + true);
         } else {
