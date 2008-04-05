@@ -2143,8 +2143,10 @@ public class FrontEnd extends JFrame {
         }
         progressLabel.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_INFO + "&nbsp;" + message + "&nbsp;" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
         getStatusBarProgressBar().setMinimum(0);
+        getStatusBarProgressBar().setValue(0);
         getStatusBarProgressBar().setString(Constants.EMPTY_STR);
         progressBarPanel.setVisible(true);
+        shortPause();
     }
     
     private void hideStatusBarProgressBar() {

@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
@@ -823,25 +824,47 @@ public class BackEnd {
         }
         // addons/libs
         if (config.isExportAddOnsAndLibs()) {
-            // TODO [P1] addon-info for ext/libs only should be exported into ADDON-INFO dir (iconset-info should be skipped)
+            // 1) export addons/libs
             File addonsDir = new File(exportDir, Constants.ADDONS_DIR.getName());
             if (!addonsDir.exists()) {
                 addonsDir.mkdir();
             }
+            Collection<String> addOnNames = new ArrayList<String>();
             Collection<String> updatedFiles = new ArrayList<String>();
-            for (File file : Constants.ADDONS_DIR.listFiles()) {
+            for (File file : Constants.ADDONS_DIR.listFiles(new FileFilter(){
+                public boolean accept(File pathname) {
+                    return pathname.isFile();
+                }
+            })) {
                 if (file.getName().startsWith(Constants.UPDATE_FILE_PREFIX)) {
                     File updatedFile = new File(Constants.ADDONS_DIR, file.getName().substring(Constants.UPDATE_FILE_PREFIX.length()));
                     updatedFiles.add(updatedFile.getName());
                     File exportFile = new File(addonsDir, updatedFile.getName());
                     FSUtils.duplicateFile(file, exportFile);
+                    addOnNames.add(exportFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
                 } else {
                     if (!updatedFiles.contains(file.getName())) {
                         File exportFile = new File(addonsDir, file.getName());
                         FSUtils.duplicateFile(file, exportFile);
+                        addOnNames.add(exportFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
                     }
                 }
             }
+            // 2) export addon-info directories related to exported addons/libs
+            File addOnsInfoDir = new File(addonsDir, Constants.ADDON_INFO_DIR.getName());
+            if (!addOnsInfoDir.exists()) {
+                addOnsInfoDir.mkdir();
+            }
+            for (File file : Constants.ADDON_INFO_DIR.listFiles()) {
+                if (file.isDirectory() && addOnNames.contains(file.getName())) {
+                    File exportAddOnInfoDir = new File(addOnsInfoDir, file.getName());;
+                    FSUtils.duplicateFile(file, exportAddOnInfoDir);
+                }
+            }
+            if (addOnsInfoDir.list().length == 0) {
+                addOnsInfoDir.delete();
+            }
+            // 3) export addon-info files
             for (File localAddOnInfo : Constants.CONFIG_DIR.listFiles(FILE_FILTER_EXT_SKIN_LIB_INFO)) {
                 FSUtils.duplicateFile(localAddOnInfo, new File(configDir, localAddOnInfo.getName()));
             }
