@@ -2133,7 +2133,7 @@ public class FrontEnd extends JFrame {
     
     private void displayStatusBarProgressBar(final String message) {
         // TODO [P2] this should be synchronized by status bar only (not whole application)
-        hideStatusBarProgressBar();
+        hideStatusBarProgressBar(false);
         if (progressBarPanel == null) {
             progressBarPanel = new JPanel(new BorderLayout());
             progressLabel = new JLabel();
@@ -2148,8 +2148,27 @@ public class FrontEnd extends JFrame {
     }
     
     private void hideStatusBarProgressBar() {
+        hideStatusBarProgressBar(true);
+    }
+    
+    private void hideStatusBarProgressBar(boolean pause) {
         if (progressBarPanel != null) {
+            if (pause) shortPause();
             progressBarPanel.setVisible(false);
+        }
+    }
+    
+    /**
+     * This method is helpful if there's a need to ensure some GUI related action
+     * was visible at least some noticeable amount of time,
+     * because some GUI related actions happen too quickly to be noticed by user.
+     */
+    private void shortPause() {
+        try {
+            // short pause 
+            Thread.sleep(1000); 
+        } catch (InterruptedException e) {
+            // ignore, there just won't be any pause (not critical at all) 
         }
     }
     
