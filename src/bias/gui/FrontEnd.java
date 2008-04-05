@@ -2132,7 +2132,6 @@ public class FrontEnd extends JFrame {
     private JLabel progressLabel;
     
     private void displayStatusBarProgressBar(final String message) {
-        // TODO [P2] this should be synchronized by status bar only (not whole application)
         hideStatusBarProgressBar(false);
         if (progressBarPanel == null) {
             progressBarPanel = new JPanel(new BorderLayout());
