@@ -3240,6 +3240,14 @@ public class FrontEnd extends JFrame {
                                                             Preferences.getInstance().init();
                                                             applyPreferences();
                                                         }
+                                                        if (importAddOnsAndLibsCB.isSelected()) {
+                                                            listExtensions();
+                                                            listSkins();
+                                                            listLibs();
+                                                        }
+                                                        if (importIconsCB.isSelected()) {
+                                                            listIcons();
+                                                        }
                                                         configsCB.setEditable(true);
                                                         label.setText("<html><font color=green>Data import - Completed</font></html>");
                                                         processModel.addElement("Data have been successfully imported.");
@@ -3383,6 +3391,14 @@ public class FrontEnd extends JFrame {
                     if (importConfig.isImportPrefs()) {
                         Preferences.getInstance().init();
                         instance.applyPreferences();
+                    }
+                    if (importConfig.isImportAddOnsAndLibs()) {
+                        instance.listExtensions();
+                        instance.listSkins();
+                        instance.listLibs();
+                    }
+                    if (importConfig.isImportIcons()) {
+                        instance.listIcons();
                     }
                     if (verbose) {
                         label.setText("<html><font color=green>Data import - Completed</font></html>");
@@ -4455,6 +4471,80 @@ public class FrontEnd extends JFrame {
         return depCounters;
     }
     
+    private void listExtensions() throws Throwable {
+        // ensure entry extensions map has been initialized even if no data-entries have been added so far...
+        ExtensionFactory.getAnnotatedEntryExtensionClasses();
+        // ... now extensions can be listed
+        Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
+        for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
+            if (statuses != null && statuses.get(extension) != null) {
+                addOrReplaceTableModelAddOnRow(getExtensionsModel(), extension, true, 1, statuses.get(extension));
+            } else {
+                addOrReplaceTableModelAddOnRow(getExtensionsModel(), extension, true, 1, ExtensionFactory.getExtensionStatus(extension.getName()));
+            }
+        }
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void listSkins() throws Throwable {
+        if (getSkinModel().getRowCount() == 0) {
+            getSkinModel().insertRow(0, new Object[]{Boolean.FALSE, DEFAULT_SKIN, Constants.EMPTY_STR, Constants.EMPTY_STR, "Default Skin"});
+        }
+        Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.SKIN);
+        for (AddOnInfo skin : BackEnd.getInstance().getAddOns(PackType.SKIN)) {
+            String status;
+            try {
+                if (statuses != null && statuses.get(skin) != null) {
+                    status = statuses.get(skin);
+                } else {
+                    String fullSkinName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin.getName() 
+                                            + Constants.PACKAGE_PATH_SEPARATOR + skin.getName();
+                    // extension class load test
+                    Class<Skin> skinClass = (Class<Skin>) Class.forName(fullSkinName);
+                    // extension instantiation test
+                    skinClass.newInstance();
+                    status = Constants.ADDON_STATUS_LOADED;
+                }
+            } catch (Throwable t) {
+                // extension is broken
+                System.err.println("Skin [ " + skin.getName() + " ] failed to initialize!");
+                t.printStackTrace(System.err);
+                status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(skin) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
+            }
+            addOrReplaceTableModelAddOnRow(getSkinModel(), skin, true, 1, status);
+        }
+    }
+    
+    private void listIcons() throws Throwable {
+        for (AddOnInfo iconSetInfo : BackEnd.getInstance().getIconSets()) {
+            addOrReplaceTableModelAddOnRow(getIconSetModel(), iconSetInfo, true, 1, null);
+        }
+        for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+            if (icons.keySet().contains(icon.getDescription())) {
+                icons.remove(icon.getDescription());
+            }
+        }
+        getIconListModel().removeAllElements();
+        for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
+            icons.put(icon.getDescription(), icon);
+            getIconListModel().addElement(icon);
+        }
+    }
+    
+    private void listLibs() throws Throwable {
+        Collection<AddOnInfo> addOnInfos = BackEnd.getInstance().getAddOns(PackType.LIBRARY);
+        for (AddOnInfo addOnInfo : addOnInfos) {
+            String status;
+            Map<AddOnInfo, String> libStatuses = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY);
+            if (libStatuses != null) {
+                status = libStatuses.get(addOnInfo);
+            } else {
+                status = Constants.ADDON_STATUS_LOADED;
+            }
+            addOrReplaceTableModelAddOnRow(getLibModel(), addOnInfo, false, 0, status);
+        }
+    }
+    
     @SuppressWarnings("unchecked")
     private void initAddOnsManagementDialog() {
         if (addOnsManagementDialog == null) {
@@ -4466,12 +4556,7 @@ public class FrontEnd extends JFrame {
                 extList.setRowSorter(extSorter);
                 extList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 extList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
-                    // ensure entry extensions map has been initialized even if no data-entries have been initialized so far...
-                    ExtensionFactory.getAnnotatedEntryExtensionClasses();
-                    // ... now extensions can be listed
-                    addOrReplaceTableModelAddOnRow(getExtensionsModel(), extension, true, 1, ExtensionFactory.getExtensionStatus(extension.getName()));
-                }
+                listExtensions();
                 JButton extDetailsButt = new JButton("Extension details");
                 extDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -4595,25 +4680,7 @@ public class FrontEnd extends JFrame {
                 skinList.setRowSorter(skinSorter);
                 skinList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 skinList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                getSkinModel().insertRow(0, new Object[]{Boolean.FALSE, DEFAULT_SKIN, Constants.EMPTY_STR, Constants.EMPTY_STR, "Default Skin"});
-                for (AddOnInfo skin : BackEnd.getInstance().getAddOns(PackType.SKIN)) {
-                    String status;
-                    try {
-                        String fullSkinName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin.getName() 
-                                                + Constants.PACKAGE_PATH_SEPARATOR + skin.getName();
-                        // extension class load test
-                        Class<Skin> skinClass = (Class<Skin>) Class.forName(fullSkinName);
-                        // extension instantiation test
-                        skinClass.newInstance();
-                        status = Constants.ADDON_STATUS_LOADED;
-                    } catch (Throwable t) {
-                        // extension is broken
-                        System.err.println("Skin [ " + skin.getName() + " ] failed to initialize!");
-                        t.printStackTrace(System.err);
-                        status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(skin) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
-                    }
-                    addOrReplaceTableModelAddOnRow(getSkinModel(), skin, true, 1, status);
-                }
+                listSkins();
                 JButton skinDetailsButt = new JButton("Skin details");
                 skinDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -4735,13 +4802,7 @@ public class FrontEnd extends JFrame {
                 icSetList.setRowSorter(icSetSorter);
                 icSetList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 icSetList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-                for (AddOnInfo iconSetInfo : BackEnd.getInstance().getIconSets()) {
-                    addOrReplaceTableModelAddOnRow(getIconSetModel(), iconSetInfo, true, 1, null);
-                }
-                for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-                    getIconListModel().addElement(icon);
-                    icons.put(icon.getDescription(), icon);
-                }
+                listIcons();
                 JScrollPane jsp = new JScrollPane(getIconList());
                 jsp.setPreferredSize(new Dimension(200,200));
                 jsp.setMinimumSize(new Dimension(200,200));
@@ -4874,7 +4935,7 @@ public class FrontEnd extends JFrame {
                 });
 
                 // list of loaded libs
-                libList = getLibsList(BackEnd.getInstance().getAddOns(PackType.LIBRARY));
+                libList = getLibsList();
                 JButton libDetailsButt = new JButton("Library details");
                 libDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -5932,18 +5993,9 @@ public class FrontEnd extends JFrame {
         return addOnsToInstall;
     }
     
-    private JTable getLibsList(Collection<AddOnInfo> addOnInfos) {
+    private JTable getLibsList() throws Throwable {
         final JTable addOnList = new JTable(getLibModel());
-        for (AddOnInfo addOnInfo : addOnInfos) {
-            String status;
-            Map<AddOnInfo, String> libStatuses = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY);
-            if (libStatuses != null) {
-                status = libStatuses.get(addOnInfo);
-            } else {
-                status = Constants.ADDON_STATUS_LOADED;
-            }
-            addOrReplaceTableModelAddOnRow(getLibModel(), addOnInfo, false, 0, status);
-        }
+        listLibs();
         addOnList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         final TableRowSorter<TableModel> addOnSorter = new TableRowSorter<TableModel>(getLibModel());
         addOnSorter.setSortsOnUpdates(true);
@@ -5955,7 +6007,9 @@ public class FrontEnd extends JFrame {
         int idx = findDataRowIndex(addOnModel, searchIdx, addOnInfo.getName());
         if (idx != -1) {
             addOnModel.removeRow(idx);
-            if (status != null) status = Constants.ADDON_STATUS_UPDATED;
+            if (status != null 
+                    && !status.equals(Constants.ADDON_STATUS_INSTALLED) 
+                    && !status.equals(Constants.ADDON_STATUS_IMPORTED)) status = Constants.ADDON_STATUS_UPDATED;
             addOnModel.insertRow(idx, getAddOnInfoRow((withCheckBox ? Boolean.FALSE : null), addOnInfo, status));
         } else {
             addOnModel.addRow(getAddOnInfoRow((withCheckBox ? Boolean.FALSE : null), addOnInfo, status));

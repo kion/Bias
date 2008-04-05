@@ -113,25 +113,25 @@ public class BackEnd {
     private Map<String, String> exportConfigIDs;
     
     private static final FilenameFilter FILE_FILTER_DATA_ENTRY_CONFIG = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_DATA = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.DATA_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_TOOL_DATA = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.TOOL_DATA_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_ADDON_INFO = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(
                     Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX) 
                     || name.endsWith(Constants.ADDON_SKIN_INFO_FILE_SUFFIX) 
@@ -140,68 +140,82 @@ public class BackEnd {
         }
     };
     
+    private static final FilenameFilter FILE_FILTER_EXT_SKIN_LIB_INFO = new FilenameFilter(){
+        public boolean accept(File file, String name) {
+            return name.endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX) 
+                    || name.endsWith(Constants.ADDON_SKIN_INFO_FILE_SUFFIX)
+                    || name.endsWith(Constants.ADDON_LIB_INFO_FILE_SUFFIX);
+        }
+    };
+    
     private static final FilenameFilter FILE_FILTER_LIB_INFO = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.ADDON_LIB_INFO_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_ICONSET_INFO = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.ADDON_ICONSET_INFO_FILE_SUFFIX);
         }
     };
     
+    private static final FilenameFilter FILE_FILTER_ICONSET_REG = new FilenameFilter(){
+        public boolean accept(File file, String name) {
+            return name.endsWith(Constants.ICONSET_REGISTRY_FILE_SUFFIX);
+        }
+    };
+    
     private static final FilenameFilter FILE_FILTER_EXTENSION_INFO = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_SKIN_INFO = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.ADDON_SKIN_INFO_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_ICONSET_INFO_OR_REG = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.ADDON_ICONSET_INFO_FILE_SUFFIX) || name.endsWith(Constants.ICONSET_REGISTRY_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_IMPORT_CONFIG = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.IMPORT_CONFIG_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_EXPORT_CONFIG = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.EXPORT_CONFIG_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_IMPORT_EXPORT_CONFIG = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.IMPORT_CONFIG_FILE_SUFFIX) || name.endsWith(Constants.EXPORT_CONFIG_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_ADDON_CONFIG = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.EXTENSION_CONFIG_FILE_SUFFIX) || name.endsWith(Constants.SKIN_CONFIG_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_TRANSFER_OPTIONS_CONFIG = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX);
         }
     };
     
     private static final FilenameFilter FILE_FILTER_CHECKSUM_CONFIG = new FilenameFilter(){
-        public boolean accept(File dir, String name) {
+        public boolean accept(File file, String name) {
             return name.endsWith(Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
         }
     };
@@ -314,15 +328,10 @@ public class BackEnd {
         if (Constants.ICONS_DIR.exists()) {
             File iconsListFile = new File(Constants.CONFIG_DIR, Constants.ICONS_CONFIG_FILE);
             if (iconsListFile.exists()) {
-                String[] iconsList = new String(FSUtils.readFile(iconsListFile)).split(Constants.NEW_LINE);
-                for (String iconId : iconsList) {
-                    if (!Validator.isNullOrBlank(iconId)) {
-                        File iconFile = new File(Constants.ICONS_DIR, iconId + Constants.ICON_FILE_SUFFIX);
-                        if (iconFile.exists()) {
-                            data = FSUtils.readFile(iconFile);
-                            icons.put(UUID.fromString(iconId), data);
-                        }
-                    }
+                loadIcons(iconsListFile);
+            } else {
+                for (File iconsRegFile : Constants.CONFIG_DIR.listFiles(FILE_FILTER_ICONSET_REG)) {
+                    loadIcons(iconsRegFile);
                 }
             }
         }
@@ -332,6 +341,19 @@ public class BackEnd {
         loadedAddOns = getAddOns();
         // get application's version
         appVersion = readAppVersion();
+    }
+    
+    private void loadIcons(File iconsListFile) throws IOException {
+        String[] iconsList = new String(FSUtils.readFile(iconsListFile)).split(Constants.NEW_LINE);
+        for (String iconId : iconsList) {
+            if (!Validator.isNullOrBlank(iconId)) {
+                File iconFile = new File(Constants.ICONS_DIR, iconId + Constants.ICON_FILE_SUFFIX);
+                if (iconFile.exists()) {
+                    byte[] data = FSUtils.readFile(iconFile);
+                    icons.put(UUID.fromString(iconId), data);
+                }
+            }
+        }
     }
     
     private Collection<String> getDataExportExtensionsList() {
@@ -419,7 +441,7 @@ public class BackEnd {
     public DataCategory importData(
             File importDir, 
             Collection<UUID> existingIDs, 
-            ImportConfiguration config) throws Exception {
+            ImportConfiguration config) throws Throwable {
         Cipher cipher = initCipher(Cipher.DECRYPT_MODE, config.getPassword());
         Map<String,DataEntry> importedIdentifiedData = new LinkedHashMap<String, DataEntry>();
         Document metadata = null;
@@ -557,9 +579,8 @@ public class BackEnd {
                         }
                     }
                 }
-                for (File iconSetInfoOrRegFile : iconsDir.listFiles(FILE_FILTER_ICONSET_INFO_OR_REG)) {
-                    File localIconSetInfoOrRegFile = new File(Constants.ICONS_DIR, iconSetInfoOrRegFile.getName());
-                    FSUtils.duplicateFile(iconSetInfoOrRegFile, localIconSetInfoOrRegFile);
+                for (File iconSetInfoOrRegFile : configDir.listFiles(FILE_FILTER_ICONSET_INFO_OR_REG)) {
+                    FSUtils.duplicateFile(iconSetInfoOrRegFile, new File(Constants.CONFIG_DIR, iconSetInfoOrRegFile.getName()));
                 }
             }
         }
@@ -573,7 +594,6 @@ public class BackEnd {
         }
         // addons/libs
         if (config.isImportAddOnsAndLibs()) {
-            // TODO [P1] addon-info directory should be imported as well !
             File addOnsDir = new File(importDir, Constants.ADDONS_DIR.getName());
             if (addOnsDir.exists()) {
                 for (File addOnFile : addOnsDir.listFiles()) {
@@ -585,6 +605,19 @@ public class BackEnd {
                         FSUtils.duplicateFile(addOnFile, localAddOnFile);
                     }
                 }
+            }
+            for (File addOnInfoFile : configDir.listFiles(FILE_FILTER_EXT_SKIN_LIB_INFO)) {
+                FSUtils.duplicateFile(addOnInfoFile, new File(Constants.CONFIG_DIR, addOnInfoFile.getName()));
+                AddOnInfo addOnInfo = readAddOnInfo(addOnInfoFile);
+                PackType addOnType = null;
+                if (addOnInfoFile.getName().endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX)) {
+                    addOnType = PackType.EXTENSION;
+                } else if (addOnInfoFile.getName().endsWith(Constants.ADDON_SKIN_INFO_FILE_SUFFIX)) {
+                    addOnType = PackType.SKIN;
+                } else if (addOnInfoFile.getName().endsWith(Constants.ADDON_LIB_INFO_FILE_SUFFIX)) {
+                    addOnType = PackType.LIBRARY;
+                }
+                registerNewAddOn(addOnType, addOnInfo, Constants.ADDON_STATUS_IMPORTED);
             }
         }
         // parse metadata file
@@ -704,7 +737,7 @@ public class BackEnd {
     
     public TransferData exportData(
             DataCategory data,
-            ExportConfiguration config) throws Exception {
+            ExportConfiguration config) throws Throwable {
         Cipher cipher = initCipher(Cipher.ENCRYPT_MODE, config.getPassword());
         String exportID = UUID.randomUUID().toString();
         File exportDir = new File(Constants.TMP_DIR, exportID);
@@ -773,9 +806,8 @@ public class BackEnd {
                 }
                 File iconsListFile = new File(configDir, Constants.ICONS_CONFIG_FILE);
                 FSUtils.writeFile(iconsListFile, iconsList.toString().getBytes());
-                for (File localIconSetInfoOrRegFile : Constants.ICONS_DIR.listFiles(FILE_FILTER_ICONSET_INFO_OR_REG)) {
-                    File iconSetInfoOrRegFile = new File(iconsDir, localIconSetInfoOrRegFile.getName());
-                    FSUtils.duplicateFile(localIconSetInfoOrRegFile, iconSetInfoOrRegFile);
+                for (File localIconSetInfoOrRegFile : Constants.CONFIG_DIR.listFiles(FILE_FILTER_ICONSET_INFO_OR_REG)) {
+                    FSUtils.duplicateFile(localIconSetInfoOrRegFile, new File(configDir, localIconSetInfoOrRegFile.getName()));
                 }
             }
         }
@@ -791,7 +823,7 @@ public class BackEnd {
         }
         // addons/libs
         if (config.isExportAddOnsAndLibs()) {
-            // TODO [P1] addon-info directory should be exported as well !
+            // TODO [P1] addon-info for ext/libs only should be exported into ADDON-INFO dir (iconset-info should be skipped)
             File addonsDir = new File(exportDir, Constants.ADDONS_DIR.getName());
             if (!addonsDir.exists()) {
                 addonsDir.mkdir();
@@ -809,6 +841,9 @@ public class BackEnd {
                         FSUtils.duplicateFile(file, exportFile);
                     }
                 }
+            }
+            for (File localAddOnInfo : Constants.CONFIG_DIR.listFiles(FILE_FILTER_EXT_SKIN_LIB_INFO)) {
+                FSUtils.duplicateFile(localAddOnInfo, new File(configDir, localAddOnInfo.getName()));
             }
         }
         // app core
@@ -1713,17 +1748,21 @@ public class BackEnd {
             FSUtils.duplicateFile(addOnFile, installedAddOnFile);
         }
         storeAddOnInfo(addOnInfo, addOnType);
+        registerNewAddOn(addOnType, addOnInfo, status);
+        if (uninstallAddOnsList.contains(addOnInfo.getName() + fileSuffix)) {
+            uninstallAddOnsList.remove(addOnInfo.getName() + fileSuffix);
+            storeUninstallConfiguration();
+        }
+        return addOnInfo;
+    }
+    
+    private void registerNewAddOn(PackType addOnType, AddOnInfo addOnInfo, String status) {
         Map<AddOnInfo, String> addons = newAddOns.get(addOnType);
         if (addons == null) {
             addons = new LinkedHashMap<AddOnInfo, String>();
             newAddOns.put(addOnType, addons);
         }
         addons.put(addOnInfo, status);
-        if (uninstallAddOnsList.contains(addOnInfo.getName() + fileSuffix)) {
-            uninstallAddOnsList.remove(addOnInfo.getName() + fileSuffix);
-            storeUninstallConfiguration();
-        }
-        return addOnInfo;
     }
     
     public void uninstallAddOn(String addOnName, PackType addOnType) throws Throwable {
@@ -1754,6 +1793,8 @@ public class BackEnd {
         }
         File addOnInfoFile = new File(Constants.CONFIG_DIR, addOnName + configFileSuffix);
         FSUtils.delete(addOnInfoFile);
+        File addOnInfoDir = new File(Constants.ADDON_INFO_DIR, addOnName);
+        FSUtils.delete(addOnInfoDir);
         newAddOns.remove(fullName);
     }
     

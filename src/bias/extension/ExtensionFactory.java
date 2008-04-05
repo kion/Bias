@@ -56,7 +56,7 @@ public class ExtensionFactory {
         return extension;
     }
     
-	public static Extension newExtension(Class<? extends Extension> clazz) throws Throwable {
+    public static Extension newExtension(Class<? extends Extension> clazz) throws Throwable {
         byte[] defSettings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), PackType.EXTENSION);
         Extension extension = newExtension(clazz, null, new byte[]{}, defSettings);
         return extension;
@@ -89,18 +89,21 @@ public class ExtensionFactory {
     public static Map<String, Class<? extends EntryExtension>> getAnnotatedEntryExtensionClasses() throws Throwable {
         if (annotatedEntryTypes == null) {
             annotatedEntryTypes = new LinkedHashMap<String, Class<? extends EntryExtension>>();
+            Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
             for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
-                    String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
-                                            + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
-                    Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
-                    if (EntryExtension.class.isAssignableFrom(extClass)) {
-                        // extension instantiation test
-                        newEntryExtension(extClass);
-                        // extension is ok, add it to the list
-                        String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
-                        annotatedEntryTypes.put(annotationStr, (Class<? extends EntryExtension>) extClass);
-                        extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
+                    if (statuses == null || statuses.get(extension) == null) { // skip new installed/imported extensions
+                        String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
+                                                + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
+                        Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
+                        if (EntryExtension.class.isAssignableFrom(extClass)) {
+                            // extension instantiation test
+                            newEntryExtension(extClass);
+                            // extension is ok, add it to the list
+                            String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
+                            annotatedEntryTypes.put(annotationStr, (Class<? extends EntryExtension>) extClass);
+                            extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
+                        }
                     }
                 } catch (Throwable t) {
                     System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
@@ -117,18 +120,21 @@ public class ExtensionFactory {
     public static Map<ToolExtension, String> getAnnotatedToolExtensions() throws Throwable {
         if (annotatedToolTypes == null) {
             annotatedToolTypes = new LinkedHashMap<ToolExtension, String>();
+            Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
             for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
-                    String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
-                                            + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
-                    Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
-                    if (ToolExtension.class.isAssignableFrom(extClass)) {
-                        // extension instantiation test
-                        ToolExtension ext = newToolExtension(extClass, BackEnd.getInstance().getToolData(fullExtName));
-                        // extension is ok, add it to the list
-                        String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
-                        annotatedToolTypes.put(ext, annotationStr);
-                        extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
+                    if (statuses == null || statuses.get(extension) == null) { // skip new installed/imported extensions
+                        String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
+                                                + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
+                        Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
+                        if (ToolExtension.class.isAssignableFrom(extClass)) {
+                            // extension instantiation test
+                            ToolExtension ext = newToolExtension(extClass, BackEnd.getInstance().getToolData(fullExtName));
+                            // extension is ok, add it to the list
+                            String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
+                            annotatedToolTypes.put(ext, annotationStr);
+                            extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
+                        }
                     }
                 } catch (Throwable t) {
                     System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
@@ -149,19 +155,22 @@ public class ExtensionFactory {
             TransferExtension ext = newTransferExtension(LocalTransfer.class);
             annotatedTransferTypes.put("LocalTransfer [Transfer from/to local file system]", ext);
             transferTypes.put(LocalTransfer.class.getSimpleName(), ext);
+            Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
             for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
-                    String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
-                                            + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
-                    Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
-                    if (TransferExtension.class.isAssignableFrom(extClass)) {
-                        // extension instantiation test
-                        ext = newTransferExtension(extClass);
-                        // extension is ok, add it to the list
-                        String annotationStr = extension.getName() + " [" + (extension.getDescription() != null ? extension.getDescription() : "No description") + "]";
-                        annotatedTransferTypes.put(annotationStr, ext);
-                        transferTypes.put(extClass.getSimpleName(), ext);
-                        extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
+                    if (statuses == null || statuses.get(extension) == null) { // skip new installed/imported extensions
+                        String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
+                                                + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
+                        Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
+                        if (TransferExtension.class.isAssignableFrom(extClass)) {
+                            // extension instantiation test
+                            ext = newTransferExtension(extClass);
+                            // extension is ok, add it to the list
+                            String annotationStr = extension.getName() + " [" + (extension.getDescription() != null ? extension.getDescription() : "No description") + "]";
+                            annotatedTransferTypes.put(annotationStr, ext);
+                            transferTypes.put(extClass.getSimpleName(), ext);
+                            extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
+                        }
                     }
                 } catch (Throwable t) {
                     System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
