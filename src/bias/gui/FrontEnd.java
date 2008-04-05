@@ -5530,9 +5530,6 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    // TODO [P1] try to resolve dependencies using list of installed addons first, 
-    //           only then (if not resolved) try to use online list of available addons
-    
     private void installLocalPackages(final AddOnFileChooser addOnFileChooser, final PackType addOnType, final DefaultTableModel addOnModel) {
         if (addOnFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
             syncExecute(new Runnable(){

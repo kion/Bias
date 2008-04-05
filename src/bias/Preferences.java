@@ -37,7 +37,7 @@ public class Preferences {
     }
     
     public void init() {
-        prefs = BackEnd.getInstance().getPrefs();
+        prefs = BackEnd.getInstance().getPreferences();
         if (prefs != null) {
             Node rootNode = prefs.getFirstChild();
             NodeList prefNodes = rootNode.getChildNodes();

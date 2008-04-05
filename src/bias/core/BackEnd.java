@@ -2312,7 +2312,14 @@ public class BackEnd {
         this.config = config;
     }
 
-    public Document getPrefs() {
+    public Document getPreferences() {
+        if (prefs == null) {
+            try {
+                loadPreferences();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
         return prefs;
     }
 
