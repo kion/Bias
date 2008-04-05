@@ -111,9 +111,9 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     }
     
     private void initSettings() throws Exception {
+        props = new Properties();
         if (getSettings() != null && !Arrays.equals(getSettings(), settings)) {
             settings = getSettings();
-            props = new Properties();
             props.putAll(PropertiesUtils.deserializeProperties(settings));
             String verboseStr = props.getProperty(PROPERTY_EXPORT_VERBOSE_MODE);
             if (!Validator.isNullOrBlank(verboseStr)) {
