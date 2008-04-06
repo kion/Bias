@@ -678,9 +678,7 @@ public class FrontEnd extends JFrame {
             try {
                 // initialize tray icon
                 if (trayIcon == null) {
-                    trayIcon = new TrayIcon(
-                            ICON_APP.getImage(), 
-                            "Bias :: Versatile Information Manager");
+                    trayIcon = new TrayIcon(ICON_APP.getImage(), instance.messages.get("main.window.title"));
                     trayIcon.setImageAutoSize(true);
                     trayIcon.addMouseListener(new MouseAdapter(){
                         @Override
@@ -4243,8 +4241,10 @@ public class FrontEnd extends JFrame {
                             String type = field.getType().getSimpleName().toLowerCase();
                             if ("string".equals(type)) {
                                 prefPanel = new JPanel(new GridLayout(2, 1));
-                                JLabel prefTitle = new JLabel(prefAnn.title() + Constants.BLANK_STR);
-                                prefTitle.setToolTipText(prefAnn.description());
+                                JLabel prefTitle = new JLabel(messages.get(prefAnn.title()) + Constants.BLANK_STR);
+                                if (!Validator.isNullOrBlank(prefAnn.description())) {
+                                    prefTitle.setToolTipText(messages.get(prefAnn.description()));
+                                }
                                 prefPanel.add(prefTitle);
                                 if (field.isAnnotationPresent(PreferenceChoice.class)) {
                                     prefControl = new JComboBox();
@@ -4295,13 +4295,17 @@ public class FrontEnd extends JFrame {
                                 }
                             } else if ("boolean".equals(type)) {
                                 prefPanel = new JPanel(new GridLayout(1, 1));
-                                prefControl = new JCheckBox(prefAnn.title());
-                                ((JCheckBox) prefControl).setToolTipText(prefAnn.description());
+                                prefControl = new JCheckBox(messages.get(prefAnn.title()));
+                                if (!Validator.isNullOrBlank(prefAnn.description())) {
+                                    ((JCheckBox) prefControl).setToolTipText(messages.get(prefAnn.description()));
+                                }
                                 ((JCheckBox) prefControl).setSelected(field.getBoolean(Preferences.getInstance()));
                             } else if ("int".equals(type)) {
                                 prefPanel = new JPanel(new GridLayout(2, 1));
-                                JLabel prefTitle = new JLabel(prefAnn.title() + Constants.BLANK_STR);
-                                prefTitle.setToolTipText(prefAnn.description());
+                                JLabel prefTitle = new JLabel(messages.get(prefAnn.title()) + Constants.BLANK_STR);
+                                if (!Validator.isNullOrBlank(prefAnn.description())) {
+                                    prefTitle.setToolTipText(messages.get(prefAnn.description()));
+                                }
                                 prefPanel.add(prefTitle);
                                 SpinnerNumberModel sm = new SpinnerNumberModel();
                                 sm.setMinimum(0);

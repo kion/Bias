@@ -8,6 +8,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import bias.Constants;
+
 /**
  * @author kion
  */
@@ -16,5 +18,5 @@ import java.lang.annotation.Target;
 @Target(value = {ElementType.FIELD})
 public @interface Preference {
     String title();
-    String description();
+    String description() default Constants.EMPTY_STR;
 }

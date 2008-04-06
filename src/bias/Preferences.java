@@ -166,73 +166,63 @@ public class Preferences {
     // TODO [P1] preferences should be internationalized as well (!)
 
     @Preference(
-            title = "Preferred language (needs restart)",
-            description = "Defines preferred language for GUI interface, messages etc.")
+            title = "preferred.language.preference.title")
     @PreferenceChoice(
             providerClass = PreferredLanguageChoiceProvider.class)
     public String preferredLanguage = Constants.DEFAULT_LANGUAGE;
     
     @Preference(
-            title = "Preferred date-time format:",
-            description = "Defines preferred format for date-time rendering")
+            title = "preferred.datetime.format.preference.title")
     @PreferenceValidation(
             validationClass = PreferredDateFormatValidator.class)        
     public String preferredDateTimeFormat = "dd.MM.yyyy @ HH:mm:ss";
     
     @Preference(
-            title = "Preferred timeout for network operations (in seconds):",
-            description = "Defines preferred timeout for network operations (which will fail on timeout specified)")
+            title = "preferred.timeout.preference.title")
     public int preferredTimeOut = 60;
     
     @Preference(
-            title = "Show system tray icon",
-            description = "Defines whether application can allocate space in system tray; allows to hide/restore application to/from system tray icon")
+            title = "use.systrayicon.preference.title",
+            description = "use.systrayicon.preference.description")
     public boolean useSysTrayIcon = false;
 
     @Preference(
-            title = "Remain in system tray on window close",
-            description = "Defines whether application should remain in system tray when application's window is closed")
+            title = "remain.in.systray.on.window.close.preference.title")
     public boolean remainInSysTrayOnWindowClose = false;
     
     @Preference(
-            title = "Hide main window on start",
-            description = "Defines whether application should start with hidden main window (system tray icon will be shown in this case)")
+            title = "start.hidden.preference.title")
     @PreferenceEnable(
             enabledByField = "remainInSysTrayOnWindowClose", 
             enabledByValue = "true")        
     public boolean startHidden = false;
     
     @Preference(
-            title = "Minimize to system tray",
-            description = "Defines whether application should be minimized to system tray instead of task panel")
+            title = "minimize.to.systray.preference.title")
     public boolean minimizeToSysTray = false;
     
     @Preference(
-            title = "Auto save on exit",
-            description = "Defines whether user data have to be automatically saved on exit")
+            title = "auto.save.on.exit.preference.title")
     public boolean autoSaveOnExit = false;
     
     @Preference(
-            title = "Display confirmation dialogs",
-            description = "Defines whether confirmation dialogs should appear whenever user tries to delete entry, uninstall add-on and so on.")
+            title = "display.confirmation.dialogs.preference.title",
+            description = "display.confirmation.dialogs.preference.description")
     public boolean displayConfirmationDialogs = true;
     
     @Preference(
-            title = "Enable automatic update",
-            description = "Application core and add-ons will be checked for updates on startup if this option is enabled.")
+            title = "enable.auto.update.preference.title")
     public boolean enableAutoUpdate = true;
 
     @Preference(
-            title = "Automatic update interval, in days (set to 0 to update on startup only): ",
-            description = "Defines how often automatic update is performed")
+            title = "auto.update.interval.preference.title")
     @PreferenceEnable(
             enabledByField = "enableAutoUpdate", 
             enabledByValue = "true")        
     public int autoUpdateInterval = 7;
     
     @Preference(
-            title = "Show memory usage information in status bar",
-            description = "Defines if memory usage information should be shown in the status bar")
+            title = "show.memory.usage.preference.title")
     public boolean showMemoryUsage = false;
     
 }
