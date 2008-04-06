@@ -183,7 +183,7 @@ import bias.utils.Downloader.DownloadListener;
  */
 public class FrontEnd extends JFrame {
     
-    // TODO [P3] internationalization
+    // TODO [P1] internationalization
 
     private static final long serialVersionUID = 1L;
     
