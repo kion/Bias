@@ -125,11 +125,13 @@ import bias.Constants;
 import bias.Preferences;
 import bias.Splash;
 import bias.Constants.TRANSFER_TYPE;
+import bias.Preferences.PreferenceChoiceProvider;
 import bias.Preferences.PreferenceValidator;
-import bias.annotation.PreferenceAnnotation;
-import bias.annotation.PreferenceEnableAnnotation;
-import bias.annotation.PreferenceProtectAnnotation;
-import bias.annotation.PreferenceValidationAnnotation;
+import bias.annotation.Preference;
+import bias.annotation.PreferenceChoice;
+import bias.annotation.PreferenceEnable;
+import bias.annotation.PreferenceProtect;
+import bias.annotation.PreferenceValidation;
 import bias.core.AddOnInfo;
 import bias.core.BackEnd;
 import bias.core.DataCategory;
@@ -164,6 +166,7 @@ import bias.extension.TransferExtension;
 import bias.extension.TransferOptions;
 import bias.extension.TransferProgressListener;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
+import bias.i18n.I18nService;
 import bias.skin.Skin;
 import bias.skin.UIIcons;
 import bias.utils.AppManager;
@@ -184,11 +187,13 @@ import bias.utils.Downloader.DownloadListener;
 public class FrontEnd extends JFrame {
     
     // TODO [P1] internationalization
-
+    
     private static final long serialVersionUID = 1L;
     
     private static final String DEFAULT_SKIN = "DefaultSkin";
 
+    private static final String LOCALE = I18nService.getInstance().getLanguageLocale(Preferences.getInstance().preferredLanguage);
+    
     /**
      * Application icon
      */
@@ -837,6 +842,8 @@ public class FrontEnd extends JFrame {
         return false;
     }
     
+    private Map<String, String> messages = I18nService.getInstance().getMessages();
+    
     /**
      * This method initializes this
      * 
@@ -846,7 +853,7 @@ public class FrontEnd extends JFrame {
         this.setSize(new Dimension(772, 535));
         try {
             this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-            this.setTitle("Bias");
+            this.setTitle(messages.get("main.window.title"));
             this.setIconImage(ICON_APP.getImage());
             this.setContentPane(getJContentPane());
 
@@ -4229,7 +4236,7 @@ public class FrontEnd extends JFrame {
                 Field[] fields = Preferences.class.getDeclaredFields();
                 try {
                     for (final Field field : fields) {
-                        PreferenceAnnotation prefAnn = field.getAnnotation(PreferenceAnnotation.class);
+                        Preference prefAnn = field.getAnnotation(Preference.class);
                         if (prefAnn != null) {
                             JPanel prefPanel = null;
                             Component prefControl = null;
@@ -4239,13 +4246,21 @@ public class FrontEnd extends JFrame {
                                 JLabel prefTitle = new JLabel(prefAnn.title() + Constants.BLANK_STR);
                                 prefTitle.setToolTipText(prefAnn.description());
                                 prefPanel.add(prefTitle);
-                                if (field.isAnnotationPresent(PreferenceProtectAnnotation.class)) {
+                                if (field.isAnnotationPresent(PreferenceChoice.class)) {
+                                    prefControl = new JComboBox();
+                                    PreferenceChoice choiceAnn = field.getAnnotation(PreferenceChoice.class);
+                                    ((JComboBox) prefControl).setEditable(choiceAnn.isEditable());
+                                    PreferenceChoiceProvider choiceProvider = choiceAnn.providerClass().newInstance();
+                                    for (String choice : choiceProvider.getPreferenceChoices()) {
+                                        ((JComboBox) prefControl).addItem(choice);
+                                    }
+                                } else if (field.isAnnotationPresent(PreferenceProtect.class)) {
                                     prefControl = new JPasswordField();
                                 } else {
                                     prefControl = new JTextField();
                                 }
                                 prefControl.setPreferredSize(new Dimension(150, 20));
-                                PreferenceValidationAnnotation prefValAnn = field.getAnnotation(PreferenceValidationAnnotation.class);
+                                PreferenceValidation prefValAnn = field.getAnnotation(PreferenceValidation.class);
                                 if (prefValAnn != null) {
                                     // TODO [P3] optimization: there should be only one instance of certain validation class
                                     final PreferenceValidator<String> validator = (PreferenceValidator<String>) prefValAnn.validationClass().newInstance();
@@ -4273,7 +4288,11 @@ public class FrontEnd extends JFrame {
                                 if (text == null) {
                                     text = Constants.EMPTY_STR;
                                 }
-                                ((JTextField) prefControl).setText(text);
+                                if (prefControl instanceof JTextField) {
+                                    ((JTextField) prefControl).setText(text);
+                                } else if (prefControl instanceof JComboBox) {
+                                    ((JComboBox) prefControl).setSelectedItem(text);
+                                }
                             } else if ("boolean".equals(type)) {
                                 prefPanel = new JPanel(new GridLayout(1, 1));
                                 prefControl = new JCheckBox(prefAnn.title());
@@ -4303,7 +4322,7 @@ public class FrontEnd extends JFrame {
                         prefsPanel.add(prefPanel);
                     }
                     for (Entry<Component, Field> pref : prefEntries.entrySet()) {
-                        PreferenceEnableAnnotation prefEnableAnn = pref.getValue().getAnnotation(PreferenceEnableAnnotation.class);
+                        PreferenceEnable prefEnableAnn = pref.getValue().getAnnotation(PreferenceEnable.class);
                         if (prefEnableAnn != null) {
                             createPrefChangeListener(pref.getKey(), prefEnableAnn, prefEntries);
                         }
@@ -4344,7 +4363,7 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    private void createPrefChangeListener(final Component c, final PreferenceEnableAnnotation ann, Map<Component, Field> prefEntries) {
+    private void createPrefChangeListener(final Component c, final PreferenceEnable ann, Map<Component, Field> prefEntries) {
         for (final Entry<Component, Field> pref : prefEntries.entrySet()) {
             if (ann.enabledByField().equals(pref.getValue().getName())) {
                 if (pref.getKey() instanceof JTextField) {
@@ -4481,7 +4500,7 @@ public class FrontEnd extends JFrame {
     }
     
     private void listExtensions() throws Throwable {
-        // ensure entry extensions map has been initialized even if no data-entries have been added so far...
+        // ensure entry extensions map has been initialized even if no data-entries have been added so far;
         ExtensionFactory.getAnnotatedEntryExtensionClasses();
         // ... now extensions can be listed
         Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
@@ -4573,11 +4592,13 @@ public class FrontEnd extends JFrame {
                         if (idx != -1) {
                             try {
                                 String extension = (String) extList.getValueAt(idx, 1);
-                                String version = (String) extList.getValueAt(idx, 2);
                                 try {
-                                    File addOnInfoFile = new File(
-                                            new File(Constants.ADDON_INFO_DIR, extension), 
-                                            extension + Constants.VALUES_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
+                                    File addOnInfoFile = new File(new File(Constants.ADDON_INFO_DIR, extension), LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX);
+                                    if (!addOnInfoFile.exists()) {
+                                        addOnInfoFile = new File(
+                                                new File(Constants.ADDON_INFO_DIR, extension), 
+                                                Constants.DEFAULT_LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX);
+                                    }
                                     if (addOnInfoFile.exists()) {
                                         URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                         URL addOnURL = addOnInfoFile.toURI().toURL();
@@ -4700,11 +4721,13 @@ public class FrontEnd extends JFrame {
                                 if (DEFAULT_SKIN.equals(skin)) {
                                     displayMessage("This is a default native Java cross-platform Skin.");
                                 } else {
-                                    String version = (String) skinList.getValueAt(idx, 2);
                                     try {
-                                        File addOnInfoFile = new File(
-                                                new File(Constants.ADDON_INFO_DIR, skin), 
-                                                skin + Constants.VALUES_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
+                                        File addOnInfoFile = new File(new File(Constants.ADDON_INFO_DIR, skin), LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX);
+                                        if (!addOnInfoFile.exists()) {
+                                            addOnInfoFile = new File(
+                                                    new File(Constants.ADDON_INFO_DIR, skin), 
+                                                    Constants.DEFAULT_LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX);
+                                        }
                                         if (addOnInfoFile.exists()) {
                                             URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                             URL addOnURL = addOnInfoFile.toURI().toURL();
@@ -4822,11 +4845,13 @@ public class FrontEnd extends JFrame {
                         if (idx != -1) {
                             try {
                                 String ic = (String) icSetList.getValueAt(idx, 1);
-                                String version = (String) icSetList.getValueAt(idx, 2);
                                 try {
-                                    File addOnInfoFile = new File(
-                                            new File(Constants.ADDON_INFO_DIR, ic), 
-                                            ic + Constants.VALUES_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
+                                    File addOnInfoFile = new File(new File(Constants.ADDON_INFO_DIR, ic), LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX);
+                                    if (!addOnInfoFile.exists()) {
+                                        addOnInfoFile = new File(
+                                                new File(Constants.ADDON_INFO_DIR, ic), 
+                                                Constants.DEFAULT_LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX);
+                                    }
                                     if (addOnInfoFile.exists()) {
                                         URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                         URL addOnURL = addOnInfoFile.toURI().toURL();
@@ -4896,7 +4921,6 @@ public class FrontEnd extends JFrame {
                                 for (Object icon : getIconList().getSelectedValues()) {
                                     getIconListModel().removeElement(icon);
                                 }
-                                displayMessage("Icon(s) have been successfully removed!");
                             }
                         } catch (Throwable t) {
                             displayErrorMessage("Failed to remove icon(s)! " + CommonUtils.getFailureDetails(t), t);
@@ -4952,11 +4976,13 @@ public class FrontEnd extends JFrame {
                         if (idx != -1) {
                             try {
                                 String lib = (String) libList.getValueAt(idx, 0);
-                                String version = (String) libList.getValueAt(idx, 1);
                                 try {
-                                    File addOnInfoFile = new File(
-                                            new File(Constants.ADDON_INFO_DIR, lib), 
-                                            lib + Constants.VALUES_SEPARATOR + version + Constants.ADDON_DETAILS_FILENAME_SUFFIX);
+                                    File addOnInfoFile = new File(new File(Constants.ADDON_INFO_DIR, lib), LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX);
+                                    if (!addOnInfoFile.exists()) {
+                                        addOnInfoFile = new File(
+                                                new File(Constants.ADDON_INFO_DIR, lib), 
+                                                Constants.DEFAULT_LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX);
+                                    }
                                     if (addOnInfoFile.exists()) {
                                         URL baseURL = addOnInfoFile.getParentFile().toURI().toURL();
                                         URL addOnURL = addOnInfoFile.toURI().toURL();
@@ -5056,13 +5082,22 @@ public class FrontEnd extends JFrame {
                         if (idx != -1) {
                             String addOnName = (String) onlineList.getValueAt(idx, 2);
                             try {
-                                final Pack pack = getAvailableOnlinePackages().get(addOnName);
-                                String fileName = pack.getName() + (pack.getVersion() != null ? Constants.VALUES_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.ADDON_DETAILS_FILENAME_SUFFIX;
-                                final URL addOnURL = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
+                                Pack pack = getAvailableOnlinePackages().get(addOnName);
+                                String fileName = pack.getName() + Constants.PATH_SEPARATOR + LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX;
+                                URL addOnURL = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
                                 try {
+                                    // try to load addon-info file for preferred locale first...
                                     loadAndDisplayPackageDetails(BackEnd.getInstance().getRepositoryBaseURL(), addOnURL, pack);
-                                } catch (MalformedURLException ex) {
-                                    displayErrorMessage("Failure while resolving repository URL! " + CommonUtils.getFailureDetails(ex), ex);
+                                } catch (Throwable t) {
+                                    // ... if failed, try to load it for default locale
+                                    fileName = pack.getName() + Constants.PATH_SEPARATOR + 
+                                                    Constants.DEFAULT_LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX;
+                                    addOnURL = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
+                                    try {
+                                        loadAndDisplayPackageDetails(BackEnd.getInstance().getRepositoryBaseURL(), addOnURL, pack);
+                                    } catch (Throwable t2) {
+                                        displayErrorMessage("Failed to load package details page!", t2);
+                                    }
                                 }
                             } catch (Exception ex) {
                                 displayErrorMessage("Failure while resolving repository URL! " + CommonUtils.getFailureDetails(ex), ex);
@@ -5720,7 +5755,7 @@ public class FrontEnd extends JFrame {
                         if (!Validator.isNullOrBlank(pack.getUrl())) {
                             url = new URL(pack.getUrl());
                         } else {
-                            url = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
+                            url = new URL(BackEnd.getInstance().getRepositoryBaseURL() + pack.getName() + Constants.PATH_SEPARATOR + fileName);
                         }
                         File file = new File(Constants.TMP_DIR, fileName);
                         urlFileMap.put(url, file);
@@ -5738,7 +5773,7 @@ public class FrontEnd extends JFrame {
                     if (!Validator.isNullOrBlank(pack.getUrl())) {
                         url = new URL(pack.getUrl());
                     } else {
-                        url = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
+                        url = new URL(BackEnd.getInstance().getRepositoryBaseURL() + pack.getName() + Constants.PATH_SEPARATOR + fileName);
                     }
                     File file = new File(Constants.TMP_DIR, fileName);
                     urlFileMap.put(url, file);
@@ -6021,57 +6056,51 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final AddOnInfo addOnInfo) {
+    private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final AddOnInfo addOnInfo) throws Throwable {
         loadAndDisplayPackageDetails(baseURL, addOnURL, addOnInfo.getName(), addOnInfo.getDependencies());
     }
     
-    private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final Pack pack) {
+    private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final Pack pack) throws Throwable {
         loadAndDisplayPackageDetails(baseURL, addOnURL, pack.getName(), pack.getDependency());
     }
     
-    private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final String addOnName, final Collection<Dependency> dependencies) {
-        execute(new Runnable(){
-            public void run() {
-                boolean loaded = false;
-                InputStream is = null;
-                ByteArrayOutputStream baos = null;
+    private void loadAndDisplayPackageDetails(final URL baseURL, final URL addOnURL, final String addOnName, final Collection<Dependency> dependencies) throws Throwable {
+        boolean loaded = false;
+        InputStream is = null;
+        ByteArrayOutputStream baos = null;
+        try {
+            is = addOnURL.openStream();
+            baos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int readBytesNum;
+            while ((readBytesNum = is.read(buffer)) != -1) {
+                baos.write(buffer, 0, readBytesNum);
+            }
+            loaded = true;
+        } finally {
                 try {
-                    is = addOnURL.openStream();
-                    baos = new ByteArrayOutputStream();
-                    byte[] buffer = new byte[1024];
-                    int readBytesNum;
-                    while ((readBytesNum = is.read(buffer)) != -1) {
-                        baos.write(buffer, 0, readBytesNum);
-                    }
-                    loaded = true;
+                    if (is != null) is.close();
+                    if (baos != null) baos.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            if (loaded) {
+                try {
+                    JOptionPane op = new JOptionPane();
+                    JPanel p = new JPanel(new BorderLayout());
+                    p.add(getDetailsPane(new String(baos.toByteArray()), baseURL), BorderLayout.CENTER);
+                    p.add(getDependenciesPanel(dependencies), BorderLayout.SOUTH);
+                    op.setMessage(p);
+                    op.setMessageType(JOptionPane.INFORMATION_MESSAGE);
+                    final Dialog d = op.createDialog(getActiveWindow(), addOnName + " :: Details");
+                    d.setLocation(getActiveWindow().getLocation());
+                    d.setSize(getActiveWindow().getSize());
+                    d.setVisible(true);
                 } catch (Throwable t) {
-                    displayErrorMessage("Failed to load package details page! " + CommonUtils.getFailureDetails(t), t);
-                } finally {
-                        try {
-                            if (is != null) is.close();
-                            if (baos != null) baos.close();
-                        } catch (IOException e) {
-                            // ignore
-                        }
-                    if (loaded) {
-                        try {
-                            JOptionPane op = new JOptionPane();
-                            JPanel p = new JPanel(new BorderLayout());
-                            p.add(getDetailsPane(new String(baos.toByteArray()), baseURL), BorderLayout.CENTER);
-                            p.add(getDependenciesPanel(dependencies), BorderLayout.SOUTH);
-                            op.setMessage(p);
-                            op.setMessageType(JOptionPane.INFORMATION_MESSAGE);
-                            final Dialog d = op.createDialog(getActiveWindow(), addOnName + " :: Details");
-                            d.setLocation(getActiveWindow().getLocation());
-                            d.setSize(getActiveWindow().getSize());
-                            d.setVisible(true);
-                        } catch (Throwable t) {
-                            displayErrorMessage("Failed to display package details! " + CommonUtils.getFailureDetails(t), t);
-                        }
-                    }
+                    displayErrorMessage("Failed to display package details! " + CommonUtils.getFailureDetails(t), t);
                 }
             }
-        });
+        }
     }
     
     private int findDataRowIndex(DefaultTableModel model, int colIdx, String data) {

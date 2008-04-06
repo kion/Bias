@@ -4,8 +4,10 @@
 package bias;
 
 import java.io.File;
+import java.util.Collection;
 
 import bias.extension.Extension;
+import bias.i18n.I18nService;
 import bias.skin.Skin;
 import bias.utils.FSUtils;
 
@@ -19,10 +21,9 @@ public class Constants {
         EXPORT
     }
     
-    private static final String DIRNAME_ADDON_INFO = "ADDON-INFO";
-    
     public static final File ROOT_DIR = Launcher.getRootDir();
     public static final File ADDONS_DIR = new File(ROOT_DIR, "addons");
+    private static final String DIRNAME_ADDON_INFO = "ADDON-INFO";
     public static final File ADDON_INFO_DIR = new File(ADDONS_DIR, DIRNAME_ADDON_INFO);
     public static final File CONFIG_DIR = new File(ROOT_DIR, "conf");
     public static final File DATA_DIR = new File(ROOT_DIR, "data");
@@ -96,7 +97,6 @@ public class Constants {
     public static final String VALUES_SEPARATOR = "_";
     public static final String JAR_FILE_SUFFIX = ".jar";
     public static final String ZIP_FILE_SUFFIX = ".zip";
-    public static final String ADDON_DETAILS_FILENAME_SUFFIX = ".html";
     
     public static final String PROPERTY_VALUES_SEPARATOR = ",";
     
@@ -106,7 +106,7 @@ public class Constants {
     public static final String JAR_FILE_PATTERN = "(?i).+\\.jar$";
     public static final String JAR_FILE_PATTERN_DESCRIPTION = "Java Archive (JAR) file";
     public static final String JAR_FILE_ADDON_INFO_DIR_PATH = "META-INF/ADDON-INFO/";
-    public static final String JAR_FILE_ICONSET_REG_PATH = "META-INF/iconset.reg";
+    public static final String JAR_FILE_ICONSET_REG_PATH = "META-INF/ADDON-INFO/iconset.reg";
 
     public static final String ZIP_FILE_PATTERN = "(?i).+\\.zip$";
     public static final String ZIP_FILE_PATTERN_DESCRIPTION = "ZIP archive file";
@@ -119,6 +119,7 @@ public class Constants {
     public static final String UNINSTALL_CONFIG_FILE = "uninstall.conf";
     public static final String METADATA_FILE_NAME = "metadata.xml";
     public static final String ICONS_CONFIG_FILE = "icons.conf";
+    public static final String ADDON_INFO_FILENAME_SUFFIX = ".info.html";
     public static final String DATA_FILE_SUFFIX = ".data";
     public static final String TOOL_DATA_FILE_SUFFIX = ".tooldata";
     public static final String FILE_SUFFIX_PATTERN = "\\..*$";
@@ -205,5 +206,16 @@ public class Constants {
     public static final String XML_ELEMENT_ATTRIBUTE_PLACEMENT = "placement";
     public static final String XML_ELEMENT_ATTRIBUTE_ACTIVE_IDX = "active-idx";
     public static final String XML_ELEMENT_ATTRIBUTE_VALUE = "value";
+
+    public static final String LANGUAGES_LIST_FILENAME = "lang.properties";
+    public static final String MESSAGES_CHARSET = "UTF8";
+    public static final String MESSAGE_FILE_PATH = PATH_SEPARATOR + I18nService.class.getPackage().getName().replaceAll("\\.", PATH_SEPARATOR) + "/messages/";
+    public static final String MESSAGE_FILE_ENDING = ".properties";
+    public static final String MESSAGE_KEY_VALUE_SEPARATOR = "=";
+    public static final String MESSAGE_SEPARATOR = "\n+\r*";
+
+    public static final Collection<String> AVAILABLE_LANGUAGES = I18nService.getInstance().getAvailableLanguages();
+    public static final String DEFAULT_LANGUAGE = AVAILABLE_LANGUAGES.iterator().next();
+    public static final String DEFAULT_LOCALE = I18nService.getInstance().getLanguageLocale(DEFAULT_LANGUAGE);
 
 }

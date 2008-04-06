@@ -6,17 +6,21 @@ package bias;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import bias.annotation.PreferenceAnnotation;
-import bias.annotation.PreferenceEnableAnnotation;
-import bias.annotation.PreferenceValidationAnnotation;
+import bias.annotation.Preference;
+import bias.annotation.PreferenceChoice;
+import bias.annotation.PreferenceEnable;
+import bias.annotation.PreferenceNeedsRestart;
+import bias.annotation.PreferenceValidation;
 import bias.core.BackEnd;
 import bias.gui.FrontEnd;
+import bias.i18n.I18nService;
 import bias.utils.Validator;
 
 import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
@@ -80,7 +84,7 @@ public class Preferences {
         prefs.appendChild(rootNode);
         Field[] fields = Preferences.class.getDeclaredFields();
         for (final Field field : fields) {
-            PreferenceAnnotation prefAnn = field.getAnnotation(PreferenceAnnotation.class);
+            Preference prefAnn = field.getAnnotation(Preference.class);
             if (prefAnn != null) {
                 Element prefElement = prefs.createElement(Constants.XML_ELEMENT_PREFERENCE);
                 prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, field.getName());
@@ -116,10 +120,14 @@ public class Preferences {
     
     /* VALIDATION CLASSES SECTION */
     
-    // ********* interface *********
+    // ********* interfaces *********
 
     public static interface PreferenceValidator<T> {
         public void validate(T value) throws Exception;
+    }
+    
+    public static interface PreferenceChoiceProvider {
+        public Collection<String> getPreferenceChoices() throws Exception;
     }
     
     // ********* implementors *********
@@ -148,66 +156,86 @@ public class Preferences {
         }
     }
     
+    public static class PreferredLanguageChoiceProvider implements PreferenceChoiceProvider {
+        public Collection<String> getPreferenceChoices() throws Exception {
+            return I18nService.getInstance().getAvailableLanguages();
+        }
+    }
+    
     /* PREFERENCES DECLARATION SECTION */
     
-    @PreferenceAnnotation(
+    // TODO [P1] preferences should be internationalized as well (!)
+
+    // TODO [P1] add 'NeedsRestart' annotation (?)
+    
+    // TODO [P1] implement choice-type support
+    @Preference(
+            title = "Preferred language",
+            description = "Defines preferred language for GUI interface, messages etc.")
+    @PreferenceChoice(
+            providerClass = PreferredLanguageChoiceProvider.class)
+    @PreferenceNeedsRestart        
+    public String preferredLanguage = Constants.DEFAULT_LANGUAGE;
+    
+    @Preference(
             title = "Preferred date-time format:",
             description = "Defines preferred format for date-time rendering")
-    @PreferenceValidationAnnotation(validationClass = PreferredDateFormatValidator.class)        
+    @PreferenceValidation(
+            validationClass = PreferredDateFormatValidator.class)        
     public String preferredDateTimeFormat = "dd.MM.yyyy @ HH:mm:ss";
     
-    @PreferenceAnnotation(
+    @Preference(
             title = "Preferred timeout for network operations (in seconds):",
             description = "Defines preferred timeout for network operations (which will fail on timeout specified)")
     public int preferredTimeOut = 60;
     
-    @PreferenceAnnotation(
+    @Preference(
             title = "Show system tray icon",
             description = "Defines whether application can allocate space in system tray; allows to hide/restore application to/from system tray icon")
     public boolean useSysTrayIcon = false;
 
-    @PreferenceAnnotation(
+    @Preference(
             title = "Remain in system tray on window close",
             description = "Defines whether application should remain in system tray when application's window is closed")
     public boolean remainInSysTrayOnWindowClose = false;
     
-    @PreferenceAnnotation(
+    @Preference(
             title = "Hide main window on start",
             description = "Defines whether application should start with hidden main window (system tray icon will be shown in this case)")
-    @PreferenceEnableAnnotation(
+    @PreferenceEnable(
             enabledByField = "remainInSysTrayOnWindowClose", 
             enabledByValue = "true")        
     public boolean startHidden = false;
     
-    @PreferenceAnnotation(
+    @Preference(
             title = "Minimize to system tray",
             description = "Defines whether application should be minimized to system tray instead of task panel")
     public boolean minimizeToSysTray = false;
     
-    @PreferenceAnnotation(
+    @Preference(
             title = "Auto save on exit",
             description = "Defines whether user data have to be automatically saved on exit")
     public boolean autoSaveOnExit = false;
     
-    @PreferenceAnnotation(
+    @Preference(
             title = "Display confirmation dialogs",
             description = "Defines whether confirmation dialogs should appear whenever user tries to delete entry, uninstall add-on and so on.")
     public boolean displayConfirmationDialogs = true;
     
-    @PreferenceAnnotation(
+    @Preference(
             title = "Enable automatic update",
             description = "Application core and add-ons will be checked for updates on startup if this option is enabled.")
     public boolean enableAutoUpdate = true;
 
-    @PreferenceAnnotation(
+    @Preference(
             title = "Automatic update interval, in days (set to 0 to update on startup only): ",
             description = "Defines how often automatic update is performed")
-    @PreferenceEnableAnnotation(
+    @PreferenceEnable(
             enabledByField = "enableAutoUpdate", 
             enabledByValue = "true")        
     public int autoUpdateInterval = 7;
     
-    @PreferenceAnnotation(
+    @Preference(
             title = "Show memory usage information in status bar",
             description = "Defines if memory usage information should be shown in the status bar")
     public boolean showMemoryUsage = false;

@@ -9,4 +9,4 @@ package bias.extension;
  * @author kion
  */
 
-public interface Extension {}
+public interface Extension extends AddOn {}

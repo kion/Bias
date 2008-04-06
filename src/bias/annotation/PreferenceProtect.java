@@ -14,4 +14,4 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.FIELD})
-public @interface PreferenceProtectAnnotation {}
+public @interface PreferenceProtect {}

@@ -3,12 +3,22 @@
  */
 package bias.skin;
 
+import bias.extension.AddOn;
+import bias.i18n.I18nService;
+
 
 /**
  * @author kion
  */
 
-public abstract class Skin {
+public abstract class Skin implements AddOn {
+
+    /**
+     * Internationalization support
+     */
+    protected String getMessage(String key) {
+        return I18nService.getInstance().getMessages(getClass()).get(key);
+    }
     
     /**
      * Performs needed actions to activate certain Skin

@@ -8,12 +8,21 @@ import java.util.UUID;
 
 import javax.swing.JComponent;
 
+import bias.i18n.I18nService;
+
 /**
  * @author kion
  */
 
 public abstract class EntryExtension extends JComponent implements Extension {
 
+    /**
+     * Internationalization support
+     */
+    protected String getMessage(String key) {
+        return I18nService.getInstance().getMessages(getClass()).get(key);
+    }
+    
     private UUID id;
     
     private byte[] data;

@@ -3,6 +3,8 @@
  */
 package bias.extension;
 
+import bias.i18n.I18nService;
+
 
 
 
@@ -12,6 +14,13 @@ package bias.extension;
 
 public abstract class ToolExtension implements Extension {
 
+    /**
+     * Internationalization support
+     */
+    protected String getMessage(String key) {
+        return I18nService.getInstance().getMessages(getClass()).get(key);
+    }
+    
     private byte[] data;
     
     private byte[] settings;

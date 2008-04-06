@@ -9,6 +9,7 @@ import bias.Constants;
 import bias.Constants.TRANSFER_TYPE;
 import bias.core.BackEnd;
 import bias.core.TransferData;
+import bias.i18n.I18nService;
 import bias.utils.PropertiesUtils;
 
 
@@ -16,6 +17,13 @@ import bias.utils.PropertiesUtils;
  * @author kion
  */
 public abstract class TransferExtension implements Extension {
+    
+    /**
+     * Internationalization support
+     */
+    protected String getMessage(String key) {
+        return I18nService.getInstance().getMessages(getClass()).get(key);
+    }
     
     private byte[] settings;
     

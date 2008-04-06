@@ -736,6 +736,7 @@ public class BackEnd {
         }
     }
     
+    // FIXME [P1] stuff uninstalled during current session should not be exported (?)
     public TransferData exportData(
             DataCategory data,
             ExportConfiguration config) throws Throwable {
@@ -824,12 +825,17 @@ public class BackEnd {
         }
         // addons/libs
         if (config.isExportAddOnsAndLibs()) {
-            // 1) export addons/libs
+            Collection<String> addOnNames = new ArrayList<String>();
+            // 1) export addon-info files
+            for (File localAddOnInfo : Constants.CONFIG_DIR.listFiles(FILE_FILTER_EXT_SKIN_LIB_INFO)) {
+                FSUtils.duplicateFile(localAddOnInfo, new File(configDir, localAddOnInfo.getName()));
+                addOnNames.add(localAddOnInfo.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
+            }
+            // 2) export addons/libs
             File addonsDir = new File(exportDir, Constants.ADDONS_DIR.getName());
             if (!addonsDir.exists()) {
                 addonsDir.mkdir();
             }
-            Collection<String> addOnNames = new ArrayList<String>();
             Collection<String> updatedFiles = new ArrayList<String>();
             for (File file : Constants.ADDONS_DIR.listFiles(new FileFilter(){
                 public boolean accept(File pathname) {
@@ -839,18 +845,20 @@ public class BackEnd {
                 if (file.getName().startsWith(Constants.UPDATE_FILE_PREFIX)) {
                     File updatedFile = new File(Constants.ADDONS_DIR, file.getName().substring(Constants.UPDATE_FILE_PREFIX.length()));
                     updatedFiles.add(updatedFile.getName());
-                    File exportFile = new File(addonsDir, updatedFile.getName());
-                    FSUtils.duplicateFile(file, exportFile);
-                    addOnNames.add(exportFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
+                    String addOnName = updatedFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    if (addOnNames.contains(addOnName)) {
+                        File exportFile = new File(addonsDir, updatedFile.getName());
+                        FSUtils.duplicateFile(file, exportFile);
+                    }
                 } else {
-                    if (!updatedFiles.contains(file.getName())) {
+                    String addOnName = file.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                    if (!updatedFiles.contains(file.getName()) && addOnNames.contains(addOnName)) {
                         File exportFile = new File(addonsDir, file.getName());
                         FSUtils.duplicateFile(file, exportFile);
-                        addOnNames.add(exportFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
                     }
                 }
             }
-            // 2) export addon-info directories related to exported addons/libs
+            // 3) export addon-info directories related to exported addons/libs
             File addOnsInfoDir = new File(addonsDir, Constants.ADDON_INFO_DIR.getName());
             if (!addOnsInfoDir.exists()) {
                 addOnsInfoDir.mkdir();
@@ -863,10 +871,6 @@ public class BackEnd {
             }
             if (addOnsInfoDir.list().length == 0) {
                 addOnsInfoDir.delete();
-            }
-            // 3) export addon-info files
-            for (File localAddOnInfo : Constants.CONFIG_DIR.listFiles(FILE_FILTER_EXT_SKIN_LIB_INFO)) {
-                FSUtils.duplicateFile(localAddOnInfo, new File(configDir, localAddOnInfo.getName()));
             }
         }
         // app core
@@ -1630,12 +1634,13 @@ public class BackEnd {
             if (destination.exists()) {
                 FSUtils.delete(destination);
             }
+            String infoDirPath = Constants.JAR_FILE_ADDON_INFO_DIR_PATH + addOnName + Constants.PATH_SEPARATOR;
             JarEntry je;
             while ((je = in.getNextJarEntry()) != null) {
                 String name = je.getName();
-                if (!name.equals(Constants.JAR_FILE_ADDON_INFO_DIR_PATH) && name.startsWith(Constants.JAR_FILE_ADDON_INFO_DIR_PATH)) {
+                if (!name.equals(infoDirPath) && name.startsWith(infoDirPath)) {
                     if (name.endsWith(Constants.PATH_SEPARATOR)) {
-                        name = name.substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
+                        name = name.substring(infoDirPath.length());
                         if (!Validator.isNullOrBlank(name)) {
                             File dir = new File(destination, name);
                             dir.mkdirs();
@@ -1648,7 +1653,7 @@ public class BackEnd {
                             baos.write(buffer, 0, br);
                         }
                         baos.close();
-                        name = je.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
+                        name = je.getName().substring(infoDirPath.length());
                         name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
                         File file = new File(destination, name);
                         File dir = file.getParentFile();
@@ -1953,43 +1958,43 @@ public class BackEnd {
                         String iconSetDescription = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION);
                         aoi = new AddOnInfo(iconSetName, iconSetVersion, iconSetAuthor, iconSetDescription);
                     }
+                    String infoDirPath = null;
                     File destination = null;
                     if (aoi != null && !Validator.isNullOrBlank(aoi.getName())) {
                         destination = new File(Constants.ADDON_INFO_DIR, aoi.getName());
                         if (destination.exists()) {
                             FSUtils.delete(destination);
                         }
+                        infoDirPath = Constants.JAR_FILE_ADDON_INFO_DIR_PATH + aoi.getName() + Constants.PATH_SEPARATOR;
                     }
                     byte[] iconsetRegBytes = null;
                     JarEntry entry;                     
                     while ((entry = in.getNextJarEntry()) != null) {
                         String name = entry.getName();
-                        if (!name.equals(Constants.JAR_FILE_ADDON_INFO_DIR_PATH) && name.startsWith(Constants.JAR_FILE_ADDON_INFO_DIR_PATH)) {
-                            if (destination != null) {
-                                if (name.endsWith(Constants.PATH_SEPARATOR)) {
-                                    name = name.substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
-                                    if (!Validator.isNullOrBlank(name)) {
-                                        File dir = new File(destination, name);
-                                        dir.mkdirs();
-                                    }
-                                } else {
-                                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                    byte[] buffer = new byte[1024];
-                                    int br;
-                                    while ((br = in.read(buffer)) > 0) {
-                                        baos.write(buffer, 0, br);
-                                    }
-                                    baos.close();
-                                    name = entry.getName().substring(Constants.JAR_FILE_ADDON_INFO_DIR_PATH.length());
-                                    name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
-                                    File f = new File(destination, name);
-                                    File dir = f.getParentFile();
-                                    if (!dir.exists()) {
-                                        dir.mkdirs();
-                                    }
-                                    f.createNewFile();
-                                    FSUtils.writeFile(f, baos.toByteArray());
+                        if (infoDirPath != null && !name.equals(infoDirPath) && name.startsWith(infoDirPath)) {
+                            if (name.endsWith(Constants.PATH_SEPARATOR)) {
+                                name = name.substring(infoDirPath.length());
+                                if (!Validator.isNullOrBlank(name)) {
+                                    File dir = new File(destination, name);
+                                    dir.mkdirs();
                                 }
+                            } else {
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                byte[] buffer = new byte[1024];
+                                int br;
+                                while ((br = in.read(buffer)) > 0) {
+                                    baos.write(buffer, 0, br);
+                                }
+                                baos.close();
+                                name = entry.getName().substring(infoDirPath.length());
+                                name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
+                                File f = new File(destination, name);
+                                File dir = f.getParentFile();
+                                if (!dir.exists()) {
+                                    dir.mkdirs();
+                                }
+                                f.createNewFile();
+                                FSUtils.writeFile(f, baos.toByteArray());
                             }
                         } else {
                             if (!name.endsWith(Constants.PATH_SEPARATOR)) {
