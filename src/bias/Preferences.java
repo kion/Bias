@@ -166,9 +166,6 @@ public class Preferences {
     
     // TODO [P1] preferences should be internationalized as well (!)
 
-    // TODO [P1] add 'NeedsRestart' annotation (?)
-    
-    // TODO [P1] implement choice-type support
     @Preference(
             title = "Preferred language",
             description = "Defines preferred language for GUI interface, messages etc.")
