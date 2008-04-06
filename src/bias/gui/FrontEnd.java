@@ -1413,62 +1413,51 @@ public class FrontEnd extends JFrame {
         return data;
     }
     
-    private JPanel processPanel;
-    
     private JPanel getProcessPanel() {
-        if (processPanel == null) {
-            processPanel = new JPanel(new BorderLayout());
-            JPanel p = new JPanel(new FlowLayout());
-            p.add(new JLabel(
-                    Constants.HTML_PREFIX +
-                    Constants.HTML_COLOR_HIGHLIGHT_INFO + 
-                    "Please, wait while finalizing tasks are being performed..." +
-                    Constants.HTML_COLOR_SUFFIX +
-                    Constants.HTML_SUFFIX
-                    ));
-            processPanel.add(p, BorderLayout.NORTH);
-            processPanel.add(new JLabel(ICON_PROCESS), BorderLayout.CENTER);
-            JPanel p2 = new JPanel(new FlowLayout());
-            JLabel fql = new JLabel(
-                    Constants.HTML_PREFIX + 
-                    "<u>" + 
-                    Constants.HTML_COLOR_HIGHLIGHT_WARNING + 
-                    "Force exit (all incomplete tasks will be aborted)" +
-                    Constants.HTML_COLOR_SUFFIX + 
-                    "</u>" + 
-                    Constants.HTML_SUFFIX
-                    );
-            fql.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            fql.addMouseListener(new MouseAdapter(){
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    singleThreadExecutor.shutdownNow();
-                    BackEnd.getInstance().shutdown(0);
-                }
-            });
-            p2.add(fql);
-            processPanel.add(p2, BorderLayout.SOUTH);
-            processPanel.setBorder(new LineBorder(Color.GRAY, 7, true));
-        }
+        JPanel processPanel = new JPanel(new BorderLayout());
+        JPanel p = new JPanel(new FlowLayout());
+        p.add(new JLabel(
+                Constants.HTML_PREFIX +
+                Constants.HTML_COLOR_HIGHLIGHT_INFO + 
+                "Some tasks are still running, please wait them to finish..." +
+                Constants.HTML_COLOR_SUFFIX +
+                Constants.HTML_SUFFIX
+                ));
+        processPanel.add(p, BorderLayout.NORTH);
+        processPanel.add(new JLabel(ICON_PROCESS), BorderLayout.CENTER);
+        JPanel p2 = new JPanel(new FlowLayout());
+        JLabel fql = new JLabel(
+                Constants.HTML_PREFIX + 
+                "<u>" + 
+                Constants.HTML_COLOR_HIGHLIGHT_WARNING + 
+                "Force exit (all incomplete tasks will be aborted)" +
+                Constants.HTML_COLOR_SUFFIX + 
+                "</u>" + 
+                Constants.HTML_SUFFIX
+                );
+        fql.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        fql.addMouseListener(new MouseAdapter(){
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                singleThreadExecutor.shutdownNow();
+                BackEnd.getInstance().shutdown(0);
+            }
+        });
+        p2.add(fql);
+        processPanel.add(p2, BorderLayout.SOUTH);
+        processPanel.setBorder(new LineBorder(Color.GRAY, 7, true));
         return processPanel;
     }
     
-    private JDialog finalizeDialog;
     private void finalizeUI() {
-        syncExecute(new Runnable(){
-            public void run() {
-                if (finalizeDialog == null) {
-                    finalizeDialog = new JDialog(getActiveWindow(), ModalityType.MODELESS);
-                    finalizeDialog.setUndecorated(true);
-                    finalizeDialog.setContentPane(getProcessPanel());
-                    finalizeDialog.pack();
-                    finalizeDialog.setLocation(
-                            getActiveWindow().getX() + (getActiveWindow().getWidth() - finalizeDialog.getWidth()) / 2, 
-                            getActiveWindow().getY() + (getActiveWindow().getHeight() - finalizeDialog.getHeight()) / 2);
-                    finalizeDialog.setVisible(true);
-                }
-            }
-        });
+        JDialog finalizeDialog = new JDialog(getActiveWindow(), ModalityType.MODELESS);
+        finalizeDialog.setUndecorated(true);
+        finalizeDialog.setContentPane(getProcessPanel());
+        finalizeDialog.pack();
+        finalizeDialog.setLocation(
+                getActiveWindow().getX() + (getActiveWindow().getWidth() - finalizeDialog.getWidth()) / 2, 
+                getActiveWindow().getY() + (getActiveWindow().getHeight() - finalizeDialog.getHeight()) / 2);
+        finalizeDialog.setVisible(true);
     }
     
     private static ExecutorService cachedThreadPool;
