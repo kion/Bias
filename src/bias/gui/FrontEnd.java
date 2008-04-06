@@ -4213,7 +4213,6 @@ public class FrontEnd extends JFrame {
         }
     };
     
-    // TODO [P1] handle 'NeedsRestart' annotation
     private PreferencesAction preferencesAction = new PreferencesAction();
     private class PreferencesAction extends AbstractAction {
         private static final long serialVersionUID = 1L;

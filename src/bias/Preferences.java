@@ -16,7 +16,6 @@ import org.w3c.dom.NodeList;
 import bias.annotation.Preference;
 import bias.annotation.PreferenceChoice;
 import bias.annotation.PreferenceEnable;
-import bias.annotation.PreferenceNeedsRestart;
 import bias.annotation.PreferenceValidation;
 import bias.core.BackEnd;
 import bias.gui.FrontEnd;
@@ -167,11 +166,10 @@ public class Preferences {
     // TODO [P1] preferences should be internationalized as well (!)
 
     @Preference(
-            title = "Preferred language",
+            title = "Preferred language (needs restart)",
             description = "Defines preferred language for GUI interface, messages etc.")
     @PreferenceChoice(
             providerClass = PreferredLanguageChoiceProvider.class)
-    @PreferenceNeedsRestart        
     public String preferredLanguage = Constants.DEFAULT_LANGUAGE;
     
     @Preference(
