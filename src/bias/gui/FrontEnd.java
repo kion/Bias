@@ -192,6 +192,8 @@ public class FrontEnd extends JFrame {
     
     private static final String DEFAULT_SKIN = "DefaultSkin";
 
+    // TODO [P1] implement language-selection-on-first-start feature 
+    //           (and first-time-start screen in general that will contain this option)
     private static final String LOCALE = I18nService.getInstance().getLanguageLocale(Preferences.getInstance().preferredLanguage);
     
     /**
