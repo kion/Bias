@@ -79,7 +79,7 @@ public class MainEntry extends ToolExtension implements BeforeSaveEventListener 
     public byte[] configure() throws Throwable {
         initSettings();
         Properties props = PropertiesUtils.deserializeProperties(settings);
-        JLabel meLabel = new JLabel("Main entry (to switch to before save):");
+        JLabel meLabel = new JLabel(getMessage("main.entry"));
         JComboBox meCB = new JComboBox();
         meCB.addItem(Constants.EMPTY_STR);
         Map<UUID, VisualEntryDescriptor> veds = FrontEnd.getVisualEntryDescriptors();
@@ -89,7 +89,7 @@ public class MainEntry extends ToolExtension implements BeforeSaveEventListener 
         if (mainEntryId != null) {
             meCB.setSelectedItem(veds.get(mainEntryId));
         }
-        JCheckBox sCB = new JCheckBox("Switch to main entry only before exit");
+        JCheckBox sCB = new JCheckBox(getMessage("switch.before.exit.only"));
         sCB.setSelected(switchOnlyBeforeExit);
         JOptionPane.showMessageDialog(FrontEnd.getActiveWindow(), new Component[]{ meLabel, meCB, sCB }, "Configuration", JOptionPane.QUESTION_MESSAGE);
         if (!Validator.isNullOrBlank(meCB.getSelectedItem())) {

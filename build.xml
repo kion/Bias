@@ -239,7 +239,7 @@
          ================================= -->
 	<target name="Build_Extension_MainEntry" description="MainEntry Add-On">
 		<delete dir="build" includes="MainEntry*.jar" />
-		<jar basedir="bin" destfile="build/MainEntry_${MainEntry_Version}.jar" includes="bias/extension/MainEntry/** bias/res/MainEntry/**">
+		<jar basedir="bin" destfile="build/MainEntry_${MainEntry_Version}.jar" includes="bias/extension/MainEntry/** bias/res/MainEntry/** bias/i18n/MainEntry/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/MainEntry/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="MainEntry" />

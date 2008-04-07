@@ -4,8 +4,6 @@
 package bias.i18n;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -40,6 +38,8 @@ public class I18nService {
         return instance;
     }
     
+    // TODO [P1] maybe it's better to move addon's i18n-message files to the 
+    //           appropriate packages (.../AddOn/i18n/...) instead of ADDON-INFO dir ?... 
     public Map<String, String> getMessages(Class<? extends AddOn> addOnClass) {
         Map<String, String> messages = null;
         try {
@@ -49,18 +49,15 @@ public class I18nService {
             messages = addOnMessages.get(addOnClass);
             if (messages == null) {
                 String locale = getLanguageLocale(Preferences.getInstance().preferredLanguage);
-                File addOnInfoDir = new File(Constants.ADDON_INFO_DIR, addOnClass.getSimpleName());
-                if (addOnInfoDir.exists()) {
-                    File messagesFile = new File(addOnInfoDir, locale + Constants.MESSAGE_FILE_ENDING);
-                    if (!messagesFile.exists()) {
-                        locale = Constants.DEFAULT_LOCALE;
-                    }
-                    messagesFile = new File(addOnInfoDir, locale + Constants.MESSAGE_FILE_ENDING);
-                    FileInputStream is = new FileInputStream(messagesFile);
-                    messages = initLocale(is);
-                    addOnMessages.put(addOnClass, messages);
-                    is.close();
+                InputStream is = addOnClass.getResourceAsStream(
+                        Constants.MESSAGES_PATH_PREFIX + addOnClass.getSimpleName() + Constants.PATH_SEPARATOR + locale + Constants.MESSAGE_FILE_ENDING);
+                if (is == null) {
+                    is = addOnClass.getResourceAsStream(
+                            Constants.MESSAGES_PATH_PREFIX + addOnClass.getSimpleName() + Constants.PATH_SEPARATOR + Constants.DEFAULT_LOCALE + Constants.MESSAGE_FILE_ENDING);
                 }
+                messages = initLocale(is);
+                addOnMessages.put(addOnClass, messages);
+                is.close();
             }
         } catch (Throwable t) {
             System.err.println("Failed to initialize internationalization support for class '" + addOnClass.getName() + "'!");
