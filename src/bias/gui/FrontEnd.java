@@ -192,6 +192,8 @@ public class FrontEnd extends JFrame {
     
     private static final String DEFAULT_SKIN = "DefaultSkin";
 
+    private static final Map<String, String> MESSAGES = I18nService.getInstance().getMessages();
+    
     // TODO [P1] implement language-selection-on-first-start feature 
     //           (and first-time-start screen in general that will contain this option)
     private static final String LOCALE = I18nService.getInstance().getLanguageLocale(Preferences.getInstance().preferredLanguage);
@@ -680,7 +682,7 @@ public class FrontEnd extends JFrame {
             try {
                 // initialize tray icon
                 if (trayIcon == null) {
-                    trayIcon = new TrayIcon(ICON_APP.getImage(), instance.messages.get("main.window.title"));
+                    trayIcon = new TrayIcon(ICON_APP.getImage(), MESSAGES.get("main.window.title"));
                     trayIcon.setImageAutoSize(true);
                     trayIcon.addMouseListener(new MouseAdapter(){
                         @Override
@@ -842,8 +844,6 @@ public class FrontEnd extends JFrame {
         return false;
     }
     
-    private Map<String, String> messages = I18nService.getInstance().getMessages();
-    
     /**
      * This method initializes this
      * 
@@ -853,7 +853,7 @@ public class FrontEnd extends JFrame {
         this.setSize(new Dimension(772, 535));
         try {
             this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-            this.setTitle(messages.get("main.window.title"));
+            this.setTitle(MESSAGES.get("main.window.title"));
             this.setIconImage(ICON_APP.getImage());
             this.setContentPane(getJContentPane());
 
@@ -1922,16 +1922,19 @@ public class FrontEnd extends JFrame {
     }
     
     public static void displayErrorMessage(Throwable t) {
-        JOptionPane.showMessageDialog(getActiveWindow(), CommonUtils.getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
+        Splash.hideSplash();
         t.printStackTrace(System.err);
+        JOptionPane.showMessageDialog(getActiveWindow(), CommonUtils.getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     public static void displayErrorMessage(String message, Throwable t) {
-        JOptionPane.showMessageDialog(getActiveWindow(), message, "Error", JOptionPane.ERROR_MESSAGE);
+        Splash.hideSplash();
         t.printStackTrace(System.err);
+        JOptionPane.showMessageDialog(getActiveWindow(), message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     public static void displayErrorMessage(String message) {
+        Splash.hideSplash();
         JOptionPane.showMessageDialog(getActiveWindow(), message, "Error", JOptionPane.ERROR_MESSAGE);
     }
     
@@ -4243,9 +4246,9 @@ public class FrontEnd extends JFrame {
                             String type = field.getType().getSimpleName().toLowerCase();
                             if ("string".equals(type)) {
                                 prefPanel = new JPanel(new GridLayout(2, 1));
-                                JLabel prefTitle = new JLabel(messages.get(prefAnn.title()) + Constants.BLANK_STR);
+                                JLabel prefTitle = new JLabel(MESSAGES.get(prefAnn.title()) + Constants.BLANK_STR);
                                 if (!Validator.isNullOrBlank(prefAnn.description())) {
-                                    prefTitle.setToolTipText(messages.get(prefAnn.description()));
+                                    prefTitle.setToolTipText(MESSAGES.get(prefAnn.description()));
                                 }
                                 prefPanel.add(prefTitle);
                                 if (field.isAnnotationPresent(PreferenceChoice.class)) {
@@ -4297,16 +4300,16 @@ public class FrontEnd extends JFrame {
                                 }
                             } else if ("boolean".equals(type)) {
                                 prefPanel = new JPanel(new GridLayout(1, 1));
-                                prefControl = new JCheckBox(messages.get(prefAnn.title()));
+                                prefControl = new JCheckBox(MESSAGES.get(prefAnn.title()));
                                 if (!Validator.isNullOrBlank(prefAnn.description())) {
-                                    ((JCheckBox) prefControl).setToolTipText(messages.get(prefAnn.description()));
+                                    ((JCheckBox) prefControl).setToolTipText(MESSAGES.get(prefAnn.description()));
                                 }
                                 ((JCheckBox) prefControl).setSelected(field.getBoolean(Preferences.getInstance()));
                             } else if ("int".equals(type)) {
                                 prefPanel = new JPanel(new GridLayout(2, 1));
-                                JLabel prefTitle = new JLabel(messages.get(prefAnn.title()) + Constants.BLANK_STR);
+                                JLabel prefTitle = new JLabel(MESSAGES.get(prefAnn.title()) + Constants.BLANK_STR);
                                 if (!Validator.isNullOrBlank(prefAnn.description())) {
-                                    prefTitle.setToolTipText(messages.get(prefAnn.description()));
+                                    prefTitle.setToolTipText(MESSAGES.get(prefAnn.description()));
                                 }
                                 prefPanel.add(prefTitle);
                                 SpinnerNumberModel sm = new SpinnerNumberModel();
