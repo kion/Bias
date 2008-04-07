@@ -13,4 +13,28 @@ display.confirmation.dialogs.preference.description == Requests user's confirmat
 enable.auto.update.preference.title == Enable automatic update (requires internet connection)
 auto.update.interval.preference.title == Automatic update interval, in days (set to 0 to update on startup only)
 show.memory.usage.preference.title == Show memory usage information in status bar
-export.info == <html><b><i><font color="blue">Note: there're two export modes available:<br/><ul><li>static - only selected nodes will be exported</li><li>dynamic - in addition to nodes selected for static export, collapsed nodes can be selected<br/>to enable recursive export; in this case all nested nodes will be exported as well<br/>(this is especially handy when stored configurations are used)</li></ul></font></i></b></html>
+export.info == Note: there're two export modes available:<br/><ul><li>static - only selected nodes will be exported</li><li>dynamic - in addition to nodes selected for static export, collapsed nodes can be selected<br/>to enable recursive export; in this case all nested nodes will be exported as well<br/>(this is especially handy when stored configurations are used)</li></ul>
+loaded.ready == loaded & ready
+category.added == category '$' added
+entry.added == entry '$' added
+category.deleted == category '$' deleted
+entry.deleted == entry '$' deleted
+preferences.applied == preferences applied
+export.done == export done
+import.done == import done
+password.changed == password changed
+modified.by == modified by
+data.saved == data saved
+add.category.to.rootlevel == Add category to the root level
+add.entry.to.rootlevel == Add entry to the root level
+tabs.placement == Choose tabs placement
+icon == Icon
+caption == Caption
+type == Type
+new.category == New category
+new.entry == New entry
+add.category == add category
+add.entry == add entry
+no.entry.extensions.installed == There're no entry extensions installed currently.<br/>Entries can't be added before there's at least one entry extension installed.
+failed.to.add.category = Failed to add category
+failed.to.add.entry == Failed to add entry.<br/>Some entry extension(s) may be broken.<br/>Try to open add-ons management dialog, <br/>and uninstall/reinstall broken extensions.

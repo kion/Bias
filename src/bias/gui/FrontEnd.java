@@ -216,7 +216,10 @@ public class FrontEnd extends JFrame {
             new Placement(JTabbedPane.BOTTOM)
         };
     
-    private static final JLabel exportInfoLabel = new JLabel(MESSAGES.get("export.info"));
+    private static final JLabel exportInfoLabel = new JLabel(
+            Constants.HTML_PREFIX + 
+            "<b><i><font color=\"blue\">" + MESSAGES.get("export.info") + "</font></i></b>" + 
+            Constants.HTML_SUFFIX);
     
     private static AddOnFileChooser addOnFileChooser = new AddOnFileChooser();
 
@@ -540,7 +543,7 @@ public class FrontEnd extends JFrame {
     }
 
     public static void startup() {
-        displayStatusBarMessage("loaded & ready");
+        displayStatusBarMessage(MESSAGES.get("loaded.ready"));
         if (Preferences.getInstance().startHidden) {
             showSysTrayIcon();
             if (!sysTrayIconVisible) {
@@ -597,7 +600,7 @@ public class FrontEnd extends JFrame {
             }
         }
         handleAutoUpdate(isStartingUp);
-        displayStatusBarMessage("preferences applied");
+        displayStatusBarMessage(MESSAGES.get("preferences.applied"));
     }
     
     private static JPanel memUsageIndicatorPanel = null;
@@ -1292,7 +1295,7 @@ public class FrontEnd extends JFrame {
                 }
             }
         });
-        displayStatusBarMessage("data saved");
+        displayStatusBarMessage(MESSAGES.get("data.saved"));
         fireAfterSaveEvent(new SaveEvent(beforeExit));
     }
     
@@ -2068,6 +2071,14 @@ public class FrontEnd extends JFrame {
         });
     }
     
+    private static String parseMessageVars(String message, String...vars) {
+        String modifiedMsg = message;
+        for (String var : vars) {
+            modifiedMsg = modifiedMsg.replaceFirst("\\$", var);
+        }
+        return modifiedMsg;
+    }
+    
     private JList getStatusBarMessagesList() {
         if (statusBarMessagesList == null) {
             statusBarMessagesList = new JList(new DefaultListModel());
@@ -2075,19 +2086,20 @@ public class FrontEnd extends JFrame {
         return statusBarMessagesList;
     }
     
-    public static void displayStatusBarErrorMessage(final String message) {
-        displayStatusBarMessage(message, true);
+    public static void displayStatusBarErrorMessage(String message, String...vars) {
+        displayStatusBarMessage(message, true, vars);
     }
     
-    public static void displayStatusBarMessage(final String message) {
-        displayStatusBarMessage(message, false);
+    public static void displayStatusBarMessage(String message, String...vars) {
+        displayStatusBarMessage(message, false, vars);
     }
     
-    private static void displayStatusBarMessage(final String message, final boolean isError) {
+    private static void displayStatusBarMessage(final String message, final boolean isError, final String...vars) {
         // TODO [P2] this should be synchronized by status bar only (not whole application)
         syncExecute(new Runnable(){
             public void run() {
                 if (instance != null) {
+                    String msg = parseMessageVars(message, vars);
                     final String timestamp = dateFormat.format(new Date()) + " # ";
                     String iaText = Constants.BLANK_STR + timestamp;
                     for (int i = 0; i < iaText.length(); i++) {
@@ -2098,7 +2110,7 @@ public class FrontEnd extends JFrame {
                             // ignore
                         }
                     }
-                    String msg = Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_OK) + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX;
+                    msg = Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_OK) + msg + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX;
                     instance.getJLabelStatusBarMsg().setText(msg);
                     try {
                         Thread.sleep(250);
@@ -2704,7 +2716,7 @@ public class FrontEnd extends JFrame {
                     try {
                         BackEnd.setPassword(currPass, newPass);
                         displayMessage("Password has been successfully changed!");
-                        displayStatusBarMessage("password changed");
+                        displayStatusBarMessage(MESSAGES.get("password.changed"));
                     } catch (Exception ex) {
                         displayErrorMessage("Failed to change password!" + Constants.NEW_LINE + ex.getMessage(), ex);
                     }
@@ -2719,7 +2731,7 @@ public class FrontEnd extends JFrame {
         
         public AddEntryAction() {
             putValue(Action.NAME, "addEntry");
-            putValue(Action.SHORT_DESCRIPTION, "add entry");
+            putValue(Action.SHORT_DESCRIPTION, MESSAGES.get("add.entry"));
             putValue(Action.SMALL_ICON, uiIcons.getIconEntry());
         }
         
@@ -2728,8 +2740,7 @@ public class FrontEnd extends JFrame {
                 Map<String, Class<? extends EntryExtension>> extensions = ExtensionFactory.getAnnotatedEntryExtensionClasses();
                 if (extensions.isEmpty()) {
                     displayMessage(
-                            "You have no any extensions installed currently." + Constants.NEW_LINE +
-                            "You can't add entries before you have at least one extension installed.");
+                            Constants.HTML_PREFIX + MESSAGES.get("no.entry.extensions.installed") + Constants.HTML_SUFFIX);
                 } else {
                     if (getJTabbedPane().getTabCount() == 0) {
                         if (!defineRootPlacement()) {
@@ -2740,9 +2751,9 @@ public class FrontEnd extends JFrame {
                     if (getJTabbedPane().getTabCount() == 0 || getJTabbedPane().getSelectedIndex() == -1) {
                         currentTabPane = getJTabbedPane();
                     } else {
-                        addToRootCB = new JCheckBox("Add entry to the root level");
+                        addToRootCB = new JCheckBox(MESSAGES.get("add.entry.to.rootlevel"));
                     }
-                    JLabel entryTypeLabel = new JLabel("Type:");
+                    JLabel entryTypeLabel = new JLabel(MESSAGES.get("type"));
                     JComboBox entryTypeComboBox = new JComboBox();
                     for (String entryType : extensions.keySet()) {
                         entryTypeComboBox.addItem(entryType);
@@ -2751,17 +2762,17 @@ public class FrontEnd extends JFrame {
                         entryTypeComboBox.setSelectedItem(lastAddedEntryType);
                     }
                     entryTypeComboBox.setEditable(false);
-                    JLabel icLabel = new JLabel("Choose icon:");
+                    JLabel icLabel = new JLabel(MESSAGES.get("icon"));
                     JComboBox iconChooser = new JComboBox();
                     iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
                     for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                         iconChooser.addItem(icon);
                     }
-                    JLabel cLabel = new JLabel("Caption:");
+                    JLabel cLabel = new JLabel(MESSAGES.get("caption"));
                     String caption = JOptionPane.showInputDialog(
                             FrontEnd.this, 
                             new Component[] { addToRootCB, entryTypeLabel, entryTypeComboBox, icLabel, iconChooser, cLabel },
-                            "New entry", 
+                            MESSAGES.get("new.entry"), 
                             JOptionPane.QUESTION_MESSAGE);
                     if (caption != null) {
                         String typeDescription = (String) entryTypeComboBox.getSelectedItem();
@@ -2782,16 +2793,12 @@ public class FrontEnd extends JFrame {
                             if (icon != null) {
                                 tabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
                             }
-                            displayStatusBarMessage("entry '" + caption + "' added");
+                            displayStatusBarMessage(MESSAGES.get("entry.added"), caption);
                         }
                     }
                 }
             } catch (Throwable t) {
-                displayErrorMessage("Unable to add entry." + Constants.NEW_LINE +
-                                    "Some extension(s) may be broken." + Constants.NEW_LINE +
-                                    "Try to open extensions management dialog, " +
-                                    "it will autodetect and remove broken extensions." + Constants.NEW_LINE +
-                                    "After that, try to add entry again.", t);
+                displayErrorMessage(Constants.HTML_PREFIX + MESSAGES.get("failed.to.add.entry") + Constants.HTML_SUFFIX, t);
             }
         }
     };
@@ -2941,8 +2948,9 @@ public class FrontEnd extends JFrame {
                     if (currentTabPane.getTabCount() > 0) {
                         if (confirmedDelete()) {
                             String caption = currentTabPane.getTitleAt(currentTabPane.getSelectedIndex());
+                            boolean isCategory = currentTabPane.getSelectedComponent() instanceof JTabbedPane;
                             currentTabPane.remove(currentTabPane.getSelectedIndex());
-                            displayStatusBarMessage("entry '" + caption + "' deleted");
+                            displayStatusBarMessage(MESSAGES.get(isCategory ? "category.deleted" : "entry.deleted"), caption);
                             currentTabPane = getActiveTabPane(currentTabPane);
                         }
                     } else {
@@ -2951,7 +2959,7 @@ public class FrontEnd extends JFrame {
                             if (confirmedDelete()) {
                                 String caption = parentTabPane.getTitleAt(parentTabPane.getSelectedIndex());
                                 parentTabPane.remove(currentTabPane);
-                                displayStatusBarMessage("category '" + caption + "' deleted");
+                                displayStatusBarMessage(MESSAGES.get("category.deleted"), caption);
                                 currentTabPane = getActiveTabPane(parentTabPane);
                             }
                         }
@@ -3258,7 +3266,7 @@ public class FrontEnd extends JFrame {
                                                         label.setText("<html><font color=green>Data import - Completed</font></html>");
                                                         processModel.addElement("Data have been successfully imported.");
                                                         autoscrollList(processList);
-                                                        StringBuffer sb = new StringBuffer("import done");
+                                                        StringBuffer sb = new StringBuffer(MESSAGES.get("import.done"));
                                                         Properties meta = td.getMetaData();
                                                         if (meta != null && !meta.isEmpty()) {
                                                             sb.append(" (");
@@ -3269,7 +3277,7 @@ public class FrontEnd extends JFrame {
                                                             String user = meta.getProperty(Constants.META_DATA_USERNAME);
                                                             if (!Validator.isNullOrBlank(user)) {
                                                                 sb.append(", ");
-                                                                sb.append("modified by " + user);
+                                                                sb.append(MESSAGES.get("modified.by") + Constants.BLANK_STR + user);
                                                             }
                                                             String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
                                                             if (!Validator.isNullOrBlank(timestamp)) {
@@ -3410,7 +3418,7 @@ public class FrontEnd extends JFrame {
                         label.setText("<html><font color=green>Data import - Completed</font></html>");
                         processLabel.setText("Data have been successfully imported.");
                     }
-                    StringBuffer sb = new StringBuffer("import done ('" + configName + "'");
+                    StringBuffer sb = new StringBuffer(MESSAGES.get("import.done") + " ('" + configName + "'");
                     Properties meta = td.getMetaData();
                     if (meta != null && !meta.isEmpty()) {
                         String size = meta.getProperty(Constants.META_DATA_FILESIZE);
@@ -3768,7 +3776,7 @@ public class FrontEnd extends JFrame {
                                                     label.setText("<html><font color=green>Data export - Completed</font></html>");
                                                     processModel.addElement("Data have been successfully transferred.");
                                                     autoscrollList(processList);
-                                                    StringBuffer sb = new StringBuffer("export done");
+                                                    StringBuffer sb = new StringBuffer(MESSAGES.get("export.done"));
                                                     Properties meta = td.getMetaData();
                                                     if (meta != null && !meta.isEmpty()) {
                                                         sb.append(" (");
@@ -3897,7 +3905,7 @@ public class FrontEnd extends JFrame {
                             label.setText("<html><font color=green>Data export - Completed</font></html>");
                             processLabel.setText("Data have been successfully exported.");
                         }
-                        StringBuffer sb = new StringBuffer("export done ('" + configName + "'");
+                        StringBuffer sb = new StringBuffer(MESSAGES.get("export.done") + " ('" + configName + "'");
                         Properties meta = td.getMetaData();
                         if (meta != null && !meta.isEmpty()) {
                             String size = meta.getProperty(Constants.META_DATA_FILESIZE);
@@ -4040,7 +4048,7 @@ public class FrontEnd extends JFrame {
         
         public AddCategoryAction() {
             putValue(Action.NAME, "addCategory");
-            putValue(Action.SHORT_DESCRIPTION, "add category");
+            putValue(Action.SHORT_DESCRIPTION, MESSAGES.get("add.category"));
             putValue(Action.SMALL_ICON, uiIcons.getIconCategory());
         }
         
@@ -4055,24 +4063,24 @@ public class FrontEnd extends JFrame {
                 if (getJTabbedPane().getTabCount() == 0 || getJTabbedPane().getSelectedIndex() == -1) {
                     currentTabPane = getJTabbedPane();
                 } else {
-                    addToRootCB = new JCheckBox("Add category to the root level");
+                    addToRootCB = new JCheckBox(MESSAGES.get("add.category.to.rootlevel"));
                 }
-                JLabel pLabel = new JLabel("Choose tabs placement:");
+                JLabel pLabel = new JLabel(MESSAGES.get("tabs.placement"));
                 JComboBox placementsChooser = new JComboBox();
                 for (Placement placement : PLACEMENTS) {
                     placementsChooser.addItem(placement);
                 }
-                JLabel icLabel = new JLabel("Choose icon:");
+                JLabel icLabel = new JLabel(MESSAGES.get("icon"));
                 JComboBox iconChooser = new JComboBox();
                 iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                     iconChooser.addItem(icon);
                 }
-                JLabel cLabel = new JLabel("Caption:");
+                JLabel cLabel = new JLabel(MESSAGES.get("caption"));
                 String categoryCaption = JOptionPane.showInputDialog(
                         FrontEnd.this, 
                         new Component[] { addToRootCB, pLabel, placementsChooser, icLabel, iconChooser, cLabel },
-                        "New category", 
+                        MESSAGES.get("new.category"), 
                         JOptionPane.QUESTION_MESSAGE);
                 if (categoryCaption != null) {
                     JTabbedPane categoryTabPane = new JTabbedPane();
@@ -4088,11 +4096,11 @@ public class FrontEnd extends JFrame {
                     if (icon != null) {
                         parentTabPane.setIconAt(parentTabPane.getSelectedIndex(), icon);
                     }
-                    displayStatusBarMessage("category '" + categoryCaption + "' added");
+                    displayStatusBarMessage(MESSAGES.get("category.added"), categoryCaption);
                     currentTabPane = (JTabbedPane) categoryTabPane.getParent();
                 }
             } catch (Exception ex) {
-                displayErrorMessage(ex);
+                displayErrorMessage(MESSAGES.get("failed.to.add.category"), ex);
             }
         }
     };
