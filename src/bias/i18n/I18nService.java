@@ -38,8 +38,6 @@ public class I18nService {
         return instance;
     }
     
-    // TODO [P1] maybe it's better to move addon's i18n-message files to the 
-    //           appropriate packages (.../AddOn/i18n/...) instead of ADDON-INFO dir ?... 
     public Map<String, String> getMessages(Class<? extends AddOn> addOnClass) {
         Map<String, String> messages = null;
         try {
