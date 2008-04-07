@@ -208,11 +208,11 @@ public class Constants {
     public static final String XML_ELEMENT_ATTRIBUTE_VALUE = "value";
 
     public static final String MESSAGES_PATH_PREFIX = PATH_SEPARATOR + I18nService.class.getPackage().getName().replaceAll("\\.", PATH_SEPARATOR) + PATH_SEPARATOR;
-    public static final String LANGUAGES_LIST_FILENAME = "lang.properties";
+    public static final String LANGUAGES_LIST_FILENAME = "lang.list";
     public static final String MESSAGES_CHARSET = "UTF8";
     public static final String MESSAGE_FILE_PATH = PATH_SEPARATOR + I18nService.class.getPackage().getName().replaceAll("\\.", PATH_SEPARATOR) + PATH_SEPARATOR;
-    public static final String MESSAGE_FILE_ENDING = ".properties";
-    public static final String MESSAGE_KEY_VALUE_SEPARATOR = "=";
+    public static final String MESSAGE_FILE_ENDING = ".msg";
+    public static final String MESSAGE_KEY_VALUE_SEPARATOR = "==";
     public static final String MESSAGE_SEPARATOR = "\n+\r*";
 
     public static final Collection<String> AVAILABLE_LANGUAGES = I18nService.getInstance().getAvailableLanguages();

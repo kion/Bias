@@ -216,20 +216,7 @@ public class FrontEnd extends JFrame {
             new Placement(JTabbedPane.BOTTOM)
         };
     
-    private static final JLabel recursiveExportInfoLabel = new JLabel(
-            "<html><b><i><font color=\"blue\">" +
-            "Note: there're two export modes available:<br/>" +
-            "<ul>" + 
-            "<li>" +
-            "static - only selected nodes will be exported" +
-            "</li>" + 
-            "<li>" +
-            "dynamic - in addition to nodes selected for static export, collapsed nodes can be selected<br/>" +
-            "to enable recursive export; in this case all nested nodes will be exported as well<br/>" +
-            "(this is especially handy when stored configurations are used)" + 
-            "</li>" + 
-            "</ul>" + 
-            "</font></i></b></html>");
+    private static final JLabel exportInfoLabel = new JLabel(MESSAGES.get("export.info"));
     
     private static AddOnFileChooser addOnFileChooser = new AddOnFileChooser();
 
@@ -3677,7 +3664,7 @@ public class FrontEnd extends JFrame {
                             exportPanel.add(passPanel, BorderLayout.SOUTH);
                             if (dataTree != null) {
                                 JPanel treePanel = new JPanel(new BorderLayout());
-                                treePanel.add(recursiveExportInfoLabel, BorderLayout.NORTH);
+                                treePanel.add(exportInfoLabel, BorderLayout.NORTH);
                                 treePanel.add(new JScrollPane(dataTree), BorderLayout.CENTER);
                                 exportPanel.add(treePanel, BorderLayout.EAST);
                             }
