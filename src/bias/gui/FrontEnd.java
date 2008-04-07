@@ -218,7 +218,7 @@ public class FrontEnd extends JFrame {
     
     private static final JLabel exportInfoLabel = new JLabel(
             Constants.HTML_PREFIX + 
-            "<b><i><font color=\"blue\">" + MESSAGES.get("export.info") + "</font></i></b>" + 
+            "<b><i>" + Constants.HTML_COLOR_HIGHLIGHT_INFO + MESSAGES.get("export.info") + Constants.HTML_COLOR_SUFFIX + "</i></b>" + 
             Constants.HTML_SUFFIX);
     
     private static AddOnFileChooser addOnFileChooser = new AddOnFileChooser();
@@ -715,7 +715,7 @@ public class FrontEnd extends JFrame {
             Splash.hideSplash();
             displayErrorMessage(
                     "Bias has failed to load data!" + Constants.NEW_LINE +
-                    "It seems that you have typed wrong password...", gse);
+                    MESSAGES.get("wrong.password"), gse);
             BackEnd.getInstance().shutdown(-1);
         } catch (Throwable t) {
             Splash.hideSplash();
@@ -780,9 +780,9 @@ public class FrontEnd extends JFrame {
             // inform user about update complete
             JOptionPane.showMessageDialog(
                     getActiveWindow(), 
-                    "<html>Automatic update complete<br/><br/>" +
+                    Constants.HTML_PREFIX + "Automatic update complete<br/><br/>" +
                     "<i>(Note: automatic update can be disabled via preferences option 'Enable automatic update',<br>" +
-                    "update interval can be adjusted via preferences option 'Automatic update interval')</i><html>");
+                    "update interval can be adjusted via preferences option 'Automatic update interval')</i>" + Constants.HTML_SUFFIX);
         }
     };
 
@@ -1015,7 +1015,7 @@ public class FrontEnd extends JFrame {
                 }
             } catch (Throwable t) {
                 displayErrorMessage(
-                        "<html>Extension <i>" + extName + "</i> failed to serialize settings!<br/>" +
+                        Constants.HTML_PREFIX + "Extension <i>" + extName + "</i> failed to serialize settings!<br/>" +
                         "Settings that have failed to serialize will be lost! :(<br/>" + 
                         "This the most likely is an extension's bug or 3rd-party library dependency problem.<br/>" +
                         "You can either:<br/>" +
@@ -1023,7 +1023,7 @@ public class FrontEnd extends JFrame {
                             "<li>check whether all 3rd-party libraries extension depends on are installed</li>" +
                             "<li>uninstall extension to avoid further instability and data loss</li>" + 
                             "<li>contact extension's author for further help</li>" +
-                            "</ul></html>", t);
+                            "</ul>" + Constants.HTML_SUFFIX, t);
             }
         }
     }
@@ -1367,7 +1367,7 @@ public class FrontEnd extends JFrame {
                         serializedData = extension.serializeData();
                     } catch (Throwable t) {
                         displayErrorMessage(
-                                "<html>Extension <i>" + extension.getClass().getSimpleName() + "</i> failed to serialize data!<br/>" +
+                                Constants.HTML_PREFIX + "Extension <i>" + extension.getClass().getSimpleName() + "</i> failed to serialize data!<br/>" +
                                 "Data that have failed to serialize will be lost! :(<br/>" + 
                                 "This the most likely is an extension's bug or 3rd-party library dependency problem.<br/>" +
                                 "You can either:<br/>" +
@@ -1375,13 +1375,13 @@ public class FrontEnd extends JFrame {
                                     "<li>check whether all 3rd-party libraries extension depends on are installed</li>" +
                                     "<li>uninstall extension to avoid further instability and data loss</li>" + 
                                     "<li>contact extension's author for further help</li>" +
-                                    "</ul></html>", t);
+                                    "</ul>" + Constants.HTML_SUFFIX, t);
                     }
                     try {
                         serializedSettings = extension.serializeSettings();
                     } catch (Throwable t) {
                         displayErrorMessage(
-                                "<html>Extension <i>" + extension.getClass().getSimpleName() + "</i> failed to serialize settings!<br/>" +
+                                Constants.HTML_PREFIX + "Extension <i>" + extension.getClass().getSimpleName() + "</i> failed to serialize settings!<br/>" +
                                 "Settings that have failed to serialize will be lost! :(<br/>" + 
                                 "This the most likely is an extension's bug or 3rd-party library dependency problem.<br/>" +
                                 "You can either:<br/>" +
@@ -1389,7 +1389,7 @@ public class FrontEnd extends JFrame {
                                     "<li>check whether all 3rd-party libraries extension depends on are installed</li>" +
                                     "<li>uninstall extension to avoid further instability and data loss</li>" + 
                                     "<li>contact extension's author for further help</li>" +
-                                    "</ul></html>", t);
+                                    "</ul>" + Constants.HTML_SUFFIX, t);
                     }
                 }
                 DataEntry dataEntry;
@@ -2653,8 +2653,8 @@ public class FrontEnd extends JFrame {
         if (Preferences.getInstance().displayConfirmationDialogs) {
             int opt = JOptionPane.showConfirmDialog(
                     getActiveWindow(), 
-                    "<html>" + message + "<br/><br/>" +
-                    		"<i>(Note: this dialog can be disabled via preferences option 'Display confirmation dialogs')</i><html>", 
+                    Constants.HTML_PREFIX + message + "<br/><br/>" +
+                    		"<i>(Note: this dialog can be disabled via preferences option 'Display confirmation dialogs')</i>" + Constants.HTML_SUFFIX, 
                     title, 
                     JOptionPane.YES_NO_OPTION);
             return opt == JOptionPane.YES_OPTION;
@@ -3053,8 +3053,8 @@ public class FrontEnd extends JFrame {
                 p.add(pb, BorderLayout.CENTER);
                 p.add(importUnchangedDataCB, BorderLayout.SOUTH);
                 Component[] c = new Component[] {
-                        new JLabel("<html>Choose existing import configuration to use, <br/>" + 
-                                   "or leave selection empty and press OK for custom export.</html>"),
+                        new JLabel(Constants.HTML_PREFIX + "Choose existing import configuration to use, <br/>" + 
+                                   "or leave selection empty and press OK for custom export." + Constants.HTML_SUFFIX),
                         p          
                 };
                 int opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Import", JOptionPane.OK_CANCEL_OPTION);
@@ -3105,7 +3105,7 @@ public class FrontEnd extends JFrame {
                                         // check if checksum of data to be imported has changed since last import (or if import is forced)...
                                         if (!importUnchangedDataCB.isSelected() && !transferrer.importCheckSumChanged(importOptions, metaBytes)) {
                                             // ... if no, do not import and inform user about that, if in verbose mode
-                                            label.setText("<html><font color=green>Data import - Completed</font></html>");
+                                            label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + "Data import - Completed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                             processModel.addElement("Import discarded: data haven't changed since last import.");
                                             autoscrollList(processList);
                                         } else {
@@ -3135,7 +3135,7 @@ public class FrontEnd extends JFrame {
                                             if (importedData == null) {
                                                 processModel.addElement("Import source initialization failure: no data have been retrieved!");
                                                 autoscrollList(processList);
-                                                label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                                label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Data import - Failed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                             } else {
                                                 processModel.addElement("Data to be imported successfully transferred.");
                                                 autoscrollList(processList);
@@ -3263,7 +3263,7 @@ public class FrontEnd extends JFrame {
                                                             listIcons();
                                                         }
                                                         configsCB.setEditable(true);
-                                                        label.setText("<html><font color=green>Data import - Completed</font></html>");
+                                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + "Data import - Completed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                                         processModel.addElement("Data have been successfully imported.");
                                                         autoscrollList(processList);
                                                         StringBuffer sb = new StringBuffer(MESSAGES.get("import.done"));
@@ -3305,7 +3305,7 @@ public class FrontEnd extends JFrame {
                                                         processModel.addElement("Failed to import data!");
                                                         processModel.addElement("Error details: It seems that you have typed wrong password...");
                                                         autoscrollList(processList);
-                                                        label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Data import - Failed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                                         gse.printStackTrace(System.err);
                                                     } catch (Exception ex) {
                                                         processModel.addElement("Failed to import data!");
@@ -3313,7 +3313,7 @@ public class FrontEnd extends JFrame {
                                                             processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
                                                         }
                                                         autoscrollList(processList);
-                                                        label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Data import - Failed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                                         ex.printStackTrace(System.err);
                                                     }
                                                 }
@@ -3325,7 +3325,7 @@ public class FrontEnd extends JFrame {
                                             processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
                                         }
                                         autoscrollList(processList);
-                                        label.setText("<html><font color=red>Data import - Failed</font></html>");
+                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Data import - Failed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                         ex.printStackTrace(System.err);
                                     } finally {
                                         instance.hideStatusBarProgressBar();
@@ -3344,15 +3344,15 @@ public class FrontEnd extends JFrame {
     public static void autoImport(final String configName, final boolean force, final boolean verbose) {
         if (instance != null) {
             JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
-            JLabel processLabel = verbose ? new JLabel("Importing data ('" + configName + "')...") : null;
-            JLabel label = verbose ? new JLabel("Data import") : null;
+            JLabel processLabel = verbose ? new JLabel(MESSAGES.get("importing.data") +  "('" + configName + "')...") : null;
+            JLabel label = verbose ? new JLabel(MESSAGES.get("data.import")) : null;
             if (verbose) panel.add(processLabel, BorderLayout.CENTER);
             if (verbose) displayBottomPanel(label, panel);
             try {
                 ImportConfiguration importConfig = BackEnd.getInstance().getPopulatedImportConfigurations().get(configName);
                 final TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
                 if (transferrer == null) {
-                    throw new Exception("It looks like transfer type used in this stored import configuration is no longer available (extension uninstalled?).");
+                    throw new Exception(MESSAGES.get("transfer.type.no.longer.available"));
                 }
                 byte[] importOptions = BackEnd.getInstance().getImportOptions(configName);
                 byte[] metaBytes = transferrer.readData(importOptions, true);
@@ -3362,12 +3362,12 @@ public class FrontEnd extends JFrame {
                     // ... if no, do not import...
                     if (verbose) {
                         // ... and inform user about that, if in verbose mode
-                        label.setText("<html><font color=green>Data import - Completed</font></html>");
-                        processLabel.setText("Import discarded: data haven't changed since last import.");
+                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + MESSAGES.get("import.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                        processLabel.setText(MESSAGES.get("import.discarded.no.data.changes"));
                     }
                 } else {
                     // ... if yes, do perform import
-                    instance.displayStatusBarProgressBar("Importing data ('" + configName + "')...");
+                    instance.displayStatusBarProgressBar(MESSAGES.get("importing.data") + "('" + configName + "')...");
                     if (metaBytes != null) {
                         Properties metaData = PropertiesUtils.deserializeProperties(metaBytes);
                         String sizeStr = metaData.getProperty(Constants.META_DATA_FILESIZE);
@@ -3381,8 +3381,8 @@ public class FrontEnd extends JFrame {
                                     long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
                                     instance.getStatusBarProgressBar().setString( 
                                             FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(size)
-                                            + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
-                                            + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
+                                            + ", " + MESSAGES.get("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                            + ", " + MESSAGES.get("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
                                 }
                             });
                         }
@@ -3415,8 +3415,8 @@ public class FrontEnd extends JFrame {
                         instance.listIcons();
                     }
                     if (verbose) {
-                        label.setText("<html><font color=green>Data import - Completed</font></html>");
-                        processLabel.setText("Data have been successfully imported.");
+                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + MESSAGES.get("import.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                        processLabel.setText(MESSAGES.get("import.success"));
                     }
                     StringBuffer sb = new StringBuffer(MESSAGES.get("import.done") + " ('" + configName + "'");
                     Properties meta = td.getMetaData();
@@ -3429,7 +3429,7 @@ public class FrontEnd extends JFrame {
                         String user = meta.getProperty(Constants.META_DATA_USERNAME);
                         if (!Validator.isNullOrBlank(user)) {
                             sb.append(", ");
-                            sb.append("modified by " + user);
+                            sb.append(MESSAGES.get("modified.by") + Constants.BLANK_STR + user);
                         }
                         String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
                         if (!Validator.isNullOrBlank(timestamp)) {
@@ -3443,19 +3443,19 @@ public class FrontEnd extends JFrame {
                 }
             } catch (GeneralSecurityException gse) {
                 if (verbose) {
-                    processLabel.setText("Failed to import data! Error details: It seems that password is wrong...");
-                    label.setText("<html><font color=red>Data import - Failed</font></html>");
+                    processLabel.setText(MESSAGES.get("import failed") + MESSAGES.get("error details") + ": " + MESSAGES.get("wrong.password"));
+                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + MESSAGES.get("import.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                 }
-                displayStatusBarErrorMessage("Failed to import data! Wrong password.");
+                displayStatusBarErrorMessage(MESSAGES.get("import failed") + Constants.BLANK_STR + MESSAGES.get("wrong.password"));
                 gse.printStackTrace(System.err);
             } catch (Throwable t) {
-                String errMsg = "Failed to import data!";
+                String errMsg = MESSAGES.get("import.failed");
                 if (t.getMessage() != null) {
-                    errMsg += " Error details: " + t.getClass().getSimpleName() + ": " + t.getMessage();
+                    errMsg += Constants.BLANK_STR + MESSAGES.get("error.details") + ": " + t.getClass().getSimpleName() + ": " + t.getMessage();
                 }
                 if (verbose) {
                     processLabel.setText(errMsg);
-                    label.setText("<html><font color=red>Data import - Failed</font></html>");
+                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + MESSAGES.get("import.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                 }
                 displayStatusBarErrorMessage(errMsg);
                 t.printStackTrace(System.err);
@@ -3536,8 +3536,8 @@ public class FrontEnd extends JFrame {
                 p.add(pb, BorderLayout.CENTER);
                 p.add(exportUnchangedDataCB, BorderLayout.SOUTH);
                 Component[] c = new Component[] {
-                        new JLabel("<html>Choose existing export configuration to use, <br/>" + 
-                                   "or leave selection empty and press OK for custom export.</html>"),
+                        new JLabel(Constants.HTML_PREFIX + "Choose existing export configuration to use, <br/>" + 
+                                   "or leave selection empty and press OK for custom export." + Constants.HTML_SUFFIX),
                         p          
                 };
                 opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Export", JOptionPane.OK_CANCEL_OPTION);
@@ -3749,7 +3749,7 @@ public class FrontEnd extends JFrame {
                                             // check if checksum of data to be exported has changed since last export (or if export is forced)...
                                             if (!exportUnchangedDataCB.isSelected() && !transferrer.exportCheckSumChanged(transferOpts, td)) {
                                                 // ... if no, do not export and inform user about that
-                                                label.setText("<html><font color=green>Data export - Completed</font></html>");
+                                                label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + "Data export - Completed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                                 processModel.addElement("Export discarded: data haven't changed since last export.");
                                                 autoscrollList(processList);
                                             } else {
@@ -3773,7 +3773,7 @@ public class FrontEnd extends JFrame {
                                                 }    
                                                 boolean exported = transferrer.exportData(td, transferOpts, exportUnchangedDataCB.isSelected());
                                                 if (exported) {
-                                                    label.setText("<html><font color=green>Data export - Completed</font></html>");
+                                                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + "Data export - Completed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                                     processModel.addElement("Data have been successfully transferred.");
                                                     autoscrollList(processList);
                                                     StringBuffer sb = new StringBuffer(MESSAGES.get("export.done"));
@@ -3834,7 +3834,7 @@ public class FrontEnd extends JFrame {
                                                 processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
                                             }
                                             autoscrollList(processList);
-                                            label.setText("<html><font color=red>Data export - Failed</font></html>");
+                                            label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Data export - Failed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                             ex.printStackTrace(System.err);
                                         } finally {
                                             instance.hideStatusBarProgressBar();
@@ -3854,8 +3854,8 @@ public class FrontEnd extends JFrame {
     public static void autoExport(final String configName, final boolean force, final boolean verbose) {
         if (instance != null) {
             JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
-            JLabel processLabel = verbose ? new JLabel("Exporting data ('" + configName + "')...") : null;
-            JLabel label = verbose ? new JLabel("Data export") : null;
+            JLabel processLabel = verbose ? new JLabel(MESSAGES.get("exporting.data") + "('" + configName + "')...") : null;
+            JLabel label = verbose ? new JLabel(MESSAGES.get("data.export")) : null;
             if (verbose) panel.add(processLabel, BorderLayout.CENTER);
             if (verbose) displayBottomPanel(label, panel);
             try {
@@ -3867,7 +3867,7 @@ public class FrontEnd extends JFrame {
                 byte[] exportOptions = BackEnd.getInstance().getExportOptions(configName);
                 final TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
                 if (transferrer == null) {
-                    throw new Exception("It looks like transfer type used in this stored export configuration is no longer available (extension uninstalled?).");
+                    throw new Exception(MESSAGES.get("transfer.type.no.longer.available"));
                 }
                 // check connection before performing export
                 transferrer.checkConnection(exportOptions);
@@ -3879,12 +3879,12 @@ public class FrontEnd extends JFrame {
                     // ... if no, do not export...
                     if (verbose) {
                         // ... and inform user about that, if in verbose mode
-                        label.setText("<html><font color=green>Data export - Completed</font></html>");
-                        processLabel.setText("Export discarded: data haven't changed since last export.");
+                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + MESSAGES.get("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                        processLabel.setText(MESSAGES.get("export.discarded.no.data.changes"));
                     }
                 } else {
                     // ... if yes, do perform export
-                    instance.displayStatusBarProgressBar("Exporting data ('" + configName + "')...");
+                    instance.displayStatusBarProgressBar(MESSAGES.get("exporting.data") + "('" + configName + "')...");
                     if (transferrer instanceof ObservableTransferExtension) {
                         instance.getStatusBarProgressBar().setMaximum(td.getData().length);
                         ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
@@ -3894,16 +3894,16 @@ public class FrontEnd extends JFrame {
                                 long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
                                 instance.getStatusBarProgressBar().setString( 
                                         FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(td.getData().length)
-                                        + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
-                                        + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
+                                        + ", " + MESSAGES.get("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                        + ", " + MESSAGES.get("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
                             }
                         });
                     }    
                     boolean exported = transferrer.exportData(td, transferOptions, force);
                     if (exported) {
                         if (verbose) {
-                            label.setText("<html><font color=green>Data export - Completed</font></html>");
-                            processLabel.setText("Data have been successfully exported.");
+                            label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + MESSAGES.get("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                            processLabel.setText(MESSAGES.get("export.success"));
                         }
                         StringBuffer sb = new StringBuffer(MESSAGES.get("export.done") + " ('" + configName + "'");
                         Properties meta = td.getMetaData();
@@ -3925,13 +3925,13 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable ex) {
-                String errMsg = "Failed to export data!";
+                String errMsg = MESSAGES.get("export.failed");
                 if (ex.getMessage() != null) {
-                    errMsg += " Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                    errMsg += Constants.BLANK_STR + MESSAGES.get("error.details") + ": " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
                 }
                 if (verbose) {
                     processLabel.setText(errMsg);
-                    label.setText("<html><font color=red>Data export - Failed</font></html>");
+                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + MESSAGES.get("export.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                 }
                 displayStatusBarErrorMessage(errMsg);
                 ex.printStackTrace(System.err);

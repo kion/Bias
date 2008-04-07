@@ -36,5 +36,24 @@ new.entry == New entry
 add.category == add category
 add.entry == add entry
 no.entry.extensions.installed == There're no entry extensions installed currently.<br/>Entries can't be added before there's at least one entry extension installed.
-failed.to.add.category = Failed to add category
+failed.to.add.category == Failed to add category
 failed.to.add.entry == Failed to add entry.<br/>Some entry extension(s) may be broken.<br/>Try to open add-ons management dialog, <br/>and uninstall/reinstall broken extensions.
+elapsed.time == elapsed time
+estimated.time.left == estimated time left
+transfer.type.no.longer.available == It looks like transfer type used by this stored configuration is no longer available (extension uninstalled?)
+wrong.password == It seems that password is wrong...
+exporting.data == Exporting data
+data.export == Data export
+export.completed == Data export - Completed
+export.success == Data have been successfully exported
+export.failed == Failed to export data!
+export.failure == Data export - Failed
+export.discarded.no.data.changes == Export discarded: data haven't changed since last export
+error.details == Error details
+importing.data == Importing data
+data.import == Data import
+import.completed == Data import - Completed
+import.success == Data have been successfully imported
+import.failed == Failed to import data
+import.failure == Data import - Failed
+import.discarded.no.data.changes == Import discarded: data haven't changed since last import
