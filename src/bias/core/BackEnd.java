@@ -736,7 +736,6 @@ public class BackEnd {
         }
     }
     
-    // FIXME [P1] stuff uninstalled during current session should not be exported (?)
     public TransferData exportData(
             DataCategory data,
             ExportConfiguration config) throws Throwable {
