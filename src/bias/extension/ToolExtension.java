@@ -20,6 +20,13 @@ public abstract class ToolExtension implements Extension {
     protected String getMessage(String key) {
         return I18nService.getInstance().getMessages(getClass()).get(key);
     }
+    protected String getMessage(String key, String...vars) {
+        String modifiedMsg = getMessage(key);
+        for (String var : vars) {
+            modifiedMsg = modifiedMsg.replaceFirst("\\$", var);
+        }
+        return modifiedMsg;
+    }
     
     private byte[] data;
     

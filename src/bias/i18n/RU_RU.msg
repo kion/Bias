@@ -31,10 +31,8 @@ tabs.placement == Расположение закладок
 icon == Иконка
 caption == Заголовок
 type == Тип
-new.category == Новая категория
-new.entry == Новая запись
-add.category == добавить категорию
-add.entry == добавить запись
+add.category == Добавить категорию
+add.entry == Добавить запись
 no.entry.extensions.installed == На данный момент не установлено ни одного расширения-записи.<br/>Записи не могут быть добавлены до того, как по крайней мере одно расширение-запись будет установлено.
 add.category.failure == Не удалось добавить категорию
 add.entry.failure == Не удалось добавить запись.<br/>Некоторые расширения-записи возможно неисправны.<br/>Попробуйте открыть диалог управления расширениями, <br/>и удалить/переустановить неисправные расширения.
@@ -55,12 +53,40 @@ import.completed == Импорт данных - Завершен
 import.success == Данные успешно импортированы
 import.failure == Не удалось импортировать данные
 import.discarded.no.data.changes == Импорт отменен: данные не изменились со времени последнего импорта
-change.password == изменить пароль
-current.password == текущий пароль
-new.password == новый пароль
-new.password.confirmation == подтверждение нового пароля
-change.password.failure == Не удалось изменить пароль!
-change.password.failure.invalid.confirmation == Не удалось изменить пароль!<br/>Новый пароль не был корректно подтвержден!
+change.password == Изменить пароль
+current.password == Текущий пароль
+new.password == Новый пароль
+password.confirmation == Подтверждение пароля
+password.confirmation.failure == Пароль не был корректно подтвержден!
 change.password.success == Пароль успешно изменен
-delete.active.entry.or.category == удалить текущую запись/категорию
+change.password.failure == Не удалось изменить пароль!
+delete.active.entry.or.category == Удалить текущую запись/категорию
 delete.active.entry.or.category.failure == Не удалось удалить запись/категорию!
+delete == Удалить
+rename == Переименовать
+new.name == Новое имя
+export.preferences == Экспорт предпочтений
+export.data.entry.configs == Экспорт настроек записей
+export.data.entry.configs.related.only == Экспортировать настройки только экспортируемых записей
+export.tools.data == Экспорт данных инструментов
+export.icons == Экспорт иконок
+export.icons.related.only == Экспортировать иконки только экспортируемых записей
+export.app.core == Экспорт ядра приложения
+export.addons.and.libs == Экспорт расширений и библиотек
+export.addon.configs == Экспорт настроек расширений
+export.import.export.configs == Экспорт хранимых конфигураций импорта/экспорта
+export.use.password == Зашифровать экспортируемые данные с помощью пароля
+export.data.compressing == Сжатие данных для экспорта...
+export.data.compressed == Данные для экспорта успешно сжаты.
+transfer.configuration.select == Выберите хранимую конфигурацию для использования, <br/>или оставьте поле для выбора пустым и нажмите ОК для начала настраиваемой траспортировки
+transfer.type == Тип транспортировки
+transfer.options.missing.error == Опции траспортировки не указаны!
+transfer.file.location.missing.error == Месторасположение файла транспортировки не указано!
+transfer.force == Транспортировать данные даже если они не изменились со времени последней транспортировки
+transfer.data.transferring == Данные траспортируются...
+transfer.configuration.delete.failure == Не удалось удалить выбранную трансортировочную конфигурацию!
+transfer.configuration.rename.failure == Не удалось переименовать выбранную трансортировочную конфигурацию!
+transfer.configuration.save == Еслы вы желаете сохранить эту траспортировочную конфигурацию,<br/> введите имя для нее (или выберите уже существующее для замены)
+transfer.configuration.saved == Траспортировочная конфигурация сохранена как '$'
+password.confirmation.invalid == [НЕПОДТВЕРЖДЕНО]
+password.confirmation.done == [ГОТОВО]

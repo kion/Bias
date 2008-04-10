@@ -19,6 +19,8 @@ import java.awt.Window;
 import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -218,7 +220,7 @@ public class FrontEnd extends JFrame {
     
     private static final JLabel exportInfoLabel = new JLabel(
             Constants.HTML_PREFIX + 
-            "<b><i>" + Constants.HTML_COLOR_HIGHLIGHT_INFO + MESSAGES.get("export.info") + Constants.HTML_COLOR_SUFFIX + "</i></b>" + 
+            "<b><i>" + Constants.HTML_COLOR_HIGHLIGHT_INFO + getMessage("export.info") + Constants.HTML_COLOR_SUFFIX + "</i></b>" + 
             Constants.HTML_SUFFIX);
     
     private static AddOnFileChooser addOnFileChooser = new AddOnFileChooser();
@@ -543,7 +545,7 @@ public class FrontEnd extends JFrame {
     }
 
     public static void startup() {
-        displayStatusBarMessage(MESSAGES.get("loaded.ready"));
+        displayStatusBarMessage(getMessage("loaded.ready"));
         if (Preferences.getInstance().startHidden) {
             showSysTrayIcon();
             if (!sysTrayIconVisible) {
@@ -600,7 +602,7 @@ public class FrontEnd extends JFrame {
             }
         }
         handleAutoUpdate(isStartingUp);
-        displayStatusBarMessage(MESSAGES.get("preferences.applied"));
+        displayStatusBarMessage(getMessage("preferences.applied"));
     }
     
     private static JPanel memUsageIndicatorPanel = null;
@@ -672,7 +674,7 @@ public class FrontEnd extends JFrame {
             try {
                 // initialize tray icon
                 if (trayIcon == null) {
-                    trayIcon = new TrayIcon(ICON_APP.getImage(), MESSAGES.get("main.window.title"));
+                    trayIcon = new TrayIcon(ICON_APP.getImage(), getMessage("main.window.title"));
                     trayIcon.setImageAutoSize(true);
                     trayIcon.addMouseListener(new MouseAdapter(){
                         @Override
@@ -715,7 +717,7 @@ public class FrontEnd extends JFrame {
             Splash.hideSplash();
             displayErrorMessage(
                     "Bias has failed to load data!" + Constants.NEW_LINE +
-                    MESSAGES.get("wrong.password"), gse);
+                    getMessage("wrong.password"), gse);
             BackEnd.getInstance().shutdown(-1);
         } catch (Throwable t) {
             Splash.hideSplash();
@@ -843,7 +845,7 @@ public class FrontEnd extends JFrame {
         this.setSize(new Dimension(772, 535));
         try {
             this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-            this.setTitle(MESSAGES.get("main.window.title"));
+            this.setTitle(getMessage("main.window.title"));
             this.setIconImage(ICON_APP.getImage());
             this.setContentPane(getJContentPane());
 
@@ -1295,7 +1297,7 @@ public class FrontEnd extends JFrame {
                 }
             }
         });
-        displayStatusBarMessage(MESSAGES.get("data.saved"));
+        displayStatusBarMessage(getMessage("data.saved"));
         fireAfterSaveEvent(new SaveEvent(beforeExit));
     }
     
@@ -2071,8 +2073,8 @@ public class FrontEnd extends JFrame {
         });
     }
     
-    private static String parseMessageVars(String message, String...vars) {
-        String modifiedMsg = message;
+    private static String getMessage(String key, String...vars) {
+        String modifiedMsg = MESSAGES.get(key);
         for (String var : vars) {
             modifiedMsg = modifiedMsg.replaceFirst("\\$", var);
         }
@@ -2086,20 +2088,19 @@ public class FrontEnd extends JFrame {
         return statusBarMessagesList;
     }
     
-    public static void displayStatusBarErrorMessage(String message, String...vars) {
-        displayStatusBarMessage(message, true, vars);
+    public static void displayStatusBarErrorMessage(String message) {
+        displayStatusBarMessage(message, true);
     }
     
-    public static void displayStatusBarMessage(String message, String...vars) {
-        displayStatusBarMessage(message, false, vars);
+    public static void displayStatusBarMessage(String message) {
+        displayStatusBarMessage(message, false);
     }
     
-    private static void displayStatusBarMessage(final String message, final boolean isError, final String...vars) {
+    private static void displayStatusBarMessage(final String message, final boolean isError) {
         // TODO [P2] this should be synchronized by status bar only (not whole application)
         syncExecute(new Runnable(){
             public void run() {
                 if (instance != null) {
-                    String msg = parseMessageVars(message, vars);
                     final String timestamp = dateFormat.format(new Date()) + " # ";
                     String iaText = Constants.BLANK_STR + timestamp;
                     for (int i = 0; i < iaText.length(); i++) {
@@ -2110,7 +2111,7 @@ public class FrontEnd extends JFrame {
                             // ignore
                         }
                     }
-                    msg = Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_OK) + msg + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX;
+                    String msg = Constants.HTML_PREFIX + "&nbsp;" + timestamp + (isError ? Constants.HTML_COLOR_HIGHLIGHT_ERROR : Constants.HTML_COLOR_HIGHLIGHT_OK) + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX;
                     instance.getJLabelStatusBarMsg().setText(msg);
                     try {
                         Thread.sleep(250);
@@ -2679,16 +2680,16 @@ public class FrontEnd extends JFrame {
         
         public ChangePasswordAction() {
             putValue(Action.NAME, "changePassword");
-            putValue(Action.SHORT_DESCRIPTION, MESSAGES.get("change.password"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("change.password"));
             putValue(Action.SMALL_ICON, uiIcons.getIconChangePassword());
         }
         
         public void actionPerformed(ActionEvent evt) {
-            JLabel currPassLabel = new JLabel(MESSAGES.get("current.password"));
+            JLabel currPassLabel = new JLabel(getMessage("current.password"));
             final JPasswordField currPassField = new JPasswordField();
-            JLabel newPassLabel = new JLabel(MESSAGES.get("new.password"));
+            JLabel newPassLabel = new JLabel(getMessage("new.password"));
             final JPasswordField newPassField = new JPasswordField();
-            JLabel newPassConfirmLabel = new JLabel(MESSAGES.get("new.password.confirmation"));
+            JLabel newPassConfirmLabel = new JLabel(getMessage("password.confirmation"));
             final JPasswordField newPassConfirmField = new JPasswordField();
             ActionListener al = new ActionListener(){
                 public void actionPerformed(ActionEvent ae){
@@ -2705,20 +2706,20 @@ public class FrontEnd extends JFrame {
                             newPassLabel, newPassField,
                             newPassConfirmLabel, newPassConfirmField
                             }, 
-                            MESSAGES.get("change.password"), 
+                            getMessage("change.password"), 
                     JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                 String currPass = new String(currPassField.getPassword());            
                 String newPass = new String(newPassField.getPassword()); 
                 String newPassConfirmation = new String(newPassConfirmField.getPassword()); 
                 if (!newPass.equals(newPassConfirmation)) {
-                    displayErrorMessage(Constants.HTML_PREFIX + MESSAGES.get("change.password.failure.invalid.confirmation") + Constants.HTML_SUFFIX);
+                    displayErrorMessage(Constants.HTML_PREFIX + getMessage("password.confirmation.failure") + Constants.HTML_SUFFIX);
                 } else {
                     try {
                         BackEnd.setPassword(currPass, newPass);
-                        displayMessage(MESSAGES.get("change.password.success"));
-                        displayStatusBarMessage(MESSAGES.get("password.changed"));
+                        displayMessage(getMessage("change.password.success"));
+                        displayStatusBarMessage(getMessage("password.changed"));
                     } catch (Exception ex) {
-                        displayErrorMessage(Constants.HTML_PREFIX + MESSAGES.get("change.password.failure") + "<br/>" + ex.getMessage() + Constants.HTML_SUFFIX, ex);
+                        displayErrorMessage(Constants.HTML_PREFIX + getMessage("change.password.failure") + "<br/>" + ex.getMessage() + Constants.HTML_SUFFIX, ex);
                     }
                 }
             }
@@ -2731,7 +2732,7 @@ public class FrontEnd extends JFrame {
         
         public AddEntryAction() {
             putValue(Action.NAME, "addEntry");
-            putValue(Action.SHORT_DESCRIPTION, MESSAGES.get("add.entry"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("add.entry"));
             putValue(Action.SMALL_ICON, uiIcons.getIconEntry());
         }
         
@@ -2740,7 +2741,7 @@ public class FrontEnd extends JFrame {
                 Map<String, Class<? extends EntryExtension>> extensions = ExtensionFactory.getAnnotatedEntryExtensionClasses();
                 if (extensions.isEmpty()) {
                     displayMessage(
-                            Constants.HTML_PREFIX + MESSAGES.get("no.entry.extensions.installed") + Constants.HTML_SUFFIX);
+                            Constants.HTML_PREFIX + getMessage("no.entry.extensions.installed") + Constants.HTML_SUFFIX);
                 } else {
                     if (getJTabbedPane().getTabCount() == 0) {
                         if (!defineRootPlacement()) {
@@ -2751,9 +2752,9 @@ public class FrontEnd extends JFrame {
                     if (getJTabbedPane().getTabCount() == 0 || getJTabbedPane().getSelectedIndex() == -1) {
                         currentTabPane = getJTabbedPane();
                     } else {
-                        addToRootCB = new JCheckBox(MESSAGES.get("add.entry.to.rootlevel"));
+                        addToRootCB = new JCheckBox(getMessage("add.entry.to.rootlevel"));
                     }
-                    JLabel entryTypeLabel = new JLabel(MESSAGES.get("type"));
+                    JLabel entryTypeLabel = new JLabel(getMessage("type"));
                     JComboBox entryTypeComboBox = new JComboBox();
                     for (String entryType : extensions.keySet()) {
                         entryTypeComboBox.addItem(entryType);
@@ -2762,17 +2763,17 @@ public class FrontEnd extends JFrame {
                         entryTypeComboBox.setSelectedItem(lastAddedEntryType);
                     }
                     entryTypeComboBox.setEditable(false);
-                    JLabel icLabel = new JLabel(MESSAGES.get("icon"));
+                    JLabel icLabel = new JLabel(getMessage("icon"));
                     JComboBox iconChooser = new JComboBox();
                     iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
                     for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                         iconChooser.addItem(icon);
                     }
-                    JLabel cLabel = new JLabel(MESSAGES.get("caption"));
+                    JLabel cLabel = new JLabel(getMessage("caption"));
                     String caption = JOptionPane.showInputDialog(
                             FrontEnd.this, 
                             new Component[] { addToRootCB, entryTypeLabel, entryTypeComboBox, icLabel, iconChooser, cLabel },
-                            MESSAGES.get("new.entry"), 
+                            getMessage("add.entry"), 
                             JOptionPane.QUESTION_MESSAGE);
                     if (caption != null) {
                         String typeDescription = (String) entryTypeComboBox.getSelectedItem();
@@ -2793,12 +2794,12 @@ public class FrontEnd extends JFrame {
                             if (icon != null) {
                                 tabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
                             }
-                            displayStatusBarMessage(MESSAGES.get("entry.added"), caption);
+                            displayStatusBarMessage(getMessage("entry.added", caption));
                         }
                     }
                 }
             } catch (Throwable t) {
-                displayErrorMessage(Constants.HTML_PREFIX + MESSAGES.get("add.entry.failure") + Constants.HTML_SUFFIX, t);
+                displayErrorMessage(Constants.HTML_PREFIX + getMessage("add.entry.failure") + Constants.HTML_SUFFIX, t);
             }
         }
     };
@@ -2938,7 +2939,7 @@ public class FrontEnd extends JFrame {
         
         public DeleteAction() {
             putValue(Action.NAME, "delete");
-            putValue(Action.SHORT_DESCRIPTION, MESSAGES.get("delete.active.entry.or.category"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("delete.active.entry.or.category"));
             putValue(Action.SMALL_ICON, uiIcons.getIconDelete());
         }
         
@@ -2950,7 +2951,7 @@ public class FrontEnd extends JFrame {
                             String caption = currentTabPane.getTitleAt(currentTabPane.getSelectedIndex());
                             boolean isCategory = currentTabPane.getSelectedComponent() instanceof JTabbedPane;
                             currentTabPane.remove(currentTabPane.getSelectedIndex());
-                            displayStatusBarMessage(MESSAGES.get(isCategory ? "category.deleted" : "entry.deleted"), caption);
+                            displayStatusBarMessage(getMessage(isCategory ? "category.deleted" : "entry.deleted", caption));
                             currentTabPane = getActiveTabPane(currentTabPane);
                         }
                     } else {
@@ -2959,13 +2960,13 @@ public class FrontEnd extends JFrame {
                             if (confirmedDelete()) {
                                 String caption = parentTabPane.getTitleAt(parentTabPane.getSelectedIndex());
                                 parentTabPane.remove(currentTabPane);
-                                displayStatusBarMessage(MESSAGES.get("category.deleted"), caption);
+                                displayStatusBarMessage(getMessage("category.deleted", caption));
                                 currentTabPane = getActiveTabPane(parentTabPane);
                             }
                         }
                     }
                 } catch (Exception ex) {
-                    displayErrorMessage(MESSAGES.get("delete.active.entry.or.category.failure"), ex);
+                    displayErrorMessage(getMessage("delete.active.entry.or.category.failure"), ex);
                 }
             }
         }
@@ -2991,7 +2992,7 @@ public class FrontEnd extends JFrame {
         
         public ImportAction() {
             putValue(Action.NAME, "import");
-            putValue(Action.SHORT_DESCRIPTION, "import...");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("data.import"));
             putValue(Action.SMALL_ICON, uiIcons.getIconImport());
         }
         
@@ -3266,7 +3267,7 @@ public class FrontEnd extends JFrame {
                                                         label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + "Data import - Completed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                                         processModel.addElement("Data have been successfully imported.");
                                                         autoscrollList(processList);
-                                                        StringBuffer sb = new StringBuffer(MESSAGES.get("import.done"));
+                                                        StringBuffer sb = new StringBuffer(getMessage("import.done"));
                                                         Properties meta = td.getMetaData();
                                                         if (meta != null && !meta.isEmpty()) {
                                                             sb.append(" (");
@@ -3277,7 +3278,7 @@ public class FrontEnd extends JFrame {
                                                             String user = meta.getProperty(Constants.META_DATA_USERNAME);
                                                             if (!Validator.isNullOrBlank(user)) {
                                                                 sb.append(", ");
-                                                                sb.append(MESSAGES.get("modified.by") + Constants.BLANK_STR + user);
+                                                                sb.append(getMessage("modified.by") + Constants.BLANK_STR + user);
                                                             }
                                                             String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
                                                             if (!Validator.isNullOrBlank(timestamp)) {
@@ -3344,15 +3345,15 @@ public class FrontEnd extends JFrame {
     public static void autoImport(final String configName, final boolean force, final boolean verbose) {
         if (instance != null) {
             JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
-            JLabel processLabel = verbose ? new JLabel(MESSAGES.get("importing.data") +  "('" + configName + "')...") : null;
-            JLabel label = verbose ? new JLabel(MESSAGES.get("data.import")) : null;
+            JLabel processLabel = verbose ? new JLabel(getMessage("importing.data") +  "('" + configName + "')...") : null;
+            JLabel label = verbose ? new JLabel(getMessage("data.import")) : null;
             if (verbose) panel.add(processLabel, BorderLayout.CENTER);
             if (verbose) displayBottomPanel(label, panel);
             try {
                 ImportConfiguration importConfig = BackEnd.getInstance().getPopulatedImportConfigurations().get(configName);
                 final TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
                 if (transferrer == null) {
-                    throw new Exception(MESSAGES.get("transfer.type.no.longer.available"));
+                    throw new Exception(getMessage("transfer.type.no.longer.available"));
                 }
                 byte[] importOptions = BackEnd.getInstance().getImportOptions(configName);
                 byte[] metaBytes = transferrer.readData(importOptions, true);
@@ -3362,12 +3363,12 @@ public class FrontEnd extends JFrame {
                     // ... if no, do not import...
                     if (verbose) {
                         // ... and inform user about that, if in verbose mode
-                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + MESSAGES.get("import.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                        processLabel.setText(MESSAGES.get("import.discarded.no.data.changes"));
+                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("import.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                        processLabel.setText(getMessage("import.discarded.no.data.changes"));
                     }
                 } else {
                     // ... if yes, do perform import
-                    instance.displayStatusBarProgressBar(MESSAGES.get("importing.data") + "('" + configName + "')...");
+                    instance.displayStatusBarProgressBar(getMessage("importing.data") + "('" + configName + "')...");
                     if (metaBytes != null) {
                         Properties metaData = PropertiesUtils.deserializeProperties(metaBytes);
                         String sizeStr = metaData.getProperty(Constants.META_DATA_FILESIZE);
@@ -3381,8 +3382,8 @@ public class FrontEnd extends JFrame {
                                     long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
                                     instance.getStatusBarProgressBar().setString( 
                                             FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(size)
-                                            + ", " + MESSAGES.get("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
-                                            + ", " + MESSAGES.get("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
+                                            + ", " + getMessage("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                            + ", " + getMessage("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
                                 }
                             });
                         }
@@ -3415,10 +3416,10 @@ public class FrontEnd extends JFrame {
                         instance.listIcons();
                     }
                     if (verbose) {
-                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + MESSAGES.get("import.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                        processLabel.setText(MESSAGES.get("import.success"));
+                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("import.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                        processLabel.setText(getMessage("import.success"));
                     }
-                    StringBuffer sb = new StringBuffer(MESSAGES.get("import.done") + " ('" + configName + "'");
+                    StringBuffer sb = new StringBuffer(getMessage("import.done") + " ('" + configName + "'");
                     Properties meta = td.getMetaData();
                     if (meta != null && !meta.isEmpty()) {
                         String size = meta.getProperty(Constants.META_DATA_FILESIZE);
@@ -3429,7 +3430,7 @@ public class FrontEnd extends JFrame {
                         String user = meta.getProperty(Constants.META_DATA_USERNAME);
                         if (!Validator.isNullOrBlank(user)) {
                             sb.append(", ");
-                            sb.append(MESSAGES.get("modified.by") + Constants.BLANK_STR + user);
+                            sb.append(getMessage("modified.by") + Constants.BLANK_STR + user);
                         }
                         String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
                         if (!Validator.isNullOrBlank(timestamp)) {
@@ -3443,19 +3444,19 @@ public class FrontEnd extends JFrame {
                 }
             } catch (GeneralSecurityException gse) {
                 if (verbose) {
-                    processLabel.setText(MESSAGES.get("import failed") + MESSAGES.get("error details") + ": " + MESSAGES.get("wrong.password"));
-                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + MESSAGES.get("import.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                    processLabel.setText(getMessage("import failed") + getMessage("error details") + ": " + getMessage("wrong.password"));
+                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("import.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                 }
-                displayStatusBarErrorMessage(MESSAGES.get("import failed") + Constants.BLANK_STR + MESSAGES.get("wrong.password"));
+                displayStatusBarErrorMessage(getMessage("import failed") + Constants.BLANK_STR + getMessage("wrong.password"));
                 gse.printStackTrace(System.err);
             } catch (Throwable t) {
-                String errMsg = MESSAGES.get("import.failure");
+                String errMsg = getMessage("import.failure");
                 if (t.getMessage() != null) {
-                    errMsg += Constants.BLANK_STR + MESSAGES.get("error.details") + ": " + t.getClass().getSimpleName() + ": " + t.getMessage();
+                    errMsg += Constants.BLANK_STR + getMessage("error.details") + ": " + t.getClass().getSimpleName() + ": " + t.getMessage();
                 }
                 if (verbose) {
                     processLabel.setText(errMsg);
-                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + MESSAGES.get("import.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("import.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                 }
                 displayStatusBarErrorMessage(errMsg);
                 t.printStackTrace(System.err);
@@ -3471,7 +3472,7 @@ public class FrontEnd extends JFrame {
         
         public ExportAction() {
             putValue(Action.NAME, "export");
-            putValue(Action.SHORT_DESCRIPTION, "export...");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("data.export"));
             putValue(Action.SMALL_ICON, uiIcons.getIconExport());
         }
 
@@ -3485,7 +3486,7 @@ public class FrontEnd extends JFrame {
                 for (String configName : BackEnd.getInstance().getPopulatedExportConfigurations().keySet()) {
                     configsCB.addItem(configName);
                 }
-                final JButton delButt = new JButton("Delete");
+                final JButton delButt = new JButton(getMessage("delete"));
                 delButt.setEnabled(false);
                 delButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -3494,17 +3495,17 @@ public class FrontEnd extends JFrame {
                             BackEnd.getInstance().removeExportConfiguration(name);
                             configsCB.removeItem(name);
                         } catch (Exception ex) {
-                            displayErrorMessage("Failed to delete selected export-configuration!", ex);
+                            displayErrorMessage(getMessage("transfer.configuration.delete.failure"), ex);
                         }
                     }
                 });
-                final JButton renButt = new JButton("Rename");
+                final JButton renButt = new JButton(getMessage("rename"));
                 renButt.setEnabled(false);
                 renButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
                             String oldName = (String) configsCB.getSelectedItem();
-                            String newName = JOptionPane.showInputDialog(FrontEnd.this, "New name:", oldName);
+                            String newName = JOptionPane.showInputDialog(FrontEnd.this, getMessage("new.name"), oldName);
                             if (!Validator.isNullOrBlank(newName)) {
                                 BackEnd.getInstance().renameExportConfiguration(oldName, newName);
                                 configsCB.removeItem(oldName);
@@ -3512,7 +3513,7 @@ public class FrontEnd extends JFrame {
                                 configsCB.setSelectedItem(newName);
                             }
                         } catch (Exception ex) {
-                            displayErrorMessage("Failed to rename selected export-configuration!", ex);
+                            displayErrorMessage(getMessage("transfer.configuration.rename.failure"), ex);
                         }
                     }
                 });
@@ -3527,7 +3528,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                final JCheckBox exportUnchangedDataCB = new JCheckBox("Force export even if data haven't been changed since last export");
+                final JCheckBox exportUnchangedDataCB = new JCheckBox(getMessage("transfer.force"));
                 JPanel p = new JPanel(new BorderLayout());
                 p.add(configsCB, BorderLayout.NORTH);
                 JPanel pb = new JPanel(new GridLayout(1, 2));
@@ -3536,11 +3537,10 @@ public class FrontEnd extends JFrame {
                 p.add(pb, BorderLayout.CENTER);
                 p.add(exportUnchangedDataCB, BorderLayout.SOUTH);
                 Component[] c = new Component[] {
-                        new JLabel(Constants.HTML_PREFIX + "Choose existing export configuration to use, <br/>" + 
-                                   "or leave selection empty and press OK for custom export." + Constants.HTML_SUFFIX),
+                        new JLabel(Constants.HTML_PREFIX + getMessage("transfer.configuration.select") + Constants.HTML_SUFFIX),
                         p          
                 };
-                opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Export", JOptionPane.OK_CANCEL_OPTION);
+                opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, getMessage("data.export"), JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
                     if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
                         final String configName = (String) configsCB.getSelectedItem();
@@ -3554,7 +3554,7 @@ public class FrontEnd extends JFrame {
                         for (String annotation : ExtensionFactory.getAnnotatedTransferExtensions().keySet()) {
                             cb.addItem(annotation);
                         }
-                        opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose export type", JOptionPane.OK_CANCEL_OPTION);
+                        opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, getMessage("transfer.type"), JOptionPane.OK_CANCEL_OPTION);
                         if (opt != JOptionPane.OK_OPTION) {
                             hideBottomPanel();
                         } else {
@@ -3568,12 +3568,12 @@ public class FrontEnd extends JFrame {
                             final byte[] transferOptions = exportOptions.getOptions();
                             if (transferOptions == null || transferOptions.length == 0) {
                                 hideBottomPanel();
-                                throw new Exception("Transfer options are missing! Import canceled.");
+                                throw new Exception(getMessage("transfer.options.missing.error"));
                             }
                             final String fileLocation = exportOptions.getFileLocation();
                             if (Validator.isNullOrBlank(fileLocation)) {
                                 hideBottomPanel();
-                                throw new Exception("Export file location is missing!");
+                                throw new Exception(getMessage("transfer.file.location.missing.error"));
                             }
                             transferrer.checkConnection(transferOptions);
                             final DataCategory data = collectData();
@@ -3623,30 +3623,42 @@ public class FrontEnd extends JFrame {
                                 dataTree = null;
                                 checkTreeManager = null;
                             }
-                            final JCheckBox exportPreferencesCB = new JCheckBox("Export preferences"); 
-                            final JCheckBox exportDataEntryConfigsCB = new JCheckBox("Export data entry configs"); 
-                            final JCheckBox exportOnlyRelatedDataEntryConfigsCB = new JCheckBox("Export data entry configs related to exported data entries only"); 
+                            final JCheckBox exportPreferencesCB = new JCheckBox(getMessage("export.preferences")); 
+                            final JCheckBox exportDataEntryConfigsCB = new JCheckBox(getMessage("export.data.entry.configs")); 
+                            final JCheckBox exportOnlyRelatedDataEntryConfigsCB = new JCheckBox(getMessage("export.data.entry.configs.related.only")); 
                             createDependentCheckboxChangeListener(exportDataEntryConfigsCB, exportOnlyRelatedDataEntryConfigsCB);
-                            final JCheckBox exportToolsDataCB = new JCheckBox("Export tools data"); 
-                            final JCheckBox exportIconsCB = new JCheckBox("Export icons");
-                            final JCheckBox exportOnlyRelatedIconsCB = new JCheckBox("Export icons related to exported data entries only");
+                            final JCheckBox exportToolsDataCB = new JCheckBox(getMessage("export.tools.data")); 
+                            final JCheckBox exportIconsCB = new JCheckBox(getMessage("export.icons"));
+                            final JCheckBox exportOnlyRelatedIconsCB = new JCheckBox(getMessage("export.icons.related.only"));
                             createDependentCheckboxChangeListener(exportIconsCB, exportOnlyRelatedIconsCB);
-                            final JCheckBox exportAppCoreCB = new JCheckBox("Export application core"); 
-                            final JCheckBox exportAddOnsCB = new JCheckBox("Export addons and libraries"); 
-                            final JCheckBox exportAddOnConfigsCB = new JCheckBox("Export addon configs");
-                            final JCheckBox exportImportExportConfigsCB = new JCheckBox("Export import/export configs");
-                            final JLabel passwordL1 = new JLabel("Encrypt exported data using password:");
+                            final JCheckBox exportAppCoreCB = new JCheckBox(getMessage("export.app.core")); 
+                            final JCheckBox exportAddOnsCB = new JCheckBox(getMessage("export.addons.and.libs")); 
+                            final JCheckBox exportAddOnConfigsCB = new JCheckBox(getMessage("export.addon.configs"));
+                            final JCheckBox exportImportExportConfigsCB = new JCheckBox(getMessage("export.import.export.configs"));
+                            final JLabel passwordL1 = new JLabel(getMessage("export.use.password"));
                             final JPasswordField passwordTF1 = new JPasswordField();
-                            final String cpText = "Confirm password:";
+                            final String cpText = getMessage("password.confirmation");
                             final JLabel passwordL2 = new JLabel(cpText);
                             final JPasswordField passwordTF2 = new JPasswordField();
+                            passwordTF2.addFocusListener(new FocusListener(){
+                                public void focusGained(FocusEvent e) {
+                                    if (!Arrays.equals(passwordTF1.getPassword(), passwordTF2.getPassword())) {
+                                        passwordL2.setText(cpText + Constants.BLANK_STR + getMessage("password.confirmation.invalid"));
+                                        passwordL2.setForeground(Color.RED);
+                                    } else {
+                                        passwordL2.setText(cpText + Constants.BLANK_STR + getMessage("password.confirmation.done"));
+                                        passwordL2.setForeground(Color.BLUE);
+                                    }
+                                }
+                                public void focusLost(FocusEvent e) {}
+                            });
                             passwordTF2.addCaretListener(new CaretListener(){
                                 public void caretUpdate(CaretEvent e) {
                                     if (!Arrays.equals(passwordTF1.getPassword(), passwordTF2.getPassword())) {
-                                        passwordL2.setText(cpText + " [INVALID]");
+                                        passwordL2.setText(cpText + Constants.BLANK_STR + getMessage("password.confirmation.invalid"));
                                         passwordL2.setForeground(Color.RED);
                                     } else {
-                                        passwordL2.setText(cpText + " [DONE]");
+                                        passwordL2.setText(cpText + Constants.BLANK_STR + getMessage("password.confirmation.done"));
                                         passwordL2.setForeground(Color.BLUE);
                                     }
                                 }
@@ -3679,11 +3691,11 @@ public class FrontEnd extends JFrame {
                             opt = JOptionPane.showConfirmDialog(
                                     FrontEnd.this, 
                                     exportPanel,
-                                    "Export data",
+                                    getMessage("data.export"),
                                     JOptionPane.OK_CANCEL_OPTION);
                             if (opt == JOptionPane.OK_OPTION) {
                                 if (!Arrays.equals(passwordTF1.getPassword(), passwordTF2.getPassword())) {
-                                    throw new Exception("Password confirmation failure!");
+                                    throw new Exception(getMessage("password.confirmation.failure"));
                                 }
                                 syncExecute(new Runnable(){
                                     public void run() {
@@ -3691,8 +3703,8 @@ public class FrontEnd extends JFrame {
                                         DefaultListModel processModel = new DefaultListModel();
                                         JList processList = new JList(processModel);
                                         panel.add(processList, BorderLayout.CENTER);
-                                        JLabel label = new JLabel("Data export");
-                                        processModel.addElement("Compressing data to be exported...");
+                                        JLabel label = new JLabel(getMessage("data.export"));
+                                        processModel.addElement(getMessage("export.data.compressing"));
                                         displayBottomPanel(label, panel);
                                         autoscrollList(processList);
                                         try {
@@ -3742,21 +3754,21 @@ public class FrontEnd extends JFrame {
                                             exportConfig.setExportImportExportConfigs(exportImportExportConfigsCB.isSelected());
                                             exportConfig.setPassword(new String(passwordTF1.getPassword()));
                                             final TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
-                                            processModel.addElement("Data to be exported have been successfully compressed.");
+                                            processModel.addElement(getMessage("export.data.compressed"));
                                             autoscrollList(processList);
                                             exportConfig.setFileLocation(fileLocation);
                                             TransferOptions transferOpts = new TransferOptions(transferOptions, exportConfig.getFileLocation());
                                             // check if checksum of data to be exported has changed since last export (or if export is forced)...
                                             if (!exportUnchangedDataCB.isSelected() && !transferrer.exportCheckSumChanged(transferOpts, td)) {
                                                 // ... if no, do not export and inform user about that
-                                                label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + "Data export - Completed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                                                processModel.addElement("Export discarded: data haven't changed since last export.");
+                                                label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                                                processModel.addElement(getMessage("export.discarded.no.data.changes"));
                                                 autoscrollList(processList);
                                             } else {
                                                 // ... if yes, do perform export
-                                                processModel.addElement("Data is being transferred...");
+                                                processModel.addElement(getMessage("transfer.data.transferring"));
                                                 autoscrollList(processList);
-                                                instance.displayStatusBarProgressBar("Exporting data...");
+                                                instance.displayStatusBarProgressBar(getMessage("exporting.data"));
                                                 if (transferrer instanceof ObservableTransferExtension) {
                                                     instance.getStatusBarProgressBar().setMaximum(td.getData().length);
                                                     ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
@@ -3766,17 +3778,17 @@ public class FrontEnd extends JFrame {
                                                             long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
                                                             instance.getStatusBarProgressBar().setString( 
                                                                     FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(td.getData().length)
-                                                                    + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
-                                                                    + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
+                                                                    + ", " + getMessage("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                                                    + ", " + getMessage("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
                                                         }
                                                     });
                                                 }    
                                                 boolean exported = transferrer.exportData(td, transferOpts, exportUnchangedDataCB.isSelected());
                                                 if (exported) {
-                                                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + "Data export - Completed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                                                    processModel.addElement("Data have been successfully transferred.");
+                                                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                                                    processModel.addElement(getMessage("export.success"));
                                                     autoscrollList(processList);
-                                                    StringBuffer sb = new StringBuffer(MESSAGES.get("export.done"));
+                                                    StringBuffer sb = new StringBuffer(getMessage("export.done"));
                                                     Properties meta = td.getMetaData();
                                                     if (meta != null && !meta.isEmpty()) {
                                                         sb.append(" (");
@@ -3795,9 +3807,11 @@ public class FrontEnd extends JFrame {
                                                     fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass()));
                                                     configsCB.setEditable(true);
                                                     Component[] c = new Component[] {
-                                                            new JLabel("Data have been successfully exported."),
-                                                            new JLabel("If you want to save this export configuration,"),
-                                                            new JLabel("input a name for it (or select existing one to overwrite):"),
+                                                            new JLabel(
+                                                                    Constants.HTML_PREFIX + 
+                                                                    getMessage("export.success") + "<br/>" + 
+                                                                    getMessage("transfer.configuration.save") +
+                                                                    Constants.HTML_SUFFIX),
                                                             configsCB          
                                                     };
                                                     JOptionPane.showMessageDialog(FrontEnd.this, c);
@@ -3823,18 +3837,18 @@ public class FrontEnd extends JFrame {
                                                             exportConfig.setExportAll(true);
                                                         }
                                                         BackEnd.getInstance().storeExportConfigurationAndOptions(configName, exportConfig, transferOptions);
-                                                        processModel.addElement("Export configuration stored as '" + configName + "'");
+                                                        processModel.addElement(getMessage("transfer.configuration.saved", configName));
                                                         autoscrollList(processList);
                                                     }
                                                 }
                                             }    
                                         } catch (Throwable ex) {
-                                            processModel.addElement("Failed to export data!");
+                                            processModel.addElement(getMessage("export.failure"));
                                             if (ex.getMessage() != null) {
-                                                processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
+                                                processModel.addElement(getMessage("error.details") + Constants.BLANK_STR + ": " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
                                             }
                                             autoscrollList(processList);
-                                            label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Data export - Failed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                                            label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("export.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                             ex.printStackTrace(System.err);
                                         } finally {
                                             instance.hideStatusBarProgressBar();
@@ -3846,7 +3860,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable t) {
-                displayErrorMessage("Failed to export: " + CommonUtils.getFailureDetails(t), t);
+                displayErrorMessage(getMessage("export.failure") + CommonUtils.getFailureDetails(t), t);
             }
         }
     };
@@ -3854,8 +3868,8 @@ public class FrontEnd extends JFrame {
     public static void autoExport(final String configName, final boolean force, final boolean verbose) {
         if (instance != null) {
             JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
-            JLabel processLabel = verbose ? new JLabel(MESSAGES.get("exporting.data") + "('" + configName + "')...") : null;
-            JLabel label = verbose ? new JLabel(MESSAGES.get("data.export")) : null;
+            JLabel processLabel = verbose ? new JLabel(getMessage("exporting.data") + "('" + configName + "')...") : null;
+            JLabel label = verbose ? new JLabel(getMessage("data.export")) : null;
             if (verbose) panel.add(processLabel, BorderLayout.CENTER);
             if (verbose) displayBottomPanel(label, panel);
             try {
@@ -3867,7 +3881,7 @@ public class FrontEnd extends JFrame {
                 byte[] exportOptions = BackEnd.getInstance().getExportOptions(configName);
                 final TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
                 if (transferrer == null) {
-                    throw new Exception(MESSAGES.get("transfer.type.no.longer.available"));
+                    throw new Exception(getMessage("transfer.type.no.longer.available"));
                 }
                 // check connection before performing export
                 transferrer.checkConnection(exportOptions);
@@ -3879,12 +3893,12 @@ public class FrontEnd extends JFrame {
                     // ... if no, do not export...
                     if (verbose) {
                         // ... and inform user about that, if in verbose mode
-                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + MESSAGES.get("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                        processLabel.setText(MESSAGES.get("export.discarded.no.data.changes"));
+                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                        processLabel.setText(getMessage("export.discarded.no.data.changes"));
                     }
                 } else {
                     // ... if yes, do perform export
-                    instance.displayStatusBarProgressBar(MESSAGES.get("exporting.data") + "('" + configName + "')...");
+                    instance.displayStatusBarProgressBar(getMessage("exporting.data") + "('" + configName + "')...");
                     if (transferrer instanceof ObservableTransferExtension) {
                         instance.getStatusBarProgressBar().setMaximum(td.getData().length);
                         ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
@@ -3894,18 +3908,18 @@ public class FrontEnd extends JFrame {
                                 long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
                                 instance.getStatusBarProgressBar().setString( 
                                         FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(td.getData().length)
-                                        + ", " + MESSAGES.get("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
-                                        + ", " + MESSAGES.get("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
+                                        + ", " + getMessage("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                        + ", " + getMessage("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
                             }
                         });
                     }    
                     boolean exported = transferrer.exportData(td, transferOptions, force);
                     if (exported) {
                         if (verbose) {
-                            label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + MESSAGES.get("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                            processLabel.setText(MESSAGES.get("export.success"));
+                            label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                            processLabel.setText(getMessage("export.success"));
                         }
-                        StringBuffer sb = new StringBuffer(MESSAGES.get("export.done") + " ('" + configName + "'");
+                        StringBuffer sb = new StringBuffer(getMessage("export.done") + " ('" + configName + "'");
                         Properties meta = td.getMetaData();
                         if (meta != null && !meta.isEmpty()) {
                             String size = meta.getProperty(Constants.META_DATA_FILESIZE);
@@ -3925,13 +3939,13 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable ex) {
-                String errMsg = MESSAGES.get("export.failure");
+                String errMsg = getMessage("export.failure");
                 if (ex.getMessage() != null) {
-                    errMsg += Constants.BLANK_STR + MESSAGES.get("error.details") + ": " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
+                    errMsg += Constants.BLANK_STR + getMessage("error.details") + ": " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
                 }
                 if (verbose) {
                     processLabel.setText(errMsg);
-                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + MESSAGES.get("export.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                    label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("export.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                 }
                 displayStatusBarErrorMessage(errMsg);
                 ex.printStackTrace(System.err);
@@ -4048,7 +4062,7 @@ public class FrontEnd extends JFrame {
         
         public AddCategoryAction() {
             putValue(Action.NAME, "addCategory");
-            putValue(Action.SHORT_DESCRIPTION, MESSAGES.get("add.category"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("add.category"));
             putValue(Action.SMALL_ICON, uiIcons.getIconCategory());
         }
         
@@ -4063,24 +4077,24 @@ public class FrontEnd extends JFrame {
                 if (getJTabbedPane().getTabCount() == 0 || getJTabbedPane().getSelectedIndex() == -1) {
                     currentTabPane = getJTabbedPane();
                 } else {
-                    addToRootCB = new JCheckBox(MESSAGES.get("add.category.to.rootlevel"));
+                    addToRootCB = new JCheckBox(getMessage("add.category.to.rootlevel"));
                 }
-                JLabel pLabel = new JLabel(MESSAGES.get("tabs.placement"));
+                JLabel pLabel = new JLabel(getMessage("tabs.placement"));
                 JComboBox placementsChooser = new JComboBox();
                 for (Placement placement : PLACEMENTS) {
                     placementsChooser.addItem(placement);
                 }
-                JLabel icLabel = new JLabel(MESSAGES.get("icon"));
+                JLabel icLabel = new JLabel(getMessage("icon"));
                 JComboBox iconChooser = new JComboBox();
                 iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
                     iconChooser.addItem(icon);
                 }
-                JLabel cLabel = new JLabel(MESSAGES.get("caption"));
+                JLabel cLabel = new JLabel(getMessage("caption"));
                 String categoryCaption = JOptionPane.showInputDialog(
                         FrontEnd.this, 
                         new Component[] { addToRootCB, pLabel, placementsChooser, icLabel, iconChooser, cLabel },
-                        MESSAGES.get("new.category"), 
+                        getMessage("add.category"), 
                         JOptionPane.QUESTION_MESSAGE);
                 if (categoryCaption != null) {
                     JTabbedPane categoryTabPane = new JTabbedPane();
@@ -4096,11 +4110,11 @@ public class FrontEnd extends JFrame {
                     if (icon != null) {
                         parentTabPane.setIconAt(parentTabPane.getSelectedIndex(), icon);
                     }
-                    displayStatusBarMessage(MESSAGES.get("category.added"), categoryCaption);
+                    displayStatusBarMessage(getMessage("category.added", categoryCaption));
                     currentTabPane = (JTabbedPane) categoryTabPane.getParent();
                 }
             } catch (Exception ex) {
-                displayErrorMessage(MESSAGES.get("add.category.failure"), ex);
+                displayErrorMessage(getMessage("add.category.failure"), ex);
             }
         }
     };
@@ -4241,9 +4255,9 @@ public class FrontEnd extends JFrame {
                             String type = field.getType().getSimpleName().toLowerCase();
                             if ("string".equals(type)) {
                                 prefPanel = new JPanel(new GridLayout(2, 1));
-                                JLabel prefTitle = new JLabel(MESSAGES.get(prefAnn.title()) + Constants.BLANK_STR);
+                                JLabel prefTitle = new JLabel(getMessage(prefAnn.title()) + Constants.BLANK_STR);
                                 if (!Validator.isNullOrBlank(prefAnn.description())) {
-                                    prefTitle.setToolTipText(MESSAGES.get(prefAnn.description()));
+                                    prefTitle.setToolTipText(getMessage(prefAnn.description()));
                                 }
                                 prefPanel.add(prefTitle);
                                 if (field.isAnnotationPresent(PreferenceChoice.class)) {
@@ -4295,16 +4309,16 @@ public class FrontEnd extends JFrame {
                                 }
                             } else if ("boolean".equals(type)) {
                                 prefPanel = new JPanel(new GridLayout(1, 1));
-                                prefControl = new JCheckBox(MESSAGES.get(prefAnn.title()));
+                                prefControl = new JCheckBox(getMessage(prefAnn.title()));
                                 if (!Validator.isNullOrBlank(prefAnn.description())) {
-                                    ((JCheckBox) prefControl).setToolTipText(MESSAGES.get(prefAnn.description()));
+                                    ((JCheckBox) prefControl).setToolTipText(getMessage(prefAnn.description()));
                                 }
                                 ((JCheckBox) prefControl).setSelected(field.getBoolean(Preferences.getInstance()));
                             } else if ("int".equals(type)) {
                                 prefPanel = new JPanel(new GridLayout(2, 1));
-                                JLabel prefTitle = new JLabel(MESSAGES.get(prefAnn.title()) + Constants.BLANK_STR);
+                                JLabel prefTitle = new JLabel(getMessage(prefAnn.title()) + Constants.BLANK_STR);
                                 if (!Validator.isNullOrBlank(prefAnn.description())) {
-                                    prefTitle.setToolTipText(MESSAGES.get(prefAnn.description()));
+                                    prefTitle.setToolTipText(getMessage(prefAnn.description()));
                                 }
                                 prefPanel.add(prefTitle);
                                 SpinnerNumberModel sm = new SpinnerNumberModel();

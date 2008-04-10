@@ -31,10 +31,8 @@ tabs.placement == Choose tabs placement
 icon == Icon
 caption == Caption
 type == Type
-new.category == New category
-new.entry == New entry
-add.category == add category
-add.entry == add entry
+add.category == Add category
+add.entry == Add entry
 no.entry.extensions.installed == There're no entry extensions installed currently.<br/>Entries can't be added before there's at least one entry extension installed.
 add.category.failure == Failed to add category
 add.entry.failure == Failed to add entry.<br/>Some entry extension(s) may be broken.<br/>Try to open add-ons management dialog, <br/>and uninstall/reinstall broken extensions.
@@ -55,12 +53,40 @@ import.completed == Data import - Completed
 import.success == Data have been successfully imported
 import.failure == Data import failed!
 import.discarded.no.data.changes == Import discarded: data haven't changed since last import
-change.password == change password
-current.password == current password
-new.password == new password
-new.password.confirmation == confirm new password
-change.password.failure == Failed to change password!
-change.password.failure.invalid.confirmation == Failed to change password!<br/>New password hasn't been correctly confirmed!
+change.password == Change password
+current.password == Current password
+new.password == New password
+password.confirmation == Confirm password
+password.confirmation.failure == Password hasn't been correctly confirmed!
 change.password.success == Password has been successfully changed!
-delete.active.entry.or.category == delete active entry/category
+change.password.failure == Failed to change password!
+delete.active.entry.or.category == Delete active entry/category
 delete.active.entry.or.category.failure == Failed to delete entry/category!
+delete == Delete
+rename == Rename
+new.name == New name
+export.preferences == Export preferences
+export.data.entry.configs == Export data entry configs
+export.data.entry.configs.related.only == Export data entry configs related to exported data entries only
+export.tools.data == Export tools data
+export.icons == Export icons
+export.icons.related.only == Export icons related to exported data entries only
+export.app.core == Export application core
+export.addons.and.libs == Export addons and libraries
+export.addon.configs == Export addon configs
+export.import.export.configs == Export stored import/export configurations
+export.use.password == Encrypt exported data using password
+export.data.compressing == Compressing data to be exported...
+export.data.compressed == Data to be exported have been successfully compressed.
+transfer.configuration.select == Select stored configuration to use, <br/>or leave selection empty and press OK to start custom trasfer
+transfer.type == Transfer type
+transfer.options.missing.error == Transfer options are missing!
+transfer.file.location.missing.error == Transfer file location is missing!
+transfer.force == Force transfer even if data haven't been changed since last transfer
+transfer.data.transferring == Data is being transferred...
+transfer.configuration.delete.failure == Failed to delete selected transfer configuration!
+transfer.configuration.rename.failure == Failed to rename selected transfer configuration!
+transfer.configuration.save == If you want to save this transfer configuration,<br/> input a name for it (or select existing one to overwrite)
+transfer.configuration.saved == Transfer configuration saved as '$'
+password.confirmation.invalid == [INVALID]
+password.confirmation.done == [DONE]
