@@ -2679,16 +2679,16 @@ public class FrontEnd extends JFrame {
         
         public ChangePasswordAction() {
             putValue(Action.NAME, "changePassword");
-            putValue(Action.SHORT_DESCRIPTION, "change password");
+            putValue(Action.SHORT_DESCRIPTION, MESSAGES.get("change.password"));
             putValue(Action.SMALL_ICON, uiIcons.getIconChangePassword());
         }
         
         public void actionPerformed(ActionEvent evt) {
-            JLabel currPassLabel = new JLabel("current password:");
+            JLabel currPassLabel = new JLabel(MESSAGES.get("current.password"));
             final JPasswordField currPassField = new JPasswordField();
-            JLabel newPassLabel = new JLabel("new password:");
+            JLabel newPassLabel = new JLabel(MESSAGES.get("new.password"));
             final JPasswordField newPassField = new JPasswordField();
-            JLabel newPassConfirmLabel = new JLabel("confirm new password:");
+            JLabel newPassConfirmLabel = new JLabel(MESSAGES.get("new.password.confirmation"));
             final JPasswordField newPassConfirmField = new JPasswordField();
             ActionListener al = new ActionListener(){
                 public void actionPerformed(ActionEvent ae){
@@ -2705,20 +2705,20 @@ public class FrontEnd extends JFrame {
                             newPassLabel, newPassField,
                             newPassConfirmLabel, newPassConfirmField
                             }, 
-                    "Change password", 
+                            MESSAGES.get("change.password"), 
                     JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                 String currPass = new String(currPassField.getPassword());            
                 String newPass = new String(newPassField.getPassword()); 
                 String newPassConfirmation = new String(newPassConfirmField.getPassword()); 
                 if (!newPass.equals(newPassConfirmation)) {
-                    displayErrorMessage("Failed to change password!" + Constants.NEW_LINE + "New password hasn't been correctly confirmed!");
+                    displayErrorMessage(Constants.HTML_PREFIX + MESSAGES.get("change.password.failure.invalid.confirmation") + Constants.HTML_SUFFIX);
                 } else {
                     try {
                         BackEnd.setPassword(currPass, newPass);
-                        displayMessage("Password has been successfully changed!");
+                        displayMessage(MESSAGES.get("change.password.success"));
                         displayStatusBarMessage(MESSAGES.get("password.changed"));
                     } catch (Exception ex) {
-                        displayErrorMessage("Failed to change password!" + Constants.NEW_LINE + ex.getMessage(), ex);
+                        displayErrorMessage(Constants.HTML_PREFIX + MESSAGES.get("change.password.failure") + "<br/>" + ex.getMessage() + Constants.HTML_SUFFIX, ex);
                     }
                 }
             }

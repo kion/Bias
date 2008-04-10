@@ -57,3 +57,10 @@ import.success == Data have been successfully imported
 import.failed == Failed to import data
 import.failure == Data import - Failed
 import.discarded.no.data.changes == Import discarded: data haven't changed since last import
+change.password == change password
+current.password == current password
+new.password == new password
+new.password.confirmation == confirm new password
+change.password.failure == Failed to change password!
+change.password.failure.invalid.confirmation == Failed to change password!<br/>New password hasn't been correctly confirmed!
+change.password.success == Password has been successfully changed!

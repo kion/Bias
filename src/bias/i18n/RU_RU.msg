@@ -56,4 +56,11 @@ import.completed == Импорт данных - Завершен
 import.success == Данные успешно импортированы
 import.failed == Не удалось импортировать данные
 import.failure == Импорт данных - Неудача
-import.discarded.no.data.changes == Импорт отменен: данные не изменились со времени последнего имспорта
+import.discarded.no.data.changes == Импорт отменен: данные не изменились со времени последнего импорта
+change.password == изменить пароль
+current.password == текущий пароль
+new.password == новый пароль
+new.password.confirmation == подтверждение нового пароля
+change.password.failure == Не удалось изменить пароль!
+change.password.failure.invalid.confirmation == Не удалось изменить пароль!<br/>Новый пароль не был корректно подтвержден!
+change.password.success == Пароль успешно изменен
