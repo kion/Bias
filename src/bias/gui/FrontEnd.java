@@ -310,9 +310,7 @@ public class FrontEnd extends JFrame {
     
     private JTabbedPane addOnsPane = null;
     
-    private JLabel processIconLabel = null;
-
-    private JLabel processMessageLabel = null;
+    private JLabel addOnsManagementScreenProcessLabel = null;
 
     private JProgressBar memUsageProgressBar = null;
     
@@ -370,6 +368,12 @@ public class FrontEnd extends JFrame {
 
     private JPanel jPanelIndicators = null;
 
+    private JPanel jPanelProcessIndicators = null;
+
+    private JPanel addOnsManagementScreenProcessPanel = null;
+
+    private JLabel processLabel = null;
+    
     private JLabel jLabelStatusBarMsg = null;
 
     private JPanel jPanel5 = null;
@@ -608,6 +612,7 @@ public class FrontEnd extends JFrame {
     private static JPanel memUsageIndicatorPanel = null;
     
     private void startMemoryUsageMonitoring() {
+        // TODO [P1] process visualization for asynchronous tasks should be present as well
         execute(new Runnable() {
             public void run() {
                 while (Preferences.getInstance().showMemoryUsage) {
@@ -1267,7 +1272,12 @@ public class FrontEnd extends JFrame {
         fireBeforeSaveEvent(new SaveEvent(beforeExit));
         syncExecute(new Runnable(){
             public void run() { 
-                BackEnd.getInstance().setConfig(collectProperties()); 
+                instance.displayProcessNotification("saving data...", false);
+            }
+        });
+        syncExecute(new Runnable(){
+            public void run() { 
+                BackEnd.getInstance().setConfig(collectProperties());
             }
         });
         syncExecute(new Runnable(){
@@ -1295,6 +1305,11 @@ public class FrontEnd extends JFrame {
                 } catch (Throwable t) {
                     displayErrorMessage("Failed to save data!", t);
                 }
+            }
+        });
+        syncExecute(new Runnable(){
+            public void run() { 
+                instance.hideProcessNotification();
             }
         });
         displayStatusBarMessage(getMessage("data.saved"));
@@ -1477,8 +1492,9 @@ public class FrontEnd extends JFrame {
     
     private static ExecutorService singleThreadExecutor;
     
-    // TODO [P1] some tasks may be executed in non-single-thread queue, 
-    //           inspect all the tasks and perform changes needed
+    public static void syncExecute(Runnable task) {
+        syncExecute(task, null, false);
+    }
     
     /**
      * This is synchronized tasks execution method, that should be used for critical tasks,
@@ -1489,12 +1505,29 @@ public class FrontEnd extends JFrame {
      * All tasks are queued and executed one by one, shutdown-task is the last in the queue.
      * 
      * @param task task to be executed before application shutdown
+     * @param message message to display in status bar while task is being executed
+     * @param displayOnAllScreens boolean defines whether processing indicator should be displayed in all GUI screens (true) or in main window only (false)
      */
-    public static void syncExecute(Runnable task) {
+    public static void syncExecute(Runnable task, final String message, final boolean displayOnAllScreens) {
         if (singleThreadExecutor == null) {
             singleThreadExecutor = Executors.newSingleThreadExecutor();
         }
+        boolean displayProcessIndicator = instance != null && !Validator.isNullOrBlank(message);
+        if (displayProcessIndicator) {
+            singleThreadExecutor.execute(new Runnable(){
+                public void run() {
+                    instance.displayProcessNotification(message, displayOnAllScreens);
+                }
+            });
+        }
         singleThreadExecutor.execute(task);
+        if (displayProcessIndicator) {
+            singleThreadExecutor.execute(new Runnable(){
+                public void run() {
+                    instance.hideProcessNotification();
+                }
+            });
+        }
     }
     
     private void shutdown() {
@@ -2157,6 +2190,25 @@ public class FrontEnd extends JFrame {
             progressBarPanel.setVisible(false);
         }
     }
+
+    private void displayProcessNotification(String message, boolean displayOnAllScreens) {
+        message = Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_INFO + "&nbsp;" + message + "&nbsp;" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX;
+        processLabel.setText(message);
+        getJPanelProcessIndicators().setVisible(true);
+        if (displayOnAllScreens) {
+            addOnsManagementScreenProcessLabel.setText(message);
+            getAddOnsManagementScreenProcessPanel().setVisible(true);
+        }
+    }    
+    
+    private void hideProcessNotification() {
+        processLabel.setText(null);
+        getJPanelProcessIndicators().setVisible(false);
+        if (addOnsManagementScreenProcessPanel != null) {
+            addOnsManagementScreenProcessLabel.setText(null);
+            getAddOnsManagementScreenProcessPanel().setVisible(false);
+        }
+    }
     
     /**
      * This method is helpful if there's a need to ensure some GUI related action
@@ -2197,8 +2249,11 @@ public class FrontEnd extends JFrame {
         if (jPanelStatusBar == null) {
             jPanelStatusBar = new JPanel();
             jPanelStatusBar.setLayout(new BorderLayout());
-            jPanelStatusBar.add(getJLabelStatusBarMsg(), BorderLayout.WEST);
-            jPanelStatusBar.add(getJPanelIndicators(), BorderLayout.EAST);
+            JPanel alwaysVisiblePanel = new JPanel(new BorderLayout());
+            alwaysVisiblePanel.add(getJLabelStatusBarMsg(), BorderLayout.CENTER);
+            alwaysVisiblePanel.add(getJPanelIndicators(), BorderLayout.EAST);
+            jPanelStatusBar.add(alwaysVisiblePanel, BorderLayout.NORTH);
+            jPanelStatusBar.add(getJPanelProcessIndicators(), BorderLayout.CENTER);
         }
         return jPanelStatusBar;
     }
@@ -2216,6 +2271,36 @@ public class FrontEnd extends JFrame {
         return jPanelIndicators;
     }
 
+    /**
+     * This method initializes jPanelProcessIndicators
+     * 
+     * @return javax.swing.JPanel
+     */
+    private JPanel getJPanelProcessIndicators() {
+        if (jPanelProcessIndicators == null) {
+            jPanelProcessIndicators = new JPanel(new BorderLayout());
+            jPanelProcessIndicators.add((processLabel = new JLabel()), BorderLayout.CENTER);
+            jPanelProcessIndicators.add(new JLabel(ICON_PROCESS), BorderLayout.EAST);
+            jPanelProcessIndicators.setVisible(false);
+        }
+        return jPanelProcessIndicators;
+    }
+    
+    /**
+     * This method initializes addOnsManagementScreenProcessPanel
+     * 
+     * @return javax.swing.JPanel
+     */
+    private JPanel getAddOnsManagementScreenProcessPanel() {
+        if (addOnsManagementScreenProcessPanel == null) {
+            addOnsManagementScreenProcessPanel = new JPanel(new BorderLayout());
+            addOnsManagementScreenProcessPanel.add((addOnsManagementScreenProcessLabel = new JLabel()), BorderLayout.CENTER);
+            addOnsManagementScreenProcessPanel.add(new JLabel(ICON_PROCESS), BorderLayout.WEST);
+            addOnsManagementScreenProcessPanel.setVisible(false);
+        }
+        return addOnsManagementScreenProcessPanel;
+    }
+    
     /**
      * This method initializes jLabelStatusBarMsg
      * 
@@ -4922,7 +5007,7 @@ public class FrontEnd extends JFrame {
                                         displayErrorMessage("Failed to install icon(s)! " + CommonUtils.getFailureDetails(t), t);
                                     }
                                 }
-                            });
+                            }, "installing icons...", true);
                         }
                     }
                 });
@@ -5343,8 +5428,6 @@ public class FrontEnd extends JFrame {
                 
                 addOnsPane.addTab("Advanced", uiIcons.getIconPreferences(), advPanel);
                 
-                processIconLabel = new JLabel();
-                processMessageLabel = new JLabel();
                 JButton doneButt = new JButton("Done");
                 doneButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -5352,12 +5435,8 @@ public class FrontEnd extends JFrame {
                     }
                 });
 
-                JPanel bottomProcessPanel = new JPanel(new BorderLayout());
-                bottomProcessPanel.add(processMessageLabel, BorderLayout.NORTH);
-                bottomProcessPanel.add(processIconLabel, BorderLayout.CENTER);
-                
                 JPanel bottomPanel = new JPanel(new BorderLayout());
-                bottomPanel.add(bottomProcessPanel, BorderLayout.EAST);
+                bottomPanel.add(getAddOnsManagementScreenProcessPanel(), BorderLayout.SOUTH);
                 bottomPanel.add(doneButt, BorderLayout.CENTER);
 
                 JPanel contentPane = new JPanel(new BorderLayout());
@@ -5379,16 +5458,6 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private void displayAddOnsManagementScreenProcessLabel(String message) {
-        processMessageLabel.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_INFO + "&nbsp;" + message + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-        processIconLabel.setIcon(ICON_PROCESS);
-    }
-
-    private void hideAddOnsManagementScreenProcessLabel() {
-        processMessageLabel.setText(null);
-        processIconLabel.setIcon(null);
-    }
-
     private JList getIconList() {
         if (icList == null) {
             icList = new JList(getIconListModel());
@@ -5596,7 +5665,7 @@ public class FrontEnd extends JFrame {
             syncExecute(new Runnable(){
                 public void run() {
                     try {
-                        displayAddOnsManagementScreenProcessLabel("installing packages...");
+                        displayProcessNotification("installing packages...", true);
                         final Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
                         StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
                         boolean error = false;
@@ -5662,10 +5731,10 @@ public class FrontEnd extends JFrame {
                             }
                         }
                     } finally {
-                        hideAddOnsManagementScreenProcessLabel();
+                        hideProcessNotification();
                     }
                 }
-            });
+            }, "installing local packages...", true);
         }
     }
     
@@ -5703,7 +5772,7 @@ public class FrontEnd extends JFrame {
             URL addonsListURL = new URL(BackEnd.getInstance().getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             Downloader d = Downloader.createSingleFileDownloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
-            displayAddOnsManagementScreenProcessLabel("refreshing online packages list...");
+            displayProcessNotification("refreshing online packages list...", true);
             d.setDownloadListener(new DownloadListener(){
                 @Override
                 public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
@@ -5747,7 +5816,7 @@ public class FrontEnd extends JFrame {
                 }
                 @Override
                 public void onFinish(long downloadedBytesNum, long elapsedTime) {
-                    hideAddOnsManagementScreenProcessLabel();
+                    hideProcessNotification();
                 }
             });
             d.start();
@@ -5802,7 +5871,7 @@ public class FrontEnd extends JFrame {
             final Long totalSize = new Long(tSize);
             if (!urlFileMap.isEmpty()) {
                 Downloader d = Downloader.createMultipleFilesDownloader(urlFileMap, Preferences.getInstance().preferredTimeOut);
-                displayAddOnsManagementScreenProcessLabel("downloading/installing packages...");
+                displayProcessNotification("downloading/installing packages...", true);
                 d.setDownloadListener(new DownloadListener(){
                     private StringBuffer sb = new StringBuffer();
                     boolean success = true;
@@ -5897,7 +5966,7 @@ public class FrontEnd extends JFrame {
                     }
                     @Override
                     public void onFinish(long downloadedBytesNum, long elapsedTime) {
-                        hideAddOnsManagementScreenProcessLabel();
+                        hideProcessNotification();
                         if (!Validator.isNullOrBlank(sb)) {
                             JOptionPane.showMessageDialog(
                                     getActiveWindow(), 
