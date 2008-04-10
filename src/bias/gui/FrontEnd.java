@@ -2798,7 +2798,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable t) {
-                displayErrorMessage(Constants.HTML_PREFIX + MESSAGES.get("failed.to.add.entry") + Constants.HTML_SUFFIX, t);
+                displayErrorMessage(Constants.HTML_PREFIX + MESSAGES.get("add.entry.failure") + Constants.HTML_SUFFIX, t);
             }
         }
     };
@@ -2938,7 +2938,7 @@ public class FrontEnd extends JFrame {
         
         public DeleteAction() {
             putValue(Action.NAME, "delete");
-            putValue(Action.SHORT_DESCRIPTION, "delete active entry/category");
+            putValue(Action.SHORT_DESCRIPTION, MESSAGES.get("delete.active.entry.or.category"));
             putValue(Action.SMALL_ICON, uiIcons.getIconDelete());
         }
         
@@ -2965,7 +2965,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 } catch (Exception ex) {
-                    displayErrorMessage("Failed to delete entry!", ex);
+                    displayErrorMessage(MESSAGES.get("delete.active.entry.or.category.failure"), ex);
                 }
             }
         }
@@ -3449,7 +3449,7 @@ public class FrontEnd extends JFrame {
                 displayStatusBarErrorMessage(MESSAGES.get("import failed") + Constants.BLANK_STR + MESSAGES.get("wrong.password"));
                 gse.printStackTrace(System.err);
             } catch (Throwable t) {
-                String errMsg = MESSAGES.get("import.failed");
+                String errMsg = MESSAGES.get("import.failure");
                 if (t.getMessage() != null) {
                     errMsg += Constants.BLANK_STR + MESSAGES.get("error.details") + ": " + t.getClass().getSimpleName() + ": " + t.getMessage();
                 }
@@ -3925,7 +3925,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable ex) {
-                String errMsg = MESSAGES.get("export.failed");
+                String errMsg = MESSAGES.get("export.failure");
                 if (ex.getMessage() != null) {
                     errMsg += Constants.BLANK_STR + MESSAGES.get("error.details") + ": " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
                 }
@@ -4100,7 +4100,7 @@ public class FrontEnd extends JFrame {
                     currentTabPane = (JTabbedPane) categoryTabPane.getParent();
                 }
             } catch (Exception ex) {
-                displayErrorMessage(MESSAGES.get("failed.to.add.category"), ex);
+                displayErrorMessage(MESSAGES.get("add.category.failure"), ex);
             }
         }
     };
