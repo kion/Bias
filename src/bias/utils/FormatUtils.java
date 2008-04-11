@@ -39,7 +39,7 @@ public class FormatUtils {
     }
     
     public static String formatTimeDuration(long duration) {
-        return formatTimeDuration(duration, "none");
+        return formatTimeDuration(duration, "--");
     }
     
     public static String formatTimeDuration(long duration, String emptyValueStr) {
