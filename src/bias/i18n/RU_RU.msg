@@ -45,14 +45,12 @@ data.export == Экспорт данных
 export.completed == Экспорт данных - Завершен
 export.success == Данные успешно экспортированы
 export.failure == Не удалось экспортировать данные
-export.discarded.no.data.changes == Экспорт отменен: данные не изменились со времени последнего экспорта
 error.details == Детали ошибки
 importing.data == Импортирую данные
 data.import == Импорт данных
 import.completed == Импорт данных - Завершен
 import.success == Данные успешно импортированы
 import.failure == Не удалось импортировать данные
-import.discarded.no.data.changes == Импорт отменен: данные не изменились со времени последнего импорта
 change.password == Изменить пароль
 current.password == Текущий пароль
 new.password == Новый пароль
@@ -65,6 +63,8 @@ delete.active.entry.or.category.failure == Не удалось удалить з
 delete == Удалить
 rename == Переименовать
 new.name == Новое имя
+overwrite.existing == Заменить существующие
+update.installed == Обновить установленные
 export.preferences == Экспорт предпочтений
 export.data.entry.configs == Экспорт настроек записей
 export.data.entry.configs.related.only == Экспортировать настройки только экспортируемых записей
@@ -75,9 +75,23 @@ export.app.core == Экспорт ядра приложения
 export.addons.and.libs == Экспорт расширений и библиотек
 export.addon.configs == Экспорт настроек расширений
 export.import.export.configs == Экспорт хранимых конфигураций импорта/экспорта
-export.use.password == Зашифровать экспортируемые данные с помощью пароля
-export.data.compressing == Сжатие данных для экспорта...
-export.data.compressed == Данные для экспорта успешно сжаты.
+export.use.password == Зашифровать экспортируемые данные используя пароль
+export.data.compressing == Упаковка данных для экспорта...
+export.data.compressed == Данные для экспорта успешно упакованы
+import.data.entries == Импорт записей
+import.data.entry.configs == Импорт настроек записей
+import.preferences == Импорт предпочтений
+import.tools.data == Импорт данных инструментов
+import.icons == Импорт иконок
+import.and.update.app.core == Импорт и обновление ядра приложения
+import.addons.and.libs == Импорт расширений и библиотек
+import.addon.configs == Импорт настроек расширений
+import.import.export.configs == Импорт хранимых конфигураций импорта/экспорта
+import.use.password == Расшифровать импортируемые данные используя пароль
+import.data.extracting == Распаковка данных для импорта...
+import.data.extracted == Данные для импорта распакованы
+import.failure.no.data.retrieved == Не удалось импортировать данные: данные не были получены!
+import.data.retrieved == Данные для импорта получены
 transfer.configuration.select == Выберите хранимую конфигурацию для использования, <br/>или оставьте поле для выбора пустым и нажмите ОК для начала настраиваемой траспортировки
 transfer.type == Тип транспортировки
 transfer.options.missing.error == Опции траспортировки не указаны!
@@ -88,5 +102,6 @@ transfer.configuration.delete.failure == Не удалось удалить вы
 transfer.configuration.rename.failure == Не удалось переименовать выбранную трансортировочную конфигурацию!
 transfer.configuration.save == Еслы вы желаете сохранить эту траспортировочную конфигурацию,<br/> введите имя для нее (или выберите уже существующее для замены)
 transfer.configuration.saved == Траспортировочная конфигурация сохранена как '$'
+transfer.discarded.no.data.changes == Транспортировка отменена: данные не изменились со времени последней траспортировки
 password.confirmation.invalid == [НЕПОДТВЕРЖДЕНО]
 password.confirmation.done == [ГОТОВО]

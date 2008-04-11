@@ -3088,7 +3088,7 @@ public class FrontEnd extends JFrame {
                 for (String configName : BackEnd.getInstance().getPopulatedImportConfigurations().keySet()) {
                     configsCB.addItem(configName);
                 }
-                final JButton delButt = new JButton("Delete");
+                final JButton delButt = new JButton(getMessage("delete"));
                 delButt.setEnabled(false);
                 delButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
@@ -3101,13 +3101,13 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                final JButton renButt = new JButton("Rename");
+                final JButton renButt = new JButton(getMessage("rename"));
                 renButt.setEnabled(false);
                 renButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
                             String oldName = (String) configsCB.getSelectedItem();
-                            String newName = JOptionPane.showInputDialog(FrontEnd.this, "New name:", oldName);
+                            String newName = JOptionPane.showInputDialog(FrontEnd.this, getMessage("new.name"), oldName);
                             if (!Validator.isNullOrBlank(newName)) {
                                 BackEnd.getInstance().renameImportConfiguration(oldName, newName);
                                 configsCB.removeItem(oldName);
@@ -3115,7 +3115,7 @@ public class FrontEnd extends JFrame {
                                 configsCB.setSelectedItem(newName);
                             }
                         } catch (Exception ex) {
-                            displayErrorMessage("Failed to rename selected import-configuration!", ex);
+                            displayErrorMessage(getMessage("transfer.configuration.rename.failure"), ex);
                         }
                     }
                 });
@@ -3130,7 +3130,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                final JCheckBox importUnchangedDataCB = new JCheckBox("Force import even if data haven't been changed since last import");
+                final JCheckBox importUnchangedDataCB = new JCheckBox(getMessage("transfer.force"));
                 JPanel p = new JPanel(new BorderLayout());
                 p.add(configsCB, BorderLayout.NORTH);
                 JPanel pb = new JPanel(new GridLayout(1, 2));
@@ -3139,11 +3139,10 @@ public class FrontEnd extends JFrame {
                 p.add(pb, BorderLayout.CENTER);
                 p.add(importUnchangedDataCB, BorderLayout.SOUTH);
                 Component[] c = new Component[] {
-                        new JLabel(Constants.HTML_PREFIX + "Choose existing import configuration to use, <br/>" + 
-                                   "or leave selection empty and press OK for custom export." + Constants.HTML_SUFFIX),
+                        new JLabel(Constants.HTML_PREFIX + getMessage("transfer.configuration.select") + Constants.HTML_SUFFIX),
                         p          
                 };
-                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, "Import", JOptionPane.OK_CANCEL_OPTION);
+                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, c, getMessage("data.import"), JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
                     if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
                         final String configName = (String) configsCB.getSelectedItem();
@@ -3157,7 +3156,7 @@ public class FrontEnd extends JFrame {
                         for (String annotation : ExtensionFactory.getAnnotatedTransferExtensions().keySet()) {
                             cb.addItem(annotation);
                         }
-                        opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, "Choose import type", JOptionPane.OK_CANCEL_OPTION);
+                        opt = JOptionPane.showConfirmDialog(FrontEnd.this, cb, getMessage("transfer.type"), JOptionPane.OK_CANCEL_OPTION);
                         if (opt == JOptionPane.OK_OPTION) {
                             syncExecute(new Runnable(){
                                 public void run() {
@@ -3165,8 +3164,8 @@ public class FrontEnd extends JFrame {
                                     DefaultListModel processModel = new DefaultListModel();
                                     JList processList = new JList(processModel);
                                     panel.add(processList, BorderLayout.CENTER);
-                                    JLabel label = new JLabel("Data import");
-                                    processModel.addElement("Transferring data to be imported...");
+                                    JLabel label = new JLabel(getMessage("data.import"));
+                                    processModel.addElement(getMessage("import.data.transferring"));
                                     displayBottomPanel(label, panel);
                                     autoscrollList(processList);
                                     try {
@@ -3180,23 +3179,23 @@ public class FrontEnd extends JFrame {
                                         final byte[] transferOptions = importOptions.getOptions();
                                         if (transferOptions == null || transferOptions.length == 0) {
                                             hideBottomPanel();
-                                            throw new Exception("Transfer options are missing! Import canceled.");
+                                            throw new Exception(getMessage("transfer.options.missing.error"));
                                         }
                                         final String fileLocation = importOptions.getFileLocation();
                                         if (Validator.isNullOrBlank(fileLocation)) {
                                             hideBottomPanel();
-                                            throw new Exception("Import file location is missing!");
+                                            throw new Exception(getMessage("transfer.file.location.missing.error"));
                                         }
                                         byte[] metaBytes = transferrer.readData(transferOptions, true);
                                         // check if checksum of data to be imported has changed since last import (or if import is forced)...
                                         if (!importUnchangedDataCB.isSelected() && !transferrer.importCheckSumChanged(importOptions, metaBytes)) {
                                             // ... if no, do not import and inform user about that, if in verbose mode
-                                            label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + "Data import - Completed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                                            processModel.addElement("Import discarded: data haven't changed since last import.");
+                                            label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("import.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                                            processModel.addElement(getMessage("transfer.discarded.no.data.changes"));
                                             autoscrollList(processList);
                                         } else {
                                             // ... if yes, do perform import
-                                            instance.displayStatusBarProgressBar("Importing data...");
+                                            instance.displayStatusBarProgressBar(getMessage("importing.data"));
                                             if (metaBytes != null) {
                                                 Properties metaData = PropertiesUtils.deserializeProperties(metaBytes);
                                                 String sizeStr = metaData.getProperty(Constants.META_DATA_FILESIZE);
@@ -3210,8 +3209,8 @@ public class FrontEnd extends JFrame {
                                                             long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
                                                             instance.getStatusBarProgressBar().setString( 
                                                                     FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(size)
-                                                                    + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
-                                                                    + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
+                                                                    + ", " + getMessage("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                                                    + ", " + getMessage("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
                                                         }
                                                     });
                                                 }
@@ -3219,69 +3218,69 @@ public class FrontEnd extends JFrame {
                                             TransferData td = transferrer.importData(importOptions, importUnchangedDataCB.isSelected());
                                             byte[] importedData = td.getData();
                                             if (importedData == null) {
-                                                processModel.addElement("Import source initialization failure: no data have been retrieved!");
+                                                processModel.addElement(getMessage("import.failure.no.data.retrieved"));
                                                 autoscrollList(processList);
-                                                label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Data import - Failed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                                                label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("import.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                             } else {
-                                                processModel.addElement("Data to be imported successfully transferred.");
+                                                processModel.addElement(getMessage("import.data.retrieved"));
                                                 autoscrollList(processList);
-                                                String oe = "Overwrite existing";
+                                                String oe = getMessage("overwrite.existing");
                                                 
                                                 JPanel p1 = new JPanel(new GridLayout(5, 2));
                                                 
-                                                JCheckBox importDataEntriesCB = new JCheckBox("Import data entries");
+                                                JCheckBox importDataEntriesCB = new JCheckBox(getMessage("import.data.entries"));
                                                 p1.add(importDataEntriesCB);
                                                 JCheckBox overwriteDataEntriesCB = new JCheckBox(oe);
                                                 p1.add(overwriteDataEntriesCB);
                                                 createDependentCheckboxChangeListener(importDataEntriesCB, overwriteDataEntriesCB);
 
-                                                JCheckBox importDataEntryConfigsCB = new JCheckBox("Import data entry configs"); 
+                                                JCheckBox importDataEntryConfigsCB = new JCheckBox(getMessage("import.data.entry.configs")); 
                                                 p1.add(importDataEntryConfigsCB);
                                                 JCheckBox overwriteDataEntryConfigsCB = new JCheckBox(oe); 
                                                 p1.add(overwriteDataEntryConfigsCB);
                                                 createDependentCheckboxChangeListener(importDataEntryConfigsCB, overwriteDataEntryConfigsCB);
                                                 
-                                                JCheckBox importPreferencesCB = new JCheckBox("Import preferences");
+                                                JCheckBox importPreferencesCB = new JCheckBox(getMessage("import.preferences"));
                                                 p1.add(importPreferencesCB);
                                                 JCheckBox overwritePreferencesCB = new JCheckBox(oe); 
                                                 p1.add(overwritePreferencesCB);
                                                 createDependentCheckboxChangeListener(importPreferencesCB, overwritePreferencesCB);
                                                 
-                                                JCheckBox importToolsDataCB = new JCheckBox("Import tools data"); 
+                                                JCheckBox importToolsDataCB = new JCheckBox(getMessage("import.tools.data")); 
                                                 p1.add(importToolsDataCB);
                                                 JCheckBox overwriteToolsDataCB = new JCheckBox(oe); 
                                                 p1.add(overwriteToolsDataCB);
                                                 createDependentCheckboxChangeListener(importToolsDataCB, overwriteToolsDataCB);
                                                 
-                                                JCheckBox importIconsCB = new JCheckBox("Import icons");
+                                                JCheckBox importIconsCB = new JCheckBox(getMessage("import.icons"));
                                                 p1.add(importIconsCB);
                                                 JCheckBox overwriteIconsCB = new JCheckBox(oe);
                                                 p1.add(overwriteIconsCB);
                                                 createDependentCheckboxChangeListener(importIconsCB, overwriteIconsCB);
 
-                                                JCheckBox importAppCoreCB = new JCheckBox("Import and update application core");
+                                                JCheckBox importAppCoreCB = new JCheckBox(getMessage("import.and.update.app.core"));
                                                 
                                                 JPanel p2 = new JPanel(new GridLayout(3, 2));
                                                 
-                                                JCheckBox importAddOnsAndLibsCB = new JCheckBox("Import addons and libraries");
+                                                JCheckBox importAddOnsAndLibsCB = new JCheckBox(getMessage("import.addons.and.libs"));
                                                 p2.add(importAddOnsAndLibsCB);
-                                                JCheckBox updateAddOnsAndLibsCB = new JCheckBox("Update installed");
+                                                JCheckBox updateAddOnsAndLibsCB = new JCheckBox(getMessage("update.installed"));
                                                 p2.add(updateAddOnsAndLibsCB);
                                                 createDependentCheckboxChangeListener(importAddOnsAndLibsCB, updateAddOnsAndLibsCB);
                                                 
-                                                JCheckBox importAddOnConfigsCB = new JCheckBox("Import addon configs");
+                                                JCheckBox importAddOnConfigsCB = new JCheckBox(getMessage("import.addon.configs"));
                                                 p2.add(importAddOnConfigsCB);
                                                 JCheckBox overwriteAddOnConfigsCB = new JCheckBox(oe);
                                                 p2.add(overwriteAddOnConfigsCB);
                                                 createDependentCheckboxChangeListener(importAddOnConfigsCB, overwriteAddOnConfigsCB);
                                                 
-                                                JCheckBox importImportExportConfigsCB = new JCheckBox("Import import/export cofigs");
+                                                JCheckBox importImportExportConfigsCB = new JCheckBox(getMessage("import.import.export.configs"));
                                                 p2.add(importImportExportConfigsCB);
                                                 JCheckBox overwriteImportExportConfigsCB = new JCheckBox(oe);
                                                 p2.add(overwriteImportExportConfigsCB);
                                                 createDependentCheckboxChangeListener(importImportExportConfigsCB, overwriteImportExportConfigsCB);
                                                 
-                                                JLabel passwordL = new JLabel("Decrypt imported data using password:");
+                                                JLabel passwordL = new JLabel(getMessage("import.use.password"));
                                                 JPasswordField passwordTF = new JPasswordField();
                                                 if (JOptionPane.showConfirmDialog(
                                                         FrontEnd.this,
@@ -3292,16 +3291,16 @@ public class FrontEnd extends JFrame {
                                                                 passwordL,
                                                                 passwordTF
                                                         },
-                                                        "Import data", 
+                                                        getMessage("data.import"), 
                                                         JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
                                                     hideBottomPanel();
                                                 } else {    
-                                                    processModel.addElement("Extracting data to be imported...");
+                                                    processModel.addElement(getMessage("import.data.extracting"));
                                                     autoscrollList(processList);
                                                     File importDir = new File(Constants.TMP_DIR, UUID.randomUUID().toString());
                                                     FSUtils.delete(importDir);
                                                     ArchUtils.extract(importedData, importDir);
-                                                    processModel.addElement("Data to be imported have been successfully extracted.");
+                                                    processModel.addElement(getMessage("import.data.extracted"));
                                                     autoscrollList(processList);
                                                     String password = new String(passwordTF.getPassword());            
                                                     try {
@@ -3349,8 +3348,8 @@ public class FrontEnd extends JFrame {
                                                             listIcons();
                                                         }
                                                         configsCB.setEditable(true);
-                                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + "Data import - Completed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                                                        processModel.addElement("Data have been successfully imported.");
+                                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("import.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                                                        processModel.addElement(getMessage("import.success"));
                                                         autoscrollList(processList);
                                                         StringBuffer sb = new StringBuffer(getMessage("import.done"));
                                                         Properties meta = td.getMetaData();
@@ -3375,43 +3374,42 @@ public class FrontEnd extends JFrame {
                                                         displayStatusBarMessage(sb.toString());
                                                         fireTransferEvent(new TransferEvent(TRANSFER_TYPE.IMPORT, transferrer.getClass()));
                                                         Component[] c = new Component[] {
-                                                                new JLabel("Data have been successfully imported."),
-                                                                new JLabel("If you want to save this import configuration,"),
-                                                                new JLabel("input a name for it (or select existing one to overwrite):"),
+                                                                new JLabel(getMessage("import.success")),
+                                                                new JLabel(Constants.HTML_PREFIX + getMessage("transfer.configuration.save") + Constants.HTML_SUFFIX),
                                                                 configsCB          
                                                         };
                                                         JOptionPane.showMessageDialog(FrontEnd.this, c);
                                                         if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
                                                             String configName = configsCB.getSelectedItem().toString();
                                                             BackEnd.getInstance().storeImportConfigurationAndOptions(configName, importConfig, transferOptions);
-                                                            processModel.addElement("Import configuration stored as '" + configName + "'");
+                                                            processModel.addElement(getMessage("transfer.configuration.saved", configName));
                                                             autoscrollList(processList);
                                                         }
                                                     } catch (GeneralSecurityException gse) {
-                                                        processModel.addElement("Failed to import data!");
-                                                        processModel.addElement("Error details: It seems that you have typed wrong password...");
+                                                        processModel.addElement(getMessage("import.failure"));
+                                                        processModel.addElement(getMessage("error.details") + ": " + getMessage("wrong.password"));
                                                         autoscrollList(processList);
-                                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Data import - Failed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("import.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                                         gse.printStackTrace(System.err);
                                                     } catch (Exception ex) {
-                                                        processModel.addElement("Failed to import data!");
+                                                        processModel.addElement(getMessage("import.failure"));
                                                         if (ex.getMessage() != null) {
-                                                            processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
+                                                            processModel.addElement(getMessage("error.details") + ": " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
                                                         }
                                                         autoscrollList(processList);
-                                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Data import - Failed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("import.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                                         ex.printStackTrace(System.err);
                                                     }
                                                 }
                                             }
                                         }    
                                     } catch (Throwable ex) {
-                                        processModel.addElement("Failed to import data!");
+                                        processModel.addElement(getMessage("import.failure"));
                                         if (ex.getMessage() != null) {
-                                            processModel.addElement("Error details: " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
+                                            processModel.addElement(getMessage("error.details") + ": " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
                                         }
                                         autoscrollList(processList);
-                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Data import - Failed" + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("import.failure") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                         ex.printStackTrace(System.err);
                                     } finally {
                                         instance.hideStatusBarProgressBar();
@@ -3422,7 +3420,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable ex) {
-                displayErrorMessage("Failed to import: " + CommonUtils.getFailureDetails(ex), ex);
+                displayErrorMessage(getMessage("import.failure") + ": " + CommonUtils.getFailureDetails(ex), ex);
             }
         }
     };
@@ -3847,7 +3845,7 @@ public class FrontEnd extends JFrame {
                                             if (!exportUnchangedDataCB.isSelected() && !transferrer.exportCheckSumChanged(transferOpts, td)) {
                                                 // ... if no, do not export and inform user about that
                                                 label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                                                processModel.addElement(getMessage("export.discarded.no.data.changes"));
+                                                processModel.addElement(getMessage("transfer.discarded.no.data.changes"));
                                                 autoscrollList(processList);
                                             } else {
                                                 // ... if yes, do perform export
@@ -3945,7 +3943,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable t) {
-                displayErrorMessage(getMessage("export.failure") + CommonUtils.getFailureDetails(t), t);
+                displayErrorMessage(getMessage("export.failure") + ": " + CommonUtils.getFailureDetails(t), t);
             }
         }
     };
@@ -3979,7 +3977,7 @@ public class FrontEnd extends JFrame {
                     if (verbose) {
                         // ... and inform user about that, if in verbose mode
                         label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                        processLabel.setText(getMessage("export.discarded.no.data.changes"));
+                        processLabel.setText(getMessage("transfer.discarded.no.data.changes"));
                     }
                 } else {
                     // ... if yes, do perform export

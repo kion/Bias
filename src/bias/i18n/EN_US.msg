@@ -45,14 +45,12 @@ data.export == Data export
 export.completed == Data export - Completed
 export.success == Data have been successfully exported
 export.failure == Data export failed!
-export.discarded.no.data.changes == Export discarded: data haven't changed since last export
 error.details == Error details
 importing.data == Importing data
 data.import == Data import
 import.completed == Data import - Completed
 import.success == Data have been successfully imported
 import.failure == Data import failed!
-import.discarded.no.data.changes == Import discarded: data haven't changed since last import
 change.password == Change password
 current.password == Current password
 new.password == New password
@@ -65,6 +63,8 @@ delete.active.entry.or.category.failure == Failed to delete entry/category!
 delete == Delete
 rename == Rename
 new.name == New name
+overwrite.existing == Overwrite existing
+update.installed == Update installed
 export.preferences == Export preferences
 export.data.entry.configs == Export data entry configs
 export.data.entry.configs.related.only == Export data entry configs related to exported data entries only
@@ -78,6 +78,20 @@ export.import.export.configs == Export stored import/export configurations
 export.use.password == Encrypt exported data using password
 export.data.compressing == Compressing data to be exported...
 export.data.compressed == Data to be exported have been successfully compressed.
+import.data.entries == Import data entries
+import.data.entry.configs == Import data entry configs
+import.preferences == Import preferences
+import.tools.data == Import tools data
+import.icons == Import icons
+import.and.update.app.core == Import and update application core
+import.addons.and.libs == Import addons and libraries
+import.addon.configs == Import addon configs
+import.import.export.configs == Import import/export cofigs
+import.use.password == Decrypt imported data using password
+import.data.extracting == Extracting data to be imported...
+import.data.extracted == Data to be imported have been successfully extracted
+import.failure.no.data.retrieved == Import source initialization failure: no data have been retrieved!
+import.data.retrieved == Data to be imported successfully retrieved
 transfer.configuration.select == Select stored configuration to use, <br/>or leave selection empty and press OK to start custom trasfer
 transfer.type == Transfer type
 transfer.options.missing.error == Transfer options are missing!
@@ -88,5 +102,6 @@ transfer.configuration.delete.failure == Failed to delete selected transfer conf
 transfer.configuration.rename.failure == Failed to rename selected transfer configuration!
 transfer.configuration.save == If you want to save this transfer configuration,<br/> input a name for it (or select existing one to overwrite)
 transfer.configuration.saved == Transfer configuration saved as '$'
+transfer.discarded.no.data.changes == Transfer discarded: data haven't changed since last transfer
 password.confirmation.invalid == [INVALID]
 password.confirmation.done == [DONE]
