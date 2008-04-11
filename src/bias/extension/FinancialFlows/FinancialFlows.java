@@ -834,23 +834,25 @@ public class FinancialFlows extends EntryExtension {
                     }
                 }
             }
-            RegularTimePeriod month = new Month(dateLow);
-            while (month.getStart().getTime() <= dateHigh.getTime()) {
-                for (int i = 0; i < model.getRowCount(); i++) {
-                    DIRECTION d = (DIRECTION) model.getValueAt(i, COLUMN_DIRECTION_IDX);
-                    Date date = (Date) model.getValueAt(i, COLUMN_DATE_IDX);
-                    Date endDate = (Date) model.getValueAt(i, COLUMN_END_DATE_IDX);
-                    if (d == direction && date.getTime() >= dateLow.getTime() && endDate.getTime() <= dateHigh.getTime()) {
-                        String type = (String) model.getValueAt(i, COLUMN_TYPE_IDX);
-                        Number num = 0;
-                        if (dataset.getKeys().contains(type)) {
-                            num = dataset.getValue(type);
+            if (dateLow != null && dateHigh != null) {
+                RegularTimePeriod month = new Month(dateLow);
+                while (month.getStart().getTime() <= dateHigh.getTime()) {
+                    for (int i = 0; i < model.getRowCount(); i++) {
+                        DIRECTION d = (DIRECTION) model.getValueAt(i, COLUMN_DIRECTION_IDX);
+                        Date date = (Date) model.getValueAt(i, COLUMN_DATE_IDX);
+                        Date endDate = (Date) model.getValueAt(i, COLUMN_END_DATE_IDX);
+                        if (d == direction && date.getTime() >= dateLow.getTime() && endDate.getTime() <= dateHigh.getTime()) {
+                            String type = (String) model.getValueAt(i, COLUMN_TYPE_IDX);
+                            Number num = 0;
+                            if (dataset.getKeys().contains(type)) {
+                                num = dataset.getValue(type);
+                            }
+                            num = num.floatValue() + (Float) model.getValueAt(i, COLUMN_AMOUNT_IDX);
+                            dataset.setValue(type, num);
                         }
-                        num = num.floatValue() + (Float) model.getValueAt(i, COLUMN_AMOUNT_IDX);
-                        dataset.setValue(type, num);
                     }
+                    month = month.next();
                 }
-                month = month.next();
             }
         }
     }
