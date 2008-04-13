@@ -12,6 +12,12 @@
 		<xs:attribute name="y" type="xs:int" use="required"/>
 		<xs:attribute name="h" type="xs:int" use="required"/>
 		<xs:attribute name="w" type="xs:int" use="required"/>
+		<xs:attribute name="type" type="bias:frameType" use="required"/>
 		<xs:attribute name="content" type="xs:string" use="required"/>
 	</xs:complexType>
+	<xs:simpleType name="frameType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="HTML-snippet"/>
+		</xs:restriction>
+	</xs:simpleType>
 </xs:schema>

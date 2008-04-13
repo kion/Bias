@@ -5,7 +5,8 @@ package bias.extension.DashBoard;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyVetoException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,10 +15,7 @@ import java.util.LinkedList;
 import java.util.Properties;
 import java.util.UUID;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDesktopPane;
 import javax.swing.JToolBar;
 import javax.swing.event.InternalFrameAdapter;
@@ -28,10 +26,11 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import bias.Constants;
-import bias.core.Attachment;
-import bias.core.BackEnd;
 import bias.extension.EntryExtension;
+import bias.extension.DashBoard.frame.InternalFrame;
+import bias.extension.DashBoard.frame.HTMLPageFrame.HTMLPageFrame;
 import bias.extension.DashBoard.xmlb.Frame;
+import bias.extension.DashBoard.xmlb.FrameType;
 import bias.extension.DashBoard.xmlb.Frames;
 import bias.extension.DashBoard.xmlb.ObjectFactory;
 import bias.gui.FrontEnd;
@@ -45,8 +44,6 @@ public class DashBoard extends EntryExtension {
     
     // TODO [P1] add support for different note-types (html, image, link etc. - some can be took right from clipboard)
     
-    private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "add.png"));
-
     private static final String SCHEMA_LOCATION = "http://bias.sourceforge.net/addons/DashBoardSchema.xsd";
 
     private static JAXBContext context;
@@ -65,7 +62,7 @@ public class DashBoard extends EntryExtension {
 
     private JToolBar toolBar;
     
-    private JButton addButton;
+    private JComboBox addCB;
     
     private static JAXBContext getContext() throws JAXBException {
         if (context == null) {
@@ -131,7 +128,8 @@ public class DashBoard extends EntryExtension {
             frame.setY(f.getY());
             frame.setW(f.getWidth());
             frame.setH(f.getHeight());
-            frame.setContent(f.getEditorPanel().getCode());
+            frame.setContent(f.serializeContent());
+            frame.setType(FrameType.fromValue(f.getName()));
             frames.getFrame().add(frame);
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -151,17 +149,34 @@ public class DashBoard extends EntryExtension {
         if (toolBar == null) {
             toolBar = new JToolBar();
             toolBar.setFloatable(false);
-            toolBar.add(getAddButton());
+            toolBar.add(getAddComboBox());
         }
         return toolBar;
     }
     
-    private JButton getAddButton() {
-        if (addButton == null) {
-            addButton = new JButton(addAction);
-            addButton.setText(Constants.EMPTY_STR);
+    private JComboBox getAddComboBox() {
+        if (addCB == null) {
+            addCB = new JComboBox();
+            addCB.addItem("Add...");
+            for (FrameType ft : FrameType.values()) {
+                addCB.addItem(ft.value());
+            }
+            addCB.addItemListener(new ItemListener(){
+                public void itemStateChanged(ItemEvent e) {
+                    if (e.getStateChange() == ItemEvent.SELECTED && addCB.getSelectedIndex() != 0) {
+                        try {
+                            FrameType ft = FrameType.fromValue((String) addCB.getSelectedItem());
+                            Frame frame = new Frame();
+                            frame.setType(ft);
+                            addFrame(frame);
+                        } finally {
+                            addCB.setSelectedIndex(0);
+                        }
+                    }
+                }
+            });
         }
-        return addButton;
+        return addCB;
     }
     
     private JDesktopPane getDashBoardPanel() {
@@ -172,66 +187,45 @@ public class DashBoard extends EntryExtension {
         return dashBoardPanel;
     }
     
-    private AddAction addAction = new AddAction();
-    private class AddAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
-        
-        public AddAction() {
-            putValue(Action.NAME, "addNote");
-            putValue(Action.SHORT_DESCRIPTION, "add note");
-            putValue(Action.SMALL_ICON, ICON_ADD);
-        }
-        
-        public void actionPerformed(ActionEvent evt) {
-            addFrame(null);
-        }
-    };
-    
     private void addFrame(Frame frame) {
         getDashBoardPanel().add(createInternalFrame(frame));
     }
     
     private InternalFrame createInternalFrame(Frame frame) {
         final InternalFrame f;
-        if (frame != null) {
-            f = new InternalFrame(getId(), frame.getContent());
-            f.setLocation(frame.getX(), frame.getY());
-            f.setSize(frame.getW(), frame.getH());
-        } else {
-            f = new InternalFrame(getId(), "<i>content here...</i>");
-            f.setLocation(0, 0);
-            f.setSize(200, 100);
+        String content = frame.getContent();
+        if (content == null) content = Constants.EMPTY_STR;
+        switch (frame.getType()) {
+        case HTML_SNIPPET:
+            f = new HTMLPageFrame(getId(), content);
+            f.setName(frame.getType().value());
+            break;
+        default: f = null;
         }
-        f.setVisible(true);
-        try {
-            f.setSelected(true);
-        } catch (PropertyVetoException e1) {
-            // ignore
-        }
-        f.addInternalFrameListener(new InternalFrameAdapter(){
-            @Override
-            public void internalFrameClosed(InternalFrameEvent e) {
-                getFrames().remove(f);
-                cleanUpUnUsedAttachments(f);
+        if (f != null) {
+            if (frame.getContent() != null) {
+                f.setLocation(frame.getX(), frame.getY());
+                f.setSize(frame.getW(), frame.getH());
+            } else {
+                f.setLocation(0, 0);
+                f.setSize(200, 100);
             }
-        });
-        getFrames().add(f);
+            f.setVisible(true);
+            try {
+                f.setSelected(true);
+            } catch (PropertyVetoException e1) {
+                // ignore
+            }
+            f.addInternalFrameListener(new InternalFrameAdapter(){
+                @Override
+                public void internalFrameClosed(InternalFrameEvent e) {
+                    getFrames().remove(f);
+                    f.cleanUpUnUsedAttachments();
+                }
+            });
+            getFrames().add(f);
+        }
         return f;
     }
-
-    private void cleanUpUnUsedAttachments(InternalFrame f) {
-        try {
-            Collection<String> usedAttachmentNames = f.getEditorPanel().getProcessedAttachmentNames();
-            Collection<Attachment> atts = BackEnd.getInstance().getAttachments(getId());
-            for (Attachment att : atts) {
-                if (!usedAttachmentNames.contains(att.getName())) {
-                    BackEnd.getInstance().removeAttachment(getId(), att.getName());
-                }
-            }
-        } catch (Exception ex) {
-            // if some error occurred while cleaning up unused attachments,
-            // ignore it, these attachments will be removed next time Bias persists data
-        }
-    }
-
+    
 }

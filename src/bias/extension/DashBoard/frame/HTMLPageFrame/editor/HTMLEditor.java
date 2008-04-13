@@ -1,7 +1,7 @@
 /**
  * Created on Feb 27, 2007
  */
-package bias.extension.DashBoard.editor;
+package bias.extension.DashBoard.frame.HTMLPageFrame.editor;
 
 import java.io.IOException;
 

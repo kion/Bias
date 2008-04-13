@@ -1,7 +1,7 @@
 /**
  * Created on Feb 23, 2008
  */
-package bias.extension.DashBoard.editor;
+package bias.extension.DashBoard.frame.HTMLPageFrame.editor;
 
 import java.awt.Font;
 
