@@ -106,7 +106,7 @@ public class FinancialFlows extends EntryExtension {
         INCOME, OUTGO
     }
 
-    private static final String SCHEMA_LOCATION = "http://bias.sourceforge.net/schema.xsd";
+    private static final String SCHEMA_LOCATION = "http://bias.sourceforge.net/addons/FinancialFlowsSchema.xsd";
 
     private static final int COLUMN_DIRECTION_IDX = 0;
 

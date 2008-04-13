@@ -269,6 +269,23 @@
 	</target>
 
 	<!-- ================================= 
+          target: Build_Extension_DashBoard
+         ================================= -->
+	<target name="Build_Extension_DashBoard" description="DashBoard Add-On">
+		<delete dir="build" includes="DashBoard*.jar" />
+		<jar basedir="bin" destfile="build/DashBoard_${DashBoard_Version}.jar" includes="bias/extension/DashBoard/** bias/res/DashBoard/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/DashBoard/**" />
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="DashBoard" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="${DashBoard_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Simple dashboard for chaotic snippets placement" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+			</manifest>
+		</jar>
+	</target>
+
+	<!-- ================================= 
           target: Build_Skin_JGLooksSkin             
          ================================= -->
 	<target name="Build_Skin_JGLooksSkin" description="JGoodies Looks Skin">

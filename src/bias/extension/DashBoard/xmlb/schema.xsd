@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:bias="http://bias.sourceforge.net" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://bias.sourceforge.net">
+	<xs:element name="frames">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="frame" type="bias:frame" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="frame">
+		<xs:attribute name="x" type="xs:int" use="required"/>
+		<xs:attribute name="y" type="xs:int" use="required"/>
+		<xs:attribute name="h" type="xs:int" use="required"/>
+		<xs:attribute name="w" type="xs:int" use="required"/>
+		<xs:attribute name="content" type="xs:string" use="required"/>
+	</xs:complexType>
+</xs:schema>

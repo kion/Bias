@@ -491,7 +491,9 @@ public class ToDoList extends EntryExtension {
                 DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
                 if (todoEntriesTable.getSelectedRow() != -1) {
                     int idx = sorter.convertRowIndexToModel(todoEntriesTable.getSelectedRow());
+                    UUID id = UUID.fromString((String) model.getValueAt(idx, 0));
                     model.removeRow(idx);
+                    cleanUpUnUsedAttachments(id);
                 }
             }
         });
@@ -528,7 +530,6 @@ public class ToDoList extends EntryExtension {
     private Collection<ToDoEntry> getToDoEntries() {
         Collection<ToDoEntry> entries = new LinkedList<ToDoEntry>();
         DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
-        Collection<String> usedAttachmentNames = new ArrayList<String>();
         for (int i = 0; i < model.getRowCount(); i++) {
             ToDoEntry entry = new ToDoEntry();
             UUID id = UUID.fromString((String) model.getValueAt(i, 0));
@@ -539,15 +540,15 @@ public class ToDoList extends EntryExtension {
             entry.setStatus((String) model.getValueAt(i, 4));
             HTMLEditorPanel editorPanel = editorPanels.get(id);
             entry.setDescription(editorPanel.getCode());
-            usedAttachmentNames.addAll(editorPanel.getProcessedAttachmentNames());
             entries.add(entry);
         }
-        cleanUpUnUsedAttachments(usedAttachmentNames);
         return entries;
     }
 
-    private void cleanUpUnUsedAttachments(Collection<String> usedAttachmentNames) {
+    private void cleanUpUnUsedAttachments(UUID id) {
         try {
+            HTMLEditorPanel editorPanel = editorPanels.get(id);
+            Collection<String> usedAttachmentNames = editorPanel.getProcessedAttachmentNames();
             Collection<Attachment> atts = BackEnd.getInstance().getAttachments(getId());
             for (Attachment att : atts) {
                 if (!usedAttachmentNames.contains(att.getName())) {
