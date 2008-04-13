@@ -5,6 +5,7 @@ package bias.extension.DashBoard;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyVetoException;
@@ -203,12 +204,14 @@ public class DashBoard extends EntryExtension {
         default: f = null;
         }
         if (f != null) {
+            Dimension minSize = new Dimension(260, 120);
+            f.setMinimumSize(minSize);
             if (frame.getContent() != null) {
                 f.setLocation(frame.getX(), frame.getY());
                 f.setSize(frame.getW(), frame.getH());
             } else {
                 f.setLocation(0, 0);
-                f.setSize(200, 100);
+                f.setSize(minSize);
             }
             f.setVisible(true);
             try {
