@@ -35,8 +35,8 @@ import javax.xml.bind.Unmarshaller;
 
 import bias.Constants;
 import bias.extension.EntryExtension;
-import bias.extension.DashBoard.frame.InternalFrame;
-import bias.extension.DashBoard.frame.HTMLPageFrame.HTMLPageFrame;
+import bias.extension.DashBoard.frame.HTMLSnippet;
+import bias.extension.DashBoard.frame.InfoSnippet;
 import bias.extension.DashBoard.xmlb.Frame;
 import bias.extension.DashBoard.xmlb.FrameType;
 import bias.extension.DashBoard.xmlb.Frames;
@@ -50,7 +50,7 @@ import bias.utils.PropertiesUtils;
 public class DashBoard extends EntryExtension {
     private static final long serialVersionUID = 1L;
     
-    // TODO [P2] add more different note-types (image, link etc. - some can be took right from clipboard)
+    // TODO [P2] add more different snippet-types
     
     private static final String SCHEMA_LOCATION = "http://bias.sourceforge.net/addons/DashBoardSchema.xsd";
 
@@ -62,9 +62,9 @@ public class DashBoard extends EntryExtension {
 
     private static ObjectFactory objFactory = new ObjectFactory();
     
-    private Collection<InternalFrame> frames;
+    private Collection<InfoSnippet> frames;
     
-    private Map<InternalFrame, Integer> framesZOrders;
+    private Map<InfoSnippet, Integer> framesZOrders;
     
     private Properties settings;
 
@@ -120,16 +120,16 @@ public class DashBoard extends EntryExtension {
         settings = PropertiesUtils.deserializeProperties(getSettings());
     }
     
-    private Collection<InternalFrame> getFrames() {
+    private Collection<InfoSnippet> getFrames() {
         if (frames == null) {
-            frames = new LinkedList<InternalFrame>();
+            frames = new LinkedList<InfoSnippet>();
         }
         return frames;
     }
     
-    private Map<InternalFrame, Integer> getFramesZOrders() {
+    private Map<InfoSnippet, Integer> getFramesZOrders() {
         if (framesZOrders == null) {
-            framesZOrders = new HashMap<InternalFrame, Integer>();
+            framesZOrders = new HashMap<InfoSnippet, Integer>();
         }
         return framesZOrders;
     }
@@ -140,7 +140,7 @@ public class DashBoard extends EntryExtension {
     @Override
     public byte[] serializeData() throws Throwable {
         Frames frames = objFactory.createFrames();
-        for (InternalFrame f : getFrames()) {
+        for (InfoSnippet f : getFrames()) {
             Frame frame = new Frame();
             frame.setX(f.getX());
             frame.setY(f.getY());
@@ -208,7 +208,7 @@ public class DashBoard extends EntryExtension {
     }
     
     private void addFrame(Frame frame, boolean isNew) {
-        InternalFrame f = createInternalFrame(frame);
+        InfoSnippet f = createInternalFrame(frame);
         getDashBoardPanel().add(f);
         int zOrder = isNew ? 0 : frame.getZ();
         if (isNew) {
@@ -226,7 +226,7 @@ public class DashBoard extends EntryExtension {
     }
     
     private void updateZOrders() {
-        for (InternalFrame f : getFramesZOrders().keySet()) {
+        for (InfoSnippet f : getFramesZOrders().keySet()) {
             Integer zo = getFramesZOrders().get(f);
             zo++;
             getFramesZOrders().put(f, zo);
@@ -234,7 +234,7 @@ public class DashBoard extends EntryExtension {
     }
     
     private void restoreZOrders() {
-        for (Entry<InternalFrame, Integer> entry : getFramesZOrders().entrySet()) {
+        for (Entry<InfoSnippet, Integer> entry : getFramesZOrders().entrySet()) {
             try {
                 getDashBoardPanel().setComponentZOrder(entry.getKey(), entry.getValue());
             } catch (IllegalArgumentException iae) {
@@ -243,13 +243,13 @@ public class DashBoard extends EntryExtension {
         }
     }
     
-    private InternalFrame createInternalFrame(Frame frame) {
-        final InternalFrame f;
+    private InfoSnippet createInternalFrame(Frame frame) {
+        final InfoSnippet f;
         String content = frame.getContent();
         if (content == null) content = Constants.EMPTY_STR;
         switch (frame.getType()) {
         case HTML_SNIPPET:
-            f = new HTMLPageFrame(getId(), content);
+            f = new HTMLSnippet(getId(), content);
             f.setName(frame.getType().value());
             break;
         default: f = null;
