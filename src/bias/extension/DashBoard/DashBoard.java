@@ -43,6 +43,8 @@ import bias.utils.PropertiesUtils;
 public class DashBoard extends EntryExtension {
     private static final long serialVersionUID = 1L;
     
+    // TODO [P1] add support for different note-types (html, image, link etc. - some can be took right from clipboard)
+    
     private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "add.png"));
 
     private static final String SCHEMA_LOCATION = "http://bias.sourceforge.net/addons/DashBoardSchema.xsd";
