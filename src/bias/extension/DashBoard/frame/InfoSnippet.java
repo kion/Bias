@@ -12,13 +12,13 @@ import javax.swing.border.EtchedBorder;
 /**
  * @author kion
  */
-public abstract class InternalFrame extends JInternalFrame {
+public abstract class InfoSnippet extends JInternalFrame {
     private static final long serialVersionUID = 1L;
     
     private UUID id;
     private String content;
     
-    public InternalFrame(UUID id, String content) {
+    public InfoSnippet(UUID id, String content) {
         super(null, true, true, false, false);
         this.id = id;
         this.content = content;
