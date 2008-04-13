@@ -210,7 +210,10 @@ public class DashBoard extends EntryExtension {
             try {
                 getDashBoardPanel().setComponentZOrder(f, zOrder);
                 updateZOrders();
+                f.setSelected(true);
             } catch (IllegalArgumentException iae) {
+                // ignore
+            } catch (PropertyVetoException e) {
                 // ignore
             }
         }
@@ -257,11 +260,6 @@ public class DashBoard extends EntryExtension {
                 f.setSize(minSize);
             }
             f.setVisible(true);
-            try {
-                f.setSelected(true);
-            } catch (PropertyVetoException e1) {
-                // ignore
-            }
             f.addInternalFrameListener(new InternalFrameAdapter(){
                 @Override
                 public void internalFrameClosed(InternalFrameEvent e) {
