@@ -796,7 +796,6 @@ public class HTMLEditorPanel extends JPanel {
                             if (replaceSel) {
                                 getJTextPane().replaceSelection(Constants.EMPTY_STR);
                             }
-                            linkHTML.append("&nbsp;");
                             HTMLEditor.insertHTML(getJTextPane(), linkHTML.toString(), HTML.Tag.A);
                         } catch (BadLocationException exception) {
                             FrontEnd.displayErrorMessage(exception);
