@@ -12,9 +12,12 @@ import java.beans.PropertyVetoException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.Map.Entry;
 
 import javax.swing.JComboBox;
 import javax.swing.JDesktopPane;
@@ -56,6 +59,8 @@ public class DashBoard extends EntryExtension {
     private static ObjectFactory objFactory = new ObjectFactory();
     
     private Collection<InternalFrame> frames;
+    
+    private Map<InternalFrame, Integer> framesZOrders;
     
     private Properties settings;
 
@@ -101,8 +106,9 @@ public class DashBoard extends EntryExtension {
             if (getData() != null && getData().length != 0) {
                 Frames frames = (Frames) getUnmarshaller().unmarshal(new ByteArrayInputStream(getData()));
                 for (Frame frame : frames.getFrame()) {
-                    addFrame(frame);
+                    addFrame(frame, false);
                 }
+                restoreZOrders();
             }
         } catch (JAXBException e) {
             FrontEnd.displayErrorMessage("Failed to initialize!", e);
@@ -115,6 +121,13 @@ public class DashBoard extends EntryExtension {
             frames = new LinkedList<InternalFrame>();
         }
         return frames;
+    }
+    
+    private Map<InternalFrame, Integer> getFramesZOrders() {
+        if (framesZOrders == null) {
+            framesZOrders = new HashMap<InternalFrame, Integer>();
+        }
+        return framesZOrders;
     }
     
     /* (non-Javadoc)
@@ -131,6 +144,7 @@ public class DashBoard extends EntryExtension {
             frame.setH(f.getHeight());
             frame.setContent(f.serializeContent());
             frame.setType(FrameType.fromValue(f.getName()));
+            frame.setZ(getDashBoardPanel().getComponentZOrder(f));
             frames.getFrame().add(frame);
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -169,7 +183,7 @@ public class DashBoard extends EntryExtension {
                             FrameType ft = FrameType.fromValue((String) addCB.getSelectedItem());
                             Frame frame = new Frame();
                             frame.setType(ft);
-                            addFrame(frame);
+                            addFrame(frame, true);
                         } finally {
                             addCB.setSelectedIndex(0);
                         }
@@ -188,8 +202,37 @@ public class DashBoard extends EntryExtension {
         return dashBoardPanel;
     }
     
-    private void addFrame(Frame frame) {
-        getDashBoardPanel().add(createInternalFrame(frame));
+    private void addFrame(Frame frame, boolean isNew) {
+        InternalFrame f = createInternalFrame(frame);
+        getDashBoardPanel().add(f);
+        int zOrder = isNew ? 0 : frame.getZ();
+        if (isNew) {
+            try {
+                getDashBoardPanel().setComponentZOrder(f, zOrder);
+                updateZOrders();
+            } catch (IllegalArgumentException iae) {
+                // ignore
+            }
+        }
+        getFramesZOrders().put(f, zOrder);
+    }
+    
+    private void updateZOrders() {
+        for (InternalFrame f : getFramesZOrders().keySet()) {
+            Integer zo = getFramesZOrders().get(f);
+            zo++;
+            getFramesZOrders().put(f, zo);
+        }
+    }
+    
+    private void restoreZOrders() {
+        for (Entry<InternalFrame, Integer> entry : getFramesZOrders().entrySet()) {
+            try {
+                getDashBoardPanel().setComponentZOrder(entry.getKey(), entry.getValue());
+            } catch (IllegalArgumentException iae) {
+                // ignore
+            }
+        }
     }
     
     private InternalFrame createInternalFrame(Frame frame) {
