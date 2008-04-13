@@ -35,8 +35,8 @@ import javax.xml.bind.Unmarshaller;
 
 import bias.Constants;
 import bias.extension.EntryExtension;
-import bias.extension.DashBoard.frame.HTMLSnippet;
-import bias.extension.DashBoard.frame.InfoSnippet;
+import bias.extension.DashBoard.snippet.HTMLSnippet;
+import bias.extension.DashBoard.snippet.InfoSnippet;
 import bias.extension.DashBoard.xmlb.Frame;
 import bias.extension.DashBoard.xmlb.FrameType;
 import bias.extension.DashBoard.xmlb.Frames;
