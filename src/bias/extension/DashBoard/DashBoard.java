@@ -8,6 +8,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyVetoException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -21,9 +23,11 @@ import java.util.Map.Entry;
 
 import javax.swing.JComboBox;
 import javax.swing.JDesktopPane;
+import javax.swing.JOptionPane;
 import javax.swing.JToolBar;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
+import javax.swing.plaf.basic.BasicInternalFrameUI;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -143,6 +147,7 @@ public class DashBoard extends EntryExtension {
             frame.setW(f.getWidth());
             frame.setH(f.getHeight());
             frame.setContent(f.serializeContent());
+            frame.setTitle(f.getTitle());
             frame.setType(FrameType.fromValue(f.getName()));
             frame.setZ(getDashBoardPanel().getComponentZOrder(f));
             frames.getFrame().add(frame);
@@ -250,6 +255,7 @@ public class DashBoard extends EntryExtension {
         default: f = null;
         }
         if (f != null) {
+            f.setTitle(frame.getTitle());
             Dimension minSize = new Dimension(260, 120);
             f.setMinimumSize(minSize);
             if (frame.getContent() != null) {
@@ -265,6 +271,17 @@ public class DashBoard extends EntryExtension {
                 public void internalFrameClosed(InternalFrameEvent e) {
                     getFrames().remove(f);
                     f.cleanUpUnUsedAttachments();
+                }
+            });
+            ((BasicInternalFrameUI) f.getUI()).getNorthPane().addMouseListener(new MouseAdapter(){
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (!e.isPopupTrigger() && e.getClickCount() == 2) {
+                        String title = JOptionPane.showInputDialog(DashBoard.this, "Snippet title", f.getTitle());
+                        if (title != null) {
+                            f.setTitle(title);
+                        }
+                    }
                 }
             });
             getFrames().add(f);
