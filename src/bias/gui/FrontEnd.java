@@ -1089,7 +1089,6 @@ public class FrontEnd extends JFrame {
             displayErrorMessage("Failed to initialize tools! ", t);
         }
         if (extensions != null) {
-            boolean buttonsPresent = false;
             instance.getJPanelIndicators().setVisible(false);
             instance.getJToolBar3().removeAll();
             tools = new LinkedHashMap<Class<? extends ToolExtension>, ToolExtension>();
@@ -1100,14 +1099,14 @@ public class FrontEnd extends JFrame {
                                             + Constants.PACKAGE_PATH_SEPARATOR + tool.getClass().getSimpleName();
                     tool.setSettings(BackEnd.getInstance().getAddOnSettings(fullExtName, PackType.EXTENSION));
                     tool.setData(BackEnd.getInstance().getToolData(fullExtName));
-                    buttonsPresent = instance.representTool(tool);
+                    instance.representTool(tool);
                     tools.put(tool.getClass(), tool);
                 } catch (Throwable t) {
                     displayErrorMessage("Failed to initialize tool '" + tool.getClass().getCanonicalName() + "'", t);
                 }
             }
             instance.getJPanelIndicators().setVisible(true);
-            if (buttonsPresent) {
+            if (instance.getJToolBar3().getComponentCount() > 0) {
                 instance.getJPanel5().setVisible(true);
             }
         }
