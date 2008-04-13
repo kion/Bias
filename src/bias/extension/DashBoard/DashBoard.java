@@ -33,7 +33,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
-import bias.Constants;
 import bias.extension.EntryExtension;
 import bias.extension.DashBoard.snippet.HTMLSnippet;
 import bias.extension.DashBoard.snippet.InfoSnippet;
@@ -245,8 +244,8 @@ public class DashBoard extends EntryExtension {
     
     private InfoSnippet createInternalFrame(Frame frame) {
         final InfoSnippet f;
-        String content = frame.getContent();
-        if (content == null) content = Constants.EMPTY_STR;
+        byte[] content = frame.getContent();
+        if (content == null) content = new byte[]{};
         switch (frame.getType()) {
         case HTML_SNIPPET:
             f = new HTMLSnippet(getId(), content);
@@ -256,8 +255,7 @@ public class DashBoard extends EntryExtension {
         }
         if (f != null) {
             f.setTitle(frame.getTitle());
-            Dimension minSize = new Dimension(260, 120);
-            f.setMinimumSize(minSize);
+            Dimension minSize = f.getMinimumSize();
             if (frame.getContent() != null) {
                 f.setLocation(frame.getX(), frame.getY());
                 f.setSize(frame.getW(), frame.getH());

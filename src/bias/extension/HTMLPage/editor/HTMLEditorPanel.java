@@ -96,6 +96,8 @@ public class HTMLEditorPanel extends JPanel {
 
     private static final ImageIcon ICON_SAVE = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/save.png"));
 
+    private static final ImageIcon ICON_EDIT_CODE = new ImageIcon(BackEnd.getInstance().getResourceURL(HTMLPage.class, "editor/edit_code.png"));
+
     private static final String HTML_PAGE_FILE_NAME_PATTERN = "(?i).+\\.(htm|html)$";
 
     private static final Collection<String> FONT_FAMILY_NAMES = fontFamilies();
@@ -171,6 +173,8 @@ public class HTMLEditorPanel extends JPanel {
     private JButton jButton2 = null;
 
     private JButton jButton5 = null;
+
+    private JButton jButton9 = null;
 
     private JButton jButton8 = null;
 
@@ -506,6 +510,7 @@ public class HTMLEditorPanel extends JPanel {
             jToolBar1 = new JToolBar();
             jToolBar1.setFloatable(false); 
             jToolBar1.setBorder(null); 
+            jToolBar1.add(getJButton9());
             jToolBar1.add(getJButton1()); 
             jToolBar1.add(getJButton()); 
             jToolBar1.add(getJButton2()); 
@@ -626,6 +631,32 @@ public class HTMLEditorPanel extends JPanel {
             });
         }
         return jButton5;
+    }
+
+    /**
+     * This method initializes jButton9
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton9() {
+        if (jButton9 == null) {
+            jButton9 = new JButton();
+            jButton9.setToolTipText("edit code"); 
+            jButton9.setIcon(ICON_EDIT_CODE); 
+            jButton9.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    String code = getJTextPane().getText();
+                    JTextPane tp = new JTextPane();
+                    tp.setText(code);
+                    int opt = JOptionPane.showConfirmDialog(HTMLEditorPanel.this, new JScrollPane(tp), "Edit code", JOptionPane.OK_CANCEL_OPTION);
+                    if (opt == JOptionPane.OK_OPTION) {
+                        code = tp.getText();
+                        getJTextPane().setText(code);
+                    }
+                }
+            });
+        }
+        return jButton9;
     }
 
     /**

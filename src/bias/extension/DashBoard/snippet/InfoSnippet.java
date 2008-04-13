@@ -16,13 +16,12 @@ public abstract class InfoSnippet extends JInternalFrame {
     private static final long serialVersionUID = 1L;
     
     private UUID id;
-    private String content;
+    private byte[] content;
     
-    public InfoSnippet(UUID id, String content) {
+    public InfoSnippet(UUID id, byte[] content) {
         super(null, true, true, false, false);
         this.id = id;
         this.content = content;
-        setDefaultCloseOperation(JInternalFrame.EXIT_ON_CLOSE);
         setContentPane(getRepresentation());
         setBorder(new EtchedBorder(EtchedBorder.RAISED));
     }
@@ -31,13 +30,13 @@ public abstract class InfoSnippet extends JInternalFrame {
         return id;
     }
 
-    protected String getContent() {
+    protected byte[] getContent() {
         return content;
     }
     
     protected abstract Container getRepresentation();
     
-    public abstract String serializeContent();
+    public abstract byte[] serializeContent();
     
     public abstract void cleanUpUnUsedAttachments();
     

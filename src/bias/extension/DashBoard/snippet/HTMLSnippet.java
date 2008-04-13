@@ -4,6 +4,7 @@
 package bias.extension.DashBoard.snippet;
 
 import java.awt.Container;
+import java.awt.Dimension;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -19,7 +20,7 @@ public class HTMLSnippet extends InfoSnippet {
 
     private HTMLEditorPanel editorPanel;
 
-    public HTMLSnippet(UUID id, String content) {
+    public HTMLSnippet(UUID id, byte[] content) {
         super(id, content);
     }
 
@@ -33,7 +34,7 @@ public class HTMLSnippet extends InfoSnippet {
 
     public HTMLEditorPanel getEditorPanel() {
         if (editorPanel == null) {
-            editorPanel = new HTMLEditorPanel(getId(), getContent());
+            editorPanel = new HTMLEditorPanel(getId(), new String(getContent()));
         }
         return editorPanel;
     }
@@ -61,8 +62,13 @@ public class HTMLSnippet extends InfoSnippet {
      * @see bias.extension.DashBoard.frame.InternalFrame#serializeContent()
      */
     @Override
-    public String serializeContent() {
-        return getEditorPanel().getCode();
+    public byte[] serializeContent() {
+        return getEditorPanel().getCode().getBytes();
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+        return new Dimension(290, 120);
     }
 
 }
