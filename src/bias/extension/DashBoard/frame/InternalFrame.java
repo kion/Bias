@@ -22,6 +22,7 @@ public abstract class InternalFrame extends JInternalFrame {
         super(null, true, true, false, false);
         this.id = id;
         this.content = content;
+        setDefaultCloseOperation(JInternalFrame.EXIT_ON_CLOSE);
         setContentPane(getRepresentation());
         setBorder(new EtchedBorder(EtchedBorder.RAISED));
     }
