@@ -611,7 +611,6 @@ public class FrontEnd extends JFrame {
     private static JPanel memUsageIndicatorPanel = null;
     
     private void startMemoryUsageMonitoring() {
-        // TODO [P1] process visualization for asynchronous tasks should be present as well
         execute(new Runnable() {
             public void run() {
                 while (Preferences.getInstance().showMemoryUsage) {
@@ -620,7 +619,7 @@ public class FrontEnd extends JFrame {
                     long bytes2 = mmxb.getHeapMemoryUsage().getCommitted() + mmxb.getNonHeapMemoryUsage().getCommitted();
                     memUsageProgressBar.setMaximum((int) bytes2/1024);
                     memUsageProgressBar.setValue((int) bytes/1024);
-                    memUsageProgressBar.setString(" Memory Usage: " + bytes/1024/1024 + " of " + bytes2/1024/1024 + " Mb" + Constants.BLANK_STR);
+                    memUsageProgressBar.setString(Constants.BLANK_STR + getMessage("memory.usage", "" + bytes/1024/1024, "" + bytes2/1024/1024) + Constants.BLANK_STR);
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {
@@ -678,7 +677,7 @@ public class FrontEnd extends JFrame {
             try {
                 // initialize tray icon
                 if (trayIcon == null) {
-                    trayIcon = new TrayIcon(ICON_APP.getImage(), getMessage("main.window.title"));
+                    trayIcon = new TrayIcon(ICON_APP.getImage(), getMessage("app.title"));
                     trayIcon.setImageAutoSize(true);
                     trayIcon.addMouseListener(new MouseAdapter(){
                         @Override
@@ -1426,13 +1425,13 @@ public class FrontEnd extends JFrame {
         return data;
     }
     
-    private JPanel getProcessPanel() {
+    private JPanel getFinalizingProcessPanel() {
         JPanel processPanel = new JPanel(new BorderLayout());
         JPanel p = new JPanel(new FlowLayout());
         p.add(new JLabel(
                 Constants.HTML_PREFIX +
                 Constants.HTML_COLOR_HIGHLIGHT_INFO + 
-                "Some tasks are still running, please wait them to finish..." +
+                getMessage("running.tasks.wait") +
                 Constants.HTML_COLOR_SUFFIX +
                 Constants.HTML_SUFFIX
                 ));
@@ -1443,7 +1442,7 @@ public class FrontEnd extends JFrame {
                 Constants.HTML_PREFIX + 
                 "<u>" + 
                 Constants.HTML_COLOR_HIGHLIGHT_WARNING + 
-                "Force exit (all incomplete tasks will be aborted)" +
+                getMessage("running.tasks.force.exit") +
                 Constants.HTML_COLOR_SUFFIX + 
                 "</u>" + 
                 Constants.HTML_SUFFIX
@@ -1465,7 +1464,7 @@ public class FrontEnd extends JFrame {
     private void finalizeUI() {
         JDialog finalizeDialog = new JDialog(getActiveWindow(), ModalityType.MODELESS);
         finalizeDialog.setUndecorated(true);
-        finalizeDialog.setContentPane(getProcessPanel());
+        finalizeDialog.setContentPane(getFinalizingProcessPanel());
         finalizeDialog.pack();
         finalizeDialog.setLocation(
                 getActiveWindow().getX() + (getActiveWindow().getWidth() - finalizeDialog.getWidth()) / 2, 
@@ -1483,6 +1482,7 @@ public class FrontEnd extends JFrame {
      * @param task task to be executed
      */
     public static void execute(Runnable task) {
+        // TODO [P1] process visualization for asynchronous tasks should be present as well
         if (cachedThreadPool == null) {
             cachedThreadPool = Executors.newCachedThreadPool();
         }
@@ -2894,7 +2894,7 @@ public class FrontEnd extends JFrame {
         
         public AdjustCategoryAction() {
             putValue(Action.NAME, "adjustCategory");
-            putValue(Action.SHORT_DESCRIPTION, "adjust category");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("adjust.category"));
             putValue(Action.SMALL_ICON, uiIcons.getIconAdjustCategory());
         }
         
@@ -2941,7 +2941,7 @@ public class FrontEnd extends JFrame {
         
         public AdjustEntryAction() {
             putValue(Action.NAME, "adjustEntry");
-            putValue(Action.SHORT_DESCRIPTION, "adjust entry");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("adjust.entry"));
             putValue(Action.SMALL_ICON, uiIcons.getIconAdjustEntry());
         }
         
@@ -2984,7 +2984,7 @@ public class FrontEnd extends JFrame {
         
         public ConfigEntryAction() {
             putValue(Action.NAME, "configEntry");
-            putValue(Action.SHORT_DESCRIPTION, "configure entry");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("configure.entry"));
             putValue(Action.SMALL_ICON, uiIcons.getIconConfigure());
         }
         
@@ -4182,7 +4182,7 @@ public class FrontEnd extends JFrame {
         
         public SaveAction() {
             putValue(Action.NAME, "save");
-            putValue(Action.SHORT_DESCRIPTION, "save");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("save"));
             putValue(Action.SMALL_ICON, uiIcons.getIconSave());
         }
 
@@ -4197,7 +4197,7 @@ public class FrontEnd extends JFrame {
         
         public ExitAction() {
             putValue(Action.NAME, "exit");
-            putValue(Action.SHORT_DESCRIPTION, "exit");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("exit"));
             putValue(Action.SMALL_ICON, uiIcons.getIconExit());
         }
 
@@ -4212,7 +4212,7 @@ public class FrontEnd extends JFrame {
         
         public BackToFirstAction() {
             putValue(Action.NAME, "backToFirst");
-            putValue(Action.SHORT_DESCRIPTION, "back to first");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("history.back.to.first"));
             putValue(Action.SMALL_ICON, uiIcons.getIconBackToFirst());
             setEnabled(false);
         }
@@ -4230,7 +4230,7 @@ public class FrontEnd extends JFrame {
         
         public BackAction() {
             putValue(Action.NAME, "back");
-            putValue(Action.SHORT_DESCRIPTION, "back");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("history.back"));
             putValue(Action.SMALL_ICON, uiIcons.getIconBack());
             setEnabled(false);
         }
@@ -4250,7 +4250,7 @@ public class FrontEnd extends JFrame {
         
         public ForwardAction() {
             putValue(Action.NAME, "forward");
-            putValue(Action.SHORT_DESCRIPTION, "forward");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("history.forward"));
             putValue(Action.SMALL_ICON, uiIcons.getIconForward());
             setEnabled(false);
         }
@@ -4270,7 +4270,7 @@ public class FrontEnd extends JFrame {
         
         public ForwardToLastAction() {
             putValue(Action.NAME, "forwardToLast");
-            putValue(Action.SHORT_DESCRIPTION, "forward to last");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("history.forward.to.last"));
             putValue(Action.SMALL_ICON, uiIcons.getIconForwardToLast());
             setEnabled(false);
         }
@@ -4288,7 +4288,7 @@ public class FrontEnd extends JFrame {
         
         public PreferencesAction() {
             putValue(Action.NAME, "preferences");
-            putValue(Action.SHORT_DESCRIPTION, "preferences");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("preferences"));
             putValue(Action.SMALL_ICON, uiIcons.getIconPreferences());
         }
 
@@ -4516,7 +4516,7 @@ public class FrontEnd extends JFrame {
         
         public ManageAddOnsAction() {
             putValue(Action.NAME, "manageAddOns");
-            putValue(Action.SHORT_DESCRIPTION, "manage add-ons");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("manage.addons"));
             putValue(Action.SMALL_ICON, uiIcons.getIconAddOns());
         }
 
@@ -6228,12 +6228,12 @@ public class FrontEnd extends JFrame {
         
         public AboutAction() {
             putValue(Action.NAME, "about");
-            putValue(Action.SHORT_DESCRIPTION, "about...");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("about"));
             putValue(Action.SMALL_ICON, uiIcons.getIconAbout());
         }
 
         public void actionPerformed(ActionEvent evt) {
-            JLabel title1Label = new JLabel("Bias :: Versatile Information Manager [ version " + BackEnd.getInstance().getAppVersion() + " ]");
+            JLabel title1Label = new JLabel(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppVersion() + " ]");
             JLabel link1Label = new LinkLabel("http://bias.sourceforge.net/");
             JLabel title2Label = new JLabel("© Roman Kasianenko ( kion ) 2006-2008");
         	JLabel link2Label = new LinkLabel("http://kion.name/");

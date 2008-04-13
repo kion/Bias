@@ -1,4 +1,5 @@
-main.window.title == Bias :: Versatile Information Manager
+app.title == Bias :: Versatile Information Manager
+version == Version
 preferred.language.preference.title == Preferred language (needs Bias restart)
 preferred.datetime.format.preference.title == Preferred date-time format
 preferred.timeout.preference.title == Preferred timeout for network operations (in seconds)
@@ -33,6 +34,9 @@ caption == Caption
 type == Type
 add.category == Add category
 add.entry == Add entry
+adjust.category == Adjust Category
+adjust.entry == Adjust Entry
+configure.entry == Configure entry
 no.entry.extensions.installed == There're no entry extensions installed currently.<br/>Entries can't be added before there's at least one entry extension installed.
 add.category.failure == Failed to add category
 add.entry.failure == Failed to add entry.<br/>Some entry extension(s) may be broken.<br/>Try to open add-ons management dialog, <br/>and uninstall/reinstall broken extensions.
@@ -62,6 +66,7 @@ delete.active.entry.or.category == Delete active entry/category
 delete.active.entry.or.category.failure == Failed to delete entry/category!
 delete == Delete
 rename == Rename
+save == Save
 new.name == New name
 overwrite.existing == Overwrite existing
 update.installed == Update installed
@@ -105,3 +110,14 @@ transfer.configuration.saved == Transfer configuration saved as '$'
 transfer.discarded.no.data.changes == Transfer discarded: data haven't changed since last transfer
 password.confirmation.invalid == [INVALID]
 password.confirmation.done == [DONE]
+exit == Exit
+about == About Bias
+manage.addons == Manage add-ons
+preferences == Preferences
+history.back.to.first == Back to first
+history.back == Back
+history.forward == Forward
+history.forward.to.last == Forward to last
+running.tasks.wait == Some tasks are still running, please wait them to finish...
+running.tasks.force.exit == Force exit (all incomplete tasks will be aborted)
+memory.usage == Memory Usage: $ of $ Mb
