@@ -21,7 +21,6 @@ import javax.swing.JTextField;
 import bias.Constants;
 import bias.Preferences;
 import bias.extension.ObservableTransferExtension;
-import bias.extension.TransferOptions;
 import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
@@ -167,7 +166,7 @@ public class FTPTransfer extends ObservableTransferExtension {
      * @see bias.extension.TransferExtension#configure(bias.Constants.TRANSFER_OPERATION_TYPE)
      */
     @Override
-    public TransferOptions configure(Constants.TRANSFER_TYPE transferType) throws Throwable {
+    public byte[] configure(Constants.TRANSFER_TYPE transferType) throws Throwable {
         Properties options = new Properties();
         JLabel serverL = new JLabel("FTP Server (domain name or IP, including port if using non-default one)");
         JTextField serverTF = new JTextField();
@@ -209,7 +208,7 @@ public class FTPTransfer extends ObservableTransferExtension {
             if (!Validator.isNullOrBlank(text)) {
                 options.setProperty(TRANSFER_OPTION_PASSWORD, text);
             }
-            return new TransferOptions(PropertiesUtils.serializeProperties(options), filepathTF.getText());
+            return PropertiesUtils.serializeProperties(options);
         }
         return null;
     }

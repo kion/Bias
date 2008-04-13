@@ -165,7 +165,6 @@ import bias.extension.ObservableTransferExtension;
 import bias.extension.ToolExtension;
 import bias.extension.ToolRepresentation;
 import bias.extension.TransferExtension;
-import bias.extension.TransferOptions;
 import bias.extension.TransferProgressListener;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
 import bias.i18n.I18nService;
@@ -3171,24 +3170,14 @@ public class FrontEnd extends JFrame {
                                     try {
                                         final String annotation = (String) cb.getSelectedItem();
                                         final TransferExtension transferrer = ExtensionFactory.getAnnotatedTransferExtensions().get(annotation);
-                                        final TransferOptions importOptions = transferrer.configure(TRANSFER_TYPE.IMPORT);
-                                        if (importOptions == null) {
-                                            hideBottomPanel();
-                                            return;
-                                        }
-                                        final byte[] transferOptions = importOptions.getOptions();
+                                        final byte[] transferOptions = transferrer.configure(TRANSFER_TYPE.IMPORT);
                                         if (transferOptions == null || transferOptions.length == 0) {
                                             hideBottomPanel();
                                             throw new Exception(getMessage("transfer.options.missing.error"));
                                         }
-                                        final String fileLocation = importOptions.getFileLocation();
-                                        if (Validator.isNullOrBlank(fileLocation)) {
-                                            hideBottomPanel();
-                                            throw new Exception(getMessage("transfer.file.location.missing.error"));
-                                        }
                                         byte[] metaBytes = transferrer.readData(transferOptions, true);
                                         // check if checksum of data to be imported has changed since last import (or if import is forced)...
-                                        if (!importUnchangedDataCB.isSelected() && !transferrer.importCheckSumChanged(importOptions, metaBytes)) {
+                                        if (!importUnchangedDataCB.isSelected() && !transferrer.importCheckSumChanged(transferOptions, metaBytes)) {
                                             // ... if no, do not import and inform user about that, if in verbose mode
                                             label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("import.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                             processModel.addElement(getMessage("transfer.discarded.no.data.changes"));
@@ -3215,7 +3204,7 @@ public class FrontEnd extends JFrame {
                                                     });
                                                 }
                                             }
-                                            TransferData td = transferrer.importData(importOptions, importUnchangedDataCB.isSelected());
+                                            TransferData td = transferrer.importData(transferOptions, importUnchangedDataCB.isSelected());
                                             byte[] importedData = td.getData();
                                             if (importedData == null) {
                                                 processModel.addElement(getMessage("import.failure.no.data.retrieved"));
@@ -3306,7 +3295,6 @@ public class FrontEnd extends JFrame {
                                                     try {
                                                         ImportConfiguration importConfig = new ImportConfiguration();
                                                         importConfig.setTransferProvider(transferrer.getClass().getSimpleName());
-                                                        importConfig.setFileLocation(fileLocation);
                                                         importConfig.setImportDataEntries(importDataEntriesCB.isSelected());
                                                         importConfig.setOverwriteDataEntries(overwriteDataEntriesCB.isSelected());
                                                         importConfig.setImportDataEntryConfigs(importDataEntryConfigsCB.isSelected());
@@ -3438,9 +3426,8 @@ public class FrontEnd extends JFrame {
                 if (transferrer == null) {
                     throw new Exception(getMessage("transfer.type.no.longer.available"));
                 }
-                byte[] importOptions = BackEnd.getInstance().getImportOptions(configName);
-                byte[] metaBytes = transferrer.readData(importOptions, true);
-                TransferOptions transferOptions = new TransferOptions(importOptions, importConfig.getFileLocation());
+                byte[] transferOptions = BackEnd.getInstance().getImportOptions(configName);
+                byte[] metaBytes = transferrer.readData(transferOptions, true);
                 // check if checksum of data to be imported has changed since last import (or if import is forced)...
                 if (!force && !transferrer.importCheckSumChanged(transferOptions, metaBytes)) {
                     // ... if no, do not import...
@@ -3643,20 +3630,10 @@ public class FrontEnd extends JFrame {
                         } else {
                             String annotation = (String) cb.getSelectedItem();
                             final TransferExtension transferrer = ExtensionFactory.getAnnotatedTransferExtensions().get(annotation);
-                            TransferOptions exportOptions = transferrer.configure(TRANSFER_TYPE.IMPORT);
-                            if (exportOptions == null) {
-                                hideBottomPanel();
-                                return;
-                            }
-                            final byte[] transferOptions = exportOptions.getOptions();
+                            final byte[] transferOptions = transferrer.configure(TRANSFER_TYPE.IMPORT);
                             if (transferOptions == null || transferOptions.length == 0) {
                                 hideBottomPanel();
                                 throw new Exception(getMessage("transfer.options.missing.error"));
-                            }
-                            final String fileLocation = exportOptions.getFileLocation();
-                            if (Validator.isNullOrBlank(fileLocation)) {
-                                hideBottomPanel();
-                                throw new Exception(getMessage("transfer.file.location.missing.error"));
                             }
                             transferrer.checkConnection(transferOptions);
                             final DataCategory data = collectData();
@@ -3839,10 +3816,8 @@ public class FrontEnd extends JFrame {
                                             final TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
                                             processModel.addElement(getMessage("export.data.compressed"));
                                             autoscrollList(processList);
-                                            exportConfig.setFileLocation(fileLocation);
-                                            TransferOptions transferOpts = new TransferOptions(transferOptions, exportConfig.getFileLocation());
                                             // check if checksum of data to be exported has changed since last export (or if export is forced)...
-                                            if (!exportUnchangedDataCB.isSelected() && !transferrer.exportCheckSumChanged(transferOpts, td)) {
+                                            if (!exportUnchangedDataCB.isSelected() && !transferrer.exportCheckSumChanged(transferOptions, td)) {
                                                 // ... if no, do not export and inform user about that
                                                 label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                                 processModel.addElement(getMessage("transfer.discarded.no.data.changes"));
@@ -3866,7 +3841,7 @@ public class FrontEnd extends JFrame {
                                                         }
                                                     });
                                                 }    
-                                                boolean exported = transferrer.exportData(td, transferOpts, exportUnchangedDataCB.isSelected());
+                                                boolean exported = transferrer.exportData(td, transferOptions, exportUnchangedDataCB.isSelected());
                                                 if (exported) {
                                                     label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
                                                     processModel.addElement(getMessage("export.success"));
@@ -3961,16 +3936,15 @@ public class FrontEnd extends JFrame {
                 if (!exportConfig.isExportAll()) {
                     instance.filterData(data, exportConfig.getSelectedIds(), exportConfig.getSelectedRecursiveIds());
                 }
-                byte[] exportOptions = BackEnd.getInstance().getExportOptions(configName);
+                byte[] transferOptions = BackEnd.getInstance().getExportOptions(configName);
                 final TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
                 if (transferrer == null) {
                     throw new Exception(getMessage("transfer.type.no.longer.available"));
                 }
                 // check connection before performing export
-                transferrer.checkConnection(exportOptions);
+                transferrer.checkConnection(transferOptions);
                 // if no exceptions thrown, proceed further
                 final TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
-                TransferOptions transferOptions = new TransferOptions(exportOptions, exportConfig.getFileLocation());
                 // check if checksum of data to be exported has changed since last export (or if export is forced)...
                 if (!force && !transferrer.exportCheckSumChanged(transferOptions, td)) {
                     // ... if no, do not export...

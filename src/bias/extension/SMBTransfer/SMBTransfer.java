@@ -21,7 +21,6 @@ import jcifs.smb.SmbFileOutputStream;
 import bias.Preferences;
 import bias.Constants.TRANSFER_TYPE;
 import bias.extension.ObservableTransferExtension;
-import bias.extension.TransferOptions;
 import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
@@ -72,7 +71,7 @@ public class SMBTransfer extends ObservableTransferExtension {
      * @see bias.extension.TransferExtension#configure(bias.Constants.TRANSFER_TYPE)
      */
     @Override
-    public TransferOptions configure(TRANSFER_TYPE transferType) throws Throwable {
+    public byte[] configure(TRANSFER_TYPE transferType) throws Throwable {
         Properties options = new Properties();
         JLabel hostL = new JLabel("SMB host");
         JTextField hostTF = new JTextField();
@@ -114,7 +113,7 @@ public class SMBTransfer extends ObservableTransferExtension {
             if (!Validator.isNullOrBlank(text)) {
                 options.setProperty(TRANSFER_OPTION_PASSWORD, text);
             }
-            return new TransferOptions(PropertiesUtils.serializeProperties(options), filepathTF.getText());
+            return PropertiesUtils.serializeProperties(options);
         }
         return null;
     }

@@ -11,14 +11,12 @@ import bias.Constants;
 public abstract class TransferConfiguration {
     
     private String transferProvider;
-    private String fileLocation; 
     private String password;
 
     public TransferConfiguration() {}
 
-    protected TransferConfiguration(String transferProvider, String fileLocation, String password) {
+    protected TransferConfiguration(String transferProvider, String password) {
         this.transferProvider = transferProvider;
-        this.fileLocation = fileLocation;
         this.password = password;
     }
 
@@ -28,14 +26,6 @@ public abstract class TransferConfiguration {
 
     public void setTransferProvider(String transferProvider) {
         this.transferProvider = transferProvider;
-    }
-
-    public String getFileLocation() {
-        return fileLocation;
-    }
-
-    public void setFileLocation(String fileLocation) {
-        this.fileLocation = fileLocation;
     }
 
     public String getPassword() {

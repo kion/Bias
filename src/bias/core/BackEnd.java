@@ -62,6 +62,7 @@ import bias.extension.ToolExtension;
 import bias.extension.TransferExtension;
 import bias.utils.ArchUtils;
 import bias.utils.FSUtils;
+import bias.utils.FormatUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 import bias.utils.VersionComparator;
@@ -399,7 +400,7 @@ public class BackEnd {
         }
     }
     
-    public boolean isTransferFileLocationCheckSumChanged(TRANSFER_TYPE transferType, Class<? extends TransferExtension> transferExtClass, String fileLocation, String checkSum) throws Exception {
+    public boolean isTransferCheckSumChanged(TRANSFER_TYPE transferType, Class<? extends TransferExtension> transferExtClass, byte[] options, String checkSum) throws Exception {
         if (checkSum != null) {
             File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
             if (checkSumsFile.exists()) {
@@ -409,7 +410,8 @@ public class BackEnd {
                 ByteArrayInputStream bais = new ByteArrayInputStream(decryptedData);
                 p.load(bais);
                 bais.close();
-                String storedCheckSum = p.getProperty(transferType.name() + Constants.VALUES_SEPARATOR + fileLocation);
+                String optionsHex = FormatUtils.formatBytesAsHexString(options);
+                String storedCheckSum = p.getProperty(transferType.name() + Constants.VALUES_SEPARATOR + optionsHex);
                 if (!Validator.isNullOrBlank(storedCheckSum)) {
                     if (storedCheckSum.equals(checkSum)) {
                         return false;
@@ -420,7 +422,7 @@ public class BackEnd {
         return true;
     }
     
-    public void storeTransferFileLocationCheckSum(TRANSFER_TYPE transferType, Class<? extends TransferExtension> transferExtClass, String fileLocation, String checkSum) throws Exception {
+    public void storeTransferCheckSum(TRANSFER_TYPE transferType, Class<? extends TransferExtension> transferExtClass, byte[] options, String checkSum) throws Exception {
         if (checkSum != null) {
             Properties p = new Properties();
             File checkSumsFile = new File(Constants.CONFIG_DIR, transferExtClass.getSimpleName() + Constants.CHECKSUM_CONFIG_FILE_SUFFIX);
@@ -431,7 +433,8 @@ public class BackEnd {
                 p.load(bais);
                 bais.close();
             }
-            p.setProperty(transferType.name() + Constants.VALUES_SEPARATOR + fileLocation, checkSum);
+            String optionsHex = FormatUtils.formatBytesAsHexString(options);
+            p.setProperty(transferType.name() + Constants.VALUES_SEPARATOR + optionsHex, checkSum);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();;
             p.store(baos, null);
             byte[] encryptedData = encrypt(baos.toByteArray());
@@ -967,7 +970,6 @@ public class BackEnd {
     private ImportConfiguration populateImportConfiguration(Properties props) {
         return new ImportConfiguration(
                 props.getProperty(Constants.OPTION_TRANSFER_PROVIDER),
-                props.getProperty(Constants.OPTION_FILE_LOCATION),
                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRIES)),
                 Boolean.valueOf(props.getProperty(Constants.OPTION_OVERWRITE_DATA_ENTRIES)), 
                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS)),
@@ -993,7 +995,6 @@ public class BackEnd {
         boolean exportAll = !Validator.isNullOrBlank(exportAllStr) && Boolean.valueOf(exportAllStr);
         ExportConfiguration config = new ExportConfiguration(
                 props.getProperty(Constants.OPTION_TRANSFER_PROVIDER),
-                props.getProperty(Constants.OPTION_FILE_LOCATION),
                 exportAll,
                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_PREFERENCES)), 
                 Boolean.valueOf(props.getProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS)), 
@@ -1033,7 +1034,6 @@ public class BackEnd {
         Properties props = new Properties();
         props.setProperty(Constants.OPTION_CONFIG_NAME, configName);
         props.setProperty(Constants.OPTION_TRANSFER_PROVIDER, config.getTransferProvider());
-        props.setProperty(Constants.OPTION_FILE_LOCATION, config.getFileLocation());
         props.setProperty(Constants.OPTION_PROCESS_DATA_ENTRIES, "" + config.isImportDataEntries());
         props.setProperty(Constants.OPTION_OVERWRITE_DATA_ENTRIES, "" + config.isOverwriteDataEntries()); 
         props.setProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS, "" + config.isImportDataEntryConfigs());
@@ -1059,7 +1059,6 @@ public class BackEnd {
         Properties props = new Properties();
         props.setProperty(Constants.OPTION_CONFIG_NAME, configName);
         props.setProperty(Constants.OPTION_TRANSFER_PROVIDER, config.getTransferProvider());
-        props.setProperty(Constants.OPTION_FILE_LOCATION, config.getFileLocation());
         props.setProperty(Constants.OPTION_PROCESS_PREFERENCES, "" + config.isExportPreferences()); 
         props.setProperty(Constants.OPTION_PROCESS_DATA_ENTRY_CONFIGS, "" + config.isExportDataEntryConfigs()); 
         props.setProperty(Constants.OPTION_PROCESS_ONLY_RELATED_DATA_ENTRY_CONFIGS, "" + config.isExportOnlyRelatedDataEntryConfigs()); 

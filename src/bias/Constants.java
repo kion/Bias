@@ -155,7 +155,6 @@ public class Constants {
 
     public static final String DATA_TREE_ROOT_NODE_CAPTION = "ALL DATA";
     public static final String OPTION_TRANSFER_PROVIDER = "TRANSFER_PROVIDER";
-    public static final String OPTION_FILE_LOCATION = "FILE_LOCATION";
     public static final String OPTION_CONFIG_NAME = "CONFIG_NAME";
     public static final String OPTION_EXPORT_ALL = "EXPORT_ALL";
     public static final String OPTION_SELECTED_RECURSIVE_IDS = "SELECTED_RECURSIVE_IDS";

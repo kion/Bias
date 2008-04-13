@@ -66,12 +66,12 @@ public abstract class TransferExtension implements Extension {
      *  
      * @return boolean true if checksum has changed, false - otherwise
      */
-    public boolean importCheckSumChanged(TransferOptions options, byte[] metaDataBytes) throws Throwable {
+    public boolean importCheckSumChanged(byte[] options, byte[] metaDataBytes) throws Throwable {
         String checkSum = null;
         if (metaDataBytes != null && metaDataBytes.length != 0) {
             checkSum = PropertiesUtils.deserializeProperties(metaDataBytes).getProperty(Constants.META_DATA_CHECKSUM);
         }
-        return BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, this.getClass(), options.getFileLocation(), checkSum);
+        return BackEnd.getInstance().isTransferCheckSumChanged(TRANSFER_TYPE.IMPORT, this.getClass(), options, checkSum);
     }
 
     /**
@@ -80,18 +80,18 @@ public abstract class TransferExtension implements Extension {
      * 
      * @return TransferData instance representing imported data and it's metadata, or null if data is up to date and import has been discarded
      */
-    public TransferData importData(TransferOptions options, boolean force) throws Throwable {
+    public TransferData importData(byte[] options, boolean force) throws Throwable {
         TransferData td = new TransferData(null, null);
         String checkSum = null;
         Properties meta = null;
-        byte[] metaBytes = readData(options.getOptions(), true);
+        byte[] metaBytes = readData(options, true);
         if (metaBytes != null && metaBytes.length != 0) {
             meta = PropertiesUtils.deserializeProperties(metaBytes);
             checkSum = meta.getProperty(Constants.META_DATA_CHECKSUM);
         }
-        if (force || BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.IMPORT, this.getClass(), options.getFileLocation(), checkSum)) {
-            byte[] data = readData(options.getOptions(), false);
-            BackEnd.getInstance().storeTransferFileLocationCheckSum(TRANSFER_TYPE.IMPORT, this.getClass(), options.getFileLocation(), checkSum);
+        if (force || BackEnd.getInstance().isTransferCheckSumChanged(TRANSFER_TYPE.IMPORT, this.getClass(), options, checkSum)) {
+            byte[] data = readData(options, false);
+            BackEnd.getInstance().storeTransferCheckSum(TRANSFER_TYPE.IMPORT, this.getClass(), options, checkSum);
             td.setData(data);
             td.setMetaData(meta);
         }
@@ -114,12 +114,12 @@ public abstract class TransferExtension implements Extension {
      *  
      * @return boolean true if checksum has changed, false - otherwise
      */
-    public boolean exportCheckSumChanged(TransferOptions options, TransferData td) throws Throwable {
+    public boolean exportCheckSumChanged(byte[] options, TransferData td) throws Throwable {
         String checkSum = null;
         if (td.getMetaData() != null) {
             checkSum = td.getMetaData().getProperty(Constants.META_DATA_CHECKSUM);
         }
-        return BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.EXPORT, this.getClass(), options.getFileLocation(), checkSum);
+        return BackEnd.getInstance().isTransferCheckSumChanged(TRANSFER_TYPE.EXPORT, this.getClass(), options, checkSum);
     }
 
     /**
@@ -128,16 +128,16 @@ public abstract class TransferExtension implements Extension {
      * 
      * @return boolean true if data have been successfully exported, or false if data is up to date and export has been discarded
      */
-    public boolean exportData(TransferData td, TransferOptions options, boolean force) throws Throwable {
+    public boolean exportData(TransferData td, byte[] options, boolean force) throws Throwable {
         String checkSum = null;
         Properties meta = td.getMetaData();
         if (meta != null) {
             checkSum = meta.getProperty(Constants.META_DATA_CHECKSUM);
         }
-        if (force || BackEnd.getInstance().isTransferFileLocationCheckSumChanged(TRANSFER_TYPE.EXPORT, this.getClass(), options.getFileLocation(), checkSum)) {
-            if (meta != null) writeData(PropertiesUtils.serializeProperties(meta), options.getOptions(), true);
-            writeData(td.getData(), options.getOptions(), false);
-            BackEnd.getInstance().storeTransferFileLocationCheckSum(TRANSFER_TYPE.EXPORT, this.getClass(), options.getFileLocation(), checkSum);
+        if (force || BackEnd.getInstance().isTransferCheckSumChanged(TRANSFER_TYPE.EXPORT, this.getClass(), options, checkSum)) {
+            if (meta != null) writeData(PropertiesUtils.serializeProperties(meta), options, true);
+            writeData(td.getData(), options, false);
+            BackEnd.getInstance().storeTransferCheckSum(TRANSFER_TYPE.EXPORT, this.getClass(), options, checkSum);
             return true;
         }
         return false;
@@ -170,7 +170,7 @@ public abstract class TransferExtension implements Extension {
      * @param operation type (import/export) to be performed after configuration
      * @return options byte array containing serialized configuration options
      */
-    public abstract TransferOptions configure(Constants.TRANSFER_TYPE transferType) throws Throwable;
+    public abstract byte[] configure(Constants.TRANSFER_TYPE transferType) throws Throwable;
 
     /**
      * Defines whether extension's configuration should be skipped on export

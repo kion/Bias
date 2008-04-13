@@ -30,7 +30,6 @@ public class ImportConfiguration extends TransferConfiguration {
     
     public ImportConfiguration(
             String transferProvider,
-            String fileLocation,
             boolean importDataEntries, 
             boolean overwriteDataEntries, 
             boolean importDataEntryConfigs, 
@@ -49,7 +48,7 @@ public class ImportConfiguration extends TransferConfiguration {
             boolean importImportExportConfigs, 
             boolean overwriteImportExportConfigs, 
             String password) {
-        super(transferProvider, fileLocation, password);
+        super(transferProvider, password);
         this.importDataEntries = importDataEntries;
         this.overwriteDataEntries = overwriteDataEntries;
         this.importDataEntryConfigs = importDataEntryConfigs;

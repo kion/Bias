@@ -109,7 +109,7 @@ public class LocalTransfer extends ObservableTransferExtension {
      * @see bias.extension.TransferExtension#configure(bias.Constants.TRANSFER_OPERATION_TYPE)
      */
     @Override
-    public TransferOptions configure(Constants.TRANSFER_TYPE transferType) throws Throwable {
+    public byte[] configure(Constants.TRANSFER_TYPE transferType) throws Throwable {
         Properties options = null;
         ZipFileChooser zfc = new ZipFileChooser();
         int rVal = 0;
@@ -129,7 +129,7 @@ public class LocalTransfer extends ObservableTransferExtension {
                 filePath += ".zip";
             }
             options.setProperty(TRANSFER_OPTION_FILEPATH, filePath);
-            return new TransferOptions(PropertiesUtils.serializeProperties(options), filePath);
+            return PropertiesUtils.serializeProperties(options);
         }
         return null;
     }

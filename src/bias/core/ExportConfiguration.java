@@ -30,7 +30,6 @@ public class ExportConfiguration extends TransferConfiguration {
 
     public ExportConfiguration(
             String transferProvider,
-            String fileLocation,
             boolean exportAll,
             boolean exportPreferences, 
             boolean exportDataEntryConfigs, 
@@ -43,7 +42,7 @@ public class ExportConfiguration extends TransferConfiguration {
             boolean exportAddOnConfigs,
             boolean exportImportExportConfigs, 
             String password) {
-        super(transferProvider, fileLocation, password);
+        super(transferProvider, password);
         this.exportAll = exportAll;
         this.selectedIds = new LinkedList<UUID>();
         this.selectedRecursiveIds = new LinkedList<UUID>();
