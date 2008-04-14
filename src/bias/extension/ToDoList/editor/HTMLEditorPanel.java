@@ -647,6 +647,7 @@ public class HTMLEditorPanel extends JPanel {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     String code = getJTextPane().getText();
                     JTextPane tp = new JTextPane();
+                    tp.setEditorKit(new CustomHTMLCodeEditorKit(tp));
                     tp.setText(code);
                     int opt = FrontEnd.displayDialog(new JScrollPane(tp), "Edit code", JOptionPane.OK_CANCEL_OPTION);
                     if (opt == JOptionPane.OK_OPTION) {
