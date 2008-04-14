@@ -6143,21 +6143,29 @@ public class FrontEnd extends JFrame {
                 }
             if (loaded) {
                 try {
-                    JOptionPane op = new JOptionPane();
                     JPanel p = new JPanel(new BorderLayout());
                     p.add(getDetailsPane(new String(baos.toByteArray()), baseURL), BorderLayout.CENTER);
                     p.add(getDependenciesPanel(dependencies), BorderLayout.SOUTH);
-                    op.setMessage(p);
-                    op.setMessageType(JOptionPane.INFORMATION_MESSAGE);
-                    final Dialog d = op.createDialog(getActiveWindow(), addOnName + " :: Details");
-                    d.setLocation(getActiveWindow().getLocation());
-                    d.setSize(getActiveWindow().getSize());
-                    d.setVisible(true);
+                    displayDialog(p, addOnName + " :: Details");
                 } catch (Throwable t) {
                     displayErrorMessage("Failed to display package details! " + CommonUtils.getFailureDetails(t), t);
                 }
             }
         }
+    }
+    
+    public static int displayDialog(Object message, String title) {
+        return displayDialog(message, title, -1);
+    }
+    
+    public static int displayDialog(Object message, String title, int optionType) {
+        JOptionPane op = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE);
+        if (optionType != -1) op.setOptionType(optionType);
+        final Dialog d = op.createDialog(getActiveWindow(), title);
+        d.setLocation(getActiveWindow().getLocation());
+        d.setSize(getActiveWindow().getSize());
+        d.setVisible(true);
+        return (Integer) op.getValue();
     }
     
     private int findDataRowIndex(DefaultTableModel model, int colIdx, String data) {

@@ -648,7 +648,7 @@ public class HTMLEditorPanel extends JPanel {
                     String code = getJTextPane().getText();
                     JTextPane tp = new JTextPane();
                     tp.setText(code);
-                    int opt = JOptionPane.showConfirmDialog(HTMLEditorPanel.this, new JScrollPane(tp), "Edit code", JOptionPane.OK_CANCEL_OPTION);
+                    int opt = FrontEnd.displayDialog(new JScrollPane(tp), "Edit code", JOptionPane.OK_CANCEL_OPTION);
                     if (opt == JOptionPane.OK_OPTION) {
                         code = tp.getText();
                         getJTextPane().setText(code);
