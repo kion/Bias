@@ -163,6 +163,15 @@ public class DashBoard extends EntryExtension {
     public byte[] serializeSettings() throws Throwable {
         return PropertiesUtils.serializeProperties(settings);
     }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#getSearchData()
+     */
+    @Override
+    public Collection<String> getSearchData() throws Throwable {
+        // TODO [P1] implement
+        return super.getSearchData();
+    }
 
     private JToolBar getToolBar() {
         if (toolBar == null) {
