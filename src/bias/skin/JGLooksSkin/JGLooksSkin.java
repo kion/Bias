@@ -18,7 +18,7 @@ import javax.swing.UIManager;
 
 import bias.gui.FrontEnd;
 import bias.skin.Skin;
-import bias.skin.UIIcons;
+import bias.skin.GUIIcons;
 import bias.utils.PropertiesUtils;
 
 import com.jgoodies.looks.FontPolicies;
@@ -186,7 +186,7 @@ public class JGLooksSkin extends Skin {
      * @see bias.laf.LookAndFeel#getControlIcons()
      */
     @Override
-    public UIIcons getUIIcons() {
+    public GUIIcons getUIIcons() {
         // TODO [P3] try to use custom LAF icons
         return null;
     }

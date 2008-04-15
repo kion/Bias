@@ -54,7 +54,7 @@ public abstract class Skin implements AddOn {
 
      * @return ControlIcons structure
      */
-    public UIIcons getUIIcons() {
+    public GUIIcons getUIIcons() {
         return null;
     }
 

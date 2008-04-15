@@ -168,8 +168,8 @@ import bias.extension.TransferExtension;
 import bias.extension.TransferProgressListener;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
 import bias.i18n.I18nService;
+import bias.skin.GUIIcons;
 import bias.skin.Skin;
-import bias.skin.UIIcons;
 import bias.utils.AppManager;
 import bias.utils.ArchUtils;
 import bias.utils.CommonUtils;
@@ -237,7 +237,7 @@ public class FrontEnd extends JFrame {
     private static Map<Class<? extends ToolExtension>, JPanel> indicatorAreas = new HashMap<Class<? extends ToolExtension>, JPanel>();
 
     // use default control icons initially
-    private static UIIcons uiIcons = new UIIcons();
+    private static GUIIcons guiIcons = new GUIIcons();
 
     private static Properties config;
     
@@ -415,6 +415,10 @@ public class FrontEnd extends JFrame {
         return unmarshaller;
     }
     
+    public static GUIIcons getGUIIcons() {
+        return guiIcons;
+    }
+
     private static Map<Class<? extends StartUpEventListener>, StartUpEventListener> startUpEventListeners;
     public static void addStartUpEventListener(StartUpEventListener l) {
         if (startUpEventListeners == null) {
@@ -899,7 +903,7 @@ public class FrontEnd extends JFrame {
                 skinInstance.activate(skinSettings);
                 // use control icons defined by Skin if available
                 if (skinInstance.getUIIcons() != null) {
-                    uiIcons = skinInstance.getUIIcons();
+                    guiIcons = skinInstance.getUIIcons();
                 }
                 if (activeSkin == null) {
                     if (skin != null) {
@@ -2763,7 +2767,7 @@ public class FrontEnd extends JFrame {
         public ChangePasswordAction() {
             putValue(Action.NAME, "changePassword");
             putValue(Action.SHORT_DESCRIPTION, getMessage("change.password"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconChangePassword());
+            putValue(Action.SMALL_ICON, guiIcons.getIconChangePassword());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -2815,7 +2819,7 @@ public class FrontEnd extends JFrame {
         public AddEntryAction() {
             putValue(Action.NAME, "addEntry");
             putValue(Action.SHORT_DESCRIPTION, getMessage("add.entry"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconEntry());
+            putValue(Action.SMALL_ICON, guiIcons.getIconEntry());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -2893,7 +2897,7 @@ public class FrontEnd extends JFrame {
         public AdjustCategoryAction() {
             putValue(Action.NAME, "adjustCategory");
             putValue(Action.SHORT_DESCRIPTION, getMessage("adjust.category"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconAdjustCategory());
+            putValue(Action.SMALL_ICON, guiIcons.getIconAdjustCategory());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -2940,7 +2944,7 @@ public class FrontEnd extends JFrame {
         public AdjustEntryAction() {
             putValue(Action.NAME, "adjustEntry");
             putValue(Action.SHORT_DESCRIPTION, getMessage("adjust.entry"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconAdjustEntry());
+            putValue(Action.SMALL_ICON, guiIcons.getIconAdjustEntry());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -2983,7 +2987,7 @@ public class FrontEnd extends JFrame {
         public ConfigEntryAction() {
             putValue(Action.NAME, "configEntry");
             putValue(Action.SHORT_DESCRIPTION, getMessage("configure.entry"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconConfigure());
+            putValue(Action.SMALL_ICON, guiIcons.getIconConfigure());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -3022,7 +3026,7 @@ public class FrontEnd extends JFrame {
         public DeleteAction() {
             putValue(Action.NAME, "delete");
             putValue(Action.SHORT_DESCRIPTION, getMessage("delete.active.entry.or.category"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconDelete());
+            putValue(Action.SMALL_ICON, guiIcons.getIconDelete());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -3075,7 +3079,7 @@ public class FrontEnd extends JFrame {
         public ImportAction() {
             putValue(Action.NAME, "import");
             putValue(Action.SHORT_DESCRIPTION, getMessage("data.import"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconImport());
+            putValue(Action.SMALL_ICON, guiIcons.getIconImport());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -3541,7 +3545,7 @@ public class FrontEnd extends JFrame {
         public ExportAction() {
             putValue(Action.NAME, "export");
             putValue(Action.SHORT_DESCRIPTION, getMessage("data.export"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconExport());
+            putValue(Action.SMALL_ICON, guiIcons.getIconExport());
         }
 
         public void actionPerformed(ActionEvent e) {
@@ -4118,7 +4122,7 @@ public class FrontEnd extends JFrame {
         public AddCategoryAction() {
             putValue(Action.NAME, "addCategory");
             putValue(Action.SHORT_DESCRIPTION, getMessage("add.category"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconCategory());
+            putValue(Action.SMALL_ICON, guiIcons.getIconCategory());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -4181,7 +4185,7 @@ public class FrontEnd extends JFrame {
         public SaveAction() {
             putValue(Action.NAME, "save");
             putValue(Action.SHORT_DESCRIPTION, getMessage("save"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconSave());
+            putValue(Action.SMALL_ICON, guiIcons.getIconSave());
         }
 
         public void actionPerformed(ActionEvent evt) {
@@ -4196,7 +4200,7 @@ public class FrontEnd extends JFrame {
         public ExitAction() {
             putValue(Action.NAME, "exit");
             putValue(Action.SHORT_DESCRIPTION, getMessage("exit"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconExit());
+            putValue(Action.SMALL_ICON, guiIcons.getIconExit());
         }
 
         public void actionPerformed(ActionEvent evt) {
@@ -4211,7 +4215,7 @@ public class FrontEnd extends JFrame {
         public BackToFirstAction() {
             putValue(Action.NAME, "backToFirst");
             putValue(Action.SHORT_DESCRIPTION, getMessage("history.back.to.first"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconBackToFirst());
+            putValue(Action.SMALL_ICON, guiIcons.getIconBackToFirst());
             setEnabled(false);
         }
 
@@ -4229,7 +4233,7 @@ public class FrontEnd extends JFrame {
         public BackAction() {
             putValue(Action.NAME, "back");
             putValue(Action.SHORT_DESCRIPTION, getMessage("history.back"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconBack());
+            putValue(Action.SMALL_ICON, guiIcons.getIconBack());
             setEnabled(false);
         }
 
@@ -4249,7 +4253,7 @@ public class FrontEnd extends JFrame {
         public ForwardAction() {
             putValue(Action.NAME, "forward");
             putValue(Action.SHORT_DESCRIPTION, getMessage("history.forward"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconForward());
+            putValue(Action.SMALL_ICON, guiIcons.getIconForward());
             setEnabled(false);
         }
 
@@ -4269,7 +4273,7 @@ public class FrontEnd extends JFrame {
         public ForwardToLastAction() {
             putValue(Action.NAME, "forwardToLast");
             putValue(Action.SHORT_DESCRIPTION, getMessage("history.forward.to.last"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconForwardToLast());
+            putValue(Action.SMALL_ICON, guiIcons.getIconForwardToLast());
             setEnabled(false);
         }
 
@@ -4287,7 +4291,7 @@ public class FrontEnd extends JFrame {
         public PreferencesAction() {
             putValue(Action.NAME, "preferences");
             putValue(Action.SHORT_DESCRIPTION, getMessage("preferences"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconPreferences());
+            putValue(Action.SMALL_ICON, guiIcons.getIconPreferences());
         }
 
         boolean prefsErr;
@@ -4515,7 +4519,7 @@ public class FrontEnd extends JFrame {
         public ManageAddOnsAction() {
             putValue(Action.NAME, "manageAddOns");
             putValue(Action.SHORT_DESCRIPTION, getMessage("manage.addons"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconAddOns());
+            putValue(Action.SMALL_ICON, guiIcons.getIconAddOns());
         }
 
         public void actionPerformed(ActionEvent e) {
@@ -5219,7 +5223,7 @@ public class FrontEnd extends JFrame {
                 extPanel.add(new JScrollPane(extList), BorderLayout.CENTER);
                 extPanel.add(extControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Extensions", uiIcons.getIconExtensions(), extPanel);
+                addOnsPane.addTab("Extensions", guiIcons.getIconExtensions(), extPanel);
                 
                 JPanel skinControlsPanel = new JPanel(new GridLayout(1,4));
                 skinControlsPanel.add(skinDetailsButt);
@@ -5240,7 +5244,7 @@ public class FrontEnd extends JFrame {
                 skinPanel.add(new JScrollPane(skinList), BorderLayout.CENTER);
                 skinPanel.add(skinControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Skins", uiIcons.getIconSkins(), skinPanel);
+                addOnsPane.addTab("Skins", guiIcons.getIconSkins(), skinPanel);
                 
                 JPanel icControlsPanel = new JPanel(new GridLayout(1,4));
                 icControlsPanel.add(icSetDetailsButt);
@@ -5262,7 +5266,7 @@ public class FrontEnd extends JFrame {
                 icPanel.add(jsp, BorderLayout.EAST);
                 icPanel.add(icControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Icons", uiIcons.getIconIcons(), icPanel);
+                addOnsPane.addTab("Icons", guiIcons.getIconIcons(), icPanel);
                 
                 JPanel onlineControlsPanel = new JPanel(new GridLayout(1,5));
                 onlineControlsPanel.add(onlineRefreshButt);
@@ -5288,7 +5292,7 @@ public class FrontEnd extends JFrame {
                 p.add(onlineControlsPanel, BorderLayout.SOUTH);
                 onlinePanel.add(p, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Online", uiIcons.getIconOnline(), onlinePanel);
+                addOnsPane.addTab("Online", guiIcons.getIconOnline(), onlinePanel);
                 
                 JPanel advPanel = new JPanel(new BorderLayout());
 
@@ -5396,7 +5400,7 @@ public class FrontEnd extends JFrame {
                 
                 advPanel.add(advBottomPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Advanced", uiIcons.getIconPreferences(), advPanel);
+                addOnsPane.addTab("Advanced", guiIcons.getIconPreferences(), advPanel);
                 
                 JButton doneButt = new JButton("Done");
                 doneButt.addActionListener(new ActionListener(){
@@ -6235,7 +6239,7 @@ public class FrontEnd extends JFrame {
         public AboutAction() {
             putValue(Action.NAME, "about");
             putValue(Action.SHORT_DESCRIPTION, getMessage("about"));
-            putValue(Action.SMALL_ICON, uiIcons.getIconAbout());
+            putValue(Action.SMALL_ICON, guiIcons.getIconAbout());
         }
 
         public void actionPerformed(ActionEvent evt) {
@@ -6256,6 +6260,6 @@ public class FrontEnd extends JFrame {
                     JOptionPane.PLAIN_MESSAGE,
                     ICON_LOGO);
         }
-    };
-    
+    }
+
 }

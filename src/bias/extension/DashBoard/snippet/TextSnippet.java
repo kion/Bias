@@ -1,10 +1,11 @@
 /**
- * Created on Oct 24, 2006
+ * Created on Apr 15, 2008
  */
-package bias.extension.PlainText;
+package bias.extension.DashBoard.snippet;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -33,7 +34,8 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
 import bias.core.BackEnd;
-import bias.extension.EntryExtension;
+import bias.extension.DashBoard.DashBoard;
+import bias.extension.DashBoard.editor.UndoRedoManager;
 import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
@@ -41,12 +43,10 @@ import bias.utils.Validator;
 /**
  * @author kion
  */
-
-public class PlainText extends EntryExtension {
-
+public class TextSnippet extends InfoSnippet {
     private static final long serialVersionUID = 1L;
 
-    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(BackEnd.getInstance().getResourceURL(PlainText.class, "switch_mode.png"));
+    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "editor/switch_mode.png"));
     
     private static final String PROPERTY_FONT_SIZE = "FONT_SIZE";
     
@@ -73,124 +73,19 @@ public class PlainText extends EntryExtension {
     private JButton jButton1 = null;
     private JButton jButton2 = null;
 
-    /**
-     * Default constructor
-     */
-    public PlainText(UUID id, byte[] data, byte[] settings) {
-        super(id, data, settings);
+    public TextSnippet(UUID id, byte[] content, byte[] settings) {
+        super(id, content, settings);
         initialize();
     }
 
-    /* (non-Javadoc)
-     * @see bias.extension.EntryExtension#configure(byte[])
-     */
-    @Override
-    public byte[] configure(byte[] settings) throws Throwable {
-        Properties newSettings = PropertiesUtils.deserializeProperties(settings);
-        JLabel fsLb = new JLabel("Font size:");
-        JComboBox fsCb = new JComboBox();
-        for (Integer fs : FONT_SIZES) {
-            fsCb.addItem("" + fs);
-        }
-        String selValue = newSettings.getProperty(PROPERTY_FONT_SIZE);
-        if (selValue == null) {
-            selValue = "" + DEFAULT_FONT_SIZE;
-        }
-        fsCb.setSelectedItem(selValue);
-        int opt = JOptionPane.showConfirmDialog(
-                FrontEnd.getActiveWindow(), 
-                new Component[]{fsLb, fsCb}, 
-                "Settings for " + this.getClass().getSimpleName() + " extension", 
-                JOptionPane.OK_CANCEL_OPTION);
-        if (opt == JOptionPane.OK_OPTION) {
-            newSettings.setProperty(PROPERTY_FONT_SIZE, (String) fsCb.getSelectedItem());
-            return PropertiesUtils.serializeProperties(newSettings);
-        }
-        return null;
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.EntryExtension#applySettings(byte[])
-     */
-    @Override
-    public void applySettings(byte[] settings) {
-        this.settings = PropertiesUtils.deserializeProperties(settings);
-        String cfs = this.settings.getProperty(PROPERTY_FONT_SIZE);
-        if (cfs != null) {
-            currentFontSize = Integer.valueOf(cfs);
-        } else {
-            currentFontSize = DEFAULT_FONT_SIZE;
-        }
-        setFontSize(new ActionEvent(getJTextPane(), ActionEvent.ACTION_PERFORMED, "Font size"));
-        if (currentFontSize == FONT_SIZES[FONT_SIZES.length-1]) {
-            getJButton1().setEnabled(false);
-        } else if (currentFontSize == FONT_SIZES[0]) {
-            getJButton2().setEnabled(false);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#serializeSettings()
-     */
-    public byte[] serializeSettings() throws Throwable {
-        settings.setProperty(PROPERTY_FONT_SIZE, "" + currentFontSize);
-        JScrollBar sb = getJScrollPane().getVerticalScrollBar();
-        if (sb != null && sb.getValue() != 0) {
-            settings.setProperty(PROPERTY_SCROLLBAR_VERT, "" + sb.getValue());
-        } else {
-            settings.remove(PROPERTY_SCROLLBAR_VERT);
-        }
-        sb = getJScrollPane().getHorizontalScrollBar();
-        if (sb != null && sb.getValue() != 0) {
-            settings.setProperty(PROPERTY_SCROLLBAR_HORIZ, "" + sb.getValue());
-        } else {
-            settings.remove(PROPERTY_SCROLLBAR_HORIZ);
-        }
-        int cp = getJTextPane().getCaretPosition();
-        settings.setProperty(PROPERTY_CARET_POSITION, "" + cp);
-        return PropertiesUtils.serializeProperties(settings);
-    }
-    
-    /* (non-Javadoc)
-     * @see bias.extension.Extension#serializeData()
-     */
-    public byte[] serializeData() throws Throwable {
-        if (dataChanged) {
-            return getJTextPane().getText().getBytes();
-        } else {
-            return getData();
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see bias.extension.EntryExtension#getSearchData()
-     */
-    @Override
-    public Collection<String> getSearchData() throws Throwable {
-        Collection<String> searchData = new ArrayList<String>();
-        Document doc = getJTextPane().getDocument();
-        String text = null;
-        try {
-            text = doc.getText(0, doc.getLength());
-        } catch (BadLocationException e) {
-            // ignore, shouldn't happen ever
-        }
-        searchData.add(text);
-        return searchData;
-    }
-
-    /**
-     * This method initializes this
-     * 
-     * @return void
-     */
     private void initialize() {
         this.setSize(733, 515);
         this.setLayout(new BorderLayout());
-        if (getData() != null) {
-            getJTextPane().setText(new String(getData()));
+        if (getContent() != null) {
+            getJTextPane().setText(new String(getContent()));
         }
-        applySettings(getSettings());
+        settings = PropertiesUtils.deserializeProperties(getSettings());
+        applySettings();
         JScrollBar sb = getJScrollPane().getVerticalScrollBar();
         if (sb != null) {
             String val = settings.getProperty(PROPERTY_SCROLLBAR_VERT);
@@ -386,6 +281,105 @@ public class PlainText extends EntryExtension {
         }
         getJTextPane().setSelectionStart(0);
         getJTextPane().setSelectionEnd(0);
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.DashBoard.snippet.InfoSnippet#getRepresentation()
+     */
+    @Override
+    protected Container getRepresentation() {
+        return getJTextPane();
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.DashBoard.snippet.InfoSnippet#configure()
+     */
+    @Override
+    public void configure() throws Throwable {
+        JLabel fsLb = new JLabel("Font size:");
+        JComboBox fsCb = new JComboBox();
+        for (Integer fs : FONT_SIZES) {
+            fsCb.addItem("" + fs);
+        }
+        String selValue = "" + currentFontSize;
+        fsCb.setSelectedItem(selValue);
+        int opt = JOptionPane.showConfirmDialog(
+                FrontEnd.getActiveWindow(), 
+                new Component[]{fsLb, fsCb}, 
+                "Settings", 
+                JOptionPane.OK_CANCEL_OPTION);
+        if (opt == JOptionPane.OK_OPTION) {
+            currentFontSize = Integer.valueOf((String) fsCb.getSelectedItem());
+            settings.setProperty(PROPERTY_FONT_SIZE, "" + currentFontSize);
+            applySettings();
+        }
+    }
+    
+    public void applySettings() {
+        String cfs = this.settings.getProperty(PROPERTY_FONT_SIZE);
+        if (cfs != null) {
+            currentFontSize = Integer.valueOf(cfs);
+        } else {
+            currentFontSize = DEFAULT_FONT_SIZE;
+        }
+        setFontSize(new ActionEvent(getJTextPane(), ActionEvent.ACTION_PERFORMED, "Font size"));
+        if (currentFontSize == FONT_SIZES[FONT_SIZES.length-1]) {
+            getJButton1().setEnabled(false);
+        } else if (currentFontSize == FONT_SIZES[0]) {
+            getJButton2().setEnabled(false);
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.DashBoard.snippet.InfoSnippet#getSearchData()
+     */
+    @Override
+    public Collection<String> getSearchData() {
+        Collection<String> searchData = new ArrayList<String>();
+        Document doc = getJTextPane().getDocument();
+        String text = null;
+        try {
+            text = doc.getText(0, doc.getLength());
+        } catch (BadLocationException e) {
+            // ignore, shouldn't happen ever
+        }
+        searchData.add(text);
+        return searchData;
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.DashBoard.snippet.InfoSnippet#serializeContent()
+     */
+    @Override
+    public byte[] serializeContent() {
+        if (dataChanged) {
+            return getJTextPane().getText().getBytes();
+        } else {
+            return getContent();
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.DashBoard.snippet.InfoSnippet#serializeSettings()
+     */
+    @Override
+    public byte[] serializeSettings() {
+        settings.setProperty(PROPERTY_FONT_SIZE, "" + currentFontSize);
+        JScrollBar sb = getJScrollPane().getVerticalScrollBar();
+        if (sb != null && sb.getValue() != 0) {
+            settings.setProperty(PROPERTY_SCROLLBAR_VERT, "" + sb.getValue());
+        } else {
+            settings.remove(PROPERTY_SCROLLBAR_VERT);
+        }
+        sb = getJScrollPane().getHorizontalScrollBar();
+        if (sb != null && sb.getValue() != 0) {
+            settings.setProperty(PROPERTY_SCROLLBAR_HORIZ, "" + sb.getValue());
+        } else {
+            settings.remove(PROPERTY_SCROLLBAR_HORIZ);
+        }
+        int cp = getJTextPane().getCaretPosition();
+        settings.setProperty(PROPERTY_CARET_POSITION, "" + cp);
+        return PropertiesUtils.serializeProperties(settings);
     }
 
 }

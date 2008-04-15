@@ -8,36 +8,36 @@ import javax.swing.ImageIcon;
 /**
  * @author kion
  */
-public class UIIcons {
+public class GUIIcons {
     
     // TODO [P1] add more icons for different controls that has no icons currently (buttons on add-ons management dialog etc)
 
     /**
      * Default control icons
      */
-    private static final ImageIcon ICON_ABOUT = new ImageIcon(UIIcons.class.getResource("/bias/res/about.png"));
-    private static final ImageIcon ICON_IMPORT = new ImageIcon(UIIcons.class.getResource("/bias/res/import.png"));
-    private static final ImageIcon ICON_EXPORT = new ImageIcon(UIIcons.class.getResource("/bias/res/export.png"));
-    private static final ImageIcon ICON_DELETE = new ImageIcon(UIIcons.class.getResource("/bias/res/delete.png"));
-    private static final ImageIcon ICON_CATEGORY = new ImageIcon(UIIcons.class.getResource("/bias/res/add_category.png"));
-    private static final ImageIcon ICON_ADJUST_CATEGORY = new ImageIcon(UIIcons.class.getResource("/bias/res/adjust_category.png"));
-    private static final ImageIcon ICON_ENTRY = new ImageIcon(UIIcons.class.getResource("/bias/res/add_entry.png"));
-    private static final ImageIcon ICON_ADJUST_ENTRY = new ImageIcon(UIIcons.class.getResource("/bias/res/adjust_entry.png"));
-    private static final ImageIcon ICON_CONFIGURE = new ImageIcon(UIIcons.class.getResource("/bias/res/configure.png"));
-    private static final ImageIcon ICON_CHANGE_PASSWORD = new ImageIcon(UIIcons.class.getResource("/bias/res/change_password.png"));
-    private static final ImageIcon ICON_SAVE = new ImageIcon(UIIcons.class.getResource("/bias/res/save.png"));
-    private static final ImageIcon ICON_EXIT = new ImageIcon(UIIcons.class.getResource("/bias/res/exit.png"));
-    private static final ImageIcon ICON_BACKTOFIRST = new ImageIcon(UIIcons.class.getResource("/bias/res/back_to_first.png"));
-    private static final ImageIcon ICON_BACK = new ImageIcon(UIIcons.class.getResource("/bias/res/back.png"));
-    private static final ImageIcon ICON_FORWARD = new ImageIcon(UIIcons.class.getResource("/bias/res/forward.png"));
-    private static final ImageIcon ICON_FORWARDTOLAST = new ImageIcon(UIIcons.class.getResource("/bias/res/forward_to_last.png"));
-    private static final ImageIcon ICON_ADDONS = new ImageIcon(UIIcons.class.getResource("/bias/res/addons.png"));
-    private static final ImageIcon ICON_PREFERENCES = new ImageIcon(UIIcons.class.getResource("/bias/res/prefs.png"));
-    private static final ImageIcon ICON_EXTENSIONS = new ImageIcon(UIIcons.class.getResource("/bias/res/extensions.png"));
-    private static final ImageIcon ICON_SKINS = new ImageIcon(UIIcons.class.getResource("/bias/res/skins.png"));
-    private static final ImageIcon ICON_ICONS = new ImageIcon(UIIcons.class.getResource("/bias/res/icons.png"));
-    private static final ImageIcon ICON_ONLINE = new ImageIcon(UIIcons.class.getResource("/bias/res/online.png"));
-
+    private static final ImageIcon ICON_ABOUT = new ImageIcon(GUIIcons.class.getResource("/bias/res/about.png"));
+    private static final ImageIcon ICON_IMPORT = new ImageIcon(GUIIcons.class.getResource("/bias/res/import.png"));
+    private static final ImageIcon ICON_EXPORT = new ImageIcon(GUIIcons.class.getResource("/bias/res/export.png"));
+    private static final ImageIcon ICON_DELETE = new ImageIcon(GUIIcons.class.getResource("/bias/res/delete.png"));
+    private static final ImageIcon ICON_CATEGORY = new ImageIcon(GUIIcons.class.getResource("/bias/res/add_category.png"));
+    private static final ImageIcon ICON_ADJUST_CATEGORY = new ImageIcon(GUIIcons.class.getResource("/bias/res/adjust_category.png"));
+    private static final ImageIcon ICON_ENTRY = new ImageIcon(GUIIcons.class.getResource("/bias/res/add_entry.png"));
+    private static final ImageIcon ICON_ADJUST_ENTRY = new ImageIcon(GUIIcons.class.getResource("/bias/res/adjust_entry.png"));
+    private static final ImageIcon ICON_CONFIGURE = new ImageIcon(GUIIcons.class.getResource("/bias/res/configure.png"));
+    private static final ImageIcon ICON_CHANGE_PASSWORD = new ImageIcon(GUIIcons.class.getResource("/bias/res/change_password.png"));
+    private static final ImageIcon ICON_SAVE = new ImageIcon(GUIIcons.class.getResource("/bias/res/save.png"));
+    private static final ImageIcon ICON_EXIT = new ImageIcon(GUIIcons.class.getResource("/bias/res/exit.png"));
+    private static final ImageIcon ICON_BACKTOFIRST = new ImageIcon(GUIIcons.class.getResource("/bias/res/back_to_first.png"));
+    private static final ImageIcon ICON_BACK = new ImageIcon(GUIIcons.class.getResource("/bias/res/back.png"));
+    private static final ImageIcon ICON_FORWARD = new ImageIcon(GUIIcons.class.getResource("/bias/res/forward.png"));
+    private static final ImageIcon ICON_FORWARDTOLAST = new ImageIcon(GUIIcons.class.getResource("/bias/res/forward_to_last.png"));
+    private static final ImageIcon ICON_ADDONS = new ImageIcon(GUIIcons.class.getResource("/bias/res/addons.png"));
+    private static final ImageIcon ICON_PREFERENCES = new ImageIcon(GUIIcons.class.getResource("/bias/res/prefs.png"));
+    private static final ImageIcon ICON_EXTENSIONS = new ImageIcon(GUIIcons.class.getResource("/bias/res/extensions.png"));
+    private static final ImageIcon ICON_SKINS = new ImageIcon(GUIIcons.class.getResource("/bias/res/skins.png"));
+    private static final ImageIcon ICON_ICONS = new ImageIcon(GUIIcons.class.getResource("/bias/res/icons.png"));
+    private static final ImageIcon ICON_ONLINE = new ImageIcon(GUIIcons.class.getResource("/bias/res/online.png"));
+    
     private ImageIcon iconSave;
     private ImageIcon iconImport;
     private ImageIcon iconExport;
@@ -65,7 +65,7 @@ public class UIIcons {
      * Constructs default ControlIcons structure
      * (with default icons for controls)
      */
-    public UIIcons() {
+    public GUIIcons() {
         this.iconSave = ICON_SAVE;
         this.iconImport = ICON_IMPORT; 
         this.iconExport = ICON_EXPORT; 
@@ -90,7 +90,7 @@ public class UIIcons {
         this.iconAbout = ICON_ABOUT;
     }
 
-    public UIIcons(
+    public GUIIcons(
             ImageIcon iconSave, 
             ImageIcon iconImport, 
             ImageIcon iconExport, 

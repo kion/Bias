@@ -16,9 +16,11 @@
 		<xs:attribute name="type" type="bias:frameType" use="required"/>
 		<xs:attribute name="title" type="xs:string" use="optional"/>
 		<xs:attribute name="content" type="xs:base64Binary" use="required"/>
+		<xs:attribute name="settings" type="xs:base64Binary" use="required"/>
 	</xs:complexType>
 	<xs:simpleType name="frameType">
 		<xs:restriction base="xs:string">
+			<xs:enumeration value="Text-snippet"/>
 			<xs:enumeration value="HTML-snippet"/>
 		</xs:restriction>
 	</xs:simpleType>

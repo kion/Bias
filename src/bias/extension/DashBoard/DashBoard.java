@@ -6,6 +6,8 @@ package bias.extension.DashBoard;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -22,6 +24,7 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.Map.Entry;
 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDesktopPane;
 import javax.swing.JOptionPane;
@@ -34,14 +37,17 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import bias.Constants;
 import bias.extension.EntryExtension;
 import bias.extension.DashBoard.snippet.HTMLSnippet;
 import bias.extension.DashBoard.snippet.InfoSnippet;
+import bias.extension.DashBoard.snippet.TextSnippet;
 import bias.extension.DashBoard.xmlb.Frame;
 import bias.extension.DashBoard.xmlb.FrameType;
 import bias.extension.DashBoard.xmlb.Frames;
 import bias.extension.DashBoard.xmlb.ObjectFactory;
 import bias.gui.FrontEnd;
+import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 
 /**
@@ -73,6 +79,8 @@ public class DashBoard extends EntryExtension {
     private JToolBar toolBar;
     
     private JComboBox addCB;
+    
+    private JButton configButt;
     
     private static JAXBContext getContext() throws JAXBException {
         if (context == null) {
@@ -147,6 +155,7 @@ public class DashBoard extends EntryExtension {
             frame.setW(f.getWidth());
             frame.setH(f.getHeight());
             frame.setContent(f.serializeContent());
+            frame.setSettings(f.serializeSettings());
             frame.setTitle(f.getTitle());
             frame.setType(FrameType.fromValue(f.getName()));
             frame.setZ(getDashBoardPanel().getComponentZOrder(f));
@@ -182,8 +191,30 @@ public class DashBoard extends EntryExtension {
             toolBar = new JToolBar();
             toolBar.setFloatable(false);
             toolBar.add(getAddComboBox());
+            toolBar.add(getConfigButton());
         }
         return toolBar;
+    }
+    
+    private JButton getConfigButton() {
+        if (configButt == null) {
+            configButt = new JButton(FrontEnd.getGUIIcons().getIconConfigure());
+            configButt.setText(Constants.EMPTY_STR);
+            configButt.setToolTipText("Configure snippet");
+            configButt.addActionListener(new ActionListener(){
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        InfoSnippet snippet = (InfoSnippet) getDashBoardPanel().getSelectedFrame();
+                        if (snippet != null) {
+                            snippet.configure();
+                        }
+                    } catch (Throwable t) {
+                        FrontEnd.displayErrorMessage("Failed to configure/apply/store snippet settings! " + CommonUtils.getFailureDetails(t), t);
+                    }
+                }
+            });
+        }
+        return configButt;
     }
     
     private JComboBox getAddComboBox() {
@@ -259,14 +290,19 @@ public class DashBoard extends EntryExtension {
         final InfoSnippet f;
         byte[] content = frame.getContent();
         if (content == null) content = new byte[]{};
+        byte[] settings = frame.getSettings();
+        if (settings == null) settings = new byte[]{};
         switch (frame.getType()) {
         case HTML_SNIPPET:
-            f = new HTMLSnippet(getId(), content);
-            f.setName(frame.getType().value());
+            f = new HTMLSnippet(getId(), content, settings);
+            break;
+        case TEXT_SNIPPET:
+            f = new TextSnippet(getId(), content, settings); 
             break;
         default: f = null;
         }
         if (f != null) {
+            f.setName(frame.getType().value());
             f.setTitle(frame.getTitle());
             Dimension minSize = f.getMinimumSize();
             if (frame.getContent() != null) {
