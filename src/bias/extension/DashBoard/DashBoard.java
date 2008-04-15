@@ -13,6 +13,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyVetoException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -61,9 +62,9 @@ public class DashBoard extends EntryExtension {
 
     private static ObjectFactory objFactory = new ObjectFactory();
     
-    private Collection<InfoSnippet> frames;
+    private Collection<InfoSnippet> snippets;
     
-    private Map<InfoSnippet, Integer> framesZOrders;
+    private Map<InfoSnippet, Integer> snippetsZOrders;
     
     private Properties settings;
 
@@ -119,18 +120,18 @@ public class DashBoard extends EntryExtension {
         settings = PropertiesUtils.deserializeProperties(getSettings());
     }
     
-    private Collection<InfoSnippet> getFrames() {
-        if (frames == null) {
-            frames = new LinkedList<InfoSnippet>();
+    private Collection<InfoSnippet> getSnippets() {
+        if (snippets == null) {
+            snippets = new LinkedList<InfoSnippet>();
         }
-        return frames;
+        return snippets;
     }
     
-    private Map<InfoSnippet, Integer> getFramesZOrders() {
-        if (framesZOrders == null) {
-            framesZOrders = new HashMap<InfoSnippet, Integer>();
+    private Map<InfoSnippet, Integer> getSnippetsZOrders() {
+        if (snippetsZOrders == null) {
+            snippetsZOrders = new HashMap<InfoSnippet, Integer>();
         }
-        return framesZOrders;
+        return snippetsZOrders;
     }
     
     /* (non-Javadoc)
@@ -139,7 +140,7 @@ public class DashBoard extends EntryExtension {
     @Override
     public byte[] serializeData() throws Throwable {
         Frames frames = objFactory.createFrames();
-        for (InfoSnippet f : getFrames()) {
+        for (InfoSnippet f : getSnippets()) {
             Frame frame = new Frame();
             frame.setX(f.getX());
             frame.setY(f.getY());
@@ -169,8 +170,11 @@ public class DashBoard extends EntryExtension {
      */
     @Override
     public Collection<String> getSearchData() throws Throwable {
-        // TODO [P1] implement
-        return super.getSearchData();
+        Collection<String> searchData = new ArrayList<String>();
+        for (InfoSnippet snippet : getSnippets()) {
+            searchData.addAll(snippet.getSearchData());
+        }
+        return searchData;
     }
 
     private JToolBar getToolBar() {
@@ -230,19 +234,19 @@ public class DashBoard extends EntryExtension {
                 // ignore
             }
         }
-        getFramesZOrders().put(f, zOrder);
+        getSnippetsZOrders().put(f, zOrder);
     }
     
     private void updateZOrders() {
-        for (InfoSnippet f : getFramesZOrders().keySet()) {
-            Integer zo = getFramesZOrders().get(f);
+        for (InfoSnippet f : getSnippetsZOrders().keySet()) {
+            Integer zo = getSnippetsZOrders().get(f);
             zo++;
-            getFramesZOrders().put(f, zo);
+            getSnippetsZOrders().put(f, zo);
         }
     }
     
     private void restoreZOrders() {
-        for (Entry<InfoSnippet, Integer> entry : getFramesZOrders().entrySet()) {
+        for (Entry<InfoSnippet, Integer> entry : getSnippetsZOrders().entrySet()) {
             try {
                 getDashBoardPanel().setComponentZOrder(entry.getKey(), entry.getValue());
             } catch (IllegalArgumentException iae) {
@@ -276,7 +280,7 @@ public class DashBoard extends EntryExtension {
             f.addInternalFrameListener(new InternalFrameAdapter(){
                 @Override
                 public void internalFrameClosed(InternalFrameEvent e) {
-                    getFrames().remove(f);
+                    getSnippets().remove(f);
                     f.cleanUpUnUsedAttachments();
                 }
             });
@@ -291,7 +295,7 @@ public class DashBoard extends EntryExtension {
                     }
                 }
             });
-            getFrames().add(f);
+            getSnippets().add(f);
         }
         return f;
     }

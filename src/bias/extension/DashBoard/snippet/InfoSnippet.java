@@ -4,6 +4,7 @@
 package bias.extension.DashBoard.snippet;
 
 import java.awt.Container;
+import java.util.Collection;
 import java.util.UUID;
 
 import javax.swing.JInternalFrame;
@@ -35,6 +36,8 @@ public abstract class InfoSnippet extends JInternalFrame {
     }
     
     protected abstract Container getRepresentation();
+    
+    public abstract Collection<String> getSearchData();
     
     public abstract byte[] serializeContent();
     
