@@ -7,10 +7,12 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -80,6 +82,8 @@ public class FilePack extends EntryExtension {
     
     private Map<Attachment, String> filePack;
     
+    private Map<String, String> filesChecksums;
+    
     private File lastInputDir = null;
 	
     private File lastOutputDir = null;
@@ -105,10 +109,12 @@ public class FilePack extends EntryExtension {
         Properties p = PropertiesUtils.deserializeProperties(data);
         
         filePack = new LinkedHashMap<Attachment, String>();
+        filesChecksums = new HashMap<String, String>();
 		try {
             for (Attachment att : BackEnd.getInstance().getAttachments(getId())) {
                 String date = p.getProperty(att.getName());
                 filePack.put(att, date);
+                rememberFileChecksum(att);
             }
         } catch (Exception e) {
             FrontEnd.displayErrorMessage("Failed to get attachments!", e);
@@ -363,7 +369,8 @@ public class FilePack extends EntryExtension {
 				DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
 				while (jTable1.getSelectedRow() != -1) {
 					int i = jTable1.getSelectedRow();
-					String fileName = (String) model.getValueAt(i, 0);
+                    int idx = sorter.convertRowIndexToModel(i);
+					String fileName = (String) model.getValueAt(idx, 0);
 					removeFile(fileName, i);
 				}
 			}
@@ -377,7 +384,8 @@ public class FilePack extends EntryExtension {
             if (jTable1.getSelectedRows().length > 0) {
                 DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
                 for (int i : jTable1.getSelectedRows()) {
-                    String fileName = (String) model.getValueAt(i, 0);
+                    int idx = sorter.convertRowIndexToModel(i);
+                    String fileName = (String) model.getValueAt(idx, 0);
                     final File file = new File(Constants.TMP_DIR, fileName);
                     if (!file.exists()) {
                         byte[] data = getFileData(fileName);
@@ -390,21 +398,39 @@ public class FilePack extends EntryExtension {
             FrontEnd.displayErrorMessage(e);
         }
     }
-    
+
     private synchronized void applyChangesAction(ActionEvent evt) {
         try {
+            Map<String, Integer> toRemove = new HashMap<String, Integer>();
+            Collection<File> toAdd = new ArrayList<File>();
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-            for (int i = 0; i < jTable1.getRowCount(); i++) {
+            for (int i = 0; i < model.getRowCount(); i++) {
                 String fileName = (String) model.getValueAt(i, 0);
                 File file = new File(Constants.TMP_DIR, fileName);
-                if (file.exists()) {
-                    removeFile(fileName, i);
-                    addFile(file);
+                if (file.exists() && fileCheckSumChanged(file)) {
+                    toRemove.put(fileName, i);
+                    toAdd.add(file);
                 }
+            }
+            for (Entry<String, Integer> entry : toRemove.entrySet()) {
+                removeFile(entry.getKey(), entry.getValue());
+            }
+            for (File file : toAdd) {
+                addFile(file);
             }
         } catch (Exception e) {
             FrontEnd.displayErrorMessage(e);
         }
+    }
+    
+    private boolean fileCheckSumChanged(File file) throws Exception {
+        // calculate file checksum...
+        MessageDigest md = MessageDigest.getInstance(Constants.DIGEST_ALGORITHM);
+        byte[] bytes = FSUtils.readFile(file);
+        md.update(bytes);
+        String checksum = FormatUtils.formatBytesAsHexString(md.digest());
+        // ... and compare it with remembered one
+        return !checksum.equals(filesChecksums.get(file.getName())); // return true if checksum differs
     }
     
 	private void saveFileAction(ActionEvent evt) {
@@ -419,7 +445,8 @@ public class FilePack extends EntryExtension {
                         jfc = new JFileChooser();
                     }
 					jfc.setMultiSelectionEnabled(false);
-					String fileName = (String) model.getValueAt(i, 0);
+                    int idx = sorter.convertRowIndexToModel(i);
+					String fileName = (String) model.getValueAt(idx, 0);
 					File file = new File(fileName);
 					jfc.setSelectedFile(file);
 					if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -461,8 +488,17 @@ public class FilePack extends EntryExtension {
 		BackEnd.getInstance().addAttachment(getId(), attachment);
         String date = new SimpleDateFormat("yyyy.MM.dd @ HH:mm:ss").format(new Date());
 		filePack.put(attachment, date);
+		rememberFileChecksum(attachment);
 		// update grid
 		addRow(attachment, date);
+	}
+	
+	private void rememberFileChecksum(Attachment att) throws Exception {
+        // calculate and remember file checksum
+        MessageDigest md = MessageDigest.getInstance(Constants.DIGEST_ALGORITHM);
+        md.update(att.getData());
+        String checksum = FormatUtils.formatBytesAsHexString(md.digest());
+        filesChecksums.put(att.getName(), checksum);
 	}
 	
 	private void addRow(Attachment attachment, String date) {

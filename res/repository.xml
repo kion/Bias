@@ -9,7 +9,7 @@
 	<pack type="Extension" name="ToDoList" version="0.7.5" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="100000" />
 	<pack type="Extension" name="Graffiti" version="0.2.3" author="R. Kasianenko" description="Basic paint editor" file-size="100000" />
 	<pack type="Extension" name="PlainText" version="0.9.1" author="R. Kasianenko" description="Simple plain text editor" file-size="100000" />
-	<pack type="Extension" name="FilePack" version="0.3.1" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="100000" />
+	<pack type="Extension" name="FilePack" version="0.3.3" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="100000" />
 	<pack type="Extension" name="MainEntry" version="0.3.5" author="R. Kasianenko" description="Keep certain entry as main" file-size="100000" />
 	<pack type="Extension" name="Synchronizer" version="0.2.5" author="R. Kasianenko" description="Schedule/Event-driven data synchronizer" file-size="100000" />
 	<pack type="Extension" name="DashBoard" version="0.2.9" author="R. Kasianenko" description="Simple dashboard for chaotic info-snippets placement" file-size="100000" />
