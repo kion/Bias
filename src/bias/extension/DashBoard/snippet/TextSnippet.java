@@ -6,6 +6,7 @@ package bias.extension.DashBoard.snippet;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -380,6 +381,14 @@ public class TextSnippet extends InfoSnippet {
         int cp = getJTextPane().getCaretPosition();
         settings.setProperty(PROPERTY_CARET_POSITION, "" + cp);
         return PropertiesUtils.serializeProperties(settings);
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.DashBoard.snippet.InfoSnippet#getMinimumSize()
+     */
+    @Override
+    public Dimension getMinimumSize() {
+        return new Dimension(150, 100);
     }
 
 }
