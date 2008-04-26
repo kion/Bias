@@ -3405,7 +3405,7 @@ public class FrontEnd extends JFrame {
                                         instance.hideStatusBarProgressBar();
                                     }
                                 }
-                            });
+                            }, getMessage("importing.data") + "...", false);
                         }
                     }
                 }
@@ -3423,6 +3423,7 @@ public class FrontEnd extends JFrame {
             if (verbose) panel.add(processLabel, BorderLayout.CENTER);
             if (verbose) displayBottomPanel(label, panel);
             try {
+                instance.displayProcessNotification(getMessage("importing.data") + "('" + configName + "')...", false);
                 ImportConfiguration importConfig = BackEnd.getInstance().getPopulatedImportConfigurations().get(configName);
                 final TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
                 if (transferrer == null) {
@@ -3534,6 +3535,7 @@ public class FrontEnd extends JFrame {
                 t.printStackTrace(System.err);
             } finally {
                 instance.hideStatusBarProgressBar();
+                instance.hideProcessNotification();
             }
         }
     }
@@ -3914,7 +3916,7 @@ public class FrontEnd extends JFrame {
                                             instance.hideStatusBarProgressBar();
                                         }
                                     }
-                                });
+                                }, getMessage("exporting.data") + "...", false);
                             }
                         }
                     }
@@ -3933,6 +3935,7 @@ public class FrontEnd extends JFrame {
             if (verbose) panel.add(processLabel, BorderLayout.CENTER);
             if (verbose) displayBottomPanel(label, panel);
             try {
+                instance.displayProcessNotification(getMessage("exporting.data") + "('" + configName + "')...", false);
                 DataCategory data = instance.collectData();
                 final ExportConfiguration exportConfig = BackEnd.getInstance().getPopulatedExportConfigurations().get(configName);
                 if (!exportConfig.isExportAll()) {
@@ -4010,6 +4013,7 @@ public class FrontEnd extends JFrame {
                 ex.printStackTrace(System.err);
             } finally {
                 instance.hideStatusBarProgressBar();
+                instance.hideProcessNotification();
             }
         }
     }
