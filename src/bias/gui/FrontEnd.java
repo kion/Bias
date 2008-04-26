@@ -377,11 +377,21 @@ public class FrontEnd extends JFrame {
 
     private JPanel jPanel5 = null;
 
+    private JPanel jPanel15 = null;
+
+    private JPanel jPanel16 = null;
+
     private JPanel jPanel2 = null;
 
     private JPanel jPanel3 = null;
+    
+    private JButton bottomPanelCloseButton;
+
+    private JButton sideBarCloseButton;
 
     private JSplitPane jSplitPane = null;
+
+    private JSplitPane jSplitPane1 = null;
 
     private JToolBar jToolBar2 = null;
 
@@ -1928,25 +1938,34 @@ public class FrontEnd extends JFrame {
         return null;
     }
     
+    /**
+     * This method initializes bottomPanelCloseButton
+     * 
+     * @return javax.swing.JButton
+     */
+    public JButton getBottomPanelCloseButton() {
+        if (bottomPanelCloseButton == null) {
+            bottomPanelCloseButton  = new JButton(new AbstractAction(){
+                private static final long serialVersionUID = 1L;
+                public void actionPerformed(ActionEvent e) {
+                    getJPanel2().setVisible(false);
+                }
+            });
+            bottomPanelCloseButton .setIcon(ICON_CLOSE);
+            bottomPanelCloseButton .setPreferredSize(new Dimension(18, 18));
+        }
+        return bottomPanelCloseButton;
+    }
+
     public static void displayBottomPanel(JLabel title, JPanel content) {
         if (instance != null) {
             int dl = instance.getJPanel2().isVisible() ? instance.getJSplitPane().getDividerLocation() : instance.getHeight()/5*3;
             instance.getJPanel2().setVisible(false);
             instance.getJPanel2().removeAll();
-            instance.getJPanel2().setLayout(new BorderLayout());
             instance.getJPanel3().setVisible(false);
             instance.getJPanel3().removeAll();
-            instance.getJPanel3().setLayout(new BorderLayout());
             instance.getJPanel3().add(title, BorderLayout.CENTER);
-            JButton closeButton = new JButton(new AbstractAction(){
-                private static final long serialVersionUID = 1L;
-                public void actionPerformed(ActionEvent e) {
-                    instance.getJPanel2().setVisible(false);
-                }
-            });
-            closeButton.setIcon(ICON_CLOSE);
-            closeButton.setPreferredSize(new Dimension(18, 18));
-            instance.getJPanel3().add(closeButton, BorderLayout.EAST);
+            instance.getJPanel3().add(instance.getBottomPanelCloseButton(), BorderLayout.EAST);
             instance.getJPanel3().setVisible(true);
             instance.getJPanel2().add(instance.getJPanel3(), BorderLayout.NORTH);
             instance.getJPanel2().add(new JScrollPane(content), BorderLayout.CENTER);
@@ -1958,6 +1977,48 @@ public class FrontEnd extends JFrame {
     public static void hideBottomPanel() {
         if (instance != null) {
             instance.getJPanel2().setVisible(false);
+        }
+    }
+    
+    /**
+     * This method initializes sideBarCloseButton
+     * 
+     * @return javax.swing.JButton
+     */
+    public JButton getSideBarCloseButton() {
+        if (sideBarCloseButton == null) {
+            sideBarCloseButton  = new JButton(new AbstractAction(){
+                private static final long serialVersionUID = 1L;
+                public void actionPerformed(ActionEvent e) {
+                    getJPanel16().setVisible(false);
+                }
+            });
+            sideBarCloseButton .setIcon(ICON_CLOSE);
+            sideBarCloseButton .setPreferredSize(new Dimension(18, 18));
+        }
+        return sideBarCloseButton;
+    }
+
+    public static void displaySideBar(JLabel title, JPanel content) {
+        if (instance != null) {
+            int dl = instance.getJPanel16().isVisible() ? instance.getJSplitPane1().getDividerLocation() : instance.getWidth()/5*4;
+            instance.getJPanel16().setVisible(false);
+            instance.getJPanel16().removeAll();
+            instance.getJPanel15().setVisible(false);
+            instance.getJPanel15().removeAll();
+            instance.getJPanel15().add(title, BorderLayout.CENTER);
+            instance.getJPanel15().add(instance.getSideBarCloseButton(), BorderLayout.EAST);
+            instance.getJPanel15().setVisible(true);
+            instance.getJPanel16().add(instance.getJPanel15(), BorderLayout.NORTH);
+            instance.getJPanel16().add(new JScrollPane(content), BorderLayout.CENTER);
+            instance.getJPanel16().setVisible(true);
+            instance.getJSplitPane1().setDividerLocation(dl);
+        }
+    }
+    
+    public static void hideSideBar() {
+        if (instance != null) {
+            instance.getJPanel16().setVisible(false);
         }
     }
     
@@ -2591,9 +2652,37 @@ public class FrontEnd extends JFrame {
             jPanel5 = new JPanel();
             jPanel5.setVisible(false);
             jPanel5.setLayout(new BorderLayout());
-            jPanel5.add(getJToolBar3(), BorderLayout.CENTER);
+            jPanel5.add(getJToolBar3(), BorderLayout.WEST);
         }
         return jPanel5;
+    }
+
+    /**
+     * This method initializes jPanel15
+     * 
+     * @return javax.swing.JPanel
+     */
+    private JPanel getJPanel15() {
+        if (jPanel15 == null) {
+            jPanel15 = new JPanel();
+            jPanel15.setVisible(false);
+            jPanel15.setLayout(new BorderLayout());
+        }
+        return jPanel15;
+    }
+
+    /**
+     * This method initializes jPanel16
+     * 
+     * @return javax.swing.JPanel
+     */
+    private JPanel getJPanel16() {
+        if (jPanel16 == null) {
+            jPanel16 = new JPanel();
+            jPanel16.setVisible(false);
+            jPanel16.setLayout(new BorderLayout());
+        }
+        return jPanel16;
     }
 
     /**
@@ -2606,7 +2695,7 @@ public class FrontEnd extends JFrame {
             jPanel4 = new JPanel();
             jPanel4.setLayout(new BorderLayout());
             jPanel4.add(getJPanel5(), BorderLayout.WEST);
-            jPanel4.add(getJSplitPane(), BorderLayout.CENTER);
+            jPanel4.add(getJSplitPane1(), BorderLayout.CENTER);
         }
         return jPanel4;
     }
@@ -2627,6 +2716,21 @@ public class FrontEnd extends JFrame {
     }
 
     /**
+     * This method initializes jSplitPane1
+     * 
+     * @return javax.swing.JSplitPane
+     */
+    private JSplitPane getJSplitPane1() {
+        if (jSplitPane1 == null) {
+            jSplitPane1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+            jSplitPane1.setDividerSize(3);
+            jSplitPane1.setLeftComponent(getJSplitPane());
+            jSplitPane1.setRightComponent(getJPanel16());
+        }
+        return jSplitPane1;
+    }
+
+    /**
      * This method initializes jPanel2
      * 
      * @return javax.swing.JPanel
@@ -2635,6 +2739,7 @@ public class FrontEnd extends JFrame {
         if (jPanel2 == null) {
             jPanel2 = new JPanel();
             jPanel2.setVisible(false);
+            jPanel2.setLayout(new BorderLayout());
         }
         return jPanel2;
     }
@@ -2647,6 +2752,7 @@ public class FrontEnd extends JFrame {
     private JPanel getJPanel3() {
         if (jPanel3 == null) {
             jPanel3 = new JPanel();
+            jPanel3.setLayout(new BorderLayout());
         }
         return jPanel3;
     }
@@ -3470,7 +3576,7 @@ public class FrontEnd extends JFrame {
                     if (verbose) {
                         // ... and inform user about that, if in verbose mode
                         label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("import.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                        processLabel.setText(getMessage("import.discarded.no.data.changes"));
+                        processLabel.setText(getMessage("transfer.discarded.no.data.changes"));
                     }
                 } else {
                     // ... if yes, do perform import
