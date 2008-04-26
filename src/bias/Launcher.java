@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -24,6 +25,7 @@ public class Launcher {
     private static final String UNINSTALL_CONFIG_FILE = "uninstall.conf";
     private static final String PROPERTY_VALUES_SEPARATOR = ",";
     private static final String APP_MAIN_CLASS = "bias.Bias";
+    private static final String LOCK_FILE_NAME = ".lock";
     
     public static final URL SPLASH_IMAGE_LOAD = Launcher.class.getResource("/bias/res/load.gif");
 
@@ -34,7 +36,7 @@ public class Launcher {
     public static File getRootDir() {
         return rootDir;
     }
-
+    
     private static void launchApp(String password) throws Throwable {
         Class.forName(APP_MAIN_CLASS).getMethod(
                 "launchApp", new Class[]{String.class}).invoke(null, new Object[]{password});
@@ -48,6 +50,8 @@ public class Launcher {
         rootDir = new File(jarFileURL.toURI()).getParentFile();
         addonsDir = new File(rootDir, "addons");
         configDir = new File(rootDir, "conf");
+
+        singleAppInstanceCheck();
 
         JLabel label = new JLabel("password:");
         final JPasswordField passField = new JPasswordField();
@@ -76,6 +80,23 @@ public class Launcher {
         }
     }
 
+    private static void singleAppInstanceCheck() throws Throwable {
+        // check if another application instance is not already running
+        if (!lock()) {
+            JOptionPane.showMessageDialog(null, "Application is already running!", "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
+    }
+
+    private static boolean lock() {
+        try {
+            return new FileOutputStream(new File(rootDir, LOCK_FILE_NAME)).getChannel().tryLock() != null;
+        } catch (Exception ex) {
+            // ignore, if we can't do anything - user should care by himself about having only one application instance running
+        }
+        return true;
+    }
+    
     private static void init() throws Throwable {
         // uninstall
         File uninstallConfigFile = new File(configDir, UNINSTALL_CONFIG_FILE);
