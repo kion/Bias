@@ -985,11 +985,6 @@ public class FrontEnd extends JFrame {
     private void configureExtension(String extension, boolean showFirstTimeUsageMessage) throws Exception {
         if (extension != null) {
             String extName = extension.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-            if (showFirstTimeUsageMessage) {
-                displayMessage(
-                        "This is first time you use '" + extName + "' extension." + Constants.NEW_LINE +
-                        "If extension is configurable, you can adjust its default settings...");
-            }
             try {
                 Class<? extends Extension> extensionClass = (Class<? extends Extension>) Class.forName(extension);
                 Extension extensionInstance = null;
@@ -1007,6 +1002,13 @@ public class FrontEnd extends JFrame {
                     extensionInstance = ExtensionFactory.newEntryExtension(extensionClass);
                     if (extSettings == null) {
                         extSettings = new byte[]{};
+                    }
+                    if (showFirstTimeUsageMessage) {
+                        if (isEntryExtensionConfigurable((Class<? extends EntryExtension>) extensionClass)) {
+                            displayMessage(
+                                    "This is first time you use '" + extName + "' entry extension." + Constants.NEW_LINE +
+                                    "Please, configure extension's default settings...");
+                        }
                     }
                     settings = ((EntryExtension) extensionInstance).configure(extSettings);
                     if (settings == null && extSettings.length > 0) settings = extSettings;
@@ -1034,6 +1036,17 @@ public class FrontEnd extends JFrame {
                             "</ul>" + Constants.HTML_SUFFIX, t);
             }
         }
+    }
+    
+    private boolean isEntryExtensionConfigurable(Class<? extends EntryExtension> eeClass) {
+        boolean isConfigurable = false;
+        try {
+            eeClass.getDeclaredMethod("configure", byte[].class);
+            isConfigurable = true;
+        } catch (NoSuchMethodException nsme1) {
+            // there's no configuration method for the extension class
+        }
+        return isConfigurable;
     }
     
     private boolean representTool(ToolExtension tool) throws Throwable {
@@ -3007,6 +3020,12 @@ public class FrontEnd extends JFrame {
             try {
                 EntryExtension ext = getSelectedExtensionEntry();
                 if (ext != null) {
+                    if (!isEntryExtensionConfigurable(ext.getClass())) {
+                        displayMessage(Constants.HTML_PREFIX + "Selected entry is not configurable!<br/>" +
+                        		                               "<i>(appropriate entry-extension does not provide configuration option)</i>" +
+                                       Constants.HTML_SUFFIX);
+                        return;
+                    }
                     DataEntry de = new DataEntry();
                     de.setId(ext.getId());
                     de.setType(ext.getClass().getSimpleName());
