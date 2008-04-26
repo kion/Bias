@@ -21,8 +21,15 @@ public abstract class InfoSnippet extends JInternalFrame {
     private byte[] content;
     private byte[] settings;
     
-    public InfoSnippet(UUID id, byte[] content, byte[] settings) {
-        super(null, true, true, false, false);
+    /**
+     * @param id snippet-class instance identifier
+     * @param content bytes array representing content of the snippet-class instance
+     * @param settings bytes array representing settings of the snippet-class instance
+     * @param resizable Specifies whether snippet-class frames will be resizable
+     * @param closable  Specifies whether snippet-class frames will be closable
+     */
+    public InfoSnippet(UUID id, byte[] content, byte[] settings, boolean resizable, boolean closable) {
+        super(null, resizable, closable, false, false);
         this.id = id;
         this.content = content;
         this.settings = settings;
@@ -41,7 +48,7 @@ public abstract class InfoSnippet extends JInternalFrame {
     protected byte[] getSettings() {
         return settings;
     }
-
+    
     /**
      * Returns representation container of certain snippet-class.
      * This is actual content representation shown inside snippet. 
@@ -95,7 +102,7 @@ public abstract class InfoSnippet extends JInternalFrame {
      */
     @Override
     public Dimension getMinimumSize() {
-        return new Dimension(290, 120);
+        return new Dimension(150, 150);
     }
 
 }

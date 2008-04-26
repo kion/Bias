@@ -74,7 +74,7 @@ public class TextSnippet extends InfoSnippet {
     private JButton jButton2 = null;
 
     public TextSnippet(UUID id, byte[] content, byte[] settings) {
-        super(id, content, settings);
+        super(id, content, settings, true, true);
         initialize();
     }
 

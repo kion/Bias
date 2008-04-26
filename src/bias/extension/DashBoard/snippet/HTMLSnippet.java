@@ -4,6 +4,7 @@
 package bias.extension.DashBoard.snippet;
 
 import java.awt.Container;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
@@ -21,7 +22,7 @@ public class HTMLSnippet extends InfoSnippet {
     private HTMLEditorPanel editorPanel;
 
     public HTMLSnippet(UUID id, byte[] content, byte[] settings) {
-        super(id, content, settings);
+        super(id, content, settings, true, true);
     }
 
     /* (non-Javadoc)
@@ -74,6 +75,14 @@ public class HTMLSnippet extends InfoSnippet {
         Collection<String> searchData = new ArrayList<String>();
         searchData.add(getEditorPanel().getText());
         return searchData;
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.DashBoard.snippet.InfoSnippet#getMinimumSize()
+     */
+    @Override
+    public Dimension getMinimumSize() {
+        return new Dimension(290, 120);
     }
 
 }
