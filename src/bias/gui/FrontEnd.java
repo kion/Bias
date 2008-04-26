@@ -551,20 +551,69 @@ public class FrontEnd extends JFrame {
         initialize();
     }
 
+    /**
+     * This method initializes this
+     * 
+     * @return void
+     */
+    private void initialize() {
+        try {
+            this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+            this.setTitle(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppVersion() + " ]");
+            this.setIconImage(ICON_APP.getImage());
+            this.setContentPane(getJContentPane());
+
+            representData(BackEnd.getInstance().getData());
+            
+            applyGlobalSettings();
+
+            this.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    try {
+                        if (Preferences.getInstance().remainInSysTrayOnWindowClose) {
+                            showSysTrayIcon();
+                            if (sysTrayIconVisible) {
+                                instance.setVisible(false);
+                            }
+                        } else {
+                            exit();
+                        }
+                    } catch (Throwable t) {
+                        displayErrorMessage(t);
+                    }
+                }
+                @Override
+                public void windowIconified(WindowEvent e) {
+                    if (Preferences.getInstance().minimizeToSysTray) {
+                        showSysTrayIcon();
+                        if (sysTrayIconVisible) {
+                            instance.setVisible(false);
+                        }
+                    }
+                }
+            });
+            
+        } catch (Exception ex) {
+            displayErrorMessage(ex);
+        }
+    }
+    
     public static void startup() {
+        initInstance();
         displayStatusBarMessage(getMessage("loaded.ready"));
         if (Preferences.getInstance().startHidden) {
             showSysTrayIcon();
             if (!sysTrayIconVisible) {
-                getInstance().setVisible(true);
+                instance.setVisible(true);
             }
         } else {
-            getInstance().setVisible(true);
+            instance.setVisible(true);
         }
-        fireStartUpEvent(new StartUpEvent(!getInstance().isVisible()));
+        fireStartUpEvent(new StartUpEvent(!instance.isVisible()));
     }
     
-    private static FrontEnd getInstance() {
+    private static FrontEnd initInstance() {
         if (instance == null) {
             preInit();
             activateSkin();
@@ -841,54 +890,6 @@ public class FrontEnd extends JFrame {
             return true;
         }
         return false;
-    }
-    
-    /**
-     * This method initializes this
-     * 
-     * @return void
-     */
-    private void initialize() {
-        try {
-            this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-            this.setTitle(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppVersion() + " ]");
-            this.setIconImage(ICON_APP.getImage());
-            this.setContentPane(getJContentPane());
-
-            representData(BackEnd.getInstance().getData());
-            
-            applyGlobalSettings();
-
-            this.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosing(WindowEvent e) {
-                    try {
-                        if (Preferences.getInstance().remainInSysTrayOnWindowClose) {
-                            showSysTrayIcon();
-                            if (sysTrayIconVisible) {
-                                getInstance().setVisible(false);
-                            }
-                        } else {
-                            exit();
-                        }
-                    } catch (Throwable t) {
-                        displayErrorMessage(t);
-                    }
-                }
-                @Override
-                public void windowIconified(WindowEvent e) {
-                    if (Preferences.getInstance().minimizeToSysTray) {
-                        showSysTrayIcon();
-                        if (sysTrayIconVisible) {
-                            getInstance().setVisible(false);
-                        }
-                    }
-                }
-            });
-            
-        } catch (Exception ex) {
-            displayErrorMessage(ex);
-        }
     }
     
     @SuppressWarnings("unchecked")
