@@ -53,7 +53,11 @@ import bias.utils.Validator;
  */
 public class Synchronizer extends ToolExtension implements AfterSaveEventListener, StartUpEventListener {
     
-    // TODO [P2] implement scheduled actions performed periodically at fixed day time (e.g. every day at 18:00) 
+    // TODO [P2] implement scheduled actions performed periodically at fixed day time (e.g. every day at 18:00)
+    
+    // TODO [P2] implement import/export configs linking feature (to avoid redundant transfers)
+    //           it should be checksum based: 
+    //           if export config gave the same checksum as it's linked import config - do nothing, and vice versa
     
     // TODO [P2] optionally, show pop-up messages about import that just have been performed 
     //           (useful for background imports in 'minimized to system tray' mode) 
