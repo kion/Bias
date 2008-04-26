@@ -1587,12 +1587,12 @@ public class FrontEnd extends JFrame {
             } else {
                 cs = new Component[]{l};
             }
-            caption.append("Click OK to exit.");
+            caption.append("Are you sure you want to exit?");
             l.setText(caption.toString());
             if (JOptionPane.showConfirmDialog(FrontEnd.this, 
                     cs,
                     "Exit confirmation",
-                    JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 exitWithOptionalAutoSave();
             }
         }
@@ -2729,11 +2729,11 @@ public class FrontEnd extends JFrame {
     }
 
     private boolean confirmedDelete() {
-        return confirmed("Delete confirmation", "Are you sure you want to delete active entry?");
+        return confirmed(getMessage("confirmation.delete.title"), getMessage("confirmation.delete.message"));
     }
     
     private boolean confirmedUninstall() {
-        return confirmed("Uninstall confirmation", "Are you sure you want to uninstall selected add-on(s)?");
+        return confirmed(getMessage("confirmation.uninstall.title"), getMessage("confirmation.uninstall.message"));
     }
     
     private boolean confirmed(String title, String message) {
@@ -2741,7 +2741,20 @@ public class FrontEnd extends JFrame {
             int opt = JOptionPane.showConfirmDialog(
                     getActiveWindow(), 
                     Constants.HTML_PREFIX + message + "<br/><br/>" +
-                    		"<i>(Note: this dialog can be disabled via preferences option 'Display confirmation dialogs')</i>" + Constants.HTML_SUFFIX, 
+                    		"<i>(" + getMessage("confirmation.disable.note") + " '" + getMessage("display.confirmation.dialogs.preference.title") + "')</i>" + Constants.HTML_SUFFIX, 
+                    title, 
+                    JOptionPane.YES_NO_OPTION);
+            return opt == JOptionPane.YES_OPTION;
+        }
+        return true;
+    }
+    
+    private boolean autoConfirmed(String title, String message) {
+        if (!Preferences.getInstance().autoMode) {
+            int opt = JOptionPane.showConfirmDialog(
+                    getActiveWindow(), 
+                    Constants.HTML_PREFIX + message + "<br/><br/>" +
+                            "<i>(" + getMessage("confirmation.disable.note") + " '" + getMessage("auto.mode.preference.title") + "')</i>" + Constants.HTML_SUFFIX, 
                     title, 
                     JOptionPane.YES_NO_OPTION);
             return opt == JOptionPane.YES_OPTION;
@@ -3552,6 +3565,9 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent e) {
             try {
+                if (!autoConfirmed(getMessage("export.save.data.title"), getMessage("export.save.data.message"))) {
+                    return;
+                }
                 // force (auto) save before export
                 instance.store(false);
                 // now perform export actually
@@ -3710,7 +3726,7 @@ public class FrontEnd extends JFrame {
                                         passwordL2.setText(cpText + Constants.BLANK_STR + getMessage("password.confirmation.invalid"));
                                         passwordL2.setForeground(Color.RED);
                                     } else {
-                                        passwordL2.setText(cpText + Constants.BLANK_STR + getMessage("password.confirmation.done"));
+                                        passwordL2.setText(cpText + Constants.BLANK_STR + getMessage("password.confirmation.confirmed"));
                                         passwordL2.setForeground(Color.BLUE);
                                     }
                                 }
@@ -3722,7 +3738,7 @@ public class FrontEnd extends JFrame {
                                         passwordL2.setText(cpText + Constants.BLANK_STR + getMessage("password.confirmation.invalid"));
                                         passwordL2.setForeground(Color.RED);
                                     } else {
-                                        passwordL2.setText(cpText + Constants.BLANK_STR + getMessage("password.confirmation.done"));
+                                        passwordL2.setText(cpText + Constants.BLANK_STR + getMessage("password.confirmation.confirmed"));
                                         passwordL2.setForeground(Color.BLUE);
                                     }
                                 }

@@ -11,6 +11,8 @@ minimize.to.systray.preference.title == Minimize main window to system tray
 auto.save.on.exit.preference.title == Auto save on exit
 display.confirmation.dialogs.preference.title == Display confirmation dialogs
 display.confirmation.dialogs.preference.description == Requests user's confirmation on actions like: delete entry, uninstall add-on etc.
+auto.mode.preference.title == Enable auto-mode
+auto.mode.preference.description == Allows to perform some common actions (like saving data before export) in automatic mode (without user's confirmation)
 enable.auto.update.preference.title == Enable automatic update (requires internet connection)
 auto.update.interval.preference.title == Automatic update interval, in days (set to 0 to update on startup only)
 show.memory.usage.preference.title == Show memory usage information in status bar
@@ -70,6 +72,8 @@ save == Save
 new.name == New name
 overwrite.existing == Overwrite existing
 update.installed == Update installed
+export.save.data.title == Save data before export
+export.save.data.message == Data have to be saved before export. Save now and continue?
 export.preferences == Export preferences
 export.data.entry.configs == Export data entry configs
 export.data.entry.configs.related.only == Export data entry configs related to exported data entries only
@@ -109,7 +113,12 @@ transfer.configuration.save == If you want to save this transfer configuration,<
 transfer.configuration.saved == Transfer configuration saved as '$'
 transfer.discarded.no.data.changes == Transfer discarded: data haven't changed since last transfer
 password.confirmation.invalid == [INVALID]
-password.confirmation.done == [DONE]
+password.confirmation.confirmed == [CONFIRMED]
+confirmation.delete.title == Delete confirmation
+confirmation.delete.message == Are you sure you want to delete active entry?
+confirmation.uninstall.title == Uninstall confirmation
+confirmation.uninstall.message == Are you sure you want to uninstall selected add-ons?
+confirmation.disable.note == Note: this dialog can be disabled via preferences option
 exit == Exit
 about == About Bias
 manage.addons == Manage add-ons

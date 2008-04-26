@@ -211,6 +211,11 @@ public class Preferences {
     public boolean displayConfirmationDialogs = true;
     
     @Preference(
+            title = "auto.mode.preference.title",
+            description = "auto.mode.preference.description")
+    public boolean autoMode = false;
+    
+    @Preference(
             title = "enable.auto.update.preference.title")
     public boolean enableAutoUpdate = true;
 
