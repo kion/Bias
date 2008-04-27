@@ -163,8 +163,6 @@ public class Preferences {
     
     /* PREFERENCES DECLARATION SECTION */
     
-    // TODO [P1] preferences should be internationalized as well (!)
-
     @Preference(
             title = "preferred.language.preference.title")
     @PreferenceChoice(

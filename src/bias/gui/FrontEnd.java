@@ -57,6 +57,7 @@ import java.util.Properties;
 import java.util.Stack;
 import java.util.UUID;
 import java.util.Map.Entry;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -195,8 +196,7 @@ public class FrontEnd extends JFrame {
 
     private static final Map<String, String> MESSAGES = I18nService.getInstance().getMessages();
     
-    // TODO [P1] implement language-selection-on-first-start feature 
-    //           (and first-time-start screen in general that will contain this option)
+    // TODO [P2] implement language-selection-on-first-start feature (or, maybe, choose language automatically based on default system locale ?...) 
     private static final String LOCALE = I18nService.getInstance().getLanguageLocale(Preferences.getInstance().preferredLanguage);
     
     /**
@@ -275,6 +275,8 @@ public class FrontEnd extends JFrame {
     
     private Map<String, Integer> depCounters;
     
+    private Map<String, Boolean> states;
+
     private JCheckBox onlineShowAllPackagesCB;
     
     private JTable onlineList;
@@ -1508,7 +1510,7 @@ public class FrontEnd extends JFrame {
      * @param task task to be executed
      */
     public static void execute(Runnable task) {
-        // TODO [P1] process visualization for asynchronous tasks should be present as well
+        // TODO [P2] process visualization for asynchronous tasks should be present as well ?...
         if (cachedThreadPool == null) {
             cachedThreadPool = Executors.newCachedThreadPool();
         }
@@ -1519,6 +1521,10 @@ public class FrontEnd extends JFrame {
     
     public static void syncExecute(Runnable task) {
         syncExecute(task, null, false);
+    }
+    
+    public static void syncExecute(Runnable task, final String message) {
+        syncExecute(task, message, false);
     }
     
     /**
@@ -2205,9 +2211,17 @@ public class FrontEnd extends JFrame {
         displayStatusBarMessage(message, false);
     }
     
+    private static ExecutorService statusBarExecutor;
+    
+    private static Executor getStatusBarExecutor() {
+        if (statusBarExecutor == null) {
+            statusBarExecutor = Executors.newSingleThreadExecutor();
+        }
+        return statusBarExecutor;
+    }
+    
     private static void displayStatusBarMessage(final String message, final boolean isError) {
-        // TODO [P2] this should be synchronized by status bar only (not whole application)
-        syncExecute(new Runnable(){
+        getStatusBarExecutor().execute(new Runnable(){
             public void run() {
                 if (instance != null) {
                     final String timestamp = dateFormat.format(new Date()) + " # ";
@@ -3544,7 +3558,7 @@ public class FrontEnd extends JFrame {
                                         instance.hideStatusBarProgressBar();
                                     }
                                 }
-                            }, getMessage("importing.data") + "...", false);
+                            }, getMessage("importing.data") + "...");
                         }
                     }
                 }
@@ -4058,7 +4072,7 @@ public class FrontEnd extends JFrame {
                                             instance.hideStatusBarProgressBar();
                                         }
                                     }
-                                }, getMessage("exporting.data") + "...", false);
+                                }, getMessage("exporting.data") + "...");
                             }
                         }
                     }
@@ -5236,7 +5250,7 @@ public class FrontEnd extends JFrame {
                 onlineSorter.setSortsOnUpdates(true);
                 onlineList.setRowSorter(onlineSorter);
                 onlineList.getColumnModel().getColumn(0).setPreferredWidth(30);
-                final Map<String, Boolean> states = new HashMap<String, Boolean>();
+                states = new HashMap<String, Boolean>();
                 TableModelListener dependencyResolver = new TableModelListener(){
                     public void tableChanged(TableModelEvent e) {
                         if (e.getColumn() == 0) {
@@ -5250,7 +5264,6 @@ public class FrontEnd extends JFrame {
                                             if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
                                                 int idx = findDataRowIndex(getOnlineModel(), 2, dep.getName());
                                                 if (idx == -1) {
-                                                    getOnlineModel().setValueAt(Boolean.FALSE, e.getFirstRow(), 0);
                                                     throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
                                                                             dep.getType().value() + " '" + dep.getName() + "' " + 
                                                                             (dep.getVersion() != null ? 
@@ -5264,13 +5277,15 @@ public class FrontEnd extends JFrame {
                                                         }
                                                         if ((Boolean) getOnlineModel().getValueAt(e.getFirstRow(), 0)) {
                                                             counter++;
-                                                            if (counter == 1) {
+                                                            if (counter > 0) {
                                                                 getOnlineModel().setValueAt(Boolean.TRUE, idx, 0);
                                                             }
                                                         } else {
-                                                            counter--;
-                                                            if (counter == 0) {
-                                                                getOnlineModel().setValueAt(Boolean.FALSE, idx, 0);
+                                                            if (counter > 0) {
+                                                                counter--;
+                                                                if (counter == 0) {
+                                                                    getOnlineModel().setValueAt(Boolean.FALSE, idx, 0);
+                                                                }
                                                             }
                                                         }
                                                         getDepCounters().put(dep.getName(), counter);
@@ -5919,6 +5934,7 @@ public class FrontEnd extends JFrame {
                             }
                         }
                         onlineListRefreshed = true;
+                        states.clear();
                         if (onCompleteAction != null) {
                             onCompleteAction.run();
                         }
@@ -5945,7 +5961,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    // TODO [P1] discard addon installation if at least one of it's dependencies failed to install ?...
+    // TODO [P2] discard addon installation if at least one of it's dependencies failed to install ?...
     private void downloadAndInstallOnlinePackages(final Runnable onFinishAction) {
         try {
             final Map<URL, Pack> urlPackageMap = new HashMap<URL, Pack>();
@@ -6161,7 +6177,6 @@ public class FrontEnd extends JFrame {
                                                         idx = findDataRowIndex(model, 2, dep.getName());
                                                     }
                                                     if (idx == -1) {
-                                                        addOnModel.setValueAt(Boolean.FALSE, e.getFirstRow(), 0);
                                                         throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
                                                                                 dep.getType().value() + " '" + dep.getName() + "' " + 
                                                                                 (dep.getVersion() != null ? 
@@ -6175,13 +6190,15 @@ public class FrontEnd extends JFrame {
                                                             }
                                                             if ((Boolean) addOnModel.getValueAt(e.getFirstRow(), 0)) {
                                                                 counter++;
-                                                                if (counter == 1) {
+                                                                if (counter > 0) {
                                                                     model.setValueAt(Boolean.TRUE, idx, 0);
                                                                 }
                                                             } else {
-                                                                counter--;
-                                                                if (counter == 0) {
-                                                                    model.setValueAt(Boolean.FALSE, idx, 0);
+                                                                if (counter > 0) {
+                                                                    counter--;
+                                                                    if (counter == 0) {
+                                                                        model.setValueAt(Boolean.FALSE, idx, 0);
+                                                                    }
                                                                 }
                                                             }
                                                             getDepCounters().put(dep.getName(), counter);

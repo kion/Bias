@@ -10,7 +10,7 @@ import javax.swing.ImageIcon;
  */
 public class GUIIcons {
     
-    // TODO [P1] add more icons for different controls that has no icons currently (buttons on add-ons management dialog etc)
+    // TODO [P2] add more icons for different controls that has no icons currently (buttons on add-ons management dialog etc)
 
     /**
      * Default control icons

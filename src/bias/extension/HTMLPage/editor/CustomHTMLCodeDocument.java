@@ -169,7 +169,7 @@ public class CustomHTMLCodeDocument extends DefaultStyledDocument {
 
     private void highlight(int startPos, int endPos) throws BadLocationException {
 
-        // TODO: implement comments highlighting !!!
+        // TODO [P2] implement comments highlighting
 
         setCharacterAttributes(startPos, endPos - startPos, otherText, true);
 
