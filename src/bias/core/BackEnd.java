@@ -1753,7 +1753,6 @@ public class BackEnd {
             update = true;
             status = Constants.ADDON_STATUS_UPDATED;
         }
-        File dir = Constants.ADDONS_DIR;
         String fileSuffix = null;
         switch (addOnType) {
         case EXTENSION:
@@ -1766,9 +1765,9 @@ public class BackEnd {
             fileSuffix = Constants.LIB_JAR_FILE_SUFFIX;
             break;
         }
-        File installedAddOnFile = new File(dir, addOnInfo.getName() + fileSuffix);
+        File installedAddOnFile = new File(Constants.ADDONS_DIR, addOnInfo.getName() + fileSuffix);
         if (update) {
-            File updateAddOnFile = new File(dir, Constants.UPDATE_FILE_PREFIX + addOnInfo.getName() + fileSuffix);
+            File updateAddOnFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + addOnInfo.getName() + fileSuffix);
             FSUtils.duplicateFile(addOnFile, updateAddOnFile);
         } else {
             FSUtils.duplicateFile(addOnFile, installedAddOnFile);
@@ -1925,8 +1924,7 @@ public class BackEnd {
             }
             FSUtils.delete(iconSetRegFile);
         }
-        File iconSetInfoFile = new File(Constants.CONFIG_DIR, iconSetName + Constants.ADDON_ICONSET_INFO_FILE_SUFFIX);
-        FSUtils.delete(iconSetInfoFile);
+        uninstallAddOn(iconSetName, PackType.ICON_SET);
         storeIconsList();
         return removedIds;
     }
