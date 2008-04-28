@@ -394,24 +394,6 @@
 	</target>
 
 	<!-- ================================= 
-          target: Build_Skin_SyntheticaSkin             
-         ================================= -->
-	<target name="Build_Skin_SyntheticaSkin" description="Synthetica Skin">
-		<delete dir="build" includes="SyntheticaSkin*.jar" />
-		<jar basedir="bin" destfile="build/SyntheticaSkin_${SyntheticaSkin_Version}.jar" includes="bias/skin/SyntheticaSkin/** bias/res/SyntheticaSkin/**">
-			<fileset dir="res" includes="META-INF/ADDON-INFO/SyntheticaSkin/**" />
-			<manifest>
-				<attribute name="Bias-Add-On-Name" value="SyntheticaSkin" />
-				<attribute name="Bias-Add-On-Type" value="Skin" />
-				<attribute name="Bias-Add-On-Version" value="${SyntheticaSkin_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Synthetica Skin" />
-				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
-				<attribute name="Bias-Add-On-Dependencies" value="${SyntheticaSkin_Dependencies}" />
-			</manifest>
-		</jar>
-	</target>
-
-	<!-- ================================= 
           target: Build_Skin_InfoNodeSkin             
          ================================= -->
 	<target name="Build_Skin_InfoNodeSkin" description="InfoNode Skin">
@@ -425,24 +407,6 @@
 				<attribute name="Bias-Add-On-Description" value="InfoNode Skin" />
 				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
 				<attribute name="Bias-Add-On-Dependencies" value="${InfoNodeSkin_Dependencies}" />
-			</manifest>
-		</jar>
-	</target>
-
-	<!-- ================================= 
-          target: Build_Skin_TonicSlimSkin             
-         ================================= -->
-	<target name="Build_Skin_TonicSlimSkin" description="Tonic Slim Skin">
-		<delete dir="build" includes="TonicSlimSkin*.jar" />
-		<jar basedir="bin" destfile="build/TonicSlimSkin_${TonicSlimSkin_Version}.jar" includes="bias/skin/TonicSlimSkin/** bias/res/TonicSlimSkin/**">
-			<fileset dir="res" includes="META-INF/ADDON-INFO/TonicSlimSkin/**" />
-			<manifest>
-				<attribute name="Bias-Add-On-Name" value="TonicSlimSkin" />
-				<attribute name="Bias-Add-On-Type" value="Skin" />
-				<attribute name="Bias-Add-On-Version" value="${TonicSlimSkin_Version}" />
-				<attribute name="Bias-Add-On-Description" value="Tonic Slim Skin" />
-				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
-				<attribute name="Bias-Add-On-Dependencies" value="${TonicSlimSkin_Dependencies}" />
 			</manifest>
 		</jar>
 	</target>
