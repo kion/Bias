@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.channels.FileLock;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -90,7 +91,24 @@ public class Launcher {
 
     private static boolean lock() {
         try {
-            return new FileOutputStream(new File(rootDir, LOCK_FILE_NAME)).getChannel().tryLock() != null;
+            final FileLock lock = new FileOutputStream(new File(rootDir, LOCK_FILE_NAME)).getChannel().tryLock();
+            if (lock != null) {
+                // Note: this is a trick to ensure there's only one instance of application is running at the same time; 
+                // create dummy thread...
+                new Thread(new Runnable(){
+                    public void run() {
+                        while (true) {
+                            try {
+                                if (lock.isValid()) {}; // ... and access the lock inside it to guarantee it won't be disposed by GC
+                                Thread.sleep(Long.MAX_VALUE); // now sleep "forever"
+                            } catch (InterruptedException e) {
+                                // ignore
+                            }
+                        }
+                    }
+                }).start();
+            }
+            return lock != null;
         } catch (Exception ex) {
             // ignore, if we can't do anything - user should care by himself about having only one application instance running
         }
