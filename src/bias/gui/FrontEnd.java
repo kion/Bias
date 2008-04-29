@@ -3986,92 +3986,100 @@ public class FrontEnd extends JFrame {
                                             exportConfig.setExportImportExportConfigs(exportImportExportConfigsCB.isSelected());
                                             exportConfig.setPassword(new String(passwordTF1.getPassword()));
                                             final TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
-                                            processModel.addElement(getMessage("export.data.compressed"));
-                                            autoscrollList(processList);
-                                            // check if checksum of data to be exported has changed since last export (or if export is forced)...
-                                            if (!exportUnchangedDataCB.isSelected() && !transferrer.exportCheckSumChanged(transferOptions, td)) {
-                                                // ... if no, do not export and inform user about that
-                                                label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                                                processModel.addElement(getMessage("transfer.discarded.no.data.changes"));
+                                            try {
+                                                processModel.addElement(getMessage("export.data.compressed"));
                                                 autoscrollList(processList);
-                                            } else {
-                                                // ... if yes, do perform export
-                                                processModel.addElement(getMessage("transfer.data.transferring"));
-                                                autoscrollList(processList);
-                                                instance.displayStatusBarProgressBar(getMessage("exporting.data"));
-                                                if (transferrer instanceof ObservableTransferExtension) {
-                                                    instance.getStatusBarProgressBar().setMaximum(td.getData().length);
-                                                    ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
-                                                        public void onProgress(long transferredBytesNum, long elapsedTime) {
-                                                            instance.getStatusBarProgressBar().setValue((int) transferredBytesNum);
-                                                            double estimationCoef = ((double) td.getData().length) / ((double) transferredBytesNum);
-                                                            long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
-                                                            instance.getStatusBarProgressBar().setString( 
-                                                                    FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(td.getData().length)
-                                                                    + ", " + getMessage("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
-                                                                    + ", " + getMessage("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
-                                                        }
-                                                    });
-                                                }    
-                                                boolean exported = transferrer.exportData(td, transferOptions, exportUnchangedDataCB.isSelected());
-                                                if (exported) {
+                                                // check if checksum of data to be exported has changed since last export (or if export is forced)...
+                                                if (!exportUnchangedDataCB.isSelected() && !transferrer.exportCheckSumChanged(transferOptions, td)) {
+                                                    // ... if no, do not export and inform user about that
                                                     label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                                                    processModel.addElement(getMessage("export.success"));
+                                                    processModel.addElement(getMessage("transfer.discarded.no.data.changes"));
                                                     autoscrollList(processList);
-                                                    StringBuffer sb = new StringBuffer(getMessage("export.done"));
-                                                    Properties meta = td.getMetaData();
-                                                    if (meta != null && !meta.isEmpty()) {
-                                                        sb.append(" (");
-                                                        String size = meta.getProperty(Constants.META_DATA_FILESIZE);
-                                                        if (!Validator.isNullOrBlank(size)) {
-                                                            sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
-                                                        }
-                                                        String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
-                                                        if (!Validator.isNullOrBlank(timestamp)) {
-                                                            sb.append(", ");
-                                                            sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
-                                                        }
-                                                        sb.append(")");
-                                                    }
-                                                    displayStatusBarMessage(sb.toString());
-                                                    fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass()));
-                                                    configsCB.setEditable(true);
-                                                    Component[] c = new Component[] {
-                                                            new JLabel(
-                                                                    Constants.HTML_PREFIX + 
-                                                                    getMessage("export.success") + "<br/>" + 
-                                                                    getMessage("transfer.configuration.save") +
-                                                                    Constants.HTML_SUFFIX),
-                                                            configsCB          
-                                                    };
-                                                    JOptionPane.showMessageDialog(FrontEnd.this, c);
-                                                    if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
-                                                        String configName = configsCB.getSelectedItem().toString();
-                                                        if (!exportAll) {
-                                                            if (!selectedEntries.isEmpty()) {
-                                                                Collection<UUID> ids = new ArrayList<UUID>();
-                                                                for (UUID id : selectedEntries) {
-                                                                    ids.add(id);
-                                                                }
-                                                                exportConfig.setSelectedIds(ids);
+                                                } else {
+                                                    // ... if yes, do perform export
+                                                    processModel.addElement(getMessage("transfer.data.transferring"));
+                                                    autoscrollList(processList);
+                                                    instance.displayStatusBarProgressBar(getMessage("exporting.data"));
+                                                    if (transferrer instanceof ObservableTransferExtension) {
+                                                        instance.getStatusBarProgressBar().setMaximum(td.getData().length);
+                                                        ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
+                                                            public void onProgress(long transferredBytesNum, long elapsedTime) {
+                                                                instance.getStatusBarProgressBar().setValue((int) transferredBytesNum);
+                                                                double estimationCoef = ((double) td.getData().length) / ((double) transferredBytesNum);
+                                                                long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
+                                                                instance.getStatusBarProgressBar().setString( 
+                                                                        FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(td.getData().length)
+                                                                        + ", " + getMessage("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                                                        + ", " + getMessage("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
                                                             }
-                                                            if (!selectedRecursiveEntries.isEmpty()) {
-                                                                Collection<UUID> ids = new ArrayList<UUID>();
-                                                                for (UUID id : selectedRecursiveEntries) {
-                                                                    ids.add(id);
-                                                                }
-                                                                exportConfig.setSelectedRecursiveIds(ids);
-                                                            }
-                                                            exportConfig.setExportAll(false);
-                                                        } else {
-                                                            exportConfig.setExportAll(true);
-                                                        }
-                                                        BackEnd.getInstance().storeExportConfigurationAndOptions(configName, exportConfig, transferOptions);
-                                                        processModel.addElement(getMessage("transfer.configuration.saved", configName));
+                                                        });
+                                                    }    
+                                                    boolean exported = transferrer.exportData(td, transferOptions, exportUnchangedDataCB.isSelected());
+                                                    if (exported) {
+                                                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                                                        processModel.addElement(getMessage("export.success"));
                                                         autoscrollList(processList);
+                                                        StringBuffer sb = new StringBuffer(getMessage("export.done"));
+                                                        Properties meta = td.getMetaData();
+                                                        if (meta != null && !meta.isEmpty()) {
+                                                            sb.append(" (");
+                                                            String size = meta.getProperty(Constants.META_DATA_FILESIZE);
+                                                            if (!Validator.isNullOrBlank(size)) {
+                                                                sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
+                                                            }
+                                                            String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
+                                                            if (!Validator.isNullOrBlank(timestamp)) {
+                                                                sb.append(", ");
+                                                                sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
+                                                            }
+                                                            sb.append(")");
+                                                        }
+                                                        displayStatusBarMessage(sb.toString());
+                                                        fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass()));
+                                                        configsCB.setEditable(true);
+                                                        Component[] c = new Component[] {
+                                                                new JLabel(
+                                                                        Constants.HTML_PREFIX + 
+                                                                        getMessage("export.success") + "<br/>" + 
+                                                                        getMessage("transfer.configuration.save") +
+                                                                        Constants.HTML_SUFFIX),
+                                                                configsCB          
+                                                        };
+                                                        JOptionPane.showMessageDialog(FrontEnd.this, c);
+                                                        if (!Validator.isNullOrBlank(configsCB.getSelectedItem())) {
+                                                            String configName = configsCB.getSelectedItem().toString();
+                                                            if (!exportAll) {
+                                                                if (!selectedEntries.isEmpty()) {
+                                                                    Collection<UUID> ids = new ArrayList<UUID>();
+                                                                    for (UUID id : selectedEntries) {
+                                                                        ids.add(id);
+                                                                    }
+                                                                    exportConfig.setSelectedIds(ids);
+                                                                }
+                                                                if (!selectedRecursiveEntries.isEmpty()) {
+                                                                    Collection<UUID> ids = new ArrayList<UUID>();
+                                                                    for (UUID id : selectedRecursiveEntries) {
+                                                                        ids.add(id);
+                                                                    }
+                                                                    exportConfig.setSelectedRecursiveIds(ids);
+                                                                }
+                                                                exportConfig.setExportAll(false);
+                                                            } else {
+                                                                exportConfig.setExportAll(true);
+                                                            }
+                                                            BackEnd.getInstance().storeExportConfigurationAndOptions(configName, exportConfig, transferOptions);
+                                                            processModel.addElement(getMessage("transfer.configuration.saved", configName));
+                                                            autoscrollList(processList);
+                                                        }
                                                     }
+                                                }    
+                                            } finally {
+                                                // memory usage optimization
+                                                if (td != null) {
+                                                    td.setData(null);
+                                                    td.setMetaData(null);
                                                 }
-                                            }    
+                                            }
                                         } catch (Throwable ex) {
                                             processModel.addElement(getMessage("export.failure"));
                                             if (ex.getMessage() != null) {
@@ -4118,54 +4126,62 @@ public class FrontEnd extends JFrame {
                 transferrer.checkConnection(transferOptions);
                 // if no exceptions thrown, proceed further
                 final TransferData td = BackEnd.getInstance().exportData(data, exportConfig);
-                // check if checksum of data to be exported has changed since last export (or if export is forced)...
-                if (!force && !transferrer.exportCheckSumChanged(transferOptions, td)) {
-                    // ... if no, do not export...
-                    if (verbose) {
-                        // ... and inform user about that, if in verbose mode
-                        label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                        processLabel.setText(getMessage("transfer.discarded.no.data.changes"));
-                    }
-                } else {
-                    // ... if yes, do perform export
-                    instance.displayStatusBarProgressBar(getMessage("exporting.data") + "('" + configName + "')...");
-                    if (transferrer instanceof ObservableTransferExtension) {
-                        instance.getStatusBarProgressBar().setMaximum(td.getData().length);
-                        ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
-                            public void onProgress(long transferredBytesNum, long elapsedTime) {
-                                instance.getStatusBarProgressBar().setValue((int) transferredBytesNum);
-                                double estimationCoef = ((double) td.getData().length) / ((double) transferredBytesNum);
-                                long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
-                                instance.getStatusBarProgressBar().setString( 
-                                        FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(td.getData().length)
-                                        + ", " + getMessage("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
-                                        + ", " + getMessage("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
-                            }
-                        });
-                    }    
-                    boolean exported = transferrer.exportData(td, transferOptions, force);
-                    if (exported) {
+                try {
+                    // check if checksum of data to be exported has changed since last export (or if export is forced)...
+                    if (!force && !transferrer.exportCheckSumChanged(transferOptions, td)) {
+                        // ... if no, do not export...
                         if (verbose) {
+                            // ... and inform user about that, if in verbose mode
                             label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
-                            processLabel.setText(getMessage("export.success"));
+                            processLabel.setText(getMessage("transfer.discarded.no.data.changes"));
                         }
-                        StringBuffer sb = new StringBuffer(getMessage("export.done") + " ('" + configName + "'");
-                        Properties meta = td.getMetaData();
-                        if (meta != null && !meta.isEmpty()) {
-                            String size = meta.getProperty(Constants.META_DATA_FILESIZE);
-                            if (!Validator.isNullOrBlank(size)) {
-                                sb.append(", ");
-                                sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
+                    } else {
+                        // ... if yes, do perform export
+                        instance.displayStatusBarProgressBar(getMessage("exporting.data") + "('" + configName + "')...");
+                        if (transferrer instanceof ObservableTransferExtension) {
+                            instance.getStatusBarProgressBar().setMaximum(td.getData().length);
+                            ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
+                                public void onProgress(long transferredBytesNum, long elapsedTime) {
+                                    instance.getStatusBarProgressBar().setValue((int) transferredBytesNum);
+                                    double estimationCoef = ((double) td.getData().length) / ((double) transferredBytesNum);
+                                    long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
+                                    instance.getStatusBarProgressBar().setString( 
+                                            FormatUtils.formatByteSize(transferredBytesNum) + " / " + FormatUtils.formatByteSize(td.getData().length)
+                                            + ", " + getMessage("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                            + ", " + getMessage("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
+                                }
+                            });
+                        }    
+                        boolean exported = transferrer.exportData(td, transferOptions, force);
+                        if (exported) {
+                            if (verbose) {
+                                label.setText(Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("export.completed") + Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX);
+                                processLabel.setText(getMessage("export.success"));
                             }
-                            String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
-                            if (!Validator.isNullOrBlank(timestamp)) {
-                                sb.append(", ");
-                                sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
+                            StringBuffer sb = new StringBuffer(getMessage("export.done") + " ('" + configName + "'");
+                            Properties meta = td.getMetaData();
+                            if (meta != null && !meta.isEmpty()) {
+                                String size = meta.getProperty(Constants.META_DATA_FILESIZE);
+                                if (!Validator.isNullOrBlank(size)) {
+                                    sb.append(", ");
+                                    sb.append(FormatUtils.formatByteSize(Long.valueOf(size)));
+                                }
+                                String timestamp = meta.getProperty(Constants.META_DATA_TIMESTAMP);
+                                if (!Validator.isNullOrBlank(timestamp)) {
+                                    sb.append(", ");
+                                    sb.append(dateFormat.format(new Date(Long.valueOf(timestamp))));
+                                }
                             }
+                            sb.append(")");
+                            displayStatusBarMessage(sb.toString());
+                            fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
                         }
-                        sb.append(")");
-                        displayStatusBarMessage(sb.toString());
-                        fireTransferEvent(new TransferEvent(TRANSFER_TYPE.EXPORT, transferrer.getClass(), configName));
+                    }
+                } finally {
+                    // memory usage optimization
+                    if (td != null) {
+                        td.setData(null);
+                        td.setMetaData(null);
                     }
                 }
             } catch (Throwable ex) {
