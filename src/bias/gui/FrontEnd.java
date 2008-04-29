@@ -2286,8 +2286,8 @@ public class FrontEnd extends JFrame {
         processLabel.setText(message);
         getJPanelProcessIndicators().setVisible(true);
         if (displayOnAllScreens) {
-            addOnsManagementScreenProcessLabel.setText(message);
             getAddOnsManagementScreenProcessPanel().setVisible(true);
+            getAddOnsManagementScreenProcessLabel().setText(message);
         }
     }    
     
@@ -2295,8 +2295,8 @@ public class FrontEnd extends JFrame {
         processLabel.setText(null);
         getJPanelProcessIndicators().setVisible(false);
         if (addOnsManagementScreenProcessPanel != null) {
-            addOnsManagementScreenProcessLabel.setText(null);
             getAddOnsManagementScreenProcessPanel().setVisible(false);
+            getAddOnsManagementScreenProcessLabel().setText(null);
         }
     }
     
@@ -2377,6 +2377,18 @@ public class FrontEnd extends JFrame {
     }
     
     /**
+     * This method initializes addOnsManagementScreenProcessLabel
+     * 
+     * @return javax.swing.JLabel
+     */
+    private JLabel getAddOnsManagementScreenProcessLabel() {
+        if (addOnsManagementScreenProcessLabel == null) {
+            addOnsManagementScreenProcessLabel = new JLabel();
+        }
+        return addOnsManagementScreenProcessLabel;
+    }
+
+    /**
      * This method initializes addOnsManagementScreenProcessPanel
      * 
      * @return javax.swing.JPanel
@@ -2384,7 +2396,7 @@ public class FrontEnd extends JFrame {
     private JPanel getAddOnsManagementScreenProcessPanel() {
         if (addOnsManagementScreenProcessPanel == null) {
             addOnsManagementScreenProcessPanel = new JPanel(new BorderLayout());
-            addOnsManagementScreenProcessPanel.add((addOnsManagementScreenProcessLabel = new JLabel()), BorderLayout.CENTER);
+            addOnsManagementScreenProcessPanel.add(getAddOnsManagementScreenProcessLabel(), BorderLayout.CENTER);
             addOnsManagementScreenProcessPanel.add(new JLabel(ICON_PROCESS), BorderLayout.WEST);
             addOnsManagementScreenProcessPanel.setVisible(false);
         }
@@ -5934,7 +5946,7 @@ public class FrontEnd extends JFrame {
                             }
                         }
                         onlineListRefreshed = true;
-                        states.clear();
+                        if (states != null) states.clear();
                         if (onCompleteAction != null) {
                             onCompleteAction.run();
                         }

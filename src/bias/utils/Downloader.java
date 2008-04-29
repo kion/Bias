@@ -85,17 +85,20 @@ public class Downloader {
                     } catch (IOException ioe) {
                         // ignore
                     }
-                    if (listener != null) {
-                        if (failure != null) {
-                            listener.onFailure(url, file, failure);
-                        } else if (cancel || cancelAll) {
-                            listener.onCancel(url, file, downloadedBytesNum, elapsedTime);
-                        } else {
-                            listener.onComplete(url, file, downloadedBytesNum, elapsedTime);
-                        }    
-                        listener.onFinish(downloadedBytesNum, elapsedTime);
-                    }
                     decrementTotalActiveDownloadsCount();
+                    if (listener != null) {
+                        try {
+                            if (failure != null) {
+                                listener.onFailure(url, file, failure);
+                            } else if (cancel || cancelAll) {
+                                listener.onCancel(url, file, downloadedBytesNum, elapsedTime);
+                            } else {
+                                listener.onComplete(url, file, downloadedBytesNum, elapsedTime);
+                            }    
+                        } finally {
+                            listener.onFinish(downloadedBytesNum, elapsedTime);
+                        }
+                    }
                 }
             }
         });
@@ -155,19 +158,25 @@ public class Downloader {
                             // ignore
                         }
                         if (listener != null) {
-                            if (failure != null) {
-                                listener.onFailure(url, file, failure);
-                            } else if (cancel || cancelAll) {
-                                listener.onCancel(url, file, downloadedBytesNum, elapsedTime);
-                                listener.onFinish(downloadedBytesNum, elapsedTime);
-                                decrementTotalActiveDownloadsCount();
-                                break;
-                            } else {
-                                listener.onComplete(url, file, downloadedBytesNum, elapsedTime);
-                            }
-                            if (!it.hasNext()) {
-                                listener.onFinish(downloadedBytesNum, elapsedTime);
-                                decrementTotalActiveDownloadsCount();
+                            try {
+                                if (failure != null) {
+                                    listener.onFailure(url, file, failure);
+                                } else if (cancel || cancelAll) {
+                                    decrementTotalActiveDownloadsCount();
+                                    try {
+                                        listener.onCancel(url, file, downloadedBytesNum, elapsedTime);
+                                    } finally {
+                                        listener.onFinish(downloadedBytesNum, elapsedTime);
+                                    }
+                                    break;
+                                } else {
+                                    listener.onComplete(url, file, downloadedBytesNum, elapsedTime);
+                                }
+                            } finally {
+                                if (!it.hasNext()) {
+                                    decrementTotalActiveDownloadsCount();
+                                    listener.onFinish(downloadedBytesNum, elapsedTime);
+                                }
                             }
                         }
                     }

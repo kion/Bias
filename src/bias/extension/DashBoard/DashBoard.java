@@ -56,6 +56,8 @@ import bias.utils.PropertiesUtils;
 public class DashBoard extends EntryExtension {
     private static final long serialVersionUID = 1L;
     
+    // TODO [P2] snippet's size/location (relative to dashboard root panel) should be stored on save and restored on load
+    
     // TODO [P2] add more different snippet-types
     
     private static final String SCHEMA_LOCATION = "http://bias.sourceforge.net/addons/DashBoardSchema.xsd";
