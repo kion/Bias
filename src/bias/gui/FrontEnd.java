@@ -2203,14 +2203,6 @@ public class FrontEnd extends JFrame {
         return statusBarMessagesList;
     }
     
-    public static void displayStatusBarErrorMessage(String message) {
-        displayStatusBarMessage(message, true);
-    }
-    
-    public static void displayStatusBarMessage(String message) {
-        displayStatusBarMessage(message, false);
-    }
-    
     private static ExecutorService statusBarExecutor;
     
     private static Executor getStatusBarExecutor() {
@@ -2218,6 +2210,14 @@ public class FrontEnd extends JFrame {
             statusBarExecutor = Executors.newSingleThreadExecutor();
         }
         return statusBarExecutor;
+    }
+    
+    public static void displayStatusBarErrorMessage(String message) {
+        displayStatusBarMessage(message, true);
+    }
+    
+    public static void displayStatusBarMessage(String message) {
+        displayStatusBarMessage(message, false);
     }
     
     private static void displayStatusBarMessage(final String message, final boolean isError) {
