@@ -84,7 +84,13 @@ public class BackEnd {
     
     private static String password;
     
-    private String appVersion;
+    private String appCoreVersion;
+    
+    private String updatedAppCoreVersion;
+    
+    private String appLauncherVersion;
+
+    private String updatedAppLauncherVersion;
     
     private File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
 
@@ -341,8 +347,9 @@ public class BackEnd {
         this.data = parseMetadata(metadata, identifiedData, null, false);
         // get lists of loaded addons
         loadedAddOns = getAddOns();
-        // get application's version
-        appVersion = readAppVersion();
+        // read application core/launcher versions
+        appCoreVersion = readAppCoreVersion();
+        appLauncherVersion = readAppLauncherVersion();
     }
     
     private void loadIcons(File iconsListFile) throws IOException {
@@ -1368,8 +1375,14 @@ public class BackEnd {
         return new URL(urlStr);
     }
     
-    public void installAppCoreUpdate(File appCoreUpdateFile) throws Throwable {
+    public void installAppCoreUpdate(File appCoreUpdateFile, String version) throws Throwable {
         FSUtils.duplicateFile(appCoreUpdateFile, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME));
+        updatedAppCoreVersion = version;
+    }
+    
+    public void installAppLauncherUpdate(File appLauncherUpdateFile, String version) throws Throwable {
+        FSUtils.duplicateFile(appLauncherUpdateFile, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_LAUNCHER_FILE_NAME));
+        updatedAppLauncherVersion = version;
     }
     
     public void loadDataEntrySettings(DataEntry dataEntry) throws Exception {
@@ -1485,7 +1498,13 @@ public class BackEnd {
     
     public Boolean isAddOnInstalledAndUpToDate(Pack pack) throws Throwable {
         if (pack.getType() == PackType.APP_CORE) {
-            if (VersionComparator.getInstance().compare(getAppVersion(), pack.getVersion()) >= 0) {
+            if (VersionComparator.getInstance().compare(getAppCoreVersion(), pack.getVersion()) >= 0 || (updatedAppCoreVersion != null && VersionComparator.getInstance().compare(updatedAppCoreVersion, pack.getVersion()) >= 0)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else if (pack.getType() == PackType.APP_LAUNCHER) {
+            if (VersionComparator.getInstance().compare(getAppLauncherVersion(), pack.getVersion()) >= 0 || (updatedAppLauncherVersion != null && VersionComparator.getInstance().compare(updatedAppLauncherVersion, pack.getVersion()) >= 0)) {
                 return true;
             } else {
                 return false;
@@ -1504,22 +1523,40 @@ public class BackEnd {
         return null;
     }
     
-    public String getAppVersion() {
-        return appVersion;
+    public String getAppCoreVersion() {
+        return appCoreVersion;
     }
     
-    private String readAppVersion() throws Exception {
+    public String getAppLauncherVersion() {
+        return appLauncherVersion;
+    }
+
+    private String readAppCoreVersion() throws Exception {
         File appCoreFile = new File(Constants.ROOT_DIR, Constants.APP_CORE_FILE_NAME);
         JarInputStream in = new JarInputStream(new FileInputStream(appCoreFile));
         Manifest manifest = in.getManifest();
-        String appVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_APP_VERSION);
+        String appVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_APP_CORE_VERSION);
         if (Validator.isNullOrBlank(appVersion)) {
             throw new Exception(
                     "Invalid Application Core JAR File:" + Constants.NEW_LINE +
-                    Constants.ATTRIBUTE_APP_VERSION
+                    Constants.ATTRIBUTE_APP_CORE_VERSION
                     + " attribute in MANIFEST.MF file is missing/empty!");
         }
         return appVersion;
+    }
+    
+    private String readAppLauncherVersion() throws Exception {
+        File appCoreFile = new File(Constants.ROOT_DIR, Constants.APP_LAUNCHER_FILE_NAME);
+        JarInputStream in = new JarInputStream(new FileInputStream(appCoreFile));
+        Manifest manifest = in.getManifest();
+        String launcherVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_APP_LAUNCHER_VERSION);
+        if (Validator.isNullOrBlank(launcherVersion)) {
+            throw new Exception(
+                    "Invalid Application Launcher JAR File:" + Constants.NEW_LINE +
+                    Constants.ATTRIBUTE_APP_LAUNCHER_VERSION
+                    + " attribute in MANIFEST.MF file is missing/empty!");
+        }
+        return launcherVersion;
     }
     
     public Collection<AddOnInfo> getAddOns() throws Throwable {

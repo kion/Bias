@@ -571,7 +571,7 @@ public class FrontEnd extends JFrame {
     private void initialize() {
         try {
             this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-            this.setTitle(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppVersion() + " ]");
+            this.setTitle(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppCoreVersion() + " ]");
             this.setIconImage(ICON_APP.getImage());
             this.setContentPane(getJContentPane());
 
@@ -6010,6 +6010,7 @@ public class FrontEnd extends JFrame {
                 displayProcessNotification("downloading/installing packages...", true);
                 d.setDownloadListener(new DownloadListener(){
                     private StringBuffer sb = new StringBuffer();
+                    boolean launcherUpdated = false;
                     boolean success = true;
                     @Override
                     public void onStart(URL url, File file) {
@@ -6072,8 +6073,12 @@ public class FrontEnd extends JFrame {
                                 addOrReplaceTableModelAddOnRow(getLibModel(), libInfo, false, 0, status);
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
                             } else if (pack.getType() == PackType.APP_CORE) {
-                                BackEnd.getInstance().installAppCoreUpdate(file);
+                                BackEnd.getInstance().installAppCoreUpdate(file, pack.getVersion());
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "AppCore '" + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                            } else if (pack.getType() == PackType.APP_LAUNCHER) {
+                                BackEnd.getInstance().installAppLauncherUpdate(file, pack.getVersion());
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "AppLauncher '" + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                launcherUpdated = true;
                             } else {
                                 PackType addOnType = PackType.fromValue(pack.getType().value());
                                 AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
@@ -6107,6 +6112,14 @@ public class FrontEnd extends JFrame {
                             JOptionPane.showMessageDialog(
                                     getActiveWindow(), 
                                     new JScrollPane(new JLabel(Constants.HTML_PREFIX + "<ul>" + sb.toString() + "</ul>" + Constants.HTML_SUFFIX)));
+                            if (launcherUpdated) {
+                                JOptionPane.showMessageDialog(
+                                        getActiveWindow(), 
+                                        new JLabel(
+                                                Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_INFO + 
+                                                getMessage("info.message.launcher.updated") + 
+                                                Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX));
+                            }
                             if (success && onFinishAction != null) {
                                 onFinishAction.run();
                             }
@@ -6406,7 +6419,7 @@ public class FrontEnd extends JFrame {
         }
 
         public void actionPerformed(ActionEvent evt) {
-            JLabel title1Label = new JLabel(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppVersion() + " ]");
+            JLabel title1Label = new JLabel(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppCoreVersion() + " ]");
             JLabel link1Label = new LinkLabel("http://bias.sourceforge.net/");
             JLabel title2Label = new JLabel("© Roman Kasianenko ( kion ) 2006-2008");
         	JLabel link2Label = new LinkLabel("http://kion.name/");

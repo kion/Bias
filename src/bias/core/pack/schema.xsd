@@ -26,6 +26,7 @@
 	</xs:complexType>
 	<xs:simpleType name="pack-type">
 		<xs:restriction base="xs:string">
+			<xs:enumeration value="AppLauncher"/>
 			<xs:enumeration value="AppCore"/>
 			<xs:enumeration value="Extension"/>
 			<xs:enumeration value="Skin"/>

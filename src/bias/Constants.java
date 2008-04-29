@@ -144,8 +144,10 @@ public class Constants {
     public static final String ICONSET_REGISTRY_FILE_SUFFIX = ".iconset.reg";
     public static final String UPDATE_FILE_PREFIX = "update_";
     public static final String APP_CORE_FILE_NAME = "appcore.jar";
+    public static final String APP_LAUNCHER_FILE_NAME = "bias.jar";
 
-    public static final String ATTRIBUTE_APP_VERSION = "App-Version";
+    public static final String ATTRIBUTE_APP_CORE_VERSION = "AppCore-Version";
+    public static final String ATTRIBUTE_APP_LAUNCHER_VERSION = "AppLauncher-Version";
     public static final String ATTRIBUTE_ADD_ON_NAME = "Bias-Add-On-Name";
     public static final String ATTRIBUTE_ADD_ON_TYPE = "Bias-Add-On-Type";
     public static final String ATTRIBUTE_ADD_ON_VERSION = "Bias-Add-On-Version";
