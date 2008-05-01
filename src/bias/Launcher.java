@@ -15,6 +15,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 import javax.swing.Timer;
 
+import bias.utils.CommonUtils;
 import bias.utils.FSUtils;
 
 public class Launcher {
@@ -71,13 +72,23 @@ public class Launcher {
                 JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
             String password = new String(passField.getPassword());            
             if (password != null) {
-                Splash.showSplash();
-                init();
-                launchApp(password);
-                Splash.hideSplash();
+                try {
+                    Splash.showSplash();
+                    init();
+                    launchApp(password);
+                } catch (Throwable t) {
+                    Splash.hideSplash();
+                    t.printStackTrace(System.err);
+                    JOptionPane.showMessageDialog(null, "Failed to load Bias! " + CommonUtils.getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
+                    System.exit(1);
+                } finally {
+                    Splash.hideSplash();
+                }
             } else {
                 System.exit(0);
             }
+        } else {
+            System.exit(0);
         }
     }
 
