@@ -45,7 +45,7 @@ add.entry.failure == Не удалось добавить запись.<br/>Не
 elapsed.time == прошло времени
 estimated.time.left == осталось времени
 transfer.type.no.longer.available == Похоже, что трансфер-тип используемый этой хранимой конфигурацией более не доступен (расширение удалено?)
-wrong.password == Похоже, пароль не верный...
+wrong.password == Похоже, пароль неверный...
 exporting.data == Экспортирую данные
 data.export == Экспорт данных
 export.completed == Экспорт данных - Завершен
