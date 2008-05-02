@@ -276,6 +276,7 @@ public class BackEnd {
     }
     
     private static Cipher initCipher(int mode, String password) throws Exception {
+        password = URLEncoder.encode(password, Constants.DEFAULT_ENCODING);
         PBEParameterSpec paramSpec = new PBEParameterSpec(Constants.CIPHER_SALT, 20);
         PBEKeySpec keySpec = new PBEKeySpec(password != null ? password.toCharArray() : new char[]{});
         SecretKeyFactory kf = SecretKeyFactory.getInstance(Constants.CIPHER_ALGORITHM);
