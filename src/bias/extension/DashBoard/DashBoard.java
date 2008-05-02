@@ -56,7 +56,9 @@ import bias.utils.PropertiesUtils;
 public class DashBoard extends EntryExtension {
     private static final long serialVersionUID = 1L;
     
-    // TODO [P2] snippet's size/location (relative to dashboard root panel) should be stored on save and restored on load
+    // TODO [P1] snippet's must not be movable over root panel borders
+    
+    // TODO [P1] snippet's size/location should be stored/restored relatively to root panel
     
     // TODO [P2] add more different snippet-types
     
