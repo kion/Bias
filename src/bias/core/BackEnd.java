@@ -689,7 +689,7 @@ public class BackEnd {
                 dc.setId(id);
                 Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
                 String caption = attCaption.getNodeValue();
-                caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+                caption = URLDecoder.decode(caption, Constants.DEFAULT_ENCODING);
                 dc.setCaption(caption);
                 Node attIcon = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ICON);
                 if (attIcon != null) {
@@ -725,7 +725,7 @@ public class BackEnd {
                     dataEntry.setId(id);
                     Node attCaption = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION);
                     String caption = attCaption.getNodeValue();
-                    caption = URLDecoder.decode(caption, Constants.UNICODE_ENCODING);
+                    caption = URLDecoder.decode(caption, Constants.DEFAULT_ENCODING);
                     dataEntry.setCaption(caption);
                     Node attIcon = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_ICON);
                     if (attIcon != null) {
@@ -1311,7 +1311,7 @@ public class BackEnd {
                 storeDataEntrySettings(de);
                 Element entryNode = metadata.createElement(Constants.XML_ELEMENT_ENTRY);
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, de.getId().toString());
-                String encodedCaption = URLEncoder.encode(de.getCaption(), Constants.UNICODE_ENCODING);
+                String encodedCaption = URLEncoder.encode(de.getCaption(), Constants.DEFAULT_ENCODING);
                 entryNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);
                 if (de.getIcon() != null) {
                 	String iconId = ((ImageIcon)de.getIcon()).getDescription();
@@ -1338,7 +1338,7 @@ public class BackEnd {
                 DataCategory dc = (DataCategory) item;
                 Element catNode = metadata.createElement(Constants.XML_ELEMENT_CATEGORY);
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, dc.getId().toString());
-                String encodedCaption = URLEncoder.encode(dc.getCaption(), Constants.UNICODE_ENCODING);
+                String encodedCaption = URLEncoder.encode(dc.getCaption(), Constants.DEFAULT_ENCODING);
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);
                 if (dc.getIcon() != null) {
                 	String iconId = ((ImageIcon)dc.getIcon()).getDescription();
@@ -1689,7 +1689,7 @@ public class BackEnd {
                         }
                         baos.close();
                         name = je.getName().substring(infoDirPath.length());
-                        name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
+                        name = URLDecoder.decode(name, Constants.DEFAULT_ENCODING);
                         File file = new File(destination, name);
                         File dir = file.getParentFile();
                         if (!dir.exists()) {
@@ -2020,7 +2020,7 @@ public class BackEnd {
                                 }
                                 baos.close();
                                 name = entry.getName().substring(infoDirPath.length());
-                                name = URLDecoder.decode(name, Constants.UNICODE_ENCODING);
+                                name = URLDecoder.decode(name, Constants.DEFAULT_ENCODING);
                                 File f = new File(destination, name);
                                 File dir = f.getParentFile();
                                 if (!dir.exists()) {

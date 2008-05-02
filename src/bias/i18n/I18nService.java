@@ -27,7 +27,7 @@ public class I18nService {
     
     private Map<String, String> messages;
     
-    private Map<String, String> langs;
+    private Map<String, String> langsLocales;
     
     private I18nService() {}
     
@@ -81,9 +81,9 @@ public class I18nService {
     
     public Map<String, String> initLocale(InputStream is) throws Exception {
         Map<String, String> messages = new HashMap<String, String>();
-        InputStreamReader isr = new InputStreamReader(is, Constants.MESSAGES_CHARSET);
+        InputStreamReader isr = new InputStreamReader(is, Constants.DEFAULT_ENCODING);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        OutputStreamWriter osr = new OutputStreamWriter(baos, Constants.MESSAGES_CHARSET);
+        OutputStreamWriter osr = new OutputStreamWriter(baos);
         int b;
         while ((b = isr.read()) != -1) {
             osr.write(b);
@@ -110,14 +110,14 @@ public class I18nService {
         return getAvailableLangsLocales().get(lang);
     }
     
-    private Map<String, String> getAvailableLangsLocales() {
-        if (langs == null) {
+    public Map<String, String> getAvailableLangsLocales() {
+        if (langsLocales == null) {
             try {
-                langs = new LinkedHashMap<String, String>();
+                langsLocales = new LinkedHashMap<String, String>();
                 InputStream is = I18nService.class.getResourceAsStream(Constants.MESSAGE_FILE_PATH + Constants.LANGUAGES_LIST_FILENAME);
-                InputStreamReader isr = new InputStreamReader(is, Constants.MESSAGES_CHARSET);
+                InputStreamReader isr = new InputStreamReader(is, Constants.DEFAULT_ENCODING);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                OutputStreamWriter osr = new OutputStreamWriter(baos, Constants.MESSAGES_CHARSET);
+                OutputStreamWriter osr = new OutputStreamWriter(baos);
                 int b;
                 while ((b = isr.read()) != -1) {
                     osr.write(b);
@@ -130,7 +130,7 @@ public class I18nService {
                 for (String message : msgs) {
                     String[] keyValuePair = message.split(Constants.MESSAGE_KEY_VALUE_SEPARATOR);
                     for (int i = 0; i < keyValuePair.length; i += 2) {
-                        langs.put(keyValuePair[i].trim(), keyValuePair[i+1].trim());
+                        langsLocales.put(keyValuePair[i].trim(), keyValuePair[i+1].trim());
                     }
                 }
             } catch (Throwable t) {
@@ -138,7 +138,7 @@ public class I18nService {
                 t.printStackTrace(System.err);
             }
         }
-        return langs;
+        return langsLocales;
     }
 
 }

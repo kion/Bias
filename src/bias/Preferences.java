@@ -5,6 +5,8 @@ package bias;
 
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 
@@ -53,7 +55,7 @@ public class Preferences {
                         String type = prefNode.getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_TYPE).getNodeValue();
                         String value = prefNode.getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_VALUE).getNodeValue();
                         if ("string".equals(type)) {
-                            field.set(this, value);
+                            field.set(this, URLDecoder.decode(value, Constants.DEFAULT_ENCODING));
                         } else if ("boolean".equals(type)) {
                             field.setBoolean(this, Boolean.parseBoolean(value));
                         } else if ("int".equals(type)) {
@@ -94,6 +96,8 @@ public class Preferences {
                         String s = (String) field.get(this);
                         if (Validator.isNullOrBlank(s)) {
                             s = Constants.EMPTY_STR;
+                        } else {
+                            s = URLEncoder.encode(s, Constants.DEFAULT_ENCODING);
                         }
                         prefElement.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_VALUE, s);
                     } else if ("boolean".equals(type)) {
@@ -110,8 +114,6 @@ public class Preferences {
             }
         }
         OutputFormat of = new OutputFormat();
-        of.setIndenting(true);
-        of.setIndent(4);
         StringWriter sw = new StringWriter();
         new XMLSerializer(sw, of).serialize(prefs);
         return sw.getBuffer().toString().getBytes();

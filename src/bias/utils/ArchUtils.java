@@ -51,7 +51,7 @@ public class ArchUtils {
                     baos.write(buffer, 0, br);
                 }
                 baos.close();
-                String name = URLDecoder.decode(ze.getName(), Constants.UNICODE_ENCODING);
+                String name = URLDecoder.decode(ze.getName(), Constants.DEFAULT_ENCODING);
                 File file = new File(destination, name);
                 File dir = file.getParentFile();
                 if (!dir.exists()) {

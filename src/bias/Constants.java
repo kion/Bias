@@ -4,7 +4,6 @@
 package bias;
 
 import java.io.File;
-import java.util.Collection;
 
 import bias.extension.Extension;
 import bias.i18n.I18nService;
@@ -79,7 +78,7 @@ public class Constants {
     public static final String ADDON_STATUS_BROKEN = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + "[BROKEN]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     public static final String ADDON_STATUS_BROKEN_DEPENDENCIES = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + "[BROKEN DEPENDENCIES]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     
-    public static final String UNICODE_ENCODING = "UTF-8";
+    public static final String DEFAULT_ENCODING = "UTF-8";
     
     public static final String DIGEST_ALGORITHM = "MD5";
     public static final String CIPHER_ALGORITHM = "PBEWithMD5AndDES";
@@ -210,14 +209,12 @@ public class Constants {
 
     public static final String MESSAGES_PATH_PREFIX = PATH_SEPARATOR + I18nService.class.getPackage().getName().replaceAll("\\.", PATH_SEPARATOR) + PATH_SEPARATOR;
     public static final String LANGUAGES_LIST_FILENAME = "lang.list";
-    public static final String MESSAGES_CHARSET = "UTF-8";
     public static final String MESSAGE_FILE_PATH = PATH_SEPARATOR + I18nService.class.getPackage().getName().replaceAll("\\.", PATH_SEPARATOR) + PATH_SEPARATOR;
     public static final String MESSAGE_FILE_ENDING = ".msg";
     public static final String MESSAGE_KEY_VALUE_SEPARATOR = "==";
     public static final String MESSAGE_SEPARATOR = "\n+\r*";
 
-    public static final Collection<String> AVAILABLE_LANGUAGES = I18nService.getInstance().getAvailableLanguages();
-    public static final String DEFAULT_LANGUAGE = AVAILABLE_LANGUAGES.iterator().next();
+    public static final String DEFAULT_LANGUAGE = I18nService.getInstance().getAvailableLanguages().iterator().next();
     public static final String DEFAULT_LOCALE = I18nService.getInstance().getLanguageLocale(DEFAULT_LANGUAGE);
 
 }

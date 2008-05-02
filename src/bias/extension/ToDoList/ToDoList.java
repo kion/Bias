@@ -314,7 +314,7 @@ public class ToDoList extends EntryExtension {
                         for (int j = 0; j < entryChildNodes.getLength(); j++) {
                             Node entryChildNode = entryChildNodes.item(j);
                             if (entryChildNode.getNodeName().equals(XML_ELEMENT_TITLE)) {
-                                String decodedText = URLDecoder.decode(entryChildNode.getTextContent(), Constants.UNICODE_ENCODING);
+                                String decodedText = URLDecoder.decode(entryChildNode.getTextContent(), Constants.DEFAULT_ENCODING);
                                 todoEntry.setTitle(decodedText);
                             } else if (entryChildNode.getNodeName().equals(XML_ELEMENT_DESCRIPTION)) {
                                 String description = entryChildNode.getTextContent();
@@ -334,12 +334,12 @@ public class ToDoList extends EntryExtension {
                         }
                         Node attPriority = attributes.getNamedItem(XML_ELEMENT_ATTRIBUTE_PRIORITY);
                         if (attPriority != null) {
-                            String decodedText = URLDecoder.decode(attPriority.getNodeValue(), Constants.UNICODE_ENCODING);
+                            String decodedText = URLDecoder.decode(attPriority.getNodeValue(), Constants.DEFAULT_ENCODING);
                             todoEntry.setPriority(decodedText);
                         }
                         Node attStatus = attributes.getNamedItem(XML_ELEMENT_ATTRIBUTE_STATUS);
                         if (attStatus != null) {
-                            String decodedText = URLDecoder.decode(attStatus.getNodeValue(), Constants.UNICODE_ENCODING);
+                            String decodedText = URLDecoder.decode(attStatus.getNodeValue(), Constants.DEFAULT_ENCODING);
                             todoEntry.setStatus(decodedText);
                         }
                         addToDoEntry(todoEntry);
@@ -586,7 +586,7 @@ public class ToDoList extends EntryExtension {
         for (ToDoEntry entry : getToDoEntries()) {
             Element entryNode = doc.createElement(XML_ELEMENT_ENTRY);
             Element titleNode = doc.createElement(XML_ELEMENT_TITLE);
-            String encodedText = Validator.isNullOrBlank(entry.getTitle()) ? Constants.EMPTY_STR : URLEncoder.encode(entry.getTitle(), Constants.UNICODE_ENCODING);
+            String encodedText = Validator.isNullOrBlank(entry.getTitle()) ? Constants.EMPTY_STR : URLEncoder.encode(entry.getTitle(), Constants.DEFAULT_ENCODING);
             titleNode.setTextContent(encodedText);
             entryNode.appendChild(titleNode);
             Element descriptionNode = doc.createElement(XML_ELEMENT_DESCRIPTION);
@@ -594,9 +594,9 @@ public class ToDoList extends EntryExtension {
             entryNode.appendChild(descriptionNode);
             entryNode.setAttribute(XML_ELEMENT_ATTRIBUTE_ID, entry.getId().toString());
             entryNode.setAttribute(XML_ELEMENT_ATTRIBUTE_TIMESTAMP, "" + entry.getTimestamp().getTime());
-            encodedText = Validator.isNullOrBlank(entry.getPriority()) ? Constants.EMPTY_STR : URLEncoder.encode(entry.getPriority(), Constants.UNICODE_ENCODING);
+            encodedText = Validator.isNullOrBlank(entry.getPriority()) ? Constants.EMPTY_STR : URLEncoder.encode(entry.getPriority(), Constants.DEFAULT_ENCODING);
             entryNode.setAttribute(XML_ELEMENT_ATTRIBUTE_PRIORITY, encodedText);
-            encodedText = Validator.isNullOrBlank(entry.getStatus()) ? Constants.EMPTY_STR : URLEncoder.encode(entry.getStatus(), Constants.UNICODE_ENCODING);
+            encodedText = Validator.isNullOrBlank(entry.getStatus()) ? Constants.EMPTY_STR : URLEncoder.encode(entry.getStatus(), Constants.DEFAULT_ENCODING);
             entryNode.setAttribute(XML_ELEMENT_ATTRIBUTE_STATUS, encodedText);
             rootNode.appendChild(entryNode);
         }
