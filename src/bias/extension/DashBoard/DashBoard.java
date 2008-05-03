@@ -121,7 +121,6 @@ public class DashBoard extends EntryExtension {
 
     private void initialize() {
         settings = PropertiesUtils.deserializeProperties(getSettings());
-        // FIXME [P1] snippet's location is not correctly restored (due to differences between stored and loaded root pane size values)
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 try {
@@ -135,6 +134,18 @@ public class DashBoard extends EntryExtension {
                 } catch (JAXBException ex) {
                     FrontEnd.displayErrorMessage("Failed to initialize!", ex);
                 }
+            }
+        });
+        FrontEnd.addMainWindowComponentListener(new ComponentAdapter(){
+            /* (non-Javadoc)
+             * @see java.awt.event.ComponentAdapter#componentResized(java.awt.event.ComponentEvent)
+             */
+            @Override
+            public void componentResized(ComponentEvent e) {
+                for (InfoSnippet f : getSnippets()) {
+                    relocate(f);
+                }
+                super.componentResized(e);
             }
         });
     }
@@ -160,13 +171,14 @@ public class DashBoard extends EntryExtension {
      */
     @Override
     public byte[] serializeData() throws Throwable {
+        Dimension size = FrontEnd.getMainWindowSize();
         Frames frames = objFactory.createFrames();
         for (InfoSnippet f : getSnippets()) {
             Frame frame = new Frame();
-            frame.setX(f.getLocation().getX() / getDashBoardPanel().getSize().getWidth());
-            frame.setY(f.getLocation().getY() / getDashBoardPanel().getSize().getHeight());
-            frame.setW(f.getSize().getWidth() / getDashBoardPanel().getSize().getWidth());
-            frame.setH(f.getSize().getHeight() / getDashBoardPanel().getSize().getHeight());
+            frame.setX(f.getLocation().getX() / size.getWidth());
+            frame.setY(f.getLocation().getY() / size.getHeight());
+            frame.setW(f.getSize().getWidth() / size.getWidth());
+            frame.setH(f.getSize().getHeight() / size.getHeight());
             frame.setContent(f.serializeContent());
             frame.setSettings(f.serializeSettings());
             frame.setTitle(f.getTitle());
@@ -326,18 +338,6 @@ public class DashBoard extends EntryExtension {
             dashBoardPanel = new JDesktopPane();
             dashBoardPanel.setDesktopManager(new CustomDesktopManager());
             dashBoardPanel.setBackground(Color.LIGHT_GRAY);
-            addComponentListener(new ComponentAdapter(){
-                /* (non-Javadoc)
-                 * @see java.awt.event.ComponentAdapter#componentResized(java.awt.event.ComponentEvent)
-                 */
-                @Override
-                public void componentResized(ComponentEvent e) {
-                    for (InfoSnippet f : getSnippets()) {
-                        relocate(f);
-                    }
-                    super.componentResized(e);
-                }
-            });
         }
         return dashBoardPanel;
     }
@@ -360,7 +360,6 @@ public class DashBoard extends EntryExtension {
     private void addFrame(Frame frame, boolean isNew) {
         InfoSnippet f = createInternalFrame(frame);
         getDashBoardPanel().add(f);
-        relocate(f);
         int zOrder = isNew ? 0 : frame.getZ();
         if (isNew) {
             try {
@@ -417,12 +416,13 @@ public class DashBoard extends EntryExtension {
             f.setTitle(frame.getTitle());
             Dimension minSize = f.getMinimumSize();
             if (frame.getContent() != null) {
-                int wpxValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getDashBoardPanel().getSize().getWidth() * frame.getX())));
-                int wpyValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getDashBoardPanel().getSize().getHeight() * frame.getY())));
-                int wwValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getDashBoardPanel().getSize().getWidth() * frame.getW())));
+                Dimension size = FrontEnd.getMainWindowSize();
+                int wpxValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (size.getWidth() * frame.getX())));
+                int wpyValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (size.getHeight() * frame.getY())));
+                int wwValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (size.getWidth() * frame.getW())));
                 if (wwValue < minSize.width)
                     wwValue = minSize.width;
-                int whValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getDashBoardPanel().getSize().getHeight() * frame.getH())));
+                int whValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (size.getHeight() * frame.getH())));
                 if (whValue < minSize.height)
                     whValue = minSize.height;
                 f.setLocation(wpxValue, wpyValue);

@@ -19,6 +19,7 @@ import java.awt.Window;
 import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
@@ -541,6 +542,14 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private static Collection<ComponentListener> mainWindowComponentListeners;
+    public static void addMainWindowComponentListener(ComponentListener l) {
+        if (mainWindowComponentListeners == null) {
+            mainWindowComponentListeners = new ArrayList<ComponentListener>();
+        }
+        mainWindowComponentListeners.add(l);
+    }
+    
     @SuppressWarnings("unchecked")
     private static void addEventListener(Map listeners, EventListener l) {
         if (listeners.get(l.getClass()) == null) {
@@ -635,8 +644,15 @@ public class FrontEnd extends JFrame {
             instance.applyPreferences(true);
             initTools();
             initTransferrers();
+            registerMainWindowComponentListeners();
         }
         return instance;
+    }
+    
+    private static void registerMainWindowComponentListeners() {
+        for (ComponentListener l : mainWindowComponentListeners) {
+            instance.addComponentListener(l);
+        }
     }
 
     private void applyPreferences() {
@@ -1101,6 +1117,11 @@ public class FrontEnd extends JFrame {
             getJToolBar3().remove(toolButt);
         }
         return hasButton;
+    }
+    
+    public static Dimension getMainWindowSize() {
+        if (instance == null) return null;
+        return instance.getSize();
     }
     
     public static Window getActiveWindow() {
