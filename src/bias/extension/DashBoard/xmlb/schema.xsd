@@ -5,13 +5,15 @@
 			<xs:sequence>
 				<xs:element name="frame" type="bias:frame" minOccurs="0" maxOccurs="unbounded"/>
 			</xs:sequence>
+		<xs:attribute name="h" type="xs:int" use="required"/>
+		<xs:attribute name="w" type="xs:int" use="required"/>
 		</xs:complexType>
 	</xs:element>
 	<xs:complexType name="frame">
-		<xs:attribute name="x" type="xs:int" use="required"/>
-		<xs:attribute name="y" type="xs:int" use="required"/>
-		<xs:attribute name="h" type="xs:int" use="required"/>
-		<xs:attribute name="w" type="xs:int" use="required"/>
+		<xs:attribute name="x" type="xs:float" use="required"/>
+		<xs:attribute name="y" type="xs:float" use="required"/>
+		<xs:attribute name="h" type="xs:float" use="required"/>
+		<xs:attribute name="w" type="xs:float" use="required"/>
 		<xs:attribute name="z" type="xs:int" use="required"/>
 		<xs:attribute name="type" type="bias:frameType" use="required"/>
 		<xs:attribute name="title" type="xs:string" use="optional"/>

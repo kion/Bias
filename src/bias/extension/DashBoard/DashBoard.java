@@ -29,6 +29,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDesktopPane;
 import javax.swing.JOptionPane;
 import javax.swing.JToolBar;
+import javax.swing.SwingUtilities;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 import javax.swing.plaf.basic.BasicInternalFrameUI;
@@ -118,17 +119,21 @@ public class DashBoard extends EntryExtension {
     }
 
     private void initialize() {
-        try {
-            if (getData() != null && getData().length != 0) {
-                Frames frames = (Frames) getUnmarshaller().unmarshal(new ByteArrayInputStream(getData()));
-                for (Frame frame : frames.getFrame()) {
-                    addFrame(frame, false);
+        SwingUtilities.invokeLater(new Runnable(){
+            public void run() {
+                try {
+                    if (getData() != null && getData().length != 0) {
+                        Frames frames = (Frames) getUnmarshaller().unmarshal(new ByteArrayInputStream(getData()));
+                        for (Frame frame : frames.getFrame()) {
+                            addFrame(frame, false);
+                        }
+                        restoreZOrders();
+                    }
+                } catch (JAXBException ex) {
+                    FrontEnd.displayErrorMessage("Failed to initialize!", ex);
                 }
-                restoreZOrders();
             }
-        } catch (JAXBException e) {
-            FrontEnd.displayErrorMessage("Failed to initialize!", e);
-        }
+        });
         settings = PropertiesUtils.deserializeProperties(getSettings());
     }
     
@@ -152,12 +157,14 @@ public class DashBoard extends EntryExtension {
     @Override
     public byte[] serializeData() throws Throwable {
         Frames frames = objFactory.createFrames();
+        frames.setW(getWidth());
+        frames.setH(getHeight());
         for (InfoSnippet f : getSnippets()) {
             Frame frame = new Frame();
-            frame.setX(f.getX());
-            frame.setY(f.getY());
-            frame.setW(f.getWidth());
-            frame.setH(f.getHeight());
+            frame.setX(((float) f.getX()) / ((float) getWidth()));
+            frame.setY(((float) f.getY()) / ((float) getHeight()));
+            frame.setW(((float) f.getWidth()) / ((float) getWidth()));
+            frame.setH(((float) f.getHeight()) / ((float) getHeight()));
             frame.setContent(f.serializeContent());
             frame.setSettings(f.serializeSettings());
             frame.setTitle(f.getTitle());
@@ -310,8 +317,14 @@ public class DashBoard extends EntryExtension {
             f.setTitle(frame.getTitle());
             Dimension minSize = f.getMinimumSize();
             if (frame.getContent() != null) {
-                f.setLocation(frame.getX(), frame.getY());
-                f.setSize(frame.getW(), frame.getH());
+                int wpxValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getWidth() * Double.valueOf(frame.getX()))));
+                int wpyValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getHeight() * Double.valueOf(frame.getY()))));
+                int wwValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getWidth() * Double.valueOf(frame.getW()))));
+                if (wwValue < minSize.width) wwValue = minSize.width;
+                int whValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getHeight() * Double.valueOf(frame.getH()))));
+                if (whValue < minSize.height) whValue = minSize.height;
+                f.setLocation(wpxValue, wpyValue);
+                f.setSize(wwValue, whValue);
             } else {
                 f.setLocation(0, 0);
                 f.setSize(minSize);
