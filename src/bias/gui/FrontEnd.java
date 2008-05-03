@@ -571,6 +571,7 @@ public class FrontEnd extends JFrame {
     private void initialize() {
         try {
             this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+            this.setMinimumSize(new Dimension(640, 480));
             this.setTitle(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppCoreVersion() + " ]");
             this.setIconImage(ICON_APP.getImage());
             this.setContentPane(getJContentPane());
