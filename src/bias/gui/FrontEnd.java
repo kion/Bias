@@ -807,7 +807,7 @@ public class FrontEnd extends JFrame {
             this.switchToVisualEntry(getJTabbedPane(), UUID.fromString(lsid), new LinkedList<Component>());
         }
         
-        // TODO [P3] would be nice to have window state (maximized: both/vert/horiz) restored on load
+        // TODO [P2] would be nice to have window state (maximized: both/vert/horiz) restored on load
         int wpxValue;
         int wpyValue;
         int wwValue;
@@ -816,8 +816,6 @@ public class FrontEnd extends JFrame {
         if (wpx == null) {
             wpxValue = getToolkit().getScreenSize().width / 4;
         } else {
-            getToolkit().getScreenSize().getWidth();
-            Double.valueOf(wpx);
             wpxValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getWidth() * Double.valueOf(wpx))));
         }
         String wpy = config.getProperty(Constants.PROPERTY_WINDOW_COORDINATE_Y);
@@ -830,7 +828,7 @@ public class FrontEnd extends JFrame {
         if (ww == null) {
             wwValue = (getToolkit().getScreenSize().width / 4) * 2;
         } else {
-            wwValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getHeight() * Double.valueOf(ww))));
+            wwValue = Math.round(Float.valueOf(Constants.EMPTY_STR + (getToolkit().getScreenSize().getWidth() * Double.valueOf(ww))));
         }
         String wh = config.getProperty(Constants.PROPERTY_WINDOW_HEIGHT);
         if (wh == null) {
@@ -1359,7 +1357,7 @@ public class FrontEnd extends JFrame {
         config.setProperty(Constants.PROPERTY_WINDOW_COORDINATE_Y, 
                 Constants.EMPTY_STR + getLocation().getY() / getToolkit().getScreenSize().getHeight());
         config.setProperty(Constants.PROPERTY_WINDOW_WIDTH, 
-                Constants.EMPTY_STR + getSize().getWidth() / getToolkit().getScreenSize().getHeight());
+                Constants.EMPTY_STR + getSize().getWidth() / getToolkit().getScreenSize().getWidth());
         config.setProperty(Constants.PROPERTY_WINDOW_HEIGHT, 
                 Constants.EMPTY_STR + getSize().getHeight() / getToolkit().getScreenSize().getHeight());
         config.setProperty(Constants.PROPERTY_SHOW_ALL_ONLINE_PACKS, 
