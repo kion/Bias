@@ -121,7 +121,7 @@ public class DashBoard extends EntryExtension {
 
     private void initialize() {
         settings = PropertiesUtils.deserializeProperties(getSettings());
-        // TODO [P1] snippet's location is not fully correctly restored (due to differences between stored and loaded root pane size values)
+        // FIXME [P1] snippet's location is not correctly restored (due to differences between stored and loaded root pane size values)
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 try {
