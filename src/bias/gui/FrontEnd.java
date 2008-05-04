@@ -542,14 +542,6 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private static Collection<ComponentListener> mainWindowComponentListeners;
-    public static void addMainWindowComponentListener(ComponentListener l) {
-        if (mainWindowComponentListeners == null) {
-            mainWindowComponentListeners = new ArrayList<ComponentListener>();
-        }
-        mainWindowComponentListeners.add(l);
-    }
-    
     @SuppressWarnings("unchecked")
     private static void addEventListener(Map listeners, EventListener l) {
         if (listeners.get(l.getClass()) == null) {
@@ -561,6 +553,25 @@ public class FrontEnd extends JFrame {
     private static void removeEventListener(Map listeners, EventListener l) {
         if (listeners != null) {
             listeners.remove(l.getClass());
+        }
+    }
+    
+    private static Collection<ComponentListener> mainWindowComponentListeners;
+    public static void addMainWindowComponentListener(ComponentListener l) {
+        if (mainWindowComponentListeners == null) {
+            mainWindowComponentListeners = new ArrayList<ComponentListener>();
+        }
+        if (instance != null) {
+            instance.addComponentListener(l);
+        } else {
+            mainWindowComponentListeners.add(l);
+        }
+    }
+    public static void removeMainWindowComponentListener(ComponentListener l) {
+        if (instance != null) {
+            instance.removeComponentListener(l);
+        } else if (mainWindowComponentListeners != null) {
+            mainWindowComponentListeners.remove(l);
         }
     }
     
