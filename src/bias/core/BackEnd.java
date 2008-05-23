@@ -928,7 +928,13 @@ public class BackEnd {
         metaData.setProperty(Constants.META_DATA_USERNAME, Constants.USERNAME);
         metaData.setProperty(Constants.META_DATA_TIMESTAMP, "" + System.currentTimeMillis());
         metaData.setProperty(Constants.META_DATA_FILESIZE, "" + file.length());
-        return new TransferData(FSUtils.readFile(file), metaData);
+        // read export data
+        byte[] tdata = FSUtils.readFile(file);
+        // clean-up export files
+        FSUtils.delete(exportDir);
+        FSUtils.delete(file);
+        // return export data structure
+        return new TransferData(tdata, metaData);
     }
     
     public void store() throws Exception {
