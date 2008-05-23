@@ -137,7 +137,7 @@ public class SimpleStats extends ToolExtension {
                 JLabel l = new JLabel("Disk Usage");
                 l.setForeground(new Color(0, 100, 0));
                 diskStatsPanel.add(l, BorderLayout.NORTH);
-                long size = FSUtils.getFileSize(Constants.ROOT_DIR);
+                long size = FSUtils.getFileSize(Constants.ROOT_DIR, Collections.singletonList(Constants.TMP_DIR.getName()));
                 String sizeStr = FormatUtils.formatByteSize(size);
                 JLabel ls = new JLabel(sizeStr);
                 diskStatsPanel.add(ls, BorderLayout.CENTER);

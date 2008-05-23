@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.util.List;
 
 /**
  * @author kion
@@ -100,15 +101,21 @@ public class FSUtils {
     }
     
     public static long getFileSize(File file) {
+        return getFileSize(file, null);
+    }
+    
+    public static long getFileSize(File file, List<String> excludeFileNamesList) {
         long size = 0;
         size += file.length();
         File[] files = file.listFiles();
         if (files != null) {
             for (File f : files) {
-                if (f.isDirectory()) {
-                    size += getFileSize(f);
-                } else {
-                    size += f.length();
+                if (excludeFileNamesList == null || !excludeFileNamesList.contains(f.getName())) {
+                    if (f.isDirectory()) {
+                        size += getFileSize(f, excludeFileNamesList);
+                    } else {
+                        size += f.length();
+                    }
                 }
             }
         }
