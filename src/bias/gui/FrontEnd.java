@@ -661,8 +661,10 @@ public class FrontEnd extends JFrame {
     }
     
     private static void registerMainWindowComponentListeners() {
-        for (ComponentListener l : mainWindowComponentListeners) {
-            instance.addComponentListener(l);
+        if (mainWindowComponentListeners != null) {
+            for (ComponentListener l : mainWindowComponentListeners) {
+                instance.addComponentListener(l);
+            }
         }
     }
 
