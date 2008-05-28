@@ -418,7 +418,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             public void actionPerformed(ActionEvent e) {
                 int idx = getExportActionsTable().getSelectedRow();
                 if (idx != -1) {
-                    getExportConfigs().remove(getExportActionsTable().getValueAt(idx, 0));
+                    getExportConfigs().get(getExportActionsTable().getValueAt(idx, 0)).remove(getExportActionsTable().getValueAt(idx, 1));
                     getExportConfigsModel().removeRow(idx);
                 }
             }
@@ -480,7 +480,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             public void actionPerformed(ActionEvent e) {
                 int idx = getImportActionsTable().getSelectedRow();
                 if (idx != -1) {
-                    getImportConfigs().remove(getImportActionsTable().getValueAt(idx, 0));
+                    getImportConfigs().get(getImportActionsTable().getValueAt(idx, 0)).remove(getImportActionsTable().getValueAt(idx, 1));
                     getImportConfigsModel().removeRow(idx);
                 }
             }
@@ -629,7 +629,10 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                     periods = new ArrayList<Long>();
                     getExportConfigs().put(cfg[0], periods);
                 }
-                periods.add(Long.valueOf(cfg[1]));
+                Long period = Long.valueOf(cfg[1]);
+                if (!periods.contains(period)) {
+                    periods.add(period);
+                }
             }
         }
         populateConfigsModel(getExportConfigsModel(), getExportConfigs(), INVOKATION_TYPE_ON_SAVE);
@@ -644,7 +647,10 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                     periods = new ArrayList<Long>();
                     getImportConfigs().put(cfg[0], periods);
                 }
-                periods.add(Long.valueOf(cfg[1]));
+                Long period = Long.valueOf(cfg[1]);
+                if (!periods.contains(period)) {
+                    periods.add(period);
+                }
             }
         }
         populateConfigsModel(getImportConfigsModel(), getImportConfigs(), INVOKATION_TYPE_ON_STARTUP);
