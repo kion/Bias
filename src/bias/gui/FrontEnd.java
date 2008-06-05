@@ -3616,12 +3616,12 @@ public class FrontEnd extends JFrame {
     public static void autoImport(final String configName, final boolean force, final boolean verbose) {
         if (instance != null) {
             JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
-            JLabel processLabel = verbose ? new JLabel(getMessage("importing.data") +  "('" + configName + "')...") : null;
+            JLabel processLabel = verbose ? new JLabel(getMessage("importing.data") +  " ('" + configName + "')...") : null;
             JLabel label = verbose ? new JLabel(getMessage("data.import")) : null;
             if (verbose) panel.add(processLabel, BorderLayout.CENTER);
             if (verbose) displayBottomPanel(label, panel);
             try {
-                instance.displayProcessNotification(getMessage("importing.data") + "('" + configName + "')...", false);
+                instance.displayProcessNotification(getMessage("importing.data") + " ('" + configName + "')...", false);
                 ImportConfiguration importConfig = BackEnd.getInstance().getPopulatedImportConfigurations().get(configName);
                 final TransferExtension transferrer = ExtensionFactory.getTransferExtension(importConfig.getTransferProvider());
                 if (transferrer == null) {
@@ -3639,7 +3639,7 @@ public class FrontEnd extends JFrame {
                     }
                 } else {
                     // ... if yes, do perform import
-                    instance.displayStatusBarProgressBar(getMessage("importing.data") + "('" + configName + "')...");
+                    instance.displayStatusBarProgressBar(getMessage("importing.data") + " ('" + configName + "')...");
                     if (metaBytes != null) {
                         Properties metaData = PropertiesUtils.deserializeProperties(metaBytes);
                         String sizeStr = metaData.getProperty(Constants.META_DATA_FILESIZE);
@@ -4139,12 +4139,12 @@ public class FrontEnd extends JFrame {
     public static void autoExport(final String configName, final boolean force, final boolean verbose) {
         if (instance != null) {
             JPanel panel = verbose ? new JPanel(new BorderLayout()) : null;
-            JLabel processLabel = verbose ? new JLabel(getMessage("exporting.data") + "('" + configName + "')...") : null;
+            JLabel processLabel = verbose ? new JLabel(getMessage("exporting.data") + " ('" + configName + "')...") : null;
             JLabel label = verbose ? new JLabel(getMessage("data.export")) : null;
             if (verbose) panel.add(processLabel, BorderLayout.CENTER);
             if (verbose) displayBottomPanel(label, panel);
             try {
-                instance.displayProcessNotification(getMessage("exporting.data") + "('" + configName + "')...", false);
+                instance.displayProcessNotification(getMessage("exporting.data") + " ('" + configName + "')...", false);
                 DataCategory data = instance.collectData();
                 final ExportConfiguration exportConfig = BackEnd.getInstance().getPopulatedExportConfigurations().get(configName);
                 if (!exportConfig.isExportAll()) {
@@ -4170,7 +4170,7 @@ public class FrontEnd extends JFrame {
                         }
                     } else {
                         // ... if yes, do perform export
-                        instance.displayStatusBarProgressBar(getMessage("exporting.data") + "('" + configName + "')...");
+                        instance.displayStatusBarProgressBar(getMessage("exporting.data") + " ('" + configName + "')...");
                         if (transferrer instanceof ObservableTransferExtension) {
                             instance.getStatusBarProgressBar().setMaximum(td.getData().length);
                             ((ObservableTransferExtension) transferrer).setListener(new TransferProgressListener(){
