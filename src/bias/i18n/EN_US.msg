@@ -36,8 +36,8 @@ caption == Caption
 type == Type
 add.category == Add category
 add.entry == Add entry
-adjust.category == Adjust Category
-adjust.entry == Adjust Entry
+category.properties == Category properties
+entry.properties == Entry properties
 configure.entry == Configure entry
 no.entry.extensions.installed == There're no entry extensions installed currently.<br/>Entries can't be added before there's at least one entry extension installed.
 add.category.failure == Failed to add category

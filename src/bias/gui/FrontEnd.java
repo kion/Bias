@@ -2550,7 +2550,7 @@ public class FrontEnd extends JFrame {
      */
     private JButton getJButton17() {
         if (jButton17 == null) {
-            jButton17 = new JButton(adjustCategoryAction);
+            jButton17 = new JButton(categoryPropertiesAction);
             jButton17.setText(Constants.EMPTY_STR);
         }
         return jButton17;
@@ -2563,7 +2563,7 @@ public class FrontEnd extends JFrame {
      */
     private JButton getJButton18() {
         if (jButton18 == null) {
-            jButton18 = new JButton(adjustEntryAction);
+            jButton18 = new JButton(entryPropertiesAction);
             jButton18.setText(Constants.EMPTY_STR);
         }
         return jButton18;
@@ -3082,92 +3082,96 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    private AdjustCategoryAction adjustCategoryAction = new AdjustCategoryAction();
-    private class AdjustCategoryAction extends AbstractAction {
+    private CategoryPropertiesAction categoryPropertiesAction = new CategoryPropertiesAction();
+    private class CategoryPropertiesAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         
-        public AdjustCategoryAction() {
-            putValue(Action.NAME, "adjustCategory");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("adjust.category"));
-            putValue(Action.SMALL_ICON, guiIcons.getIconAdjustCategory());
+        public CategoryPropertiesAction() {
+            putValue(Action.NAME, "categoryProperties");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("category.properties"));
+            putValue(Action.SMALL_ICON, guiIcons.getIconCategoryProperties());
         }
         
         public void actionPerformed(ActionEvent evt) {
-            try {
-                JLabel pLabel = new JLabel("Active cateogry tabs placement:");
-                JLabel rpLabel = new JLabel("Root category tabs placement:");
-                JComboBox placementsChooser = new JComboBox();
-                JComboBox rootPlacementsChooser = new JComboBox();
-                for (Placement placement : PLACEMENTS) {
-                    placementsChooser.addItem(placement);
-                    rootPlacementsChooser.addItem(placement);
-                }
-                for (int i = 0; i < placementsChooser.getItemCount(); i++) {
-                    if (((Placement) placementsChooser.getItemAt(i)).getInteger().equals(currentTabPane.getTabPlacement())) {
-                        placementsChooser.setSelectedIndex(i);
-                        break;
+            if (currentTabPane != null) {
+                try {
+                    JLabel pLabel = new JLabel("Active cateogry tabs placement:");
+                    JLabel rpLabel = new JLabel("Root category tabs placement:");
+                    JComboBox placementsChooser = new JComboBox();
+                    JComboBox rootPlacementsChooser = new JComboBox();
+                    for (Placement placement : PLACEMENTS) {
+                        placementsChooser.addItem(placement);
+                        rootPlacementsChooser.addItem(placement);
                     }
-                }
-                for (int i = 0; i < rootPlacementsChooser.getItemCount(); i++) {
-                    if (((Placement) rootPlacementsChooser.getItemAt(i)).getInteger().equals(getJTabbedPane().getTabPlacement())) {
-                        rootPlacementsChooser.setSelectedIndex(i);
-                        break;
+                    for (int i = 0; i < placementsChooser.getItemCount(); i++) {
+                        if (((Placement) placementsChooser.getItemAt(i)).getInteger().equals(currentTabPane.getTabPlacement())) {
+                            placementsChooser.setSelectedIndex(i);
+                            break;
+                        }
                     }
+                    for (int i = 0; i < rootPlacementsChooser.getItemCount(); i++) {
+                        if (((Placement) rootPlacementsChooser.getItemAt(i)).getInteger().equals(getJTabbedPane().getTabPlacement())) {
+                            rootPlacementsChooser.setSelectedIndex(i);
+                            break;
+                        }
+                    }
+                    int opt = JOptionPane.showConfirmDialog(
+                            FrontEnd.this, 
+                            new Component[]{ pLabel, placementsChooser, rpLabel, rootPlacementsChooser }, 
+                            "Category properties", 
+                            JOptionPane.OK_CANCEL_OPTION);
+                    if (opt == JOptionPane.OK_OPTION) {
+                        currentTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
+                        getJTabbedPane().setTabPlacement(((Placement) rootPlacementsChooser.getSelectedItem()).getInteger());
+                    }
+                } catch (Exception ex) {
+                    displayErrorMessage("Failed to set category properties!", ex);
                 }
-                int opt = JOptionPane.showConfirmDialog(
-                        FrontEnd.this, 
-                        new Component[]{ pLabel, placementsChooser, rpLabel, rootPlacementsChooser }, 
-                        "Category adjustment", 
-                        JOptionPane.OK_CANCEL_OPTION);
-                if (opt == JOptionPane.OK_OPTION) {
-                    currentTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
-                    getJTabbedPane().setTabPlacement(((Placement) rootPlacementsChooser.getSelectedItem()).getInteger());
-                }
-            } catch (Exception ex) {
-                displayErrorMessage("Failed to adjust category!", ex);
             }
         }
     };
     
-    private AdjustEntryAction adjustEntryAction = new AdjustEntryAction();
-    private class AdjustEntryAction extends AbstractAction {
+    private EntryPropertiesAction entryPropertiesAction = new EntryPropertiesAction();
+    private class EntryPropertiesAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         
-        public AdjustEntryAction() {
-            putValue(Action.NAME, "adjustEntry");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("adjust.entry"));
-            putValue(Action.SMALL_ICON, guiIcons.getIconAdjustEntry());
+        public EntryPropertiesAction() {
+            putValue(Action.NAME, "entryProperties");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("entry.properties"));
+            putValue(Action.SMALL_ICON, guiIcons.getIconEntryProperties());
         }
         
         public void actionPerformed(ActionEvent evt) {
-            try {
-                JLabel ecLabel = new JLabel("Entry's category (will be moved on change):");
-                JComboBox ecCB = new JComboBox();
-                ecCB.addItem(Constants.EMPTY_STR);
-                Map<UUID, VisualEntryDescriptor> veds = getCategoryDescriptors();
-                for (VisualEntryDescriptor veDescriptor : veds.values()) {
-                    ecCB.addItem(veDescriptor);
-                }
-                if (!Validator.isNullOrBlank(currentTabPane.getName())) {
-                    ecCB.setSelectedItem(veds.get(UUID.fromString(currentTabPane.getName())));
-                }
-                Object eCat = ecCB.getSelectedItem();
-                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, new Component[]{ ecLabel, ecCB }, "Entry adjustment", JOptionPane.OK_CANCEL_OPTION);
-                if (opt == JOptionPane.OK_OPTION) {
-                    if (!eCat.equals(ecCB.getSelectedItem())) {
-                        JTabbedPane sourcePane = getActiveTabPane();
-                        JTabbedPane destinationPane;
-                        if (ecCB.getSelectedItem().equals(Constants.EMPTY_STR)) {
-                            destinationPane = getJTabbedPane();
-                        } else {
-                            VisualEntryDescriptor ve = (VisualEntryDescriptor) ecCB.getSelectedItem();
-                            destinationPane = (JTabbedPane) getComponentById(ve.getEntry().getId());
-                        }
-                        TabMoveUtil.moveTab(sourcePane, sourcePane.getSelectedIndex(), destinationPane);
+            if (getSelectedExtensionEntry() != null) {
+                try {
+                    JLabel ecLabel = new JLabel("Entry's category (will be moved on change):");
+                    JComboBox ecCB = new JComboBox();
+                    ecCB.addItem(Constants.EMPTY_STR);
+                    Map<UUID, VisualEntryDescriptor> veds = getCategoryDescriptors();
+                    for (VisualEntryDescriptor veDescriptor : veds.values()) {
+                        ecCB.addItem(veDescriptor);
                     }
+                    if (!Validator.isNullOrBlank(currentTabPane.getName())) {
+                        ecCB.setSelectedItem(veds.get(UUID.fromString(currentTabPane.getName())));
+                    }
+                    Object eCat = ecCB.getSelectedItem();
+                    int opt = JOptionPane.showConfirmDialog(FrontEnd.this, new Component[]{ ecLabel, ecCB }, "Entry properties", JOptionPane.OK_CANCEL_OPTION);
+                    if (opt == JOptionPane.OK_OPTION) {
+                        if (!eCat.equals(ecCB.getSelectedItem())) {
+                            JTabbedPane sourcePane = getActiveTabPane();
+                            JTabbedPane destinationPane;
+                            if (ecCB.getSelectedItem().equals(Constants.EMPTY_STR)) {
+                                destinationPane = getJTabbedPane();
+                            } else {
+                                VisualEntryDescriptor ve = (VisualEntryDescriptor) ecCB.getSelectedItem();
+                                destinationPane = (JTabbedPane) getComponentById(ve.getEntry().getId());
+                            }
+                            TabMoveUtil.moveTab(sourcePane, sourcePane.getSelectedIndex(), destinationPane);
+                        }
+                    }
+                } catch (Exception ex) {
+                    displayErrorMessage("Failed to set entry properties!", ex);
                 }
-            } catch (Exception ex) {
-                displayErrorMessage("Failed to adjust entry!", ex);
             }
         }
     };

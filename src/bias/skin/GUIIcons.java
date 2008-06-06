@@ -20,9 +20,9 @@ public class GUIIcons {
     private static final ImageIcon ICON_EXPORT = new ImageIcon(GUIIcons.class.getResource("/bias/res/export.png"));
     private static final ImageIcon ICON_DELETE = new ImageIcon(GUIIcons.class.getResource("/bias/res/delete.png"));
     private static final ImageIcon ICON_CATEGORY = new ImageIcon(GUIIcons.class.getResource("/bias/res/add_category.png"));
-    private static final ImageIcon ICON_ADJUST_CATEGORY = new ImageIcon(GUIIcons.class.getResource("/bias/res/adjust_category.png"));
+    private static final ImageIcon ICON_CATEGORY_PROPERTIES = new ImageIcon(GUIIcons.class.getResource("/bias/res/category_properties.png"));
     private static final ImageIcon ICON_ENTRY = new ImageIcon(GUIIcons.class.getResource("/bias/res/add_entry.png"));
-    private static final ImageIcon ICON_ADJUST_ENTRY = new ImageIcon(GUIIcons.class.getResource("/bias/res/adjust_entry.png"));
+    private static final ImageIcon ICON_ENTRY_PROPERTIES = new ImageIcon(GUIIcons.class.getResource("/bias/res/entry_properties.png"));
     private static final ImageIcon ICON_CONFIGURE = new ImageIcon(GUIIcons.class.getResource("/bias/res/configure.png"));
     private static final ImageIcon ICON_CHANGE_PASSWORD = new ImageIcon(GUIIcons.class.getResource("/bias/res/change_password.png"));
     private static final ImageIcon ICON_SAVE = new ImageIcon(GUIIcons.class.getResource("/bias/res/save.png"));
@@ -41,9 +41,9 @@ public class GUIIcons {
     private ImageIcon iconSave;
     private ImageIcon iconImport;
     private ImageIcon iconExport;
-    private ImageIcon iconAdjustCategory;
+    private ImageIcon iconCategoryProperties;
     private ImageIcon iconCategory;
-    private ImageIcon iconAdjustEntry;
+    private ImageIcon iconEntryProperties;
     private ImageIcon iconConfigure;
     private ImageIcon iconEntry;
     private ImageIcon iconChangePassword;
@@ -69,9 +69,9 @@ public class GUIIcons {
         this.iconSave = ICON_SAVE;
         this.iconImport = ICON_IMPORT; 
         this.iconExport = ICON_EXPORT; 
-        this.iconAdjustCategory = ICON_ADJUST_CATEGORY; 
+        this.iconCategoryProperties = ICON_CATEGORY_PROPERTIES; 
         this.iconCategory = ICON_CATEGORY;
-        this.iconAdjustEntry = ICON_ADJUST_ENTRY; 
+        this.iconEntryProperties = ICON_ENTRY_PROPERTIES; 
         this.iconConfigure = ICON_CONFIGURE; 
         this.iconEntry = ICON_ENTRY;
         this.iconChangePassword = ICON_CHANGE_PASSWORD;
@@ -95,9 +95,9 @@ public class GUIIcons {
             ImageIcon iconImport, 
             ImageIcon iconExport, 
             ImageIcon iconCategory, 
-            ImageIcon iconAdjustCategory, 
+            ImageIcon iconCategoryProperties, 
             ImageIcon iconEntry, 
-            ImageIcon iconAdjustEntry, 
+            ImageIcon iconEntryProperties, 
             ImageIcon iconConfigure, 
             ImageIcon iconDelete,
             ImageIcon iconChangePassword,
@@ -117,9 +117,9 @@ public class GUIIcons {
         this.iconImport = iconImport;
         this.iconExport = iconExport;
         this.iconCategory = iconCategory;
-        this.iconAdjustCategory = iconAdjustCategory;
+        this.iconCategoryProperties = iconCategoryProperties;
         this.iconEntry = iconEntry;
-        this.iconAdjustEntry = iconAdjustEntry;
+        this.iconEntryProperties = iconEntryProperties;
         this.iconConfigure = iconConfigure;
         this.iconDelete = iconDelete;
         this.iconChangePassword = iconChangePassword;
@@ -281,20 +281,20 @@ public class GUIIcons {
         this.iconChangePassword = iconChangePassword;
     }
 
-    public ImageIcon getIconAdjustCategory() {
-        return iconAdjustCategory;
+    public ImageIcon getIconCategoryProperties() {
+        return iconCategoryProperties;
     }
 
-    public void setIconAdjustCategory(ImageIcon iconAdjustCategory) {
-        this.iconAdjustCategory = iconAdjustCategory;
+    public void setIconCategoryProperties(ImageIcon iconCategoryProperties) {
+        this.iconCategoryProperties = iconCategoryProperties;
     }
 
-    public ImageIcon getIconAdjustEntry() {
-        return iconAdjustEntry;
+    public ImageIcon getIconEntryProperties() {
+        return iconEntryProperties;
     }
 
-    public void setIconAdjustEntry(ImageIcon iconAdjustEntry) {
-        this.iconAdjustEntry = iconAdjustEntry;
+    public void setIconEntryProperties(ImageIcon iconEntryProperties) {
+        this.iconEntryProperties = iconEntryProperties;
     }
 
     public ImageIcon getIconConfigure() {
