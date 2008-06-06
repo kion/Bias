@@ -48,6 +48,10 @@ public class PlainText extends EntryExtension {
 
     private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(BackEnd.getInstance().getResourceURL(PlainText.class, "switch_mode.png"));
     
+    private static final ImageIcon ICON_INCREASE_FONT_SIZE = new ImageIcon(BackEnd.getInstance().getResourceURL(PlainText.class, "increase.png"));
+    
+    private static final ImageIcon ICON_DECREASE_FONT_SIZE = new ImageIcon(BackEnd.getInstance().getResourceURL(PlainText.class, "decrease.png"));
+    
     private static final String PROPERTY_FONT_SIZE = "FONT_SIZE";
     
     private static final int[] FONT_SIZES = new int[]{ 8, 10, 12, 14, 18, 24, 36 };
@@ -325,7 +329,7 @@ public class PlainText extends EntryExtension {
         if (jButton1 == null) {
             jButton1 = new JButton();
             jButton1.setToolTipText("increase font size");  
-            jButton1.setText("+");
+            jButton1.setIcon(ICON_INCREASE_FONT_SIZE);
             jButton1.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     getJButton2().setEnabled(true);
@@ -354,7 +358,7 @@ public class PlainText extends EntryExtension {
         if (jButton2 == null) {
             jButton2 = new JButton();
             jButton2.setToolTipText("decrease font size");  
-            jButton2.setText("-");
+            jButton2.setIcon(ICON_DECREASE_FONT_SIZE);
             jButton2.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
                     getJButton1().setEnabled(true);
