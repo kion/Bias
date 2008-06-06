@@ -41,6 +41,7 @@ entry.properties == Entry properties
 active.category.tabs.placement == Active category tabs placement
 root.category.tabs.placement == Root category tabs placement
 category.properties.set.error == Failed to set category properties!
+category.location == Category location (will be moved on change)
 entry.location == Entry location (will be moved on change)
 entry.properties.set.error == Failed to set entry properties!
 configure.entry == Configure entry

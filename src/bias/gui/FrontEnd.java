@@ -2102,7 +2102,7 @@ public class FrontEnd extends JFrame {
                 int index = tabbedPane.getSelectedIndex();
                 String caption = tabbedPane.getTitleAt(index);
                 
-                JLabel icLabel = new JLabel("Choose icon:");
+                JLabel icLabel = new JLabel(getMessage("icon"));
                 JComboBox iconChooser = new JComboBox();
                 iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
                 for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
@@ -2117,7 +2117,7 @@ public class FrontEnd extends JFrame {
                     	}
                     }
                 }
-                JLabel cLabel = new JLabel("Caption:");
+                JLabel cLabel = new JLabel(getMessage("caption"));
                 
                 caption = JOptionPane.showInputDialog(
                         FrontEnd.this, 
@@ -3098,7 +3098,7 @@ public class FrontEnd extends JFrame {
                     Collection<UUID> nestedCategoriesIds = getVisualEntriesIDs(currentTabPane);
                     JTabbedPane sourcePane = ((JTabbedPane) currentTabPane.getParent());
                     String activeTabPaneCaption = sourcePane.getTitleAt(sourcePane.getSelectedIndex());
-                    JLabel ecLabel = new JLabel(getMessage("entry.location"));
+                    JLabel ecLabel = new JLabel(getMessage("category.location"));
                     JComboBox ecCB = new JComboBox();
                     if (currentTabPane.getParent().getName() != null) {
                         ecCB.addItem(Constants.EMPTY_STR);
