@@ -3095,8 +3095,14 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             if (currentTabPane != null) {
                 try {
-                    Collection<UUID> nestedCategoriesIds = getVisualEntriesIDs(currentTabPane);
-                    JTabbedPane sourcePane = ((JTabbedPane) currentTabPane.getParent());
+                    Collection<UUID> nestedCategoriesIds = new ArrayList<UUID>();
+                    JTabbedPane sourcePane;
+                    if (currentTabPane.getName() == null) {
+                        sourcePane = currentTabPane;
+                    } else {
+                        sourcePane = ((JTabbedPane) currentTabPane.getParent());
+                        nestedCategoriesIds.addAll(getVisualEntriesIDs(currentTabPane));
+                    }
                     String activeTabPaneCaption = sourcePane.getTitleAt(sourcePane.getSelectedIndex());
                     JLabel ecLabel = new JLabel(getMessage("category.location"));
                     JComboBox ecCB = new JComboBox();
