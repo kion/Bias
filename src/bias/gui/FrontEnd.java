@@ -3095,8 +3095,8 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             if (currentTabPane != null) {
                 try {
-                    JLabel pLabel = new JLabel("Active cateogry tabs placement:");
-                    JLabel rpLabel = new JLabel("Root category tabs placement:");
+                    JLabel pLabel = new JLabel(getMessage("active.category.tabs.placement"));
+                    JLabel rpLabel = new JLabel(getMessage("root.category.tabs.placement"));
                     JComboBox placementsChooser = new JComboBox();
                     JComboBox rootPlacementsChooser = new JComboBox();
                     for (Placement placement : PLACEMENTS) {
@@ -3118,14 +3118,14 @@ public class FrontEnd extends JFrame {
                     int opt = JOptionPane.showConfirmDialog(
                             FrontEnd.this, 
                             new Component[]{ pLabel, placementsChooser, rpLabel, rootPlacementsChooser }, 
-                            "Category properties", 
+                            getMessage("category.properties"), 
                             JOptionPane.OK_CANCEL_OPTION);
                     if (opt == JOptionPane.OK_OPTION) {
                         currentTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
                         getJTabbedPane().setTabPlacement(((Placement) rootPlacementsChooser.getSelectedItem()).getInteger());
                     }
                 } catch (Exception ex) {
-                    displayErrorMessage("Failed to set category properties!", ex);
+                    displayErrorMessage(getMessage("category.properties.set.error"), ex);
                 }
             }
         }
@@ -3144,7 +3144,7 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             if (getSelectedExtensionEntry() != null) {
                 try {
-                    JLabel ecLabel = new JLabel("Entry's category (will be moved on change):");
+                    JLabel ecLabel = new JLabel(getMessage("entry.location"));
                     JComboBox ecCB = new JComboBox();
                     ecCB.addItem(Constants.EMPTY_STR);
                     Map<UUID, VisualEntryDescriptor> veds = getCategoryDescriptors();
@@ -3155,7 +3155,11 @@ public class FrontEnd extends JFrame {
                         ecCB.setSelectedItem(veds.get(UUID.fromString(currentTabPane.getName())));
                     }
                     Object eCat = ecCB.getSelectedItem();
-                    int opt = JOptionPane.showConfirmDialog(FrontEnd.this, new Component[]{ ecLabel, ecCB }, "Entry properties", JOptionPane.OK_CANCEL_OPTION);
+                    int opt = JOptionPane.showConfirmDialog(
+                            FrontEnd.this, 
+                            new Component[]{ ecLabel, ecCB }, 
+                            getMessage("entry.properties"), 
+                            JOptionPane.OK_CANCEL_OPTION);
                     if (opt == JOptionPane.OK_OPTION) {
                         if (!eCat.equals(ecCB.getSelectedItem())) {
                             JTabbedPane sourcePane = getActiveTabPane();
@@ -3170,7 +3174,7 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 } catch (Exception ex) {
-                    displayErrorMessage("Failed to set entry properties!", ex);
+                    displayErrorMessage(getMessage("entry.properties.set.error"), ex);
                 }
             }
         }
