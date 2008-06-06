@@ -3095,6 +3095,25 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             if (currentTabPane != null) {
                 try {
+                    Collection<UUID> nestedCategoriesIds = getVisualEntriesIDs(currentTabPane);
+                    JTabbedPane sourcePane = ((JTabbedPane) currentTabPane.getParent());
+                    String activeTabPaneCaption = sourcePane.getTitleAt(sourcePane.getSelectedIndex());
+                    JLabel ecLabel = new JLabel(getMessage("entry.location"));
+                    JComboBox ecCB = new JComboBox();
+                    if (currentTabPane.getParent().getName() != null) {
+                        ecCB.addItem(Constants.EMPTY_STR);
+                        nestedCategoriesIds.add(UUID.fromString(currentTabPane.getParent().getName()));
+                    }
+                    Map<UUID, VisualEntryDescriptor> veds = getCategoryDescriptors();
+                    for (VisualEntryDescriptor veDescriptor : veds.values()) {
+                        if (!nestedCategoriesIds.contains(veDescriptor.getEntry().getId())) {
+                            ecCB.addItem(veDescriptor);
+                        }
+                    }
+                    if (!Validator.isNullOrBlank(currentTabPane.getParent().getName())) {
+                        ecCB.setSelectedItem(veds.get(UUID.fromString(currentTabPane.getParent().getName())));
+                    }
+                    Object eCat = ecCB.getSelectedItem();
                     JLabel pLabel = new JLabel(getMessage("active.category.tabs.placement"));
                     JLabel rpLabel = new JLabel(getMessage("root.category.tabs.placement"));
                     JComboBox placementsChooser = new JComboBox();
@@ -3117,12 +3136,22 @@ public class FrontEnd extends JFrame {
                     }
                     int opt = JOptionPane.showConfirmDialog(
                             FrontEnd.this, 
-                            new Component[]{ pLabel, placementsChooser, rpLabel, rootPlacementsChooser }, 
-                            getMessage("category.properties"), 
+                            new Component[]{ ecLabel, ecCB , pLabel, placementsChooser, rpLabel, rootPlacementsChooser }, 
+                            getMessage("category.properties") + " :: " + activeTabPaneCaption, 
                             JOptionPane.OK_CANCEL_OPTION);
                     if (opt == JOptionPane.OK_OPTION) {
                         currentTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
                         getJTabbedPane().setTabPlacement(((Placement) rootPlacementsChooser.getSelectedItem()).getInteger());
+                        if (eCat != null && !eCat.equals(ecCB.getSelectedItem())) {
+                            JTabbedPane destinationPane;
+                            if (ecCB.getSelectedItem().equals(Constants.EMPTY_STR)) {
+                                destinationPane = getJTabbedPane();
+                            } else {
+                                VisualEntryDescriptor ve = (VisualEntryDescriptor) ecCB.getSelectedItem();
+                                destinationPane = (JTabbedPane) getComponentById(ve.getEntry().getId());
+                            }
+                            TabMoveUtil.moveTab(sourcePane, sourcePane.getSelectedIndex(), destinationPane);
+                        }
                     }
                 } catch (Exception ex) {
                     displayErrorMessage(getMessage("category.properties.set.error"), ex);
@@ -3158,7 +3187,7 @@ public class FrontEnd extends JFrame {
                     int opt = JOptionPane.showConfirmDialog(
                             FrontEnd.this, 
                             new Component[]{ ecLabel, ecCB }, 
-                            getMessage("entry.properties"), 
+                            getMessage("entry.properties") + " :: " + getSelectedVisualEntryCaption(), 
                             JOptionPane.OK_CANCEL_OPTION);
                     if (opt == JOptionPane.OK_OPTION) {
                         if (!eCat.equals(ecCB.getSelectedItem())) {
