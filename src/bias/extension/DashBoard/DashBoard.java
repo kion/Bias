@@ -227,7 +227,7 @@ public class DashBoard extends EntryExtension {
 
     private JButton getConfigButton() {
         if (configButt == null) {
-            configButt = new JButton(FrontEnd.getGUIIcons().getIconConfigure());
+            configButt = new JButton(FrontEnd.getGUIIcons().getIconConfigureEntry());
             configButt.setText(Constants.EMPTY_STR);
             configButt.setToolTipText("Configure snippet");
             configButt.addActionListener(new ActionListener() {

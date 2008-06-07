@@ -1712,7 +1712,10 @@ public class FrontEnd extends JFrame {
     }
 
     public static String getSelectedVisualEntryCaption() {
-        return instance.getSelectedVisualEntryCaption(instance.getJTabbedPane());
+        if (instance != null) {
+            return instance.getSelectedVisualEntryCaption(instance.getJTabbedPane());
+        }
+        return null;
     }
 
     private String getSelectedVisualEntryCaption(JTabbedPane tabPane) {
@@ -1935,8 +1938,11 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    private JTabbedPane getActiveTabPane() {
-        return getActiveTabPane(getJTabbedPane());
+    public static JTabbedPane getActiveTabPane() {
+        if (instance != null) {
+            return instance.getActiveTabPane(instance.getJTabbedPane());
+        }
+        return null;
     }
     
     private JTabbedPane getActiveTabPane(JTabbedPane rootTabPane) {
@@ -2503,8 +2509,8 @@ public class FrontEnd extends JFrame {
             jToolBar.add(getJButton4());
             jToolBar.add(getJButton17());
             jToolBar.add(getJButton5());
-            jToolBar.add(getJButton18());
             jToolBar.add(getJButton19());
+            jToolBar.add(getJButton18());
             jToolBar.add(getJButton1());
             jToolBar.addSeparator();
             jToolBar.add(getJButton11());
@@ -2550,7 +2556,7 @@ public class FrontEnd extends JFrame {
      */
     private JButton getJButton17() {
         if (jButton17 == null) {
-            jButton17 = new JButton(categoryPropertiesAction);
+            jButton17 = new JButton(configCategoryAction);
             jButton17.setText(Constants.EMPTY_STR);
         }
         return jButton17;
@@ -2563,7 +2569,7 @@ public class FrontEnd extends JFrame {
      */
     private JButton getJButton18() {
         if (jButton18 == null) {
-            jButton18 = new JButton(entryPropertiesAction);
+            jButton18 = new JButton(relocateEntryOrCategoryAction);
             jButton18.setText(Constants.EMPTY_STR);
         }
         return jButton18;
@@ -3082,44 +3088,19 @@ public class FrontEnd extends JFrame {
         }
     };
 
-    private CategoryPropertiesAction categoryPropertiesAction = new CategoryPropertiesAction();
-    private class CategoryPropertiesAction extends AbstractAction {
+    private ConfigCategoryAction configCategoryAction = new ConfigCategoryAction();
+    private class ConfigCategoryAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
         
-        public CategoryPropertiesAction() {
-            putValue(Action.NAME, "categoryProperties");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("category.properties"));
-            putValue(Action.SMALL_ICON, guiIcons.getIconCategoryProperties());
+        public ConfigCategoryAction() {
+            putValue(Action.NAME, "configCategory");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("configure.category"));
+            putValue(Action.SMALL_ICON, guiIcons.getIconConfigureCategory());
         }
         
         public void actionPerformed(ActionEvent evt) {
             if (currentTabPane != null) {
                 try {
-                    Collection<UUID> nestedCategoriesIds = new ArrayList<UUID>();
-                    JTabbedPane sourcePane;
-                    if (currentTabPane.getName() == null) {
-                        sourcePane = currentTabPane;
-                    } else {
-                        sourcePane = ((JTabbedPane) currentTabPane.getParent());
-                        nestedCategoriesIds.addAll(getVisualEntriesIDs(currentTabPane));
-                    }
-                    String activeTabPaneCaption = sourcePane.getTitleAt(sourcePane.getSelectedIndex());
-                    JLabel ecLabel = new JLabel(getMessage("category.location"));
-                    JComboBox ecCB = new JComboBox();
-                    if (currentTabPane.getParent().getName() != null) {
-                        ecCB.addItem(Constants.EMPTY_STR);
-                        nestedCategoriesIds.add(UUID.fromString(currentTabPane.getParent().getName()));
-                    }
-                    Map<UUID, VisualEntryDescriptor> veds = getCategoryDescriptors();
-                    for (VisualEntryDescriptor veDescriptor : veds.values()) {
-                        if (!nestedCategoriesIds.contains(veDescriptor.getEntry().getId())) {
-                            ecCB.addItem(veDescriptor);
-                        }
-                    }
-                    if (!Validator.isNullOrBlank(currentTabPane.getParent().getName())) {
-                        ecCB.setSelectedItem(veds.get(UUID.fromString(currentTabPane.getParent().getName())));
-                    }
-                    Object eCat = ecCB.getSelectedItem();
                     JLabel pLabel = new JLabel(getMessage("active.category.tabs.placement"));
                     JLabel rpLabel = new JLabel(getMessage("root.category.tabs.placement"));
                     JComboBox placementsChooser = new JComboBox();
@@ -3142,79 +3123,20 @@ public class FrontEnd extends JFrame {
                     }
                     int opt = JOptionPane.showConfirmDialog(
                             FrontEnd.this, 
-                            new Component[]{ ecLabel, ecCB , pLabel, placementsChooser, rpLabel, rootPlacementsChooser }, 
-                            getMessage("category.properties") + " :: " + activeTabPaneCaption, 
+                            new Component[]{ pLabel, placementsChooser, rpLabel, rootPlacementsChooser }, 
+                            getMessage("configure.category"), 
                             JOptionPane.OK_CANCEL_OPTION);
                     if (opt == JOptionPane.OK_OPTION) {
                         currentTabPane.setTabPlacement(((Placement) placementsChooser.getSelectedItem()).getInteger());
                         getJTabbedPane().setTabPlacement(((Placement) rootPlacementsChooser.getSelectedItem()).getInteger());
-                        if (eCat != null && !eCat.equals(ecCB.getSelectedItem())) {
-                            JTabbedPane destinationPane;
-                            if (ecCB.getSelectedItem().equals(Constants.EMPTY_STR)) {
-                                destinationPane = getJTabbedPane();
-                            } else {
-                                VisualEntryDescriptor ve = (VisualEntryDescriptor) ecCB.getSelectedItem();
-                                destinationPane = (JTabbedPane) getComponentById(ve.getEntry().getId());
-                            }
-                            TabMoveUtil.moveTab(sourcePane, sourcePane.getSelectedIndex(), destinationPane);
-                        }
                     }
                 } catch (Exception ex) {
-                    displayErrorMessage(getMessage("category.properties.set.error"), ex);
+                    displayErrorMessage(getMessage("category.configuration.error"), ex);
                 }
             }
         }
     };
     
-    private EntryPropertiesAction entryPropertiesAction = new EntryPropertiesAction();
-    private class EntryPropertiesAction extends AbstractAction {
-        private static final long serialVersionUID = 1L;
-        
-        public EntryPropertiesAction() {
-            putValue(Action.NAME, "entryProperties");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("entry.properties"));
-            putValue(Action.SMALL_ICON, guiIcons.getIconEntryProperties());
-        }
-        
-        public void actionPerformed(ActionEvent evt) {
-            if (getSelectedExtensionEntry() != null) {
-                try {
-                    JLabel ecLabel = new JLabel(getMessage("entry.location"));
-                    JComboBox ecCB = new JComboBox();
-                    ecCB.addItem(Constants.EMPTY_STR);
-                    Map<UUID, VisualEntryDescriptor> veds = getCategoryDescriptors();
-                    for (VisualEntryDescriptor veDescriptor : veds.values()) {
-                        ecCB.addItem(veDescriptor);
-                    }
-                    if (!Validator.isNullOrBlank(currentTabPane.getName())) {
-                        ecCB.setSelectedItem(veds.get(UUID.fromString(currentTabPane.getName())));
-                    }
-                    Object eCat = ecCB.getSelectedItem();
-                    int opt = JOptionPane.showConfirmDialog(
-                            FrontEnd.this, 
-                            new Component[]{ ecLabel, ecCB }, 
-                            getMessage("entry.properties") + " :: " + getSelectedVisualEntryCaption(), 
-                            JOptionPane.OK_CANCEL_OPTION);
-                    if (opt == JOptionPane.OK_OPTION) {
-                        if (!eCat.equals(ecCB.getSelectedItem())) {
-                            JTabbedPane sourcePane = getActiveTabPane();
-                            JTabbedPane destinationPane;
-                            if (ecCB.getSelectedItem().equals(Constants.EMPTY_STR)) {
-                                destinationPane = getJTabbedPane();
-                            } else {
-                                VisualEntryDescriptor ve = (VisualEntryDescriptor) ecCB.getSelectedItem();
-                                destinationPane = (JTabbedPane) getComponentById(ve.getEntry().getId());
-                            }
-                            TabMoveUtil.moveTab(sourcePane, sourcePane.getSelectedIndex(), destinationPane);
-                        }
-                    }
-                } catch (Exception ex) {
-                    displayErrorMessage(getMessage("entry.properties.set.error"), ex);
-                }
-            }
-        }
-    };
-
     private ConfigEntryAction configEntryAction = new ConfigEntryAction();
     private class ConfigEntryAction extends AbstractAction {
         private static final long serialVersionUID = 1L;
@@ -3222,7 +3144,7 @@ public class FrontEnd extends JFrame {
         public ConfigEntryAction() {
             putValue(Action.NAME, "configEntry");
             putValue(Action.SHORT_DESCRIPTION, getMessage("configure.entry"));
-            putValue(Action.SMALL_ICON, guiIcons.getIconConfigure());
+            putValue(Action.SMALL_ICON, guiIcons.getIconConfigureEntry());
         }
         
         public void actionPerformed(ActionEvent evt) {
@@ -3255,10 +3177,93 @@ public class FrontEnd extends JFrame {
                     }
                 }
             } catch (Throwable t) {
-                displayErrorMessage("Failed to configure/apply/store entry settings! " + CommonUtils.getFailureDetails(t), t);
+                displayErrorMessage(getMessage("entry.configuration.error") + Constants.BLANK_STR + CommonUtils.getFailureDetails(t), t);
             }
         }
     };
+
+    private RelocateEntryOrCategoryAction relocateEntryOrCategoryAction = new RelocateEntryOrCategoryAction();
+    private class RelocateEntryOrCategoryAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public RelocateEntryOrCategoryAction() {
+            putValue(Action.NAME, "relocateEntryOrCategory");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("relocate.entry.or.category"));
+            putValue(Action.SMALL_ICON, guiIcons.getIconRelocate());
+        }
+        
+        public void actionPerformed(ActionEvent evt) {
+            try {
+                UUID activeItemId = getSelectedVisualEntryID();
+                JLabel sourceL = new JLabel("Relocated item");
+                JComboBox sourceCB = new JComboBox();
+                Map<UUID, VisualEntryDescriptor> veds = getVisualEntryDescriptors();
+                for (VisualEntryDescriptor veDescriptor : veds.values()) {
+                    sourceCB.addItem(veDescriptor);
+                    if (activeItemId != null && veDescriptor.getEntry().getId().equals(activeItemId)) {
+                        sourceCB.setSelectedItem(veDescriptor);
+                    }
+                }
+
+                JLabel targetL = new JLabel("Target category");
+                final JComboBox targetCB = new JComboBox();
+                VisualEntryDescriptor ved = (VisualEntryDescriptor) sourceCB.getSelectedItem();
+                populateRelocationTargetComboBox(targetCB, ved.getEntry().getId(), ved.getEntryType());
+                
+                sourceCB.addItemListener(new ItemListener(){
+                    public void itemStateChanged(ItemEvent e) {
+                        if (ItemEvent.SELECTED == e.getStateChange()) {
+                            VisualEntryDescriptor ved = (VisualEntryDescriptor) e.getItem();
+                            populateRelocationTargetComboBox(targetCB, ved.getEntry().getId(), ved.getEntryType());
+                        }
+                    }
+                });
+
+                int opt = JOptionPane.showConfirmDialog(
+                        FrontEnd.this, 
+                        new Component[]{ sourceL, sourceCB, targetL, targetCB }, 
+                        getMessage("relocate.entry.or.category"), 
+                        JOptionPane.OK_CANCEL_OPTION);
+                if (opt == JOptionPane.OK_OPTION) {
+                    JTabbedPane dstTabPane;
+                    if (Validator.isNullOrBlank(targetCB.getSelectedItem())) {
+                        dstTabPane = getJTabbedPane();
+                    } else {
+                        dstTabPane = (JTabbedPane) getComponentById(((VisualEntryDescriptor) targetCB.getSelectedItem()).getEntry().getId());
+                    }
+                    Component cmp = getComponentById(((VisualEntryDescriptor) sourceCB.getSelectedItem()).getEntry().getId());
+                    JTabbedPane srcTabPane = (JTabbedPane) cmp.getParent();
+                    for (int i = 0; i < srcTabPane.getTabCount(); i++) {
+                        if (srcTabPane.getComponent(i).equals(cmp)) {
+                            TabMoveUtil.moveTab(srcTabPane, i, dstTabPane);
+                            break;
+                        }
+                    }
+                }
+
+            } catch (Exception ex) {
+                displayErrorMessage(getMessage("relocate.failed"), ex);
+            }
+        }
+    };
+    
+    private void populateRelocationTargetComboBox(JComboBox targetCB, UUID sourceComponentId, ENTRY_TYPE type) {
+        Component cmp = getComponentById(sourceComponentId);
+        Collection<UUID> skipCategoriesIds = new ArrayList<UUID>();
+        if (ENTRY_TYPE.CATEGORY == type) {
+            skipCategoriesIds.addAll(getVisualEntriesIDs((JTabbedPane) cmp));
+        }
+        if (cmp.getParent().getName() != null) {
+            targetCB.addItem(Constants.EMPTY_STR);
+            skipCategoriesIds.add(UUID.fromString(cmp.getParent().getName()));
+        }
+        Map<UUID, VisualEntryDescriptor> veds = getCategoryDescriptors();
+        for (VisualEntryDescriptor veDescriptor : veds.values()) {
+            if (!skipCategoriesIds.contains(veDescriptor.getEntry().getId())) {
+                targetCB.addItem(veDescriptor);
+            }
+        }
+    }
 
     private DeleteAction deleteEntryOrCategoryAction = new DeleteAction();
     private class DeleteAction extends AbstractAction {

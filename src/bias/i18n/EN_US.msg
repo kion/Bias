@@ -36,15 +36,15 @@ caption == Caption
 type == Type
 add.category == Add category
 add.entry == Add entry
-category.properties == Category properties
-entry.properties == Entry properties
+configure.category == Configure category
 active.category.tabs.placement == Active category tabs placement
 root.category.tabs.placement == Root category tabs placement
-category.properties.set.error == Failed to set category properties!
-category.location == Category location (will be moved on change)
+category.configuration.error == Failed to set category properties!
 entry.location == Entry location (will be moved on change)
-entry.properties.set.error == Failed to set entry properties!
 configure.entry == Configure entry
+entry.configuration.error == Failed to configure/apply/store entry settings!
+relocate.entry.or.category == Relocate entry/category
+relocate.failed == Failed to relocate entry/category
 no.entry.extensions.installed == There're no entry extensions installed currently.<br/>Entries can't be added before there's at least one entry extension installed.
 add.category.failure == Failed to add category
 add.entry.failure == Failed to add entry.<br/>Some entry extension(s) may be broken.<br/>Try to open add-ons management dialog, <br/>and uninstall/reinstall broken extensions.
