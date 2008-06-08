@@ -193,10 +193,10 @@ public class FrontEnd extends JFrame {
     
     private static final long serialVersionUID = 1L;
     
-    private static final String DEFAULT_SKIN = "DefaultSkin";
-
     private static final Map<String, String> MESSAGES = I18nService.getInstance().getMessages();
     
+    private static final String DEFAULT_SKIN = "DefaultSkin";
+
     // TODO [P2] implement language-selection-on-first-start feature (or, maybe, choose language automatically based on default system locale ?...) 
     private static final String LOCALE = I18nService.getInstance().getLanguageLocale(Preferences.getInstance().preferredLanguage);
     
