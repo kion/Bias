@@ -1066,15 +1066,9 @@ public class FrontEnd extends JFrame {
                 }
             } catch (Throwable t) {
                 displayErrorMessage(
-                        Constants.HTML_PREFIX + "Extension <i>" + extName + "</i> failed to serialize settings!<br/>" +
-                        "Settings that have failed to serialize will be lost! :(<br/>" + 
-                        "This the most likely is an extension's bug or 3rd-party library dependency problem.<br/>" +
-                        "You can either:<br/>" +
-                            "<ul><li>check for new version of extension (the bug may be fixed in new version)</li>" +
-                            "<li>check whether all 3rd-party libraries extension depends on are installed</li>" +
-                            "<li>uninstall extension to avoid further instability and data loss</li>" + 
-                            "<li>contact extension's author for further help</li>" +
-                            "</ul>" + Constants.HTML_SUFFIX, t);
+                        Constants.HTML_PREFIX + 
+                        getMessage("error.message.extension.settings.serialization.failure", extName) + 
+                        Constants.HTML_SUFFIX, t);
             }
         }
     }
@@ -1443,29 +1437,17 @@ public class FrontEnd extends JFrame {
                         serializedData = extension.serializeData();
                     } catch (Throwable t) {
                         displayErrorMessage(
-                                Constants.HTML_PREFIX + "Extension <i>" + extension.getClass().getSimpleName() + "</i> failed to serialize data!<br/>" +
-                                "Data that have failed to serialize will be lost! :(<br/>" + 
-                                "This the most likely is an extension's bug or 3rd-party library dependency problem.<br/>" +
-                                "You can either:<br/>" +
-                                    "<ul><li>check for new version of extension (the bug may be fixed in new version)</li>" +
-                                    "<li>check whether all 3rd-party libraries extension depends on are installed</li>" +
-                                    "<li>uninstall extension to avoid further instability and data loss</li>" + 
-                                    "<li>contact extension's author for further help</li>" +
-                                    "</ul>" + Constants.HTML_SUFFIX, t);
+                                Constants.HTML_PREFIX + 
+                                getMessage("error.message.extension.data.serialization.failure", extension.getClass().getSimpleName()) +
+                                Constants.HTML_SUFFIX, t);
                     }
                     try {
                         serializedSettings = extension.serializeSettings();
                     } catch (Throwable t) {
                         displayErrorMessage(
-                                Constants.HTML_PREFIX + "Extension <i>" + extension.getClass().getSimpleName() + "</i> failed to serialize settings!<br/>" +
-                                "Settings that have failed to serialize will be lost! :(<br/>" + 
-                                "This the most likely is an extension's bug or 3rd-party library dependency problem.<br/>" +
-                                "You can either:<br/>" +
-                                    "<ul><li>check for new version of extension (the bug may be fixed in new version)</li>" +
-                                    "<li>check whether all 3rd-party libraries extension depends on are installed</li>" +
-                                    "<li>uninstall extension to avoid further instability and data loss</li>" + 
-                                    "<li>contact extension's author for further help</li>" +
-                                    "</ul>" + Constants.HTML_SUFFIX, t);
+                                Constants.HTML_PREFIX + 
+                                getMessage("error.message.extension.settings.serialization.failure", extension.getClass().getSimpleName()) +
+                                Constants.HTML_SUFFIX, t);
                     }
                 }
                 DataEntry dataEntry;

@@ -131,6 +131,8 @@ auto.update.disable.note == Note: automatic update can be disabled via preferenc
 auto.update.adjust.interval.note == Note:update interval can be adjusted via preferences option 'Automatic update interval'
 info.message.restart.to.apply.changes == Bias should be restarted to changes take effect
 info.message.entry.extension.first.usage == This is first time you use '$' entry extension.<br>Please, configure extension's default settings...
+error.message.extension.settings.serialization.failure == Extension <i>$</i> failed to serialize settings!<br/>Settings that have failed to serialize will be lost! :(<br/>This the most likely is an extension's bug or 3rd-party library dependency problem.<br/>You can either:<br/><ul><li>check for new version of extension (the bug may be fixed in new version)</li><li>check whether all 3rd-party libraries extension depends on are installed</li><li>uninstall extension to avoid further instability and data loss</li><li>contact extension's author for further help</li></ul>
+error.message.extension.data.serialization.failure == Extension <i>$</i> failed to serialize data!<br/>Settings that have failed to serialize will be lost! :(<br/>This the most likely is an extension's bug or 3rd-party library dependency problem.<br/>You can either:<br/><ul><li>check for new version of extension (the bug may be fixed in new version)</li><li>check whether all 3rd-party libraries extension depends on are installed</li><li>uninstall extension to avoid further instability and data loss</li><li>contact extension's author for further help</li></ul>
 exit == Exit
 about == About Bias
 manage.addons == Manage add-ons
