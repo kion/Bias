@@ -1078,7 +1078,7 @@ public class FrontEnd extends JFrame {
         try {
             eeClass.getDeclaredMethod("configure", byte[].class);
             isConfigurable = true;
-        } catch (NoSuchMethodException nsme1) {
+        } catch (NoSuchMethodException nsme) {
             // there's no configuration method for the extension class
         }
         return isConfigurable;
