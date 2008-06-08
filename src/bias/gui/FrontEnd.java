@@ -991,7 +991,7 @@ public class FrontEnd extends JFrame {
                     if (addOnsManagementDialog != null) SwingUtilities.updateComponentTreeUI(addOnsManagementDialog);
                     skinChanged = false;
                 } else {
-                    displayMessage("Bias should be restarted to changes take effect.");
+                    displayMessage(getMessage("info.message.restart.to.apply.changes"));
                 }
             }
         } else if (currentSkin != null) {
@@ -1048,9 +1048,7 @@ public class FrontEnd extends JFrame {
                     }
                     if (showFirstTimeUsageMessage) {
                         if (isEntryExtensionConfigurable((Class<? extends EntryExtension>) extensionClass)) {
-                            displayMessage(
-                                    "This is first time you use '" + extName + "' entry extension." + Constants.NEW_LINE +
-                                    "Please, configure extension's default settings...");
+                            displayMessage(getMessage("info.message.entry.extension.first.usage", extName));
                         }
                     }
                     settings = ((EntryExtension) extensionInstance).configure(extSettings);

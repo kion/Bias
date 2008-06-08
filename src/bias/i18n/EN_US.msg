@@ -129,6 +129,8 @@ info.message.launcher.updated == Important! Bias launcher has been updated.<br/>
 info.message.auto.update.complete == Automatic update complete
 auto.update.disable.note == Note: automatic update can be disabled via preferences option 'Enable automatic update'
 auto.update.adjust.interval.note == Note:update interval can be adjusted via preferences option 'Automatic update interval'
+info.message.restart.to.apply.changes == Bias should be restarted to changes take effect
+info.message.entry.extension.first.usage == This is first time you use '$' entry extension.<br>Please, configure extension's default settings...
 exit == Exit
 about == About Bias
 manage.addons == Manage add-ons
