@@ -126,6 +126,9 @@ confirmation.uninstall.title == Uninstall confirmation
 confirmation.uninstall.message == Are you sure you want to uninstall selected add-ons?
 confirmation.disable.note == Note: this dialog can be disabled via preferences option
 info.message.launcher.updated == Important! Bias launcher has been updated.<br/>Though, such update can not be applied automatically.<br/>To apply it, you have to shutdown Bias, replace <b><i>bias.jar<i></b> file with <b><i>update_bias.jar<i></b> (in working directory) and then start Bias again.
+info.message.auto.update.complete == Automatic update complete
+auto.update.disable.note == Note: automatic update can be disabled via preferences option 'Enable automatic update'
+auto.update.adjust.interval.note == Note:update interval can be adjusted via preferences option 'Automatic update interval'
 exit == Exit
 about == About Bias
 manage.addons == Manage add-ons
@@ -136,4 +139,5 @@ history.forward == Forward
 history.forward.to.last == Forward to last
 running.tasks.wait == Some tasks are still running, please wait them to finish...
 running.tasks.force.exit == Force exit (all incomplete tasks will be aborted)
+error.data.load.failure == Failed to load data!
 memory.usage == Memory Usage: $ of $ Mb

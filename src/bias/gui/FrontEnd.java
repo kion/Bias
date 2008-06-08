@@ -814,14 +814,12 @@ public class FrontEnd extends JFrame {
         } catch (GeneralSecurityException gse) {
             Splash.hideSplash();
             displayErrorMessage(
-                    "Bias has failed to load data!" + Constants.NEW_LINE +
+                    getMessage("error.data.load.failure") + Constants.NEW_LINE +
                     getMessage("wrong.password"), gse);
             BackEnd.getInstance().shutdown(-1);
         } catch (Throwable t) {
             Splash.hideSplash();
-            displayErrorMessage(
-                    "Bias has failed to load data!" + Constants.NEW_LINE +
-                    "Terminating...", t);
+            displayErrorMessage(getMessage("error.data.load.failure"), t);
             BackEnd.getInstance().shutdown(-1);
         }
     }
@@ -878,9 +876,13 @@ public class FrontEnd extends JFrame {
             // inform user about update complete
             JOptionPane.showMessageDialog(
                     getActiveWindow(), 
-                    Constants.HTML_PREFIX + "Automatic update complete<br/><br/>" +
-                    "<i>(Note: automatic update can be disabled via preferences option 'Enable automatic update',<br>" +
-                    "update interval can be adjusted via preferences option 'Automatic update interval')</i>" + Constants.HTML_SUFFIX);
+                    Constants.HTML_PREFIX + 
+                    getMessage("info.message.auto.update.complete") + "<br/><br/>" +
+                    "<i>" +
+                    getMessage("auto.update.disable.note") + "<br>" +
+                    getMessage("auto.update.adjust.interval.note") + 
+                    "</i>" + 
+                    Constants.HTML_SUFFIX);
         }
     };
 
