@@ -1142,7 +1142,10 @@ public class FrontEnd extends JFrame {
         try {
             extensions = ExtensionFactory.getAnnotatedToolExtensions();
         } catch (Throwable t) {
-            displayErrorMessage("Failed to initialize tools! ", t);
+            displayErrorMessage(
+                    getMessage("error.message.tools.initialization.failure") + 
+                    Constants.NEW_LINE + 
+                    CommonUtils.getFailureDetails(t));
         }
         if (extensions != null) {
             instance.getJPanelIndicators().setVisible(false);
@@ -1158,7 +1161,10 @@ public class FrontEnd extends JFrame {
                     instance.representTool(tool);
                     tools.put(tool.getClass(), tool);
                 } catch (Throwable t) {
-                    displayErrorMessage("Failed to initialize tool '" + tool.getClass().getCanonicalName() + "'", t);
+                    displayErrorMessage(
+                            getMessage("error.message.tool.initialization.failure", tool.getClass().getCanonicalName()) + 
+                            Constants.NEW_LINE + 
+                            CommonUtils.getFailureDetails(t));
                 }
             }
             instance.getJPanelIndicators().setVisible(true);
@@ -1173,7 +1179,10 @@ public class FrontEnd extends JFrame {
         try {
             extensions = ExtensionFactory.getAnnotatedTransferExtensions();
         } catch (Throwable t) {
-            displayErrorMessage("Failed to initialize transferrers! ", t);
+            displayErrorMessage(
+                    getMessage("error.message.transferrers.initialization.failure") + 
+                    Constants.NEW_LINE + 
+                    CommonUtils.getFailureDetails(t));
         }
         if (extensions != null) {
             transferrers = new LinkedHashMap<Class<? extends TransferExtension>, TransferExtension>();
@@ -1185,7 +1194,10 @@ public class FrontEnd extends JFrame {
                     transferrer.setSettings(BackEnd.getInstance().getAddOnSettings(fullExtName, PackType.EXTENSION));
                     transferrers.put(transferrer.getClass(), transferrer);
                 } catch (Throwable t) {
-                    displayErrorMessage("Failed to initialize transferrer '" + transferrer.getClass().getCanonicalName() + "'", t);
+                    displayErrorMessage(
+                            getMessage("error.message.transferrer.initialization.failure", transferrer.getClass().getCanonicalName()) + 
+                            Constants.NEW_LINE + 
+                            CommonUtils.getFailureDetails(t));
                 }
             }
         }
@@ -1261,7 +1273,7 @@ public class FrontEnd extends JFrame {
                 }
             }
         } catch (Exception ex) {
-            displayErrorMessage("Failed to represented data correctly!", ex);
+            displayErrorMessage(getMessage("error.message.data.representation.failure"), ex);
         }
     }
     
