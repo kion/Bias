@@ -28,6 +28,10 @@ import.done == import done
 password.changed == password changed
 modified.by == modified by
 data.saved == data saved
+data.saving == saving data...
+error.message.data.collect.failure == Failed to collect data!
+error.message.toolsdata.collect.failure == Failed to collect tools data!
+error.message.data.save.failure == Failed to save data!
 add.category.to.rootlevel == Add category to the root level
 add.entry.to.rootlevel == Add entry to the root level
 tabs.placement == Choose tabs placement
@@ -78,6 +82,8 @@ save == Save
 new.name == New name
 overwrite.existing == Overwrite existing
 update.installed == Update installed
+error == Error
+information == Information
 export.save.data.title == Save data before export
 export.save.data.message == Data have to be saved before export. Save now and continue?
 export.preferences == Export preferences
@@ -137,7 +143,15 @@ error.message.tools.initialization.failure == Failed to initialize tools!
 error.message.tool.initialization.failure == Failed to initialize tool '$'!
 error.message.transferrers.initialization.failure == Failed to initialize transferrers!
 error.message.transferrer.initialization.failure == Failed to initialize transferrer '$'!
+error.message.entryextension.initialization.failure == Failed to initialize entry-extension!
 error.message.data.representation.failure == Failure detected while representing data!
+show.active.downloads == Show active downloads
+confirmation.cancel.active.downloads == Cancel active downloads confirmation
+confirmation.exit.unsaved.changes.message == All unsaved changes will be lost.
+confirmation.exit == Are you sure you want to exit?
+exit.confirmation == Exit confirmation
+exit.confirmation.active.downloads.present == Some downloads are still in progress. Are you sure you want to cancel all active downloads and exit?
+save.changes.before.exit == Save changes before exit
 exit == Exit
 about == About Bias
 manage.addons == Manage add-ons

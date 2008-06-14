@@ -1337,7 +1337,7 @@ public class FrontEnd extends JFrame {
         fireBeforeSaveEvent(new SaveEvent(beforeExit));
         syncExecute(new Runnable(){
             public void run() { 
-                instance.displayProcessNotification("saving data...", false);
+                instance.displayProcessNotification(getMessage("data.saving"), false);
             }
         });
         syncExecute(new Runnable(){
@@ -1350,7 +1350,7 @@ public class FrontEnd extends JFrame {
                 try {
                     BackEnd.getInstance().setData(collectData());
                 } catch (Throwable t) {
-                    displayErrorMessage("Failed to collect data!", t);
+                    displayErrorMessage(getMessage("error.message.data.collect.failure"), t);
                 }
             }
         });
@@ -1359,7 +1359,7 @@ public class FrontEnd extends JFrame {
                 try {
                     BackEnd.getInstance().setToolsData(collectToolsData());
                 } catch (Throwable t) {
-                    displayErrorMessage("Failed to collect tools data!", t);
+                    displayErrorMessage(getMessage("error.message.toolsdata.collect.failure"), t);
                 }
             }
         });
@@ -1368,7 +1368,7 @@ public class FrontEnd extends JFrame {
                 try {
                     BackEnd.getInstance().store();
                 } catch (Throwable t) {
-                    displayErrorMessage("Failed to save data!", t);
+                    displayErrorMessage(getMessage("error.message.data.save.failure"), t);
                 }
             }
         });
@@ -1607,8 +1607,8 @@ public class FrontEnd extends JFrame {
     
     private void exit() {
         if (Downloader.getTotalActiveDownloadsCount() > 0) {
-            JLabel message = new JLabel("Some downloads are still in progress. Are you sure you want to cancel all active downloads and exit?");
-            JButton button = new JButton("Show active downloads");
+            JLabel message = new JLabel(getMessage("exit.confirmation.active.downloads.present"));
+            JButton button = new JButton(getMessage("show.active.downloads"));
             button.addActionListener(new ActionListener(){
                 public void actionPerformed(ActionEvent e) {
                     addOnsManagementDialog.setVisible(true);
@@ -1618,7 +1618,7 @@ public class FrontEnd extends JFrame {
             int opt = JOptionPane.showConfirmDialog(
                     getActiveWindow(),
                     new Component[] {message, button},
-                    "Cancel downloads confirmation", 
+                    getMessage("confirmation.cancel.active.downloads"), 
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE);
             if (opt == JOptionPane.NO_OPTION) {
@@ -1632,23 +1632,28 @@ public class FrontEnd extends JFrame {
             JLabel l = new JLabel();
             StringBuffer caption = new StringBuffer();
             if (!Preferences.getInstance().autoSaveOnExit) {
-                caption.append("All unsaved changes will be lost. ");
-                JButton b = new JButton("Save changes before exit");
+                JLabel note = new JLabel(
+                        Constants.HTML_PREFIX + 
+                        "<br/><br/>" + 
+                        "<i>(" + getMessage("confirmation.disable.note") + " '" + getMessage("auto.save.on.exit.preference.title") + "' / '" + getMessage("display.confirmation.dialogs.preference.title") + "')</i>" + 
+                        Constants.HTML_SUFFIX); 
+                caption.append(getMessage("confirmation.exit.unsaved.changes.message") + Constants.BLANK_STR);
+                JButton b = new JButton(getMessage("save.changes.before.exit"));
                 b.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         store(true);
                         shutdown();
                     }
                 });
-                cs = new Component[]{l,b};
+                cs = new Component[]{l,b,note};
             } else {
                 cs = new Component[]{l};
             }
-            caption.append("Are you sure you want to exit?");
+            caption.append(getMessage("confirmation.exit"));
             l.setText(caption.toString());
             if (JOptionPane.showConfirmDialog(FrontEnd.this, 
                     cs,
-                    "Exit confirmation",
+                    getMessage("exit.confirmation"),
                     JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 exitWithOptionalAutoSave();
             }
@@ -2064,22 +2069,22 @@ public class FrontEnd extends JFrame {
     public static void displayErrorMessage(Throwable t) {
         Splash.hideSplash();
         t.printStackTrace(System.err);
-        JOptionPane.showMessageDialog(getActiveWindow(), CommonUtils.getFailureDetails(t), "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), CommonUtils.getFailureDetails(t), getMessage("error"), JOptionPane.ERROR_MESSAGE);
     }
 
     public static void displayErrorMessage(String message, Throwable t) {
         Splash.hideSplash();
         t.printStackTrace(System.err);
-        JOptionPane.showMessageDialog(getActiveWindow(), message, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), message, getMessage("error"), JOptionPane.ERROR_MESSAGE);
     }
 
     public static void displayErrorMessage(String message) {
         Splash.hideSplash();
-        JOptionPane.showMessageDialog(getActiveWindow(), message, "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), message, getMessage("error"), JOptionPane.ERROR_MESSAGE);
     }
     
     public static void displayMessage(String message) {
-        JOptionPane.showMessageDialog(getActiveWindow(), message, "Information", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), message, getMessage("information"), JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void addTabPaneListeners(JTabbedPane tabPane) {
@@ -2196,7 +2201,7 @@ public class FrontEnd extends JFrame {
                     final JPanel p = ((JPanel) c);
                     initEntryPanelContent(p);
                 } catch (Throwable t) {
-                    displayErrorMessage("Failed to initialize extension!", t);
+                    displayErrorMessage(getMessage("error.message.entryextension.initialization.failure"), t);
                 }
             } else if (c instanceof JTabbedPane) {
                 currentTabPane = (JTabbedPane) c;
