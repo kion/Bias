@@ -145,6 +145,8 @@ error.message.transferrers.initialization.failure == Failed to initialize transf
 error.message.transferrer.initialization.failure == Failed to initialize transferrer '$'!
 error.message.entryextension.initialization.failure == Failed to initialize entry-extension!
 error.message.data.representation.failure == Failure detected while representing data!
+messages.history == Messages History
+show.all.packages == Show all packages (includes already installed packages with the same or older version into the list)
 show.active.downloads == Show active downloads
 confirmation.cancel.active.downloads == Cancel active downloads confirmation
 confirmation.exit.unsaved.changes.message == All unsaved changes will be lost.

@@ -2449,7 +2449,7 @@ public class FrontEnd extends JFrame {
     private JLabel getJLabelStatusBarMsg() {
         if (jLabelStatusBarMsg == null) {
             jLabelStatusBarMsg = new JLabel();
-            final JLabel title = new JLabel("Messages History");
+            final JLabel title = new JLabel(getMessage("messages.history"));
             final JPanel panel = new JPanel(new BorderLayout());
             panel.add(getStatusBarMessagesList(), BorderLayout.CENTER);
             jLabelStatusBarMsg.addMouseListener(new MouseAdapter(){
@@ -2470,7 +2470,7 @@ public class FrontEnd extends JFrame {
      */
     private JCheckBox getOnlineShowAllPackagesCheckBox() {
         if (onlineShowAllPackagesCB == null) {
-            onlineShowAllPackagesCB = new JCheckBox("Show all packages (includes already installed packages with the same or older version into the list)");
+            onlineShowAllPackagesCB = new JCheckBox(getMessage("show.all.packages"));
             String showAll = config.getProperty(Constants.PROPERTY_SHOW_ALL_ONLINE_PACKS);
             onlineShowAllPackagesCB.setSelected(!Validator.isNullOrBlank(showAll) && Boolean.valueOf(showAll));
         }
