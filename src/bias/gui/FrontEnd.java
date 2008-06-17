@@ -1635,7 +1635,7 @@ public class FrontEnd extends JFrame {
                 JLabel note = new JLabel(
                         Constants.HTML_PREFIX + 
                         "<br/><br/>" + 
-                        "<i>(" + getMessage("confirmation.disable.note") + " '" + getMessage("auto.save.on.exit.preference.title") + "' / '" + getMessage("display.confirmation.dialogs.preference.title") + "')</i>" + 
+                        "<i>(" + getMessage("confirmation.disable.note") + " '" + getMessage("display.confirmation.dialogs.preference.title") + "' / '" + getMessage("auto.save.on.exit.preference.title") + "')</i>" + 
                         Constants.HTML_SUFFIX); 
                 caption.append(getMessage("confirmation.exit.unsaved.changes.message") + Constants.BLANK_STR);
                 JButton b = new JButton(getMessage("save.changes.before.exit"));
