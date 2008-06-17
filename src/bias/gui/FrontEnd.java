@@ -4873,14 +4873,14 @@ public class FrontEnd extends JFrame {
                 } else {
                     String fullSkinName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin.getName() 
                                             + Constants.PACKAGE_PATH_SEPARATOR + skin.getName();
-                    // extension class load test
+                    // skin class load test
                     Class<Skin> skinClass = (Class<Skin>) Class.forName(fullSkinName);
-                    // extension instantiation test
+                    // skin instantiation test
                     skinClass.newInstance();
                     status = Constants.ADDON_STATUS_LOADED;
                 }
             } catch (Throwable t) {
-                // extension is broken
+                // skin is broken
                 System.err.println("Skin [ " + skin.getName() + " ] failed to initialize!");
                 t.printStackTrace(System.err);
                 status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(skin) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
