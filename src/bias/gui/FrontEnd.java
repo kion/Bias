@@ -2948,8 +2948,8 @@ public class FrontEnd extends JFrame {
     
     private boolean defineRootPlacement() {
         boolean result = false;
-        Placement placement = (Placement) JOptionPane.showInputDialog(FrontEnd.this, "Choose placement:",
-                "Choose placement for root container", JOptionPane.QUESTION_MESSAGE, null, PLACEMENTS, PLACEMENTS[0]);
+        Placement placement = (Placement) JOptionPane.showInputDialog(FrontEnd.this, getMessage("choose.placement"),
+                getMessage("choose.placement"), JOptionPane.QUESTION_MESSAGE, null, PLACEMENTS, PLACEMENTS[0]);
         if (placement != null) {
             getJTabbedPane().setTabPlacement(placement.getInteger());
             result = true;
@@ -3151,8 +3151,9 @@ public class FrontEnd extends JFrame {
                 EntryExtension ext = getSelectedExtensionEntry();
                 if (ext != null) {
                     if (!isEntryExtensionConfigurable(ext.getClass())) {
-                        displayMessage(Constants.HTML_PREFIX + "Selected entry is not configurable!<br/>" +
-                        		                               "<i>(appropriate entry-extension does not provide configuration option)</i>" +
+                        displayMessage(Constants.HTML_PREFIX + 
+                                       getMessage("info.message.entry.not.configurable") + "<br/>" +
+                                       "<i>" + getMessage("info.message.entry.not.configurable.details") + "</i>" +
                                        Constants.HTML_SUFFIX);
                         return;
                     }
@@ -3194,7 +3195,7 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             try {
                 UUID activeItemId = getSelectedVisualEntryID();
-                JLabel sourceL = new JLabel("Relocated item");
+                JLabel sourceL = new JLabel(getMessage("relocated.item"));
                 JComboBox sourceCB = new JComboBox();
                 Map<UUID, VisualEntryDescriptor> veds = getVisualEntryDescriptors();
                 for (VisualEntryDescriptor veDescriptor : veds.values()) {
@@ -3204,7 +3205,7 @@ public class FrontEnd extends JFrame {
                     }
                 }
 
-                JLabel targetL = new JLabel("Target category");
+                JLabel targetL = new JLabel(getMessage("target.category"));
                 final JComboBox targetCB = new JComboBox();
                 VisualEntryDescriptor ved = (VisualEntryDescriptor) sourceCB.getSelectedItem();
                 populateRelocationTargetComboBox(targetCB, ved.getEntry().getId(), ved.getEntryType());
@@ -3343,7 +3344,7 @@ public class FrontEnd extends JFrame {
                             BackEnd.getInstance().removeImportConfiguration(name);
                             configsCB.removeItem(name);
                         } catch (Exception ex) {
-                            displayErrorMessage("Failed to delete selected import-configuration!", ex);
+                            displayErrorMessage(getMessage("transfer.configuration.delete.failure"), ex);
                         }
                     }
                 });
@@ -4673,12 +4674,12 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 } catch (Exception ex) {
-                    displayErrorMessage("Failed to load preferences!", ex);
+                    displayErrorMessage(getMessage("error.message.preferences.load.failure"), ex);
                 }
-                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, prefsPanel, "Preferences", JOptionPane.OK_CANCEL_OPTION);
+                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, prefsPanel, getMessage("preferences"), JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
                     if (prefsErr) {
-                        displayErrorMessage("Preference configuration contains error(s)! Preferences won't be saved, until that is fixed.");
+                        displayErrorMessage(getMessage("warning.message.preferences.contain.error"));
                     } else {
                         try {
                             for (Entry<Component, Field> pref : prefEntries.entrySet()) {
@@ -4698,7 +4699,7 @@ public class FrontEnd extends JFrame {
                                 applyPreferences();
                             }
                         } catch (Exception ex) {
-                            displayErrorMessage("Failed to save preferences!", ex);
+                            displayErrorMessage(getMessage("error.message.preferences.save.failure"), ex);
                         }
                     }
                 }

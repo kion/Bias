@@ -145,7 +145,15 @@ error.message.transferrers.initialization.failure == Failed to initialize transf
 error.message.transferrer.initialization.failure == Failed to initialize transferrer '$'!
 error.message.entryextension.initialization.failure == Failed to initialize entry-extension!
 error.message.data.representation.failure == Failure detected while representing data!
+error.message.preferences.load.failure == Failed to load preferences!
+error.message.preferences.save.failure == Failed to save preferences!
+warning.message.preferences.contain.error == Preference configuration contains error(s)! Preferences won't be saved, until that is fixed.
 messages.history == Messages History
+choose.placement == Choose placement
+info.message.entry.not.configurable == Selected entry is not configurable!
+info.message.entry.not.configurable.details == (appropriate entry-extension does not provide configuration option)
+relocated.item == Relocated item
+target.category == Target category
 show.all.packages == Show all packages (includes already installed packages with the same or older version into the list)
 show.active.downloads == Show active downloads
 confirmation.cancel.active.downloads == Cancel active downloads confirmation
