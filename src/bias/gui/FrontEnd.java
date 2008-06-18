@@ -5519,8 +5519,8 @@ public class FrontEnd extends JFrame {
                 JPanel icControlsPanel = new JPanel(new GridLayout(1,4));
                 icControlsPanel.add(icSetDetailsButt);
                 icControlsPanel.add(addIconButt);
-                icControlsPanel.add(removeIconButt);
                 icControlsPanel.add(removeIconSetButt);
+                icControlsPanel.add(removeIconButt);
                 JPanel icTopPanel = new JPanel(new BorderLayout());
                 icTopPanel.add(new JLabel("Filter:"), BorderLayout.NORTH);
                 final JTextField icSetFilterText = new JTextField();

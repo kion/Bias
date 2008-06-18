@@ -187,7 +187,7 @@ error.message.iconsets.uninstall.failure == Не удалось удалить �
 error.message.icons.remove.failure == Не удалось удалить иконки!
 error.message.icons.install.failure == Не удалось установить иконки!
 remove.selected.icons == Удалить выделенные иконки
-uninstall.selected.iconsets == Удалить выделенный(е) набор(ы) иконок
+uninstall.selected.iconsets == Удалить выделенные наборы иконок
 configure == Настроить
 info.message.extension.is.not.yet.configurable == Данное расширение пока-что не может быть (пере)настроено.
 reactivate.skin == (Ре)Активировать скин
