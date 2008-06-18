@@ -1,4 +1,5 @@
 app.title == Bias :: Многофункциональный информационный менеджер
+addons.management.title == Bias :: Управление Аддонами
 version == Версия
 preferred.language.preference.title == Предпочитаемый язык (требует перезагрузки Bias)
 preferred.datetime.format.preference.title == Предпочитаемый формат даты/времени
@@ -207,6 +208,8 @@ running.tasks.force.exit == Принужденный выход (все неза
 error.data.load.failure == Не удалось загрузить данные!
 memory.usage == Использование памяти: $ из $ Мб
 info.message.icons.installation == установка иконок...
+info.message.packages.installation == установка пакетов...
+info.message.local.packages.installation == установка локальных пакетов...
 error.message.dependency.resolution.failure == Не удалось разрешить зависимость пакета '$'! Следующий пакет-зависимость недоступен: $ '$' $.
 error.message.dependencies.handle.resolve.failure == Не удалось обработать/разрешить зависимости!
 refresh == Обновить
@@ -214,3 +217,27 @@ error.message.pack.details.page.load.failure == Не удалось загруз
 error.message.repository.url.resolution.failure == Не удалось разрешить URL репозитория!
 select.all.updates == Выделить все обновления
 cancel.download.and.installation == Отменить загрузку/установку
+filter == Фильтр
+extensions == Расширения
+skins == Скины
+icons == Иконки
+online == Онлайн
+registered.libraries == Зарегистрированные библиотеки
+clean.unused.data.and.config.files == Очистить неиспользуемые файлы данных и настроек
+info.message.clean.unused.data.and.config.files == ЗАМЕТКА: Эта операция удалит все неиспользуемые файлы данных и настроек, которые использовались аддонами, которые сейчас не загружены<br>(Делайте это только если вы не планируете устанавливать эти аддоны снова или желаете сбросить их данные/настройки)
+done == Готово
+detect.unused.libraries == Обнаружить неиспользуемые библиотеки
+uninstall.unused.libraries == Удалить неиспользуемые библиотеки!
+info.message.uninstall.unused.libraries == ЗАМЕТКА: удаление неиспользуемых библиотек удалит все библиотеки, от которых зависели некоторые незагруженные сейчас аддоны<br>(Делайте это только если вы не планируете устанавливать эти аддоны снова)
+error.message.unused.libraries.detection.failure == Не удалось обнаружить неиспользуемые библиотеки!
+error.message.unused.libraries.uninstall.failure == Не удалось удалить неиспользуемые библиотеки!
+advanced.options == Продвинутые опции
+error.message.addons.management.screen.initialization.failure == Не удалось инициализировать экран управления аддонами!
+error.message.addon.info.read.from.file.failure == Не удалось прочитать информацию расширения из файла
+name == Название
+version == Версия
+author == Автор
+description == Описание
+status == Статус
+type == Тип
+size == Размер

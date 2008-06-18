@@ -1,4 +1,5 @@
 app.title == Bias :: Versatile Information Manager
+addons.management.title == Bias :: Add-Ons Management
 version == Version
 preferred.language.preference.title == Preferred language (needs Bias restart)
 preferred.datetime.format.preference.title == Preferred date-time format
@@ -207,6 +208,8 @@ running.tasks.force.exit == Force exit (all incomplete tasks will be aborted)
 error.data.load.failure == Failed to load data!
 memory.usage == Memory Usage: $ of $ Mb
 info.message.icons.installation == installing icons...
+info.message.packages.installation == installing packages...
+info.message.local.packages.installation == installing local packages...
 error.message.dependency.resolution.failure == Failed to resolve dependency for package '$'! Following dependency-package is not available: $ '$' $.
 error.message.dependencies.handle.resolve.failure == Failed to handle/resolve dependencies!
 refresh == Refresh
@@ -214,3 +217,27 @@ error.message.pack.details.page.load.failure == Failed to load package details p
 error.message.repository.url.resolution.failure == Failed to resolve repository URL!
 select.all.updates == Select all updates
 cancel.download.and.installation == Cancel download/installation
+filter == Filter
+extensions == Extensions
+skins == Skins
+icons == Icons
+online == Online
+registered.libraries == Registered libraries
+clean.unused.data.and.config.files == Clean unused data and config files
+info.message.clean.unused.data.and.config.files == NOTE: This operation will remove all unused data and configuration files that were used by addons that are not currently loaded<br>(Do that only if you don't plan to install these addons again or want to reset their data/settings)
+done == Done
+detect.unused.libraries == Detect unused libraries
+uninstall.unused.libraries == Uninstall unused libraries!
+info.message.uninstall.unused.libraries == NOTE: uninstallation of unused libriaries will remove all libraries that some not currently loaded addons were dependent on<br>(Do that only if you don't plan to install these addons again)
+error.message.unused.libraries.detection.failure == Failed to detect unused librarires!
+error.message.unused.libraries.uninstall.failure == Failed to uninstall unused librarires!
+advanced.options == Advanced options
+error.message.addons.management.screen.initialization.failure == Failed to initialize add-ons management screen!
+error.message.addon.info.read.from.file.failure == Failed to read add-on's info from file
+name == Name
+version == Version
+author == Author
+description == Description
+status == Status
+type == Type
+size == Size

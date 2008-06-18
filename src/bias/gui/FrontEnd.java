@@ -5482,7 +5482,7 @@ public class FrontEnd extends JFrame {
                 extControlsPanel.add(extInstButt);
                 extControlsPanel.add(extUninstButt);
                 JPanel extTopPanel = new JPanel(new BorderLayout());
-                extTopPanel.add(new JLabel("Filter:"), BorderLayout.CENTER);
+                extTopPanel.add(new JLabel(getMessage("filter")), BorderLayout.CENTER);
                 final JTextField extFilterText = new JTextField();
                 extFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
@@ -5495,7 +5495,7 @@ public class FrontEnd extends JFrame {
                 extPanel.add(new JScrollPane(extList), BorderLayout.CENTER);
                 extPanel.add(extControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Extensions", guiIcons.getIconExtensions(), extPanel);
+                addOnsPane.addTab(getMessage("extensions"), guiIcons.getIconExtensions(), extPanel);
                 
                 JPanel skinControlsPanel = new JPanel(new GridLayout(1,4));
                 skinControlsPanel.add(skinDetailsButt);
@@ -5503,7 +5503,7 @@ public class FrontEnd extends JFrame {
                 skinControlsPanel.add(skinInstButt);
                 skinControlsPanel.add(skinUninstButt);
                 JPanel skinTopPanel = new JPanel(new BorderLayout());
-                skinTopPanel.add(new JLabel("Filter:"), BorderLayout.CENTER);
+                skinTopPanel.add(new JLabel(getMessage("filter")), BorderLayout.CENTER);
                 final JTextField skinFilterText = new JTextField();
                 skinFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
@@ -5516,7 +5516,7 @@ public class FrontEnd extends JFrame {
                 skinPanel.add(new JScrollPane(skinList), BorderLayout.CENTER);
                 skinPanel.add(skinControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Skins", guiIcons.getIconSkins(), skinPanel);
+                addOnsPane.addTab(getMessage("skins"), guiIcons.getIconSkins(), skinPanel);
                 
                 JPanel icControlsPanel = new JPanel(new GridLayout(1,4));
                 icControlsPanel.add(icSetDetailsButt);
@@ -5524,7 +5524,7 @@ public class FrontEnd extends JFrame {
                 icControlsPanel.add(removeIconSetButt);
                 icControlsPanel.add(removeIconButt);
                 JPanel icTopPanel = new JPanel(new BorderLayout());
-                icTopPanel.add(new JLabel("Filter:"), BorderLayout.NORTH);
+                icTopPanel.add(new JLabel(getMessage("filter")), BorderLayout.NORTH);
                 final JTextField icSetFilterText = new JTextField();
                 icSetFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
@@ -5538,7 +5538,7 @@ public class FrontEnd extends JFrame {
                 icPanel.add(jsp, BorderLayout.EAST);
                 icPanel.add(icControlsPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Icons", guiIcons.getIconIcons(), icPanel);
+                addOnsPane.addTab(getMessage("icons"), guiIcons.getIconIcons(), icPanel);
                 
                 JPanel onlineControlsPanel = new JPanel(new GridLayout(1,5));
                 onlineControlsPanel.add(onlineRefreshButt);
@@ -5548,7 +5548,7 @@ public class FrontEnd extends JFrame {
                 onlineControlsPanel.add(onlineCancelInstallButt);
                 JPanel onlinePanel = new JPanel(new BorderLayout());
                 JPanel onlineTopPanel = new JPanel(new BorderLayout());
-                onlineTopPanel.add(new JLabel("Filter:"), BorderLayout.NORTH);
+                onlineTopPanel.add(new JLabel(getMessage("filter")), BorderLayout.NORTH);
                 final JTextField onlineFilterText = new JTextField();
                 onlineFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
@@ -5564,12 +5564,12 @@ public class FrontEnd extends JFrame {
                 p.add(onlineControlsPanel, BorderLayout.SOUTH);
                 onlinePanel.add(p, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Online", guiIcons.getIconOnline(), onlinePanel);
+                addOnsPane.addTab(getMessage("online"), guiIcons.getIconOnline(), onlinePanel);
                 
                 JPanel advPanel = new JPanel(new BorderLayout());
 
                 JPanel libsPanel = new JPanel(new BorderLayout());
-                libsPanel.add(new JLabel("Registered libraries:"), BorderLayout.NORTH);
+                libsPanel.add(new JLabel(getMessage("registered.libraries")), BorderLayout.NORTH);
                 libsPanel.add(new JScrollPane(libList), BorderLayout.CENTER);
                 advPanel.add(libsPanel, BorderLayout.CENTER);
                 
@@ -5577,18 +5577,17 @@ public class FrontEnd extends JFrame {
                 JPanel cleanPanel = null;
                 if (BackEnd.getInstance().unusedAddOnDataAndConfigFilesFound() && !unusedAddOnDataAndConfigFilesCleanedUp) {
                     cleanPanel = new JPanel(new BorderLayout());
-                    final JButton cleanButt = new JButton("Clean unused data and config files!");
+                    final JButton cleanButt = new JButton(getMessage("clean.unused.data.and.config.files"));
                     JLabel cleanLabel = new JLabel(
                             Constants.HTML_PREFIX +
                             Constants.HTML_COLOR_HIGHLIGHT_WARNING +
-                            "NOTE: This will remove all unused data and configuration files that were used by extensions/skins that are not currently loaded<br>" +
-                            "(Do that only if you don't plan to install these extensions/skins again or want to reset their data/settings)" +
+                            getMessage("info.message.clean.unused.data.and.config.files") +
                             Constants.HTML_COLOR_SUFFIX +
                             Constants.HTML_SUFFIX);
                     cleanButt.addActionListener(new ActionListener(){
                         public void actionPerformed(ActionEvent e) {
                             BackEnd.getInstance().removeUnusedAddOnDataAndConfigFiles();
-                            cleanButt.setText("Clean unused data and config files! [Done]");
+                            cleanButt.setText(getMessage("clean.unused.data.and.config.files") + " [ " + getMessage("done") + " ]");
                             cleanButt.setEnabled(false);
                             unusedAddOnDataAndConfigFilesCleanedUp = true;
                         }
@@ -5598,14 +5597,13 @@ public class FrontEnd extends JFrame {
                 }
 
                 JPanel uninstLisbPanel = new JPanel(new BorderLayout());
-                final JButton detectButt = new JButton("Detect unused libraries");
-                final JButton cleanButt = new JButton("Uninstall unused libraries!");
+                final JButton detectButt = new JButton(getMessage("detect.unused.libraries"));
+                final JButton cleanButt = new JButton(getMessage("uninstall.unused.libraries"));
                 cleanButt.setEnabled(false);
                 final JLabel cleanLabel = new JLabel(
                         Constants.HTML_PREFIX +
                         Constants.HTML_COLOR_HIGHLIGHT_WARNING +
-                        "NOTE: deleting unused libriaries will remove all libraries that some not currently loaded extensions/skins were dependent on<br>" +
-                        "(Do that only if you don't plan to install these extensions/skins again)" +
+                        getMessage("info.message.uninstall.unused.libraries") +
                         Constants.HTML_COLOR_SUFFIX +
                         Constants.HTML_SUFFIX);
                 cleanLabel.setVisible(false);
@@ -5626,13 +5624,13 @@ public class FrontEnd extends JFrame {
                                 String libName = (String) getLibModel().getValueAt(i, 0);
                                 if (!deps.contains(libName)) {
                                     getLibModel().setValueAt(Constants.ADDON_STATUS_UNUSED, i, 4);
-                                    cleanButt.setText("Uninstall unused libraries!");
+                                    cleanButt.setText(getMessage("uninstall.unused.libraries"));
                                     cleanButt.setEnabled(true);
                                     cleanLabel.setVisible(true);
                                 }
                             }
                         } catch (Throwable t) {
-                            displayErrorMessage("Failed to detect unused librarires! " + CommonUtils.getFailureDetails(t), t);
+                            displayErrorMessage(getMessage("error.message.unused.libraries.detection.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(t), t);
                         }
                     }
                 });
@@ -5650,11 +5648,11 @@ public class FrontEnd extends JFrame {
                                     i++;
                                 }
                             }
-                            cleanButt.setText("Uninstall unused libraries! [Done]");
+                            cleanButt.setText(getMessage("uninstall.unused.libraries") + " [ " + getMessage("done") + " ]");
                             cleanButt.setEnabled(false);
                             cleanLabel.setVisible(false);
                         } catch (Throwable t) {
-                            displayErrorMessage("Failed to uninstall unused librarires! " + CommonUtils.getFailureDetails(t), t);
+                            displayErrorMessage(getMessage("error.message.unused.libraries.uninstall.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(t), t);
                         }
                     }
                 });
@@ -5672,9 +5670,9 @@ public class FrontEnd extends JFrame {
                 
                 advPanel.add(advBottomPanel, BorderLayout.SOUTH);
                 
-                addOnsPane.addTab("Advanced", guiIcons.getIconPreferences(), advPanel);
+                addOnsPane.addTab(getMessage("advanced.options"), guiIcons.getIconPreferences(), advPanel);
                 
-                JButton doneButt = new JButton("Done");
+                JButton doneButt = new JButton(getMessage("done"));
                 doneButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         addOnsManagementDialog.setVisible(false);
@@ -5689,7 +5687,7 @@ public class FrontEnd extends JFrame {
                 contentPane.add(addOnsPane, BorderLayout.CENTER);
                 contentPane.add(bottomPanel, BorderLayout.SOUTH);
                 
-                addOnsManagementDialog = new JFrame("Bias :: Add-Ons Management");
+                addOnsManagementDialog = new JFrame(getMessage("addons.management.title"));
                 addOnsManagementDialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
                 addOnsManagementDialog.setContentPane(contentPane);
                 addOnsManagementDialog.pack();
@@ -5699,7 +5697,7 @@ public class FrontEnd extends JFrame {
                 addOnsManagementDialog.setVisible(true);
                 
             } catch (Throwable t) {
-                displayErrorMessage("Failed to initialize add-ons configuration screen!", t);
+                displayErrorMessage(getMessage("error.message.addons.management.screen.initialization.failure"), t);
             }
         }
     }
@@ -5736,10 +5734,10 @@ public class FrontEnd extends JFrame {
                 }
             };
             icSetModel.addColumn(Constants.EMPTY_STR);
-            icSetModel.addColumn("Name");
-            icSetModel.addColumn("Version");
-            icSetModel.addColumn("Author");
-            icSetModel.addColumn("Description");
+            icSetModel.addColumn(getMessage("name"));
+            icSetModel.addColumn(getMessage("version"));
+            icSetModel.addColumn(getMessage("author"));
+            icSetModel.addColumn(getMessage("description"));
         }
         return icSetModel;
     }
@@ -5762,11 +5760,11 @@ public class FrontEnd extends JFrame {
                 }
             };
             skinModel.addColumn(Constants.EMPTY_STR);
-            skinModel.addColumn("Name");
-            skinModel.addColumn("Version");
-            skinModel.addColumn("Author");
-            skinModel.addColumn("Description");
-            skinModel.addColumn("Status");
+            skinModel.addColumn(getMessage("name"));
+            skinModel.addColumn(getMessage("version"));
+            skinModel.addColumn(getMessage("author"));
+            skinModel.addColumn(getMessage("description"));
+            skinModel.addColumn(getMessage("status"));
         }
         return skinModel;
     }
@@ -5789,11 +5787,11 @@ public class FrontEnd extends JFrame {
                 }
             };
             extModel.addColumn(Constants.EMPTY_STR);
-            extModel.addColumn("Name");
-            extModel.addColumn("Version");
-            extModel.addColumn("Author");
-            extModel.addColumn("Description");
-            extModel.addColumn("Status");
+            extModel.addColumn(getMessage("name"));
+            extModel.addColumn(getMessage("version"));
+            extModel.addColumn(getMessage("author"));
+            extModel.addColumn(getMessage("description"));
+            extModel.addColumn(getMessage("status"));
         }
         return extModel;
     }
@@ -5807,11 +5805,11 @@ public class FrontEnd extends JFrame {
                     return false;
                 }
             };
-            libModel.addColumn("Name");
-            libModel.addColumn("Version");
-            libModel.addColumn("Author");
-            libModel.addColumn("Description");
-            libModel.addColumn("Status");
+            libModel.addColumn(getMessage("name"));
+            libModel.addColumn(getMessage("version"));
+            libModel.addColumn(getMessage("author"));
+            libModel.addColumn(getMessage("description"));
+            libModel.addColumn(getMessage("status"));
         }
         return libModel;
     }
@@ -5836,13 +5834,13 @@ public class FrontEnd extends JFrame {
                 }
             };
             onlineModel.addColumn(Constants.EMPTY_STR);
-            onlineModel.addColumn("Type");
-            onlineModel.addColumn("Name");
-            onlineModel.addColumn("Version");
-            onlineModel.addColumn("Author");
-            onlineModel.addColumn("Description");
-            onlineModel.addColumn("Size");
-            onlineModel.addColumn("Status");
+            onlineModel.addColumn(getMessage("type"));
+            onlineModel.addColumn(getMessage("name"));
+            onlineModel.addColumn(getMessage("version"));
+            onlineModel.addColumn(getMessage("author"));
+            onlineModel.addColumn(getMessage("description"));
+            onlineModel.addColumn(getMessage("size"));
+            onlineModel.addColumn(getMessage("status"));
         }
         return onlineModel;
     }
@@ -5911,7 +5909,7 @@ public class FrontEnd extends JFrame {
             syncExecute(new Runnable(){
                 public void run() {
                     try {
-                        displayProcessNotification("installing packages...", true);
+                        displayProcessNotification(getMessage("info.message.packages.installation"), true);
                         final Map<AddOnInfo, File> proposedAddOnsToInstall = new HashMap<AddOnInfo, File>();
                         StringBuffer sb = new StringBuffer(Constants.HTML_PREFIX + "<ul>");
                         boolean error = false;
@@ -5921,7 +5919,7 @@ public class FrontEnd extends JFrame {
                                 proposedAddOnsToInstall.put(installedAddOn, file);
                             } catch (Throwable t) {
                                 error = true;
-                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failure on reading add-on's info from file '" + file.getName() + "': " + CommonUtils.getFailureDetails(t) + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("error.message.addon.info.read.from.file.failure") + " '" + file.getName() + "': " + CommonUtils.getFailureDetails(t) + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 t.printStackTrace(System.err);
                             }
                         }
@@ -5980,7 +5978,7 @@ public class FrontEnd extends JFrame {
                         hideProcessNotification();
                     }
                 }
-            }, "installing local packages...", true);
+            }, getMessage("info.message.local.packages.installation"), true);
         }
     }
     
@@ -6144,8 +6142,8 @@ public class FrontEnd extends JFrame {
                         long estimationTime = (long) (elapsedTime * estimationCoef - elapsedTime);
                         getOnlineTotalProgressBar().setString(itemNum + " / " + urlFileMap.size() 
                                 + " (" + FormatUtils.formatByteSize(downloadedBytesNum) + " / " + FormatUtils.formatByteSize(totalSize) + ")"
-                                + ", elapsed time: " + FormatUtils.formatTimeDuration(elapsedTime) 
-                                + ", estimated time left: " + FormatUtils.formatTimeDuration(estimationTime));
+                                + ", " + getMessage("elapsed.time") + ": " + FormatUtils.formatTimeDuration(elapsedTime) 
+                                + ", " + getMessage("estimated.time.left") + ": " + FormatUtils.formatTimeDuration(estimationTime));
                     };
                     @Override
                     public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
