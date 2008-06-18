@@ -179,6 +179,7 @@ about == О Bias
 manage.addons == Управление расширениями
 preferences == Предпочтения
 add.or.install == Добавить/Установить
+download.and.install == Загрузить и установить
 install.or.update == Установить/Обновить
 uninstall == Удалить
 error.message.extensions.uninstall.failure == Не удалось удалить расширение(я)!
@@ -206,3 +207,10 @@ running.tasks.force.exit == Принужденный выход (все неза
 error.data.load.failure == Не удалось загрузить данные!
 memory.usage == Использование памяти: $ из $ Мб
 info.message.icons.installation == установка иконок...
+error.message.dependency.resolution.failure == Не удалось разрешить зависимость пакета '$'! Следующий пакет-зависимость недоступен: $ '$' $.
+error.message.dependencies.handle.resolve.failure == Не удалось обработать/разрешить зависимости!
+refresh == Обновить
+error.message.pack.details.page.load.failure == Не удалось загрузить страницу деталей пакета!
+error.message.repository.url.resolution.failure == Не удалось разрешить URL репозитория!
+select.all.updates == Выделить все обновления
+cancel.download.and.installation == Отменить загрузку/установку

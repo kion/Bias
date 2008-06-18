@@ -5373,11 +5373,13 @@ public class FrontEnd extends JFrame {
                                             if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
                                                 int idx = findDataRowIndex(getOnlineModel(), 2, dep.getName());
                                                 if (idx == -1) {
-                                                    throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
-                                                                            dep.getType().value() + " '" + dep.getName() + "' " + 
-                                                                            (dep.getVersion() != null ? 
-                                                                            " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
-                                                                            " is not available!");
+                                                    throw new Exception(
+                                                            getMessage("error.message.dependency.resolution.failure", 
+                                                                    pack.getName(), 
+                                                                    dep.getType().value(), 
+                                                                    dep.getName(), 
+                                                                    dep.getVersion() != null ? " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR)
+                                                            );
                                                 } else {
                                                     synchronized (FrontEnd.this) {
                                                         Integer counter = getDepCounters().get(dep.getName());
@@ -5406,7 +5408,7 @@ public class FrontEnd extends JFrame {
                                     }
                                 }
                             } catch (Throwable t) {
-                                displayErrorMessage("Failed to handle/resolve dependencies! " + CommonUtils.getFailureDetails(t), t);
+                                displayErrorMessage(getMessage("error.message.dependencies.handle.resolve.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(t), t);
                             }
                         }
                     }
@@ -5416,13 +5418,13 @@ public class FrontEnd extends JFrame {
                 final JPanel onlineProgressPanel = new JPanel(new GridLayout(2,1));
                 onlineProgressPanel.add(getOnlineSingleProgressBar());
                 onlineProgressPanel.add(getOnlineTotalProgressBar());
-                JButton onlineRefreshButt = new JButton("Refresh");
+                JButton onlineRefreshButt = new JButton(getMessage("refresh"));
                 onlineRefreshButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         refreshOnlinePackagesList(null, getOnlineShowAllPackagesCheckBox().isSelected());
                     }
                 });
-                JButton onlineDetailsButt = new JButton("Package details");
+                JButton onlineDetailsButt = new JButton(getMessage("details"));
                 onlineDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = onlineList.getSelectedRow();
@@ -5443,28 +5445,28 @@ public class FrontEnd extends JFrame {
                                     try {
                                         loadAndDisplayPackageDetails(BackEnd.getInstance().getRepositoryBaseURL(), addOnURL, pack);
                                     } catch (Throwable t2) {
-                                        displayErrorMessage("Failed to load package details page!", t2);
+                                        displayErrorMessage(getMessage("error.message.pack.details.page.load.failure"), t2);
                                     }
                                 }
                             } catch (Exception ex) {
-                                displayErrorMessage("Failure while resolving repository URL! " + CommonUtils.getFailureDetails(ex), ex);
+                                displayErrorMessage(getMessage("error.message.repository.url.resolution.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(ex), ex);
                             }
                         }
                     }
                 });
-                JButton onlineInstallButt = new JButton("Download/install");
+                JButton onlineInstallButt = new JButton(getMessage("download.and.install"));
                 onlineInstallButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         downloadAndInstallOnlinePackages(null);
                     }
                 });
-                JButton onlineSelectAllUpdatesButt = new JButton("Select all updates");
+                JButton onlineSelectAllUpdatesButt = new JButton(getMessage("select.all.updates"));
                 onlineSelectAllUpdatesButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         selectAllUpdates();
                     }
                 });
-                JButton onlineCancelInstallButt = new JButton("Cancel download/installation");
+                JButton onlineCancelInstallButt = new JButton(getMessage("cancel.download.and.installation"));
                 onlineCancelInstallButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         Downloader.cancelAll();

@@ -179,6 +179,7 @@ about == About Bias
 manage.addons == Manage add-ons
 preferences == Preferences
 add.or.install == Add/Install
+download.and.install == Download & install
 install.or.update == Install/Update
 uninstall == Uninstall
 error.message.extensions.uninstall.failure == Failed to uninstall extension(s)!
@@ -206,3 +207,10 @@ running.tasks.force.exit == Force exit (all incomplete tasks will be aborted)
 error.data.load.failure == Failed to load data!
 memory.usage == Memory Usage: $ of $ Mb
 info.message.icons.installation == installing icons...
+error.message.dependency.resolution.failure == Failed to resolve dependency for package '$'! Following dependency-package is not available: $ '$' $.
+error.message.dependencies.handle.resolve.failure == Failed to handle/resolve dependencies!
+refresh == Refresh
+error.message.pack.details.page.load.failure == Failed to load package details page!
+error.message.repository.url.resolution.failure == Failed to resolve repository URL!
+select.all.updates == Select all updates
+cancel.download.and.installation == Cancel download/installation
