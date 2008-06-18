@@ -179,7 +179,7 @@ about == About Bias
 manage.addons == Manage add-ons
 preferences == Preferences
 add.or.install == Add/Install
-download.and.install == Download & install
+download.and.install == Download/install
 install.or.update == Install/Update
 uninstall == Uninstall
 error.message.extensions.uninstall.failure == Failed to uninstall extension(s)!

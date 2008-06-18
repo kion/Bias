@@ -179,7 +179,7 @@ about == О Bias
 manage.addons == Управление расширениями
 preferences == Предпочтения
 add.or.install == Добавить/Установить
-download.and.install == Загрузить и установить
+download.and.install == Загрузить/установить
 install.or.update == Установить/Обновить
 uninstall == Удалить
 error.message.extensions.uninstall.failure == Не удалось удалить расширение(я)!
