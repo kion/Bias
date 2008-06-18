@@ -4862,7 +4862,7 @@ public class FrontEnd extends JFrame {
     @SuppressWarnings("unchecked")
     private void listSkins() throws Throwable {
         if (getSkinModel().getRowCount() == 0) {
-            getSkinModel().insertRow(0, new Object[]{Boolean.FALSE, DEFAULT_SKIN, Constants.EMPTY_STR, Constants.EMPTY_STR, "Default Skin"});
+            getSkinModel().insertRow(0, new Object[]{Boolean.FALSE, DEFAULT_SKIN, Constants.EMPTY_STR, Constants.EMPTY_STR, getMessage("default.skin")});
         }
         Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.SKIN);
         for (AddOnInfo skin : BackEnd.getInstance().getAddOns(PackType.SKIN)) {
@@ -4881,7 +4881,7 @@ public class FrontEnd extends JFrame {
                 }
             } catch (Throwable t) {
                 // skin is broken
-                System.err.println("Skin [ " + skin.getName() + " ] failed to initialize!");
+                System.err.println(getMessage("error.message.skin.initialization.failure", skin.getName()));
                 t.printStackTrace(System.err);
                 status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(skin) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
             }
@@ -4931,7 +4931,7 @@ public class FrontEnd extends JFrame {
                 extList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 extList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 listExtensions();
-                JButton extDetailsButt = new JButton("Extension details");
+                JButton extDetailsButt = new JButton(getMessage("details"));
                 extDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = extList.getSelectedRow();
@@ -4951,18 +4951,18 @@ public class FrontEnd extends JFrame {
                                         AddOnInfo extInfo = BackEnd.getInstance().getAddOnInfo(extension, PackType.EXTENSION);
                                         loadAndDisplayPackageDetails(baseURL, addOnURL, extInfo);
                                     } else {
-                                        displayMessage("Detailed information is not provided with this extension.");
+                                        displayMessage(getMessage("info.message.extension.does.not.provide.detailed.info"));
                                     }
                                 } catch (MalformedURLException ex) {
-                                    displayErrorMessage("Invalid URL! " + CommonUtils.getFailureDetails(ex), ex);
+                                    displayErrorMessage(getMessage("error.message.invalid.url") + Constants.BLANK_STR + CommonUtils.getFailureDetails(ex), ex);
                                 }
                             } catch (Throwable t) {
-                                displayErrorMessage("Failed to display Extensions details!", t);
+                                displayErrorMessage(getMessage("error.message.extension.details.display.failure"), t);
                             }
                         }
                     }
                 });
-                JButton extConfigButt = new JButton("Configure");
+                JButton extConfigButt = new JButton(getMessage("configure"));
                 extConfigButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = extList.getSelectedRow();
@@ -4972,8 +4972,8 @@ public class FrontEnd extends JFrame {
                                 Map<AddOnInfo, String> newExts = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
                                 if (newExts != null && newExts.containsKey(new AddOnInfo(ext))) {
                                     displayMessage(
-                                            "This Extension can not be (re)configured yet." + Constants.NEW_LINE +
-                                            "Restart Bias first.");
+                                            getMessage("info.message.extension.is.not.yet.configurable") + Constants.NEW_LINE +
+                                            getMessage("info.message.restart.bias.first"));
                                 } else {
                                     String extFullClassName = 
                                         Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
@@ -4986,13 +4986,13 @@ public class FrontEnd extends JFrame {
                         }
                     }
                 });
-                JButton extInstButt = new JButton("Install/Update...");
+                JButton extInstButt = new JButton(getMessage("install.or.update") + "...");
                 extInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         installLocalPackages(addOnFileChooser, PackType.EXTENSION, getExtensionsModel());
                     }
                 });
-                JButton extUninstButt = new JButton("Uninstall");
+                JButton extUninstButt = new JButton(getMessage("uninstall"));
                 extUninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
@@ -5022,7 +5022,7 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         } catch (Throwable ex) {
-                            displayErrorMessage("Failed to uninstall extension(s)! " + CommonUtils.getFailureDetails(ex), ex);
+                            displayErrorMessage(getMessage("error.message.extensions.uninstall.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(ex), ex);
                         }
                     }
                 });
@@ -5057,7 +5057,7 @@ public class FrontEnd extends JFrame {
                 skinList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 skinList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 listSkins();
-                JButton skinDetailsButt = new JButton("Skin details");
+                JButton skinDetailsButt = new JButton(getMessage("details"));
                 skinDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = skinList.getSelectedRow();
@@ -5065,7 +5065,7 @@ public class FrontEnd extends JFrame {
                             try {
                                 String skin = (String) skinList.getValueAt(idx, 1);
                                 if (DEFAULT_SKIN.equals(skin)) {
-                                    displayMessage("This is a default native Java cross-platform Skin.");
+                                    displayMessage(getMessage("default.skin.description"));
                                 } else {
                                     try {
                                         File addOnInfoFile = new File(new File(Constants.ADDON_INFO_DIR, skin), LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX);
@@ -5080,19 +5080,19 @@ public class FrontEnd extends JFrame {
                                             AddOnInfo skinInfo = BackEnd.getInstance().getAddOnInfo(skin, PackType.SKIN);
                                             loadAndDisplayPackageDetails(baseURL, addOnURL, skinInfo);
                                         } else {
-                                            displayMessage("Detailed information is not provided with this Skin.");
+                                            displayMessage(getMessage("info.message.skin.does.not.provide.detailed.info"));
                                         }
                                     } catch (MalformedURLException ex) {
-                                        displayErrorMessage("Invalid URL! " + CommonUtils.getFailureDetails(ex), ex);
+                                        displayErrorMessage(getMessage("error.message.invalid.url") + Constants.BLANK_STR + CommonUtils.getFailureDetails(ex), ex);
                                     }
                                 }
                             } catch (Throwable t) {
-                                displayErrorMessage("Failed to display Skin details!", t);
+                                displayErrorMessage(getMessage("error.message.skin.details.display.failure"), t);
                             }
                         }
                     }
                 });
-                JButton skinActivateButt = new JButton("(Re)Activate Skin");
+                JButton skinActivateButt = new JButton(getMessage("reactivate.skin"));
                 skinActivateButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = skinList.getSelectedRow();
@@ -5103,14 +5103,14 @@ public class FrontEnd extends JFrame {
                                     setActiveSkin(null);
                                     skinList.repaint();
                                 } catch (Throwable t) {
-                                    displayErrorMessage("Failed to (re)activate Skin!", t);
+                                    displayErrorMessage(getMessage("error.message.skin.reactivation.failure"), t);
                                 }
                             } else {
                                 Map<AddOnInfo, String> newSkins = BackEnd.getInstance().getNewAddOns(PackType.SKIN);
                                 if (newSkins != null && newSkins.containsKey(new AddOnInfo(skin))) {
                                     displayMessage(
-                                            "This Skin can not be (re)activated yet." + Constants.NEW_LINE +
-                                            "Restart Bias first.");
+                                            getMessage("info.message.skin.is.not.yet.activable") + Constants.NEW_LINE +
+                                            getMessage("info.message.restart.bias.first"));
                                 } else {
                                     try {
                                         String fullSkinClassName = 
@@ -5119,20 +5119,20 @@ public class FrontEnd extends JFrame {
                                         setActiveSkin(fullSkinClassName);
                                         skinList.repaint();
                                     } catch (Throwable t) {
-                                        displayErrorMessage("Failed to (re)activate Skin!", t);
+                                        displayErrorMessage(getMessage("error.message.skin.reactivation.failure"), t);
                                     }
                                 }
                             }
                         }
                     }
                 });
-                JButton skinInstButt = new JButton("Install/Update...");
+                JButton skinInstButt = new JButton(getMessage("install.or.update") + "...");
                 skinInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         installLocalPackages(addOnFileChooser, PackType.SKIN, getSkinModel());
                     }
                 });
-                JButton skinUninstButt = new JButton("Uninstall");
+                JButton skinUninstButt = new JButton(getMessage("uninstall"));
                 skinUninstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
@@ -5168,7 +5168,7 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         } catch (Throwable ex) {
-                            displayErrorMessage("Failed to uninstall skin(s)! " + CommonUtils.getFailureDetails(ex), ex);
+                            displayErrorMessage(getMessage("error.message.skins.uninstall.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(ex), ex);
                         }
                     }
                 });
@@ -5184,7 +5184,7 @@ public class FrontEnd extends JFrame {
                 JScrollPane jsp = new JScrollPane(getIconList());
                 jsp.setPreferredSize(new Dimension(200,200));
                 jsp.setMinimumSize(new Dimension(200,200));
-                JButton icSetDetailsButt = new JButton("IconSet details");
+                JButton icSetDetailsButt = new JButton(getMessage("details"));
                 icSetDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = icSetList.getSelectedRow();
@@ -5204,18 +5204,18 @@ public class FrontEnd extends JFrame {
                                         AddOnInfo icInfo = BackEnd.getInstance().getAddOnInfo(ic, PackType.ICON_SET);
                                         loadAndDisplayPackageDetails(baseURL, addOnURL, icInfo);
                                     } else {
-                                        displayMessage("Detailed information is not provided with this IconSet.");
+                                        displayMessage(getMessage("info.message.iconset.does.not.provide.detailed.info"));
                                     }
                                 } catch (MalformedURLException ex) {
-                                    displayErrorMessage("Invalid URL! " + CommonUtils.getFailureDetails(ex), ex);
+                                    displayErrorMessage(getMessage("error.message.invalid.url") + Constants.BLANK_STR + CommonUtils.getFailureDetails(ex), ex);
                                 }
                             } catch (Throwable t) {
-                                displayErrorMessage("Failed to display IconSet details!", t);
+                                displayErrorMessage(getMessage("error.message.iconset.details.display.failure"), t);
                             }
                         }
                     }
                 });
-                JButton addIconButt = new JButton("Add/Install...");
+                JButton addIconButt = new JButton(getMessage("add.or.install") + "...");
                 addIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         if (iconsFileChooser.showOpenDialog(getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
@@ -5242,19 +5242,19 @@ public class FrontEnd extends JFrame {
                                         }
                                         if (added) {
                                             getIconList().repaint();
-                                            displayMessage("Icon(s) successfully installed!");
+                                            displayMessage(getMessage("success.message.icons.installed"));
                                         } else {
-                                            displayErrorMessage("Nothing to install!");
+                                            displayErrorMessage(getMessage("warning.message.nothing.to.install"));
                                         }
                                     } catch (Throwable t) {
-                                        displayErrorMessage("Failed to install icon(s)! " + CommonUtils.getFailureDetails(t), t);
+                                        displayErrorMessage(getMessage("error.message.icons.install.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(t), t);
                                     }
                                 }
-                            }, "installing icons...", true);
+                            }, getMessage("info.message.icons.installation"), true);
                         }
                     }
                 });
-                JButton removeIconButt = new JButton("Remove selected icon(s)");
+                JButton removeIconButt = new JButton(getMessage("remove.selected.icons"));
                 removeIconButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
@@ -5269,11 +5269,11 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         } catch (Throwable t) {
-                            displayErrorMessage("Failed to remove icon(s)! " + CommonUtils.getFailureDetails(t), t);
+                            displayErrorMessage(getMessage("error.message.icons.remove.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(t), t);
                         }
                     }
                 });
-                JButton removeIconSetButt = new JButton("Uninstall selected IconSet(s)");
+                JButton removeIconSetButt = new JButton(getMessage("uninstall.selected.iconsets"));
                 removeIconSetButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         try {
@@ -5308,14 +5308,14 @@ public class FrontEnd extends JFrame {
                                 }
                             }
                         } catch (Throwable ex) {
-                            displayErrorMessage("Failed to uninstall IsonSet(s)! " + CommonUtils.getFailureDetails(ex), ex);
+                            displayErrorMessage(getMessage("error.message.iconsets.uninstall.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(ex), ex);
                         }
                     }
                 });
 
                 // list of loaded libs
                 libList = getLibsList();
-                JButton libDetailsButt = new JButton("Library details");
+                JButton libDetailsButt = new JButton(getMessage("details"));
                 libDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = libList.getSelectedRow();
@@ -5335,18 +5335,18 @@ public class FrontEnd extends JFrame {
                                         AddOnInfo libInfo = BackEnd.getInstance().getAddOnInfo(lib, PackType.LIBRARY);
                                         loadAndDisplayPackageDetails(baseURL, addOnURL, libInfo);
                                     } else {
-                                        displayMessage("Detailed information is not provided with this library.");
+                                        displayMessage(getMessage("info.message.library.does.not.provide.detailed.info"));
                                     }
                                 } catch (MalformedURLException ex) {
-                                    displayErrorMessage("Invalid URL! " + CommonUtils.getFailureDetails(ex), ex);
+                                    displayErrorMessage(getMessage("error.message.invalid.url") + Constants.BLANK_STR + CommonUtils.getFailureDetails(ex), ex);
                                 }
                             } catch (Throwable t) {
-                                displayErrorMessage("Failed to display Library details!", t);
+                                displayErrorMessage(getMessage("error.message.library.details.display.failure"), t);
                             }
                         }
                     }
                 });
-                JButton libInstButt = new JButton("Install/Update...");
+                JButton libInstButt = new JButton(getMessage("install.or.update") + "...");
                 libInstButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         installLocalPackages(addOnFileChooser, PackType.LIBRARY, getLibModel());

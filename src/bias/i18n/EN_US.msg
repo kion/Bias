@@ -148,6 +148,18 @@ error.message.data.representation.failure == Failure detected while representing
 error.message.preferences.load.failure == Failed to load preferences!
 error.message.preferences.save.failure == Failed to save preferences!
 warning.message.preferences.contain.error == Preference configuration contains error(s)! Preferences won't be saved, until that is fixed.
+default.skin == Default Skin
+default.skin.description == Default native Java cross-platform Skin.
+error.message.skin.initialization.failure == Skin '$' failed to initialize!
+info.message.extension.does.not.provide.detailed.info == Detailed information is not provided with this extension
+error.message.extension.details.display.failure == Failed to display extension's details!
+info.message.skin.does.not.provide.detailed.info == Detailed information is not provided with this skin
+error.message.skin.details.display.failure == Failed to display skin's details!
+info.message.iconset.does.not.provide.detailed.info == Detailed information is not provided with this icon-set
+error.message.iconset.details.display.failure == Failed to display icon-set's details!
+info.message.library.does.not.provide.detailed.info == Detailed information is not provided with this library
+error.message.library.details.display.failure == Failed to display library's details!
+error.message.invalid.url == Invalid URL!
 messages.history == Messages History
 choose.placement == Choose placement
 info.message.entry.not.configurable == Selected entry is not configurable!
@@ -166,6 +178,25 @@ exit == Exit
 about == About Bias
 manage.addons == Manage add-ons
 preferences == Preferences
+add.or.install == Add/Install
+install.or.update == Install/Update
+uninstall == Uninstall
+error.message.extensions.uninstall.failure == Failed to uninstall extension(s)!
+error.message.skins.uninstall.failure == Failed to uninstall skin(s)!
+error.message.iconsets.uninstall.failure == Failed to uninstall icon-set(s)!
+error.message.icons.remove.failure == Failed to remove icon(s)!
+error.message.icons.install.failure == Failed to install icons!
+remove.selected.icons == Remove selected icon(s)
+uninstall.selected.iconsets == Uninstall selected icon-set(s)
+configure == Configure
+info.message.extension.is.not.yet.configurable == This extension can not be (re)configured yet.
+reactivate.skin == (Re)Activate skin
+info.message.skin.is.not.yet.activable == This Skin can not be activated yet.
+error.message.skin.reactivation.failure == Failed to (re)activate Skin!
+info.message.restart.bias.first == Restart Bias first.
+warning.message.nothing.to.install == Nothing to install!
+success.message.icons.installed == Icons successfully installed!
+details == Details...
 history.back.to.first == Back to first
 history.back == Back
 history.forward == Forward
@@ -174,3 +205,4 @@ running.tasks.wait == Some tasks are still running, please wait them to finish..
 running.tasks.force.exit == Force exit (all incomplete tasks will be aborted)
 error.data.load.failure == Failed to load data!
 memory.usage == Memory Usage: $ of $ Mb
+info.message.icons.installation == installing icons...
