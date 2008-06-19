@@ -6500,7 +6500,7 @@ public class FrontEnd extends JFrame {
             for (Dependency dep : dependencies) {
                 AddOnInfo dependentAddOnInfo = BackEnd.getInstance().getAddOnInfo(dep.getName(), dep.getType());
                 String status = dependentAddOnInfo != null && (dep.getVersion() == null || VersionComparator.getInstance().compare(dependentAddOnInfo.getVersion(), dep.getVersion()) >= 0) ? 
-                        Constants.LIB_STATUS_REGISTERED_INSTALLED : Constants.LIB_STATUS_NOT_REGISTERED_INSTALLED; 
+                        Constants.ADDON_STATUS_REGISTERED_INSTALLED : Constants.ADDON_STATUS_NOT_REGISTERED_INSTALLED; 
                 text.append(
                         "<li>" + 
                         dep.getType().value() + " '" + dep.getName() + "'" + 
