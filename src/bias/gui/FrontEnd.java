@@ -4931,7 +4931,7 @@ public class FrontEnd extends JFrame {
                 extList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 extList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 listExtensions();
-                JButton extDetailsButt = new JButton(getMessage("details" + "..."));
+                JButton extDetailsButt = new JButton(getMessage("details") + "...");
                 extDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = extList.getSelectedRow();
@@ -5057,7 +5057,7 @@ public class FrontEnd extends JFrame {
                 skinList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 skinList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 listSkins();
-                JButton skinDetailsButt = new JButton(getMessage("details" + "..."));
+                JButton skinDetailsButt = new JButton(getMessage("details") + "...");
                 skinDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = skinList.getSelectedRow();
@@ -5184,7 +5184,7 @@ public class FrontEnd extends JFrame {
                 JScrollPane jsp = new JScrollPane(getIconList());
                 jsp.setPreferredSize(new Dimension(200,200));
                 jsp.setMinimumSize(new Dimension(200,200));
-                JButton icSetDetailsButt = new JButton(getMessage("details" + "..."));
+                JButton icSetDetailsButt = new JButton(getMessage("details") + "...");
                 icSetDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = icSetList.getSelectedRow();
@@ -5315,7 +5315,7 @@ public class FrontEnd extends JFrame {
 
                 // list of loaded libs
                 libList = getLibsList();
-                JButton libDetailsButt = new JButton(getMessage("details" + "..."));
+                JButton libDetailsButt = new JButton(getMessage("details") + "...");
                 libDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = libList.getSelectedRow();
@@ -5424,7 +5424,7 @@ public class FrontEnd extends JFrame {
                         refreshOnlinePackagesList(null, getOnlineShowAllPackagesCheckBox().isSelected());
                     }
                 });
-                JButton onlineDetailsButt = new JButton(getMessage("details" + "..."));
+                JButton onlineDetailsButt = new JButton(getMessage("details") + "...");
                 onlineDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = onlineList.getSelectedRow();
