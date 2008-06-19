@@ -4931,7 +4931,7 @@ public class FrontEnd extends JFrame {
                 extList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 extList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 listExtensions();
-                JButton extDetailsButt = new JButton(getMessage("details"));
+                JButton extDetailsButt = new JButton(getMessage("details" + "..."));
                 extDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = extList.getSelectedRow();
@@ -5057,7 +5057,7 @@ public class FrontEnd extends JFrame {
                 skinList.getColumnModel().getColumn(0).setPreferredWidth(30);
                 skinList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 listSkins();
-                JButton skinDetailsButt = new JButton(getMessage("details"));
+                JButton skinDetailsButt = new JButton(getMessage("details" + "..."));
                 skinDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = skinList.getSelectedRow();
@@ -5184,7 +5184,7 @@ public class FrontEnd extends JFrame {
                 JScrollPane jsp = new JScrollPane(getIconList());
                 jsp.setPreferredSize(new Dimension(200,200));
                 jsp.setMinimumSize(new Dimension(200,200));
-                JButton icSetDetailsButt = new JButton(getMessage("details"));
+                JButton icSetDetailsButt = new JButton(getMessage("details" + "..."));
                 icSetDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = icSetList.getSelectedRow();
@@ -5315,7 +5315,7 @@ public class FrontEnd extends JFrame {
 
                 // list of loaded libs
                 libList = getLibsList();
-                JButton libDetailsButt = new JButton(getMessage("details"));
+                JButton libDetailsButt = new JButton(getMessage("details" + "..."));
                 libDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = libList.getSelectedRow();
@@ -5378,7 +5378,7 @@ public class FrontEnd extends JFrame {
                                                                     pack.getName(), 
                                                                     dep.getType().value(), 
                                                                     dep.getName(), 
-                                                                    dep.getVersion() != null ? " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR)
+                                                                    dep.getVersion() != null ? getMessage("version.x.or.higher", dep.getVersion()) : Constants.EMPTY_STR)
                                                             );
                                                 } else {
                                                     synchronized (FrontEnd.this) {
@@ -5424,7 +5424,7 @@ public class FrontEnd extends JFrame {
                         refreshOnlinePackagesList(null, getOnlineShowAllPackagesCheckBox().isSelected());
                     }
                 });
-                JButton onlineDetailsButt = new JButton(getMessage("details"));
+                JButton onlineDetailsButt = new JButton(getMessage("details" + "..."));
                 onlineDetailsButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         int idx = onlineList.getSelectedRow();
@@ -6163,10 +6163,10 @@ public class FrontEnd extends JFrame {
                                     for (AddOnInfo iconSetInfo : iconSets) {
                                         addOrReplaceTableModelAddOnRow(getIconSetModel(), iconSetInfo, true, 1, null);
                                     }
-                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("success.message.package.downloaded.and.installed", getMessage(pack.getType().value().toLowerCase()), pack.getName(), pack.getVersion()) + Constants.HTML_COLOR_SUFFIX + "</li>");
                                     getIconList().repaint();
                                 } else {
-                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "IconSet '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' - nothing to install!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                    sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage(PackType.ICON_SET.value().toLowerCase()) + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' - " + getMessage("warning.message.nothing.to.install") + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 }
                             } else if (pack.getType() == PackType.LIBRARY) {
                                 AddOnInfo libInfo = new AddOnInfo();
@@ -6180,19 +6180,18 @@ public class FrontEnd extends JFrame {
                                 BackEnd.getInstance().installAddOn(file, PackType.LIBRARY);
                                 String status = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY).get(libInfo);
                                 addOrReplaceTableModelAddOnRow(getLibModel(), libInfo, false, 0, status);
-                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Library '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("success.message.package.downloaded.and.installed", getMessage(pack.getType().value().toLowerCase()), pack.getName(), pack.getVersion()) + Constants.HTML_COLOR_SUFFIX + "</li>");
                             } else if (pack.getType() == PackType.APP_CORE) {
                                 BackEnd.getInstance().installAppCoreUpdate(file, pack.getVersion());
-                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "AppCore '" + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("success.message.package.downloaded.and.installed", getMessage(pack.getType().value().toLowerCase()), pack.getName(), pack.getVersion()) + Constants.HTML_COLOR_SUFFIX + "</li>");
                             } else if (pack.getType() == PackType.APP_LAUNCHER) {
                                 BackEnd.getInstance().installAppLauncherUpdate(file, pack.getVersion());
-                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "AppLauncher '" + pack.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("success.message.package.downloaded.and.installed", getMessage(pack.getType().value().toLowerCase()), pack.getName(), pack.getVersion()) + Constants.HTML_COLOR_SUFFIX + "</li>");
                                 launcherUpdated = true;
                             } else {
-                                PackType addOnType = PackType.fromValue(pack.getType().value());
-                                AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, addOnType);
-                                String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
-                                DefaultTableModel model = addOnType == PackType.EXTENSION ? getExtensionsModel() : getSkinModel();
+                                AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, pack.getType());
+                                String status = BackEnd.getInstance().getNewAddOns(pack.getType()).get(installedAddOn);
+                                DefaultTableModel model = pack.getType() == PackType.EXTENSION ? getExtensionsModel() : getSkinModel();
                                 int idx = findDataRowIndex(model, 1, installedAddOn.getName());
                                 if (idx != -1) {
                                     model.removeRow(idx);
@@ -6200,10 +6199,10 @@ public class FrontEnd extends JFrame {
                                 } else {
                                     model.addRow(getAddOnInfoRow(Boolean.FALSE, installedAddOn, status));
                                 }
-                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + addOnType.value() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' has been successfully downloaded and installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("success.message.package.downloaded.and.installed", getMessage(pack.getType().value().toLowerCase()), pack.getName(), pack.getVersion()) + Constants.HTML_COLOR_SUFFIX + "</li>");
                             }
                         } catch (Throwable t) {
-                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install " + pack.getType() + " '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' from downloaded file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                            sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("error.message.package.download.or.installation.failure", getMessage(pack.getType().value().toLowerCase()), pack.getName(), pack.getVersion()) + Constants.HTML_COLOR_SUFFIX + "</li>");
                             t.printStackTrace(System.err);
                         }
                     }
@@ -6211,7 +6210,7 @@ public class FrontEnd extends JFrame {
                     public void onFailure(URL url, File file, Throwable failure) {
                         success = false;
                         Pack pack = urlPackageMap.get(url);
-                        sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "'" + pack.getName() + "' - failed to retrieve installation file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                        sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "'" + pack.getName() + "' - " + getMessage("error.message.failed.to.retrieve.package") + Constants.HTML_COLOR_SUFFIX + "</li>");
                         failure.printStackTrace(System.err);
                     }
                     @Override
@@ -6240,15 +6239,15 @@ public class FrontEnd extends JFrame {
                     public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime) {
                         success = false;
                         Pack pack = urlPackageMap.get(url);
-                        sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Download/installation of pack '" + pack.getName() + Constants.BLANK_STR + pack.getVersion() + "' cancelled!" + Constants.HTML_COLOR_SUFFIX + "</li>");
-                        JOptionPane.showMessageDialog(getActiveWindow(), "Packages download/installation canceled by user!");
+                        sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("info.message.package.download.and.installation.canceled.by.user", pack.getName(), pack.getVersion()) + Constants.HTML_COLOR_SUFFIX + "</li>");
+                        JOptionPane.showMessageDialog(getActiveWindow(), getMessage("info.message.packages.download.and.installation.canceled.by.user"));
                     }
                 });
                 getOnlineTotalProgressBar().setMaximum(totalSize.intValue());
                 d.start();
             }    
         } catch (Exception ex) {
-            displayErrorMessage("Failure while resolving repository URL! " + CommonUtils.getFailureDetails(ex), ex);
+            displayErrorMessage(getMessage("error.message.repository.url.resolution.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(ex), ex);
         }
     }
     
@@ -6299,11 +6298,13 @@ public class FrontEnd extends JFrame {
                                                         idx = findDataRowIndex(model, 2, dep.getName());
                                                     }
                                                     if (idx == -1) {
-                                                        throw new Exception("Failed to resolve dependency for package '" + pack.getName() + "': " +
-                                                                                dep.getType().value() + " '" + dep.getName() + "' " + 
-                                                                                (dep.getVersion() != null ? 
-                                                                                " (version " + dep.getVersion() + " or later) " : Constants.EMPTY_STR) + 
-                                                                                " is not available!");
+                                                        throw new Exception(
+                                                                getMessage("error.message.dependency.resolution.failure", 
+                                                                        pack.getName(), 
+                                                                        dep.getType().value(), 
+                                                                        dep.getName(), 
+                                                                        dep.getVersion() != null ? getMessage("version.x.or.higher", dep.getVersion()) : Constants.EMPTY_STR)
+                                                                );
                                                     } else {
                                                         synchronized (FrontEnd.this) {
                                                             Integer counter = getDepCounters().get(dep.getName());
@@ -6328,7 +6329,7 @@ public class FrontEnd extends JFrame {
                                                     }
                                                     states.put((String) addOnModel.getValueAt(e.getFirstRow(), 1), (Boolean) addOnModel.getValueAt(e.getFirstRow(), 0));
                                                 } catch (Throwable t) {
-                                                    displayErrorMessage("Failed to handle/resolve dependencies! " + CommonUtils.getFailureDetails(t), t);
+                                                    displayErrorMessage(getMessage("error.message.dependencies.handle.resolve.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(t), t);
                                                 }
                                             }
                                         };
@@ -6349,7 +6350,7 @@ public class FrontEnd extends JFrame {
                             }
                         }
                     } catch (Throwable t) {
-                        displayErrorMessage("Failed to handle/resolve dependencies! " + CommonUtils.getFailureDetails(t), t);
+                        displayErrorMessage(getMessage("error.message.dependencies.handle.resolve.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(t), t);
                     }
                 }
             }
@@ -6360,15 +6361,15 @@ public class FrontEnd extends JFrame {
         addOnSorter.setSortsOnUpdates(true);
         addOnList.setRowSorter(addOnSorter);
         addOnModel.addColumn(Constants.EMPTY_STR);
-        addOnModel.addColumn("Name");
-        addOnModel.addColumn("Version");
-        addOnModel.addColumn("Author");
-        addOnModel.addColumn("Description");
+        addOnModel.addColumn(getMessage("name"));
+        addOnModel.addColumn(getMessage("version"));
+        addOnModel.addColumn(getMessage("author"));
+        addOnModel.addColumn(getMessage("description"));
         for (AddOnInfo addOnInfo : addOnInfos) {
             addOnModel.addRow(getInstallAddOnInfoRow(addOnInfo));
             proposedAddOnsToInstall.put(addOnInfo.getName(), addOnInfo);
         }
-        int opt = JOptionPane.showConfirmDialog(getActiveWindow(), new JScrollPane(addOnList), "Add-On(s) Installation Confirmation", JOptionPane.OK_CANCEL_OPTION);
+        int opt = JOptionPane.showConfirmDialog(getActiveWindow(), new JScrollPane(addOnList), getMessage("addons.installation.confirmation"), JOptionPane.OK_CANCEL_OPTION);
         if (opt == JOptionPane.OK_OPTION) {
             for (int i = 0; i < addOnList.getRowCount(); i++) {
                 if ((Boolean) addOnList.getValueAt(i, 0)) {
@@ -6435,9 +6436,9 @@ public class FrontEnd extends JFrame {
                     JPanel p = new JPanel(new BorderLayout());
                     p.add(getDetailsPane(new String(baos.toByteArray()), baseURL), BorderLayout.CENTER);
                     p.add(getDependenciesPanel(dependencies), BorderLayout.SOUTH);
-                    displayDialog(p, addOnName + " :: Details");
+                    displayDialog(p, addOnName + " :: " + getMessage("details"));
                 } catch (Throwable t) {
-                    displayErrorMessage("Failed to display package details! " + CommonUtils.getFailureDetails(t), t);
+                    displayErrorMessage(getMessage("error.message.pack.details.page.load.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(t), t);
                 }
             }
         }
@@ -6495,22 +6496,22 @@ public class FrontEnd extends JFrame {
         }
         StringBuffer text = new StringBuffer();
         if (dependencies != null && !dependencies.isEmpty()) {
-            text.append("AddOn dependencies:<br/><ul>");
+            text.append(getMessage("addon.dependencies") + ":<br/><ul>");
             for (Dependency dep : dependencies) {
                 AddOnInfo dependentAddOnInfo = BackEnd.getInstance().getAddOnInfo(dep.getName(), dep.getType());
                 String status = dependentAddOnInfo != null && (dep.getVersion() == null || VersionComparator.getInstance().compare(dependentAddOnInfo.getVersion(), dep.getVersion()) >= 0) ? 
-                        Constants.HTML_COLOR_HIGHLIGHT_OK + "[Registered/installed]" + Constants.HTML_COLOR_SUFFIX : Constants.HTML_COLOR_HIGHLIGHT_ERROR + "[Not registered/installed]" + Constants.HTML_COLOR_SUFFIX; 
+                        Constants.LIB_STATUS_REGISTERED_INSTALLED : Constants.LIB_STATUS_NOT_REGISTERED_INSTALLED; 
                 text.append(
                         "<li>" + 
                         dep.getType().value() + " '" + dep.getName() + "'" + 
-                        (Validator.isNullOrBlank(dep.getVersion()) ? Constants.BLANK_STR : " ver. " + dep.getVersion() + " or higher ") + 
+                        (Validator.isNullOrBlank(dep.getVersion()) ? Constants.BLANK_STR : getMessage("version.x.or.higher", dep.getVersion())) + 
                         status + 
                         "</li>");
             }
             text.append("</ul>");
         }
         if (Validator.isNullOrBlank(text)) {
-            dependenciesLabel.setText("AddOn has no dependencies.");
+            dependenciesLabel.setText(getMessage("addon.has.no.dependencies"));
         } else {
             dependenciesLabel.setText(Constants.HTML_PREFIX + text.toString() + Constants.HTML_SUFFIX);
         }
@@ -6523,7 +6524,7 @@ public class FrontEnd extends JFrame {
         
         public AboutAction() {
             putValue(Action.NAME, "about");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("about"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("about.bias"));
             putValue(Action.SMALL_ICON, guiIcons.getIconAbout());
         }
 
@@ -6541,7 +6542,7 @@ public class FrontEnd extends JFrame {
                             title2Label, link2Label,
                             title3Label, link3Label
                             },
-                    "About Bias...",
+                    getMessage("about.bias") + "...",
                     JOptionPane.PLAIN_MESSAGE,
                     ICON_LOGO);
         }

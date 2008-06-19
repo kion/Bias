@@ -77,6 +77,9 @@ public class Constants {
     public static final String ADDON_STATUS_UNUSED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "[Unused]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     public static final String ADDON_STATUS_BROKEN = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + "[BROKEN]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
     public static final String ADDON_STATUS_BROKEN_DEPENDENCIES = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + "[BROKEN DEPENDENCIES]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
+
+    public static final String LIB_STATUS_REGISTERED_INSTALLED = HTML_COLOR_HIGHLIGHT_OK + "[Registered/installed]" + HTML_COLOR_SUFFIX;
+    public static final String LIB_STATUS_NOT_REGISTERED_INSTALLED = HTML_COLOR_HIGHLIGHT_ERROR + "[Not registered/installed]" + HTML_COLOR_SUFFIX;
     
     public static final String DEFAULT_ENCODING = "UTF-8";
     

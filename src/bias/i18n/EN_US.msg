@@ -176,7 +176,7 @@ exit.confirmation == Exit confirmation
 exit.confirmation.active.downloads.present == Some downloads are still in progress. Are you sure you want to cancel all active downloads and exit?
 save.changes.before.exit == Save changes before exit
 exit == Exit
-about == About Bias
+about.bias == About Bias
 manage.addons == Manage add-ons
 preferences == Preferences
 add.or.install == Add/Install
@@ -198,7 +198,7 @@ error.message.skin.reactivation.failure == Failed to (re)activate Skin!
 info.message.restart.bias.first == Restart Bias first.
 warning.message.nothing.to.install == Nothing to install!
 success.message.icons.installed == Icons successfully installed!
-details == Details...
+details == Details
 history.back.to.first == Back to first
 history.back == Back
 history.forward == Forward
@@ -212,6 +212,7 @@ info.message.packages.installation == installing packages...
 info.message.local.packages.installation == installing local packages...
 error.message.dependency.resolution.failure == Failed to resolve dependency for package '$'! Following dependency-package is not available: $ '$' $.
 error.message.dependencies.handle.resolve.failure == Failed to handle/resolve dependencies!
+version.x.or.higher == version $ or higher
 refresh == Refresh
 error.message.pack.details.page.load.failure == Failed to load package details page!
 error.message.repository.url.resolution.failure == Failed to resolve repository URL!
@@ -241,10 +242,24 @@ description == Description
 status == Status
 type == Type
 size == Size
-success.message.addon.installed == Add-On '$ $' has been successfully installed!
-error.message.addon.installation.failure == Failed to install add-on '$ $'!
 info.message.refreshing.online.packages.list == refreshing online packages list...
 error.message.packages.list.parse.failure == Failed to parse list of available packages!
 error.message.packages.list.retrieve.failure == Failed to retrieve list of available addons!
 info.message.packages.list.refresh.canceled.by.user == Packages list refresh canceled by user!
 info.message.downloading.and.installing.packages == downloading/installing packages...
+success.message.addon.installed == Add-On '$ $' has been successfully installed!
+error.message.addon.installation.failure == Failed to install add-on '$ $'!
+success.message.package.downloaded.and.installed == $ '$ $' - successfully downloaded/installed!
+error.message.package.download.or.installation.failure == $ '$ $' - failed to download/install!
+error.message.failed.to.retrieve.package == Failed to retrieve package!
+info.message.package.download.and.installation.canceled.by.user == Downloading/installation of package '$ $' has been canceled by user!
+info.message.packages.download.and.installation.canceled.by.user == Packages downloading/installation canceled by user!
+addons.installation.confirmation == Add-Ons Installation Confirmation
+addon.dependencies == AddOn dependencies
+addon.has.no.dependencies == AddOn has no dependencies
+applauncher == Application launcher
+appcore == Application core
+extension == Extension
+skin == Skin
+iconset == Icon-set
+library == Library

@@ -176,7 +176,7 @@ exit.confirmation == Подтверждение завершения сеанс�
 exit.confirmation.active.downloads.present == Присутствуют активные загрузки. Вы уверены, что хотите прервать их и выйти?
 save.changes.before.exit == Сохранить данные перед выходом
 exit == Выход
-about == О Bias
+about.bias == О Bias
 manage.addons == Управление расширениями
 preferences == Предпочтения
 add.or.install == Добавить/Установить
@@ -198,7 +198,7 @@ error.message.skin.reactivation.failure == Не удалось (ре)актив�
 info.message.restart.bias.first == Сперва перезагрузите Bias.
 warning.message.nothing.to.install == Нечего устанавливать!
 success.message.icons.installed == Иконки успешно установлены!
-details == Детали...
+details == Детали
 history.back.to.first == В самое начало
 history.back == Назад
 history.forward == Вперед
@@ -212,6 +212,7 @@ info.message.packages.installation == установка пакетов...
 info.message.local.packages.installation == установка локальных пакетов...
 error.message.dependency.resolution.failure == Не удалось разрешить зависимость пакета '$'! Следующий пакет-зависимость недоступен: $ '$' $.
 error.message.dependencies.handle.resolve.failure == Не удалось обработать/разрешить зависимости!
+version.x.or.higher == версия $ или выше
 refresh == Обновить
 error.message.pack.details.page.load.failure == Не удалось загрузить страницу деталей пакета!
 error.message.repository.url.resolution.failure == Не удалось разрешить URL репозитория!
@@ -241,10 +242,24 @@ description == Описание
 status == Статус
 type == Тип
 size == Размер
-success.message.addon.installed == Аддон '$ $' был успешно установлен!
-error.message.addon.installation.failure == Не удалось установить аддон '$ $'!
 info.message.refreshing.online.packages.list == обновление онлайн списка пакетов...
 error.message.packages.list.parse.failure == Не удалось произвести разбор списка доступных пакетов!
 error.message.packages.list.retrieve.failure == Не удалось загрузить список доступных аддонов!
 info.message.packages.list.refresh.canceled.by.user == Обновление списка пакетов отменено пользователем!
 info.message.downloading.and.installing.packages == загрузка/установка пакетов...
+success.message.addon.installed == Аддон '$ $' был успешно установлен!
+error.message.addon.installation.failure == Не удалось установить аддон '$ $'!
+success.message.package.downloaded.and.installed == $ '$ $' - успешно загружено/установлено!
+error.message.package.download.or.installation.failure == $ '$ $' - не удалось загрузить/установить!
+error.message.failed.to.retrieve.package == Не удалось загрузить пакет!
+info.message.package.download.and.installation.canceled.by.user == Загрузка/установка пакета '$ $' была отменена пользователем!
+info.message.packages.download.and.installation.canceled.by.user == Загрузка/установка пакетов была отменена пользователем!
+addons.installation.confirmation == Подтверждение установки аддонов
+addon.dependencies == Зависимости аддона
+addon.has.no.dependencies == Аддон не имеет зависимостей
+applauncher == Загрузчик приложения
+appcore == Ядро приложения
+extension == Расширение
+skin == Скин
+iconset == Набор иконок
+library == Библиотека
