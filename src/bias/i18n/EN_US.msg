@@ -241,3 +241,10 @@ description == Description
 status == Status
 type == Type
 size == Size
+success.message.addon.installed == Add-On '$ $' has been successfully installed!
+error.message.addon.installation.failure == Failed to install add-on '$ $'!
+info.message.refreshing.online.packages.list == refreshing online packages list...
+error.message.packages.list.parse.failure == Failed to parse list of available packages!
+error.message.packages.list.retrieve.failure == Failed to retrieve list of available addons!
+info.message.packages.list.refresh.canceled.by.user == Packages list refresh canceled by user!
+info.message.downloading.and.installing.packages == downloading/installing packages...

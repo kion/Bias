@@ -5996,9 +5996,9 @@ public class FrontEnd extends JFrame {
                 } else {
                     addOnModel.addRow(getAddOnInfoRow(lib ? null : Boolean.FALSE, installedAddOn, status));
                 }
-                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + "Add-On '" + installedAddOn.getName() + Constants.BLANK_STR + installedAddOn.getVersion() + "' has been successfully installed!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("success.message.addon.installed", installedAddOn.getName(), installedAddOn.getVersion()) + Constants.HTML_COLOR_SUFFIX + "</li>");
             } catch (Throwable t) {
-                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + "Failed to install add-on '" + addons.getKey().getName() + Constants.BLANK_STR + addons.getKey().getVersion() + "' from file!" + Constants.HTML_COLOR_SUFFIX + "</li>");
+                sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_ERROR + getMessage("error.message.addon.installation.failure", addons.getKey().getName(), addons.getKey().getVersion()) + Constants.HTML_COLOR_SUFFIX + "</li>");
                 t.printStackTrace(System.err);
             }
         }
@@ -6016,7 +6016,7 @@ public class FrontEnd extends JFrame {
             URL addonsListURL = new URL(BackEnd.getInstance().getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             Downloader d = Downloader.createSingleFileDownloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
-            displayProcessNotification("refreshing online packages list...", true);
+            displayProcessNotification(getMessage("info.message.refreshing.online.packages.list"), true);
             d.setDownloadListener(new DownloadListener(){
                 @Override
                 public void onComplete(URL url, File file, long downloadedBytesNum, long elapsedTime) {
@@ -6048,16 +6048,16 @@ public class FrontEnd extends JFrame {
                             onCompleteAction.run();
                         }
                     } catch (Throwable t) {
-                        displayErrorMessage("Failed to parse downloaded list of available addons!", t);
+                        displayErrorMessage(getMessage("error.message.packages.list.parse.failure"), t);
                     }
                 }
                 @Override
                 public void onFailure(URL url, File file, Throwable failure) {
-                    displayErrorMessage("Failed to retrieve online list of available addons!", failure);
+                    displayErrorMessage(getMessage("error.message.packages.list.retrieve.failure"), failure);
                 }
                 @Override
                 public void onCancel(URL url, File file, long downloadedBytesNum, long elapsedTime) {
-                    JOptionPane.showMessageDialog(getActiveWindow(), "Online packages list refresh canceled by user!");
+                    JOptionPane.showMessageDialog(getActiveWindow(), getMessage("info.message.packages.list.refresh.canceled.by.user"));
                 }
                 @Override
                 public void onFinish(long downloadedBytesNum, long elapsedTime) {
@@ -6066,7 +6066,7 @@ public class FrontEnd extends JFrame {
             });
             d.start();
         } catch (Exception ex) {
-            displayErrorMessage("Failure while resolving repository URL! " + CommonUtils.getFailureDetails(ex), ex);
+            displayErrorMessage(getMessage("error.message.repository.url.resolution.failure") + Constants.BLANK_STR + CommonUtils.getFailureDetails(ex), ex);
         }
     }
     
@@ -6116,7 +6116,7 @@ public class FrontEnd extends JFrame {
             final Long totalSize = new Long(tSize);
             if (!urlFileMap.isEmpty()) {
                 Downloader d = Downloader.createMultipleFilesDownloader(urlFileMap, Preferences.getInstance().preferredTimeOut);
-                displayProcessNotification("downloading/installing packages...", true);
+                displayProcessNotification(getMessage("info.message.downloading.and.installing.packages"), true);
                 d.setDownloadListener(new DownloadListener(){
                     private StringBuffer sb = new StringBuffer();
                     boolean launcherUpdated = false;

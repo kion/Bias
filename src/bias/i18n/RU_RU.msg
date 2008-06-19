@@ -241,3 +241,10 @@ description == Описание
 status == Статус
 type == Тип
 size == Размер
+success.message.addon.installed == Аддон '$ $' был успешно установлен!
+error.message.addon.installation.failure == Не удалось установить аддон '$ $'!
+info.message.refreshing.online.packages.list == обновление онлайн списка пакетов...
+error.message.packages.list.parse.failure == Не удалось произвести разбор списка доступных пакетов!
+error.message.packages.list.retrieve.failure == Не удалось загрузить список доступных аддонов!
+info.message.packages.list.refresh.canceled.by.user == Обновление списка пакетов отменено пользователем!
+info.message.downloading.and.installing.packages == загрузка/установка пакетов...
