@@ -6503,8 +6503,8 @@ public class FrontEnd extends JFrame {
                         Constants.ADDON_STATUS_REGISTERED_INSTALLED : Constants.ADDON_STATUS_NOT_REGISTERED_INSTALLED; 
                 text.append(
                         "<li>" + 
-                        dep.getType().value() + " '" + dep.getName() + "'" + 
-                        (Validator.isNullOrBlank(dep.getVersion()) ? Constants.BLANK_STR : getMessage("version.x.or.higher", dep.getVersion())) + 
+                        getMessage(dep.getType().value().toLowerCase()) + " '" + dep.getName() + "' " + 
+                        (Validator.isNullOrBlank(dep.getVersion()) ? Constants.BLANK_STR : getMessage("version.x.or.higher", dep.getVersion()) + Constants.BLANK_STR) + 
                         status + 
                         "</li>");
             }
