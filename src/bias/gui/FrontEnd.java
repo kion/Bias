@@ -1084,8 +1084,9 @@ public class FrontEnd extends JFrame {
         return isConfigurable;
     }
     
-    private boolean representTool(ToolExtension tool) throws Throwable {
-        boolean hasButton = false;
+    private static Map<Class<? extends ToolExtension>, JButton> toolButtons;
+
+    private void representTool(ToolExtension tool) throws Throwable {
         JPanel panel = indicatorAreas.get(tool.getClass());
         JButton toolButt = null;
         ToolRepresentation tr = tool.getRepresentation();
@@ -1094,11 +1095,19 @@ public class FrontEnd extends JFrame {
         if (tr != null) {
             toolButt = tr.getButton();
             if (toolButt != null) {
-                hasButton = true;
                 if (Validator.isNullOrBlank(toolButt.getToolTipText())) {
                     toolButt.setToolTipText(ExtensionFactory.getAnnotatedToolExtensions().get(tool));
                 }
+                if (toolButtons == null) {
+                    toolButtons = new HashMap<Class<? extends ToolExtension>, JButton>();
+                }
+                JButton button = toolButtons.get(tool.getClass());
+                if (button != null) {
+                    getJToolBar3().remove(button);
+                }
+                toolButtons.remove(tool.getClass());
                 getJToolBar3().add(toolButt);
+                toolButtons.put(tool.getClass(), toolButt);
             } else {
                 removeButton = true;
             }
@@ -1120,10 +1129,17 @@ public class FrontEnd extends JFrame {
             panel.remove(1);
             getJPanelIndicators().remove(panel);
         }
-        if (toolButt != null && removeButton) {
-            getJToolBar3().remove(toolButt);
+        if (removeButton) {
+            if (toolButtons != null) {
+                JButton button = toolButtons.get(tool.getClass());
+                if (button != null) {
+                    getJToolBar3().setVisible(false);
+                    getJToolBar3().remove(button);
+                    getJToolBar3().setVisible(true);
+                }
+                toolButtons.remove(tool.getClass());
+            }
         }
-        return hasButton;
     }
     
     public static Dimension getMainWindowSize() {
