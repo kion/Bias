@@ -32,9 +32,9 @@ import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
-import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.gui.FrontEnd;
+import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 
@@ -46,11 +46,11 @@ public class PlainText extends EntryExtension {
 
     private static final long serialVersionUID = 1L;
 
-    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(BackEnd.getInstance().getResourceURL(PlainText.class, "switch_mode.png"));
+    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(CommonUtils.getResourceURL(PlainText.class, "switch_mode.png"));
     
-    private static final ImageIcon ICON_INCREASE_FONT_SIZE = new ImageIcon(BackEnd.getInstance().getResourceURL(PlainText.class, "increase.png"));
+    private static final ImageIcon ICON_INCREASE_FONT_SIZE = new ImageIcon(CommonUtils.getResourceURL(PlainText.class, "increase.png"));
     
-    private static final ImageIcon ICON_DECREASE_FONT_SIZE = new ImageIcon(BackEnd.getInstance().getResourceURL(PlainText.class, "decrease.png"));
+    private static final ImageIcon ICON_DECREASE_FONT_SIZE = new ImageIcon(CommonUtils.getResourceURL(PlainText.class, "decrease.png"));
     
     private static final String PROPERTY_FONT_SIZE = "FONT_SIZE";
     

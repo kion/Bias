@@ -13,8 +13,8 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
-import bias.core.BackEnd;
 import bias.extension.ToDoList.ToDoList;
+import bias.utils.CommonUtils;
 
 /**
  * @author kion
@@ -22,7 +22,7 @@ import bias.extension.ToDoList.ToDoList;
 public class CustomHTMLEditorKit extends HTMLEditorKit {
     private static final long serialVersionUID = 1L;
     
-    private static final StyleSheet CSS = getStyleSheet(BackEnd.getInstance().getResourceAsStream(ToDoList.class, "editor/styles.css"));
+    private static final StyleSheet CSS = getStyleSheet(CommonUtils.getResourceAsStream(ToDoList.class, "editor/styles.css"));
 
     private static final StyleSheet getStyleSheet(InputStream is) {
         StyleSheet styles = new StyleSheet();

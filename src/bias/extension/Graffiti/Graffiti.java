@@ -22,10 +22,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.border.LineBorder;
 
-import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.extension.Graffiti.brush.LiveBrush;
 import bias.extension.Graffiti.brush.PaintBrush;
+import bias.utils.CommonUtils;
 
 import com.sun.image.codec.jpeg.ImageFormatException;
 
@@ -41,13 +41,13 @@ public class Graffiti extends EntryExtension {
     
     private static final String IMG_FORMAT = "PNG";
     
-    private static final ImageIcon ICON_PAINT_BRUSH = new ImageIcon(BackEnd.getInstance().getResourceURL(Graffiti.class, "paint_brush.png"));
+    private static final ImageIcon ICON_PAINT_BRUSH = new ImageIcon(CommonUtils.getResourceURL(Graffiti.class, "paint_brush.png"));
 
-    private static final ImageIcon ICON_LIVE_BRUSH = new ImageIcon(BackEnd.getInstance().getResourceURL(Graffiti.class, "live_brush.png"));
+    private static final ImageIcon ICON_LIVE_BRUSH = new ImageIcon(CommonUtils.getResourceURL(Graffiti.class, "live_brush.png"));
 
-    private static final ImageIcon ICON_ERASER = new ImageIcon(BackEnd.getInstance().getResourceURL(Graffiti.class, "eraser.png"));
+    private static final ImageIcon ICON_ERASER = new ImageIcon(CommonUtils.getResourceURL(Graffiti.class, "eraser.png"));
 
-    private static final ImageIcon ICON_COLOR = new ImageIcon(BackEnd.getInstance().getResourceURL(Graffiti.class, "color.png"));
+    private static final ImageIcon ICON_COLOR = new ImageIcon(CommonUtils.getResourceURL(Graffiti.class, "color.png"));
 
     private PaintingPanel pp;
     

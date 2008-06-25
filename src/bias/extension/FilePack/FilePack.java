@@ -48,6 +48,7 @@ import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.gui.FrontEnd;
 import bias.utils.AppManager;
+import bias.utils.CommonUtils;
 import bias.utils.FSUtils;
 import bias.utils.FormatUtils;
 import bias.utils.PropertiesUtils;
@@ -64,11 +65,11 @@ public class FilePack extends EntryExtension {
     
     // TODO [P2] column widths should be stored as relative (% of whole table width) values
 
-	private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "add.png"));
-    private static final ImageIcon ICON_DELETE = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "delete.png"));
-    private static final ImageIcon ICON_VIEW = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "view.png"));
-    private static final ImageIcon ICON_APPLY = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "apply.png"));
-    private static final ImageIcon ICON_SAVE = new ImageIcon(BackEnd.getInstance().getResourceURL(FilePack.class, "save.png"));
+	private static final ImageIcon ICON_ADD = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "add.png"));
+    private static final ImageIcon ICON_DELETE = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "delete.png"));
+    private static final ImageIcon ICON_VIEW = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "view.png"));
+    private static final ImageIcon ICON_APPLY = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "apply.png"));
+    private static final ImageIcon ICON_SAVE = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "save.png"));
     
     private static final int MAX_SORT_KEYS_NUMBER = 3;
     

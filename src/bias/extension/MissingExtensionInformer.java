@@ -94,7 +94,7 @@ public class MissingExtensionInformer extends EntryExtension {
         "<html><body>" + 
         "<font size=\"3\" face=\"SansSerif\">" +
         "<b><font color=\"#FF0000\">BROKEN/MISSING EXTENSION!</font></b><br><br>" + 
-        "<b>To display this entry you should (re)install following extension:</b><br><br>" + 
+        "<b>To display this entry you should (re)install/update following extension:</b><br><br>" + 
         "<b><i><font color=\"#0000FF\">" + dataEntry.getType() + "</font></i></b>" +
         "</font>" +
         "</body></html>"; 

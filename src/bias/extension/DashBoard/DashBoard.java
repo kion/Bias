@@ -47,6 +47,7 @@ import bias.Constants;
 import bias.extension.EntryExtension;
 import bias.extension.DashBoard.snippet.HTMLSnippet;
 import bias.extension.DashBoard.snippet.InfoSnippet;
+import bias.extension.DashBoard.snippet.BrokenSnippet;
 import bias.extension.DashBoard.snippet.TextSnippet;
 import bias.extension.DashBoard.xmlb.Frame;
 import bias.extension.DashBoard.xmlb.FrameType;
@@ -394,24 +395,29 @@ public class DashBoard extends EntryExtension {
     }
 
     private InfoSnippet createInternalFrame(Frame frame) {
-        final InfoSnippet f;
+        InfoSnippet is;
         byte[] content = frame.getContent();
         if (content == null)
             content = new byte[] {};
         byte[] settings = frame.getSettings();
         if (settings == null)
             settings = new byte[] {};
-        switch (frame.getType()) {
-        case HTML_SNIPPET:
-            f = new HTMLSnippet(getId(), content, settings);
-            break;
-        case TEXT_SNIPPET:
-            f = new TextSnippet(getId(), content, settings);
-            break;
-        default:
-            f = null;
+        try {
+            switch (frame.getType()) {
+            case HTML_SNIPPET:
+                is = new HTMLSnippet(getId(), content, settings);
+                break;
+            case TEXT_SNIPPET:
+                is = new TextSnippet(getId(), content, settings);
+                break;
+            default:
+                is = null;
+            }
+        } catch (Throwable t) {
+            is = new BrokenSnippet(getId(), content, settings);
         }
-        if (f != null) {
+        if (frame != null) {
+            final InfoSnippet f = is;
             f.setName(frame.getType().value());
             f.setTitle(frame.getTitle());
             Dimension minSize = f.getMinimumSize();
@@ -452,7 +458,7 @@ public class DashBoard extends EntryExtension {
             });
             getSnippets().add(f);
         }
-        return f;
+        return is;
     }
 
 }

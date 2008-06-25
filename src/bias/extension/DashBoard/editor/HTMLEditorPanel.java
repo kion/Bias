@@ -68,6 +68,7 @@ import bias.gui.FrontEnd;
 import bias.gui.ImageFileChooser;
 import bias.gui.VisualEntryDescriptor;
 import bias.utils.AppManager;
+import bias.utils.CommonUtils;
 import bias.utils.FSUtils;
 import bias.utils.Validator;
 
@@ -78,25 +79,25 @@ public class HTMLEditorPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     
-    private static final ImageIcon ICON_ENTRY_LINK = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "editor/entry_link.png"));
+    private static final ImageIcon ICON_ENTRY_LINK = new ImageIcon(CommonUtils.getResourceURL(DashBoard.class, "editor/entry_link.png"));
 
-    private static final ImageIcon ICON_URL_LINK = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "editor/url_link.png"));
+    private static final ImageIcon ICON_URL_LINK = new ImageIcon(CommonUtils.getResourceURL(DashBoard.class, "editor/url_link.png"));
 
-    private static final ImageIcon ICON_IMAGE = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "editor/image.png"));
+    private static final ImageIcon ICON_IMAGE = new ImageIcon(CommonUtils.getResourceURL(DashBoard.class, "editor/image.png"));
 
-    private static final ImageIcon ICON_COLOR = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "editor/color.png"));
+    private static final ImageIcon ICON_COLOR = new ImageIcon(CommonUtils.getResourceURL(DashBoard.class, "editor/color.png"));
 
-    private static final ImageIcon ICON_TEXT_UNDERLINE = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "editor/text_underlined.png"));
+    private static final ImageIcon ICON_TEXT_UNDERLINE = new ImageIcon(CommonUtils.getResourceURL(DashBoard.class, "editor/text_underlined.png"));
 
-    private static final ImageIcon ICON_TEXT_ITALIC = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "editor/text_italic.png"));
+    private static final ImageIcon ICON_TEXT_ITALIC = new ImageIcon(CommonUtils.getResourceURL(DashBoard.class, "editor/text_italic.png"));
 
-    private static final ImageIcon ICON_TEXT_BOLD = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "editor/text_bold.png"));
+    private static final ImageIcon ICON_TEXT_BOLD = new ImageIcon(CommonUtils.getResourceURL(DashBoard.class, "editor/text_bold.png"));
 
-    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "editor/switch_mode.png"));
+    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(CommonUtils.getResourceURL(DashBoard.class, "editor/switch_mode.png"));
 
-    private static final ImageIcon ICON_SAVE = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "editor/save.png"));
+    private static final ImageIcon ICON_SAVE = new ImageIcon(CommonUtils.getResourceURL(DashBoard.class, "editor/save.png"));
 
-    private static final ImageIcon ICON_EDIT_CODE = new ImageIcon(BackEnd.getInstance().getResourceURL(DashBoard.class, "editor/edit_code.png"));
+    private static final ImageIcon ICON_EDIT_CODE = new ImageIcon(CommonUtils.getResourceURL(DashBoard.class, "editor/edit_code.png"));
 
     private static final String HTML_PAGE_FILE_NAME_PATTERN = "(?i).+\\.(htm|html)$";
 

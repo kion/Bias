@@ -44,7 +44,6 @@ import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import bias.core.BackEnd;
 import bias.core.Recognizable;
 import bias.extension.EntryExtension;
 import bias.extension.ExtensionFactory;
@@ -54,6 +53,7 @@ import bias.extension.SimpleSearch.SearchEngine.HighLightMarker;
 import bias.gui.FrontEnd;
 import bias.gui.VisualEntryDescriptor;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
+import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 
@@ -63,7 +63,7 @@ import bias.utils.Validator;
 
 public class SimpleSearch extends ToolExtension {
 
-    private static final ImageIcon ICON = new ImageIcon(BackEnd.getInstance().getResourceURL(SimpleSearch.class, "icon.png"));
+    private static final ImageIcon ICON = new ImageIcon(CommonUtils.getResourceURL(SimpleSearch.class, "icon.png"));
     
     private static final String PROP_SEARCH_EXPRESSION = "SEARCH_EXPRESSION";
     private static final String PROP_IS_CASE_SENSITIVE = "IS_CASE_SENSITIVE";

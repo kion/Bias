@@ -3,7 +3,11 @@
  */
 package bias.utils;
 
+import java.io.InputStream;
+import java.net.URL;
+
 import bias.Constants;
+import bias.extension.Extension;
 
 /**
  * @author kion
@@ -19,6 +23,14 @@ public class CommonUtils {
             t = t.getCause();
         }
         return msg.toString();
+    }
+
+    public static URL getResourceURL(Class<? extends Extension> extensionClass, String resourceName) {
+        return CommonUtils.class.getResource("/bias/res/" + extensionClass.getSimpleName() + "/" + resourceName);
+    }
+
+    public static InputStream getResourceAsStream(Class<? extends Extension> extensionClass, String resourceName) {
+        return CommonUtils.class.getResourceAsStream("/bias/res/" + extensionClass.getSimpleName() + "/" + resourceName);
     }
 
 }

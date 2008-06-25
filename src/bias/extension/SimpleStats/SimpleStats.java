@@ -41,6 +41,7 @@ import bias.core.Recognizable;
 import bias.extension.ToolExtension;
 import bias.extension.ToolRepresentation;
 import bias.gui.FrontEnd;
+import bias.utils.CommonUtils;
 import bias.utils.FSUtils;
 import bias.utils.FormatUtils;
 import bias.utils.PropertiesUtils;
@@ -51,7 +52,7 @@ import bias.utils.PropertiesUtils;
 
 public class SimpleStats extends ToolExtension {
 
-    private static final ImageIcon ICON = new ImageIcon(BackEnd.getInstance().getResourceURL(SimpleStats.class, "icon.png"));
+    private static final ImageIcon ICON = new ImageIcon(CommonUtils.getResourceURL(SimpleStats.class, "icon.png"));
     
     private static final String PROPERTY_SHOW_UPTIME = "SHOW_UPTIME";
     

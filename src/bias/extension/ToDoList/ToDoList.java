@@ -64,6 +64,7 @@ import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.extension.ToDoList.editor.HTMLEditorPanel;
 import bias.gui.FrontEnd;
+import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 
@@ -80,8 +81,8 @@ public class ToDoList extends EntryExtension {
     
     // TODO [P2] column widths should be stored as relative (% of whole table width) values
     
-    private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "add.png"));
-    private static final ImageIcon ICON_DELETE = new ImageIcon(BackEnd.getInstance().getResourceURL(ToDoList.class, "del.png"));
+    private static final ImageIcon ICON_ADD = new ImageIcon(CommonUtils.getResourceURL(ToDoList.class, "add.png"));
+    private static final ImageIcon ICON_DELETE = new ImageIcon(CommonUtils.getResourceURL(ToDoList.class, "del.png"));
 
     private static final String XML_ELEMENT_ROOT = "root";
     private static final String XML_ELEMENT_ENTRY = "entry";

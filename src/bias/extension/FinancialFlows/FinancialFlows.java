@@ -74,7 +74,6 @@ import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.time.TimeSeriesDataItem;
 import org.jfree.ui.RectangleInsets;
 
-import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.extension.FinancialFlows.xmlb.Direction;
 import bias.extension.FinancialFlows.xmlb.ObjectFactory;
@@ -84,6 +83,7 @@ import bias.extension.FinancialFlows.xmlb.RegularFlows;
 import bias.extension.FinancialFlows.xmlb.SingleFlow;
 import bias.extension.FinancialFlows.xmlb.SingleFlows;
 import bias.gui.FrontEnd;
+import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 
 import com.toedter.calendar.JDateChooser;
@@ -97,10 +97,10 @@ public class FinancialFlows extends EntryExtension {
 
     private static final long serialVersionUID = 1L;
 
-    private static final ImageIcon ICON_ADD = new ImageIcon(BackEnd.getInstance().getResourceURL(FinancialFlows.class, "add.png"));
-    private static final ImageIcon ICON_DELETE = new ImageIcon(BackEnd.getInstance().getResourceURL(FinancialFlows.class, "delete.png"));
-    private static final ImageIcon ICON_CHART1 = new ImageIcon(BackEnd.getInstance().getResourceURL(FinancialFlows.class, "chart1.png"));
-    private static final ImageIcon ICON_CHART2 = new ImageIcon(BackEnd.getInstance().getResourceURL(FinancialFlows.class, "chart2.png"));
+    private static final ImageIcon ICON_ADD = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "add.png"));
+    private static final ImageIcon ICON_DELETE = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "delete.png"));
+    private static final ImageIcon ICON_CHART1 = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "chart1.png"));
+    private static final ImageIcon ICON_CHART2 = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "chart2.png"));
     
     private static enum DIRECTION {
         INCOME, OUTGO
