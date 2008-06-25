@@ -1048,7 +1048,7 @@ public class FrontEnd extends JFrame {
                     }
                     if (showFirstTimeUsageMessage) {
                         if (isEntryExtensionConfigurable((Class<? extends EntryExtension>) extensionClass)) {
-                            displayMessage(getMessage("info.message.entry.extension.first.usage", extName));
+                            displayMessage(Constants.HTML_PREFIX + getMessage("info.message.entry.extension.first.usage", extName) + Constants.HTML_SUFFIX);
                         }
                     }
                     settings = ((EntryExtension) extensionInstance).configure(extSettings);
