@@ -45,7 +45,7 @@ public class FTPTransfer extends ObservableTransferExtension {
     
     private static final int DEFAULT_PORT = 21;
     
-    public FTPTransfer(byte[] settings) {
+    public FTPTransfer(byte[] settings) throws Throwable {
         super(settings);
     }
     

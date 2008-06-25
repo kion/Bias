@@ -80,7 +80,7 @@ public class PlainText extends EntryExtension {
     /**
      * Default constructor
      */
-    public PlainText(UUID id, byte[] data, byte[] settings) {
+    public PlainText(UUID id, byte[] data, byte[] settings) throws Throwable {
         super(id, data, settings);
         initialize();
     }

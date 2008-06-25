@@ -48,7 +48,7 @@ public abstract class EntryExtension extends JComponent implements Extension {
      * @param data data to be encapsulated by extension instance
      * @param settings extension instance settings
      */
-    public EntryExtension(UUID id, byte[] data, byte[] settings) {
+    public EntryExtension(UUID id, byte[] data, byte[] settings) throws Throwable {
         if (id == null) {
             id = UUID.randomUUID();
         }

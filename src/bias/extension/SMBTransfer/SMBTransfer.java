@@ -41,7 +41,7 @@ public class SMBTransfer extends ObservableTransferExtension {
 
     private static final String PROTOCOL_PREFIX = "smb://";
 
-    public SMBTransfer(byte[] settings) {
+    public SMBTransfer(byte[] settings) throws Throwable {
         super(settings);
     }
 

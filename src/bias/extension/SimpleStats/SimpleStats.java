@@ -74,7 +74,7 @@ public class SimpleStats extends ToolExtension {
     
     private JLabel label = null;
     
-    public SimpleStats(byte[] data, byte[] settings) {
+    public SimpleStats(byte[] data, byte[] settings) throws Throwable {
         super(data, settings);
         startDate = new Date();
         if (getData() != null) {
@@ -217,7 +217,7 @@ public class SimpleStats extends ToolExtension {
                 
                 FrontEnd.displayBottomPanel(new JLabel("Statistics"), statsPanel);
             } catch (Throwable t) {
-                FrontEnd.displayErrorMessage("Failed to perform search!", t);
+                FrontEnd.displayErrorMessage("Failed to gather stats!", t);
             }
         }
     };

@@ -37,7 +37,7 @@ public class HTMLPage extends EntryExtension {
     /**
      * This is the default constructor
      */
-    public HTMLPage(UUID id, byte[] data, byte[] settings) {
+    public HTMLPage(UUID id, byte[] data, byte[] settings) throws Throwable {
         super(id, data, settings);
         initialize();
     }

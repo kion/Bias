@@ -8,7 +8,7 @@ package bias.extension;
  */
 public abstract class ObservableTransferExtension extends TransferExtension {
     
-    public ObservableTransferExtension(byte[] settings) {
+    public ObservableTransferExtension(byte[] settings) throws Throwable {
         super(settings);
     }
 

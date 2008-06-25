@@ -43,7 +43,7 @@ public abstract class Skin implements AddOn {
      * @param settings initial settings
      * @return settings byte array containing serialized configuration settings
      */
-    public byte[] configure(byte[] settings) {
+    public byte[] configure(byte[] settings) throws Throwable {
         return null;
     }
     

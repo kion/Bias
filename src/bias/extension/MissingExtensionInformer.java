@@ -27,7 +27,7 @@ public class MissingExtensionInformer extends EntryExtension {
     /**
      * Default constructor
      */
-    public MissingExtensionInformer(DataEntry dataEntry) {
+    public MissingExtensionInformer(DataEntry dataEntry) throws Throwable {
         super(dataEntry.getId(), dataEntry.getData(), null);
         this.dataEntry = dataEntry;
         initialize();

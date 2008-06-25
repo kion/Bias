@@ -103,7 +103,7 @@ public class FilePack extends EntryExtension {
     private JButton jButton5;
 	private JButton jButton1;
 
-	public FilePack(UUID id, byte[] data, byte[] settings) {
+	public FilePack(UUID id, byte[] data, byte[] settings) throws Throwable {
 		super(id, data, settings);
         this.settings = getSettings();
 
@@ -117,8 +117,9 @@ public class FilePack extends EntryExtension {
                 filePack.put(att, date);
                 rememberFileChecksum(att);
             }
-        } catch (Exception e) {
-            FrontEnd.displayErrorMessage("Failed to get attachments!", e);
+        } catch (Throwable t) {
+            FrontEnd.displayErrorMessage("Failed to get attachments!", t);
+            throw t;
         }
         
         Properties s = PropertiesUtils.deserializeProperties(this.settings);
@@ -195,7 +196,7 @@ public class FilePack extends EntryExtension {
         return searchData;
     }
     
-	private void initGUI() {
+	private void initGUI() throws Throwable {
 		try {
 			{
 				BorderLayout thisLayout = new BorderLayout();
@@ -333,8 +334,9 @@ public class FilePack extends EntryExtension {
 					addRow(fpEntry.getKey(), fpEntry.getValue());
 				}
 			}
-		} catch (Exception e) {
-			FrontEnd.displayErrorMessage(e);
+		} catch (Throwable t) {
+			FrontEnd.displayErrorMessage("Failed to initialize GUI!", t);
+			throw t;
 		}
 	}
 	
@@ -356,7 +358,7 @@ public class FilePack extends EntryExtension {
 					}
                     lastInputDir = files[0].getParentFile();
 				} catch (Exception e) {
-					FrontEnd.displayErrorMessage(e);
+					FrontEnd.displayErrorMessage("Failed to add file!", e);
 				}
 			}
 		} catch (Exception e) {
@@ -376,7 +378,7 @@ public class FilePack extends EntryExtension {
 				}
 			}
 		} catch (Exception e) {
-			FrontEnd.displayErrorMessage(e);
+			FrontEnd.displayErrorMessage("Failed to remove file!", e);
 		}
 	}
 	
@@ -396,7 +398,7 @@ public class FilePack extends EntryExtension {
                 }
             }
         } catch (Exception e) {
-            FrontEnd.displayErrorMessage(e);
+            FrontEnd.displayErrorMessage("Failed to view file!", e);
         }
     }
 
@@ -420,7 +422,7 @@ public class FilePack extends EntryExtension {
                 addFile(file);
             }
         } catch (Exception e) {
-            FrontEnd.displayErrorMessage(e);
+            FrontEnd.displayErrorMessage("Failed to apply changes!", e);
         }
     }
     
@@ -469,7 +471,7 @@ public class FilePack extends EntryExtension {
 				}
 			}
 		} catch (Exception e) {
-			FrontEnd.displayErrorMessage(e);
+			FrontEnd.displayErrorMessage("Failed to save file!", e);
 		}
 	}
 	

@@ -105,7 +105,7 @@ public class JGLooksSkin extends Skin {
      * @see bias.laf.LookAndFeel#configure(byte[])
      */
     @Override
-    public byte[] configure(byte[] settings) {
+    public byte[] configure(byte[] settings) throws Throwable {
         Properties newSettings = PropertiesUtils.deserializeProperties(settings);
         Collection<Component> components = new LinkedList<Component>();
         JLabel lTh = new JLabel("Theme:");

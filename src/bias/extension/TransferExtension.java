@@ -39,7 +39,7 @@ public abstract class TransferExtension implements Extension {
      * 
      * @param settings extension instance settings
      */
-    public TransferExtension(byte[] settings) {
+    public TransferExtension(byte[] settings) throws Throwable {
         this.settings = settings;
     }
 

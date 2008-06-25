@@ -112,7 +112,7 @@ public class DashBoard extends EntryExtension {
         return marshaller;
     }
 
-    public DashBoard(UUID id, byte[] data, byte[] settings) {
+    public DashBoard(UUID id, byte[] data, byte[] settings) throws Throwable {
         super(id, data, settings);
         setLayout(new BorderLayout());
         add(getToolBar(), BorderLayout.SOUTH);

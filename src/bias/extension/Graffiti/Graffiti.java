@@ -81,7 +81,7 @@ public class Graffiti extends EntryExtension {
      * @throws IOException 
      * @throws ImageFormatException 
      */
-    public Graffiti(UUID id, byte[] data, byte[] settings) throws ImageFormatException, IOException {
+    public Graffiti(UUID id, byte[] data, byte[] settings) throws Throwable {
         super(id, data, settings);
         initialize();
     }

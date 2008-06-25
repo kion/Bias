@@ -146,13 +146,13 @@ public class ToDoList extends EntryExtension {
     
     private Properties props;
     
-    public ToDoList(UUID id, byte[] data, byte[] settings) {
+    public ToDoList(UUID id, byte[] data, byte[] settings) throws Throwable {
         super(id, data, settings);
         initialize();
         revalidate();
     }
     
-    private void initialize() {
+    private void initialize() throws Throwable {
         applySettings(getSettings());
         initGUI();
         parseData();
@@ -295,14 +295,15 @@ public class ToDoList extends EntryExtension {
         return -1;
     }
     
-    private void parseData() {
+    private void parseData() throws Throwable {
         Document doc = null;
         try {
             if (getData() != null && getData().length != 0) {
                 doc = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(getData()));
             }
-        } catch (Exception e) {
-            FrontEnd.displayErrorMessage("Failed to parse todo-list XML data file!", e);
+        } catch (Throwable t) {
+            FrontEnd.displayErrorMessage("Failed to parse todo-list XML data file!", t);
+            throw t;
         }
         try {
             if (doc != null) {
@@ -347,114 +348,120 @@ public class ToDoList extends EntryExtension {
                     }
                 }
             }
-        } catch (Exception e) {
-            FrontEnd.displayErrorMessage("Failed to parse todo-list data!", e);
+        } catch (Throwable t) {
+            FrontEnd.displayErrorMessage("Failed to parse todo-list data!", t);
+            throw t;
         }
     }
     
-    private void initGUI() {
-        if (mainPanel == null) {
-            mainPanel = new JPanel(new BorderLayout());
-            JToolBar toolbar = initToolBar();
-            DefaultTableModel model = new DefaultTableModel() {
-                private static final long serialVersionUID = 1L;
-                public boolean isCellEditable(int rowIndex, int mColIndex) {
-                    if (mColIndex == 2 || mColIndex == 3 || mColIndex == 4) return true;
-                    return false;
+    private void initGUI() throws Throwable {
+        try {
+            if (mainPanel == null) {
+                mainPanel = new JPanel(new BorderLayout());
+                JToolBar toolbar = initToolBar();
+                DefaultTableModel model = new DefaultTableModel() {
+                    private static final long serialVersionUID = 1L;
+                    public boolean isCellEditable(int rowIndex, int mColIndex) {
+                        if (mColIndex == 2 || mColIndex == 3 || mColIndex == 4) return true;
+                        return false;
+                    }
+                };
+                todoEntriesTable = new JTable(model);
+                todoEntriesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                
+                model.addColumn("ID");
+                model.addColumn("Timestamp");
+                model.addColumn("Title");
+                model.addColumn("Priority");
+                model.addColumn("Status");
+                
+                // hide ID column
+                TableColumn idCol = todoEntriesTable.getColumnModel().getColumn(0);
+                todoEntriesTable.getColumnModel().removeColumn(idCol);
+                
+                sorter = new TableRowSorter<TableModel>(model);
+                sorter.setSortsOnUpdates(true);
+                sorter.setMaxSortKeys(MAX_SORT_KEYS_NUMBER);
+                List<SortKey> sortKeys = new LinkedList<SortKey>();
+                for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+                    if (sortByColumn[i] != -1 && sortOrder[i] != null) {
+                        SortKey sortKey = new SortKey(sortByColumn[i], sortOrder[i]);
+                        sortKeys.add(sortKey);
+                    }
                 }
-            };
-            todoEntriesTable = new JTable(model);
-            todoEntriesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            
-            model.addColumn("ID");
-            model.addColumn("Timestamp");
-            model.addColumn("Title");
-            model.addColumn("Priority");
-            model.addColumn("Status");
-            
-            // hide ID column
-            TableColumn idCol = todoEntriesTable.getColumnModel().getColumn(0);
-            todoEntriesTable.getColumnModel().removeColumn(idCol);
-            
-            sorter = new TableRowSorter<TableModel>(model);
-            sorter.setSortsOnUpdates(true);
-            sorter.setMaxSortKeys(MAX_SORT_KEYS_NUMBER);
-            List<SortKey> sortKeys = new LinkedList<SortKey>();
-            for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
-                if (sortByColumn[i] != -1 && sortOrder[i] != null) {
-                    SortKey sortKey = new SortKey(sortByColumn[i], sortOrder[i]);
-                    sortKeys.add(sortKey);
-                }
+                sorter.setSortKeys(sortKeys);
+                sorter.addRowSorterListener(new RowSorterListener(){
+                    public void sorterChanged(RowSorterEvent e) {
+                        if (e.getType().equals(RowSorterEvent.Type.SORT_ORDER_CHANGED)) {
+                            List<? extends SortKey> sortKeys = sorter.getSortKeys();
+                            for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+                                if (i < sortKeys.size()) {
+                                    SortKey sortKey = sortKeys.get(i);
+                                    sortByColumn[i] = sortKey.getColumn();
+                                    sortOrder[i] = sortKey.getSortOrder();
+                                } else {
+                                    sortByColumn[i] = -1;
+                                    sortOrder[i] = null;
+                                }
+                            }
+                        }
+                    }
+                });
+                todoEntriesTable.setRowSorter(sorter);
+                
+                initTableCells();
+
+                JPanel entriesPanel = new JPanel(new BorderLayout());
+                splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+                splitPane.setDividerSize(3);
+                splitPane.setTopComponent(new JScrollPane(todoEntriesTable));
+                entriesPanel.add(splitPane, BorderLayout.CENTER);
+                
+                todoEntriesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
+                    public void valueChanged(ListSelectionEvent e) {
+                        if (!e.getValueIsAdjusting()) {
+                            DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
+                            int rn = todoEntriesTable.getSelectedRow();
+                            if (rn == -1) {
+                                splitPane.setBottomComponent(null);
+                            } else {
+                                int dl = -1;
+                                if (splitPane.getBottomComponent() != null) {
+                                    dl = splitPane.getDividerLocation();
+                                }
+                                rn = todoEntriesTable.convertRowIndexToModel(rn);
+                                UUID id = UUID.fromString((String) model.getValueAt(rn, 0));
+                                splitPane.setBottomComponent(editorPanels.get(id));
+                                if (dl != -1) {
+                                    splitPane.setDividerLocation(dl);
+                                } else {
+                                    splitPane.setDividerLocation(0.5);
+                                }
+                            }
+                        }
+                    }
+                });
+
+                mainPanel.add(entriesPanel, BorderLayout.CENTER);
+                final JTextField filterText = new JTextField();
+                filterText.addCaretListener(new CaretListener(){
+                    @SuppressWarnings("unchecked")
+                    public void caretUpdate(CaretEvent e) {
+                        TableRowSorter<TableModel> sorter = (TableRowSorter<TableModel>) todoEntriesTable.getRowSorter();
+                        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
+                    }
+                });
+                JPanel filterPanel = new JPanel(new BorderLayout());
+                filterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
+                filterPanel.add(filterText, BorderLayout.CENTER);
+                mainPanel.add(filterPanel, BorderLayout.NORTH);
+                mainPanel.add(toolbar, BorderLayout.SOUTH);
+                this.setLayout(new BorderLayout());
+                this.add(mainPanel, BorderLayout.CENTER);
             }
-            sorter.setSortKeys(sortKeys);
-            sorter.addRowSorterListener(new RowSorterListener(){
-                public void sorterChanged(RowSorterEvent e) {
-                    if (e.getType().equals(RowSorterEvent.Type.SORT_ORDER_CHANGED)) {
-                        List<? extends SortKey> sortKeys = sorter.getSortKeys();
-                        for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
-                            if (i < sortKeys.size()) {
-                                SortKey sortKey = sortKeys.get(i);
-                                sortByColumn[i] = sortKey.getColumn();
-                                sortOrder[i] = sortKey.getSortOrder();
-                            } else {
-                                sortByColumn[i] = -1;
-                                sortOrder[i] = null;
-                            }
-                        }
-                    }
-                }
-            });
-            todoEntriesTable.setRowSorter(sorter);
-            
-            initTableCells();
-
-            JPanel entriesPanel = new JPanel(new BorderLayout());
-            splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-            splitPane.setDividerSize(3);
-            splitPane.setTopComponent(new JScrollPane(todoEntriesTable));
-            entriesPanel.add(splitPane, BorderLayout.CENTER);
-            
-            todoEntriesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
-                public void valueChanged(ListSelectionEvent e) {
-                    if (!e.getValueIsAdjusting()) {
-                        DefaultTableModel model = (DefaultTableModel) todoEntriesTable.getModel();
-                        int rn = todoEntriesTable.getSelectedRow();
-                        if (rn == -1) {
-                            splitPane.setBottomComponent(null);
-                        } else {
-                            int dl = -1;
-                            if (splitPane.getBottomComponent() != null) {
-                                dl = splitPane.getDividerLocation();
-                            }
-                            rn = todoEntriesTable.convertRowIndexToModel(rn);
-                            UUID id = UUID.fromString((String) model.getValueAt(rn, 0));
-                            splitPane.setBottomComponent(editorPanels.get(id));
-                            if (dl != -1) {
-                                splitPane.setDividerLocation(dl);
-                            } else {
-                                splitPane.setDividerLocation(0.5);
-                            }
-                        }
-                    }
-                }
-            });
-
-            mainPanel.add(entriesPanel, BorderLayout.CENTER);
-            final JTextField filterText = new JTextField();
-            filterText.addCaretListener(new CaretListener(){
-                @SuppressWarnings("unchecked")
-                public void caretUpdate(CaretEvent e) {
-                    TableRowSorter<TableModel> sorter = (TableRowSorter<TableModel>) todoEntriesTable.getRowSorter();
-                    sorter.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
-                }
-            });
-            JPanel filterPanel = new JPanel(new BorderLayout());
-            filterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
-            filterPanel.add(filterText, BorderLayout.CENTER);
-            mainPanel.add(filterPanel, BorderLayout.NORTH);
-            mainPanel.add(toolbar, BorderLayout.SOUTH);
-            this.setLayout(new BorderLayout());
-            this.add(mainPanel, BorderLayout.CENTER);
+        } catch (Throwable t) {
+            FrontEnd.displayErrorMessage("Failed to initialize GUI!", t);
+            throw t;
         }
     }
     

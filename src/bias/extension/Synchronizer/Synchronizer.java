@@ -107,7 +107,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     
     private ScheduledExecutorService executor;
     
-    public Synchronizer(byte[] data, byte[] settings) throws Exception {
+    public Synchronizer(byte[] data, byte[] settings) throws Throwable {
         super(data, settings);
         initSettings();
         FrontEnd.addAfterSaveEventListener(this);

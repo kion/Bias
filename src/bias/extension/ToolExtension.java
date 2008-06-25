@@ -43,7 +43,7 @@ public abstract class ToolExtension implements Extension {
      * @param data data to be encapsulated by extension instance
      * @param settings extension instance settings
      */
-    public ToolExtension(byte[] data, byte[] settings) {
+    public ToolExtension(byte[] data, byte[] settings) throws Throwable {
         this.data = data;
         this.settings = settings;
     }

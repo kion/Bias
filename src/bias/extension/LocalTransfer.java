@@ -28,7 +28,7 @@ public class LocalTransfer extends ObservableTransferExtension {
 
     private static final String META_DATA_FILE_SUFIX = ".metadata";
 
-    public LocalTransfer(byte[] settings) {
+    public LocalTransfer(byte[] settings) throws Throwable {
         super(settings);
     }
 

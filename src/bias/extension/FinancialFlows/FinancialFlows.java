@@ -181,12 +181,12 @@ public class FinancialFlows extends EntryExtension {
         return marshaller;
     }
 
-    public FinancialFlows(UUID id, byte[] data, byte[] settings) {
+    public FinancialFlows(UUID id, byte[] data, byte[] settings) throws Throwable {
         super(id, data, settings);
         initialize();
     }
 
-    private void initialize() {
+    private void initialize() throws Throwable {
         try {
             if (getData() != null && getData().length != 0) {
                 Parts parts = (Parts) getUnmarshaller().unmarshal(new ByteArrayInputStream(getData()));
@@ -195,8 +195,9 @@ public class FinancialFlows extends EntryExtension {
             }
             Properties props = PropertiesUtils.deserializeProperties(getSettings());
             currency = props.getProperty("CURRENCY");
-        } catch (JAXBException e) {
-            FrontEnd.displayErrorMessage("Failed to initialize data/settings!", e);
+        } catch (Throwable t) {
+            FrontEnd.displayErrorMessage("Failed to initialize data/settings!", t);
+            throw t;
         }
         initGUI();
     }
@@ -311,7 +312,7 @@ public class FinancialFlows extends EntryExtension {
         }
     }
 
-    private void initGUI() {
+    private void initGUI() throws Throwable {
         try {
             {
                 BorderLayout thisLayout = new BorderLayout();
@@ -485,8 +486,9 @@ public class FinancialFlows extends EntryExtension {
                     }
                 }
             }
-        } catch (Exception e) {
-            FrontEnd.displayErrorMessage(e);
+        } catch (Throwable t) {
+            FrontEnd.displayErrorMessage("Failed to initialize GUI!", t);
+            throw t;
         }
     }
 
