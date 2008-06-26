@@ -33,8 +33,8 @@ data.saving == сохранение данных...
 error.message.data.collect.failure == Не удалось собрать данные!
 error.message.toolsdata.collect.failure == Не удалось собрать данные инструментов!
 error.message.data.save.failure == Не удалось сохранить данные!
-add.category.to.rootlevel == Добавить категорию в корневой уровень
-add.entry.to.rootlevel == Добавить запись в корневой уровень
+add.category.to.rootlevel == Добавить категорию на корневой уровень
+add.entry.to.rootlevel == Добавить запись на корневой уровень
 tabs.placement == Расположение закладок
 icon == Иконка
 caption == Заголовок

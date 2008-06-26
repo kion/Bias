@@ -888,7 +888,7 @@ public class FrontEnd extends JFrame {
 
     private Runnable updateCommand = new Runnable(){
         public void run() {
-            long delay = 1000 * 60 * 5; // 5 minutes
+            long delay = 300000 /* 1000 * 60 * 5 */; // 5 minutes
             if (Preferences.getInstance().autoUpdateInterval == 0 || isTimeToUpdate()) {
                 try {
                     Thread.sleep(delay);
@@ -923,7 +923,7 @@ public class FrontEnd extends JFrame {
         if (!Validator.isNullOrBlank(timeStr)) {
             long lastUpdateTime = Long.valueOf(timeStr);
             long currentTime = System.currentTimeMillis();
-            int interval = (int) ((currentTime - lastUpdateTime) / 1000 / 60 / 60 / 24);
+            int interval = (int) ((currentTime - lastUpdateTime) / 86400000 /* 1000 / 60 / 60 / 24 */);
             // check if specified number of days from last update date have passed
             if (interval >= Preferences.getInstance().autoUpdateInterval) {
                 return true;

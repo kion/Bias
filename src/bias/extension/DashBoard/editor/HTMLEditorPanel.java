@@ -227,6 +227,10 @@ public class HTMLEditorPanel extends JPanel {
         }
     }
     
+    public String getUnparsedCode() {
+        return getJTextPane().getText();
+    }
+    
     public String getText() {
         Document doc = getJTextPane().getDocument();
         String text = null;
