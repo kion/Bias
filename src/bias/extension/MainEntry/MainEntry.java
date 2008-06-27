@@ -38,8 +38,8 @@ public class MainEntry extends ToolExtension implements BeforeSaveEventListener 
     
     private byte[] settings;
     
-    public MainEntry(byte[] data, byte[] settings) throws Throwable {
-        super(data, settings);
+    public MainEntry(UUID id, byte[] data, byte[] settings) throws Throwable {
+        super(id, data, settings);
         initSettings();
         FrontEnd.addBeforeSaveEventListener(this);
     }

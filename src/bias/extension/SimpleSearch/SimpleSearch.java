@@ -117,8 +117,8 @@ public class SimpleSearch extends ToolExtension {
     
     private byte[] settings;
     
-    public SimpleSearch(byte[] data, byte[] settings) throws Throwable {
-        super(data, settings);
+    public SimpleSearch(UUID id, byte[] data, byte[] settings) throws Throwable {
+        super(id, data, settings);
         initSettings();
     }
     

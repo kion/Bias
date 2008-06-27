@@ -143,6 +143,7 @@ import bias.core.DataEntry;
 import bias.core.ExportConfiguration;
 import bias.core.ImportConfiguration;
 import bias.core.Recognizable;
+import bias.core.ToolData;
 import bias.core.TransferData;
 import bias.core.pack.Dependency;
 import bias.core.pack.ObjectFactory;
@@ -1397,11 +1398,11 @@ public class FrontEnd extends JFrame {
         fireAfterSaveEvent(new SaveEvent(beforeExit));
     }
     
-    private Map<String, byte[]> collectToolsData() throws Throwable {
-        Map<String, byte[]> toolsData = new HashMap<String, byte[]>();
+    private Map<String, ToolData> collectToolsData() throws Throwable {
+        Map<String, ToolData> toolsData = new HashMap<String, ToolData>();
         if (tools != null) {
             for (ToolExtension tool : tools.values()) {
-                toolsData.put(tool.getClass().getName(), tool.serializeData());
+                toolsData.put(tool.getClass().getName(), new ToolData(tool.getId(), tool.serializeData()));
                 BackEnd.getInstance().storeAddOnSettings(tool.getClass().getName(), PackType.EXTENSION, tool.serializeSettings());
             }
         }

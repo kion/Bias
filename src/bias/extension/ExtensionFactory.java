@@ -42,9 +42,6 @@ public class ExtensionFactory {
                 if (pts.length == 3 && pts[0].equals(UUID.class) && pts[1].equals(byte[].class) && pts[2].equals(byte[].class)) {
                     extension = clazz.getConstructor(new Class[]{UUID.class, byte[].class, byte[].class}).newInstance(new Object[]{id, data, settings});
                     break;
-                } else if (pts.length == 2 && pts[0].equals(byte[].class) && pts[1].equals(byte[].class)) {
-                    extension = clazz.getConstructor(new Class[]{byte[].class, byte[].class}).newInstance(new Object[]{data, settings});
-                    break;
                 } else if (pts.length == 1 && pts[0].equals(byte[].class)) {
                     extension = clazz.getConstructor(new Class[]{byte[].class}).newInstance(new Object[]{settings});
                     break;
@@ -62,9 +59,9 @@ public class ExtensionFactory {
         return extension;
     }
     
-    private static ToolExtension newToolExtension(Class<? extends Extension> clazz, byte[] data) throws Throwable {
+    private static ToolExtension newToolExtension(Class<? extends Extension> clazz, UUID id, byte[] data) throws Throwable {
         byte[] settings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), PackType.EXTENSION);
-        return (ToolExtension) newExtension(clazz, null, data, settings);
+        return (ToolExtension) newExtension(clazz, id, data, settings);
     }
     
     public static TransferExtension newTransferExtension(Class<? extends Extension> clazz) throws Throwable {
@@ -129,7 +126,7 @@ public class ExtensionFactory {
                         Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
                         if (ToolExtension.class.isAssignableFrom(extClass)) {
                             // extension instantiation test
-                            ToolExtension ext = newToolExtension(extClass, BackEnd.getInstance().getToolData(fullExtName));
+                            ToolExtension ext = newToolExtension(extClass, BackEnd.getInstance().getToolID(fullExtName), BackEnd.getInstance().getToolData(fullExtName));
                             // extension is ok, add it to the list
                             String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
                             annotatedToolTypes.put(ext, annotationStr);

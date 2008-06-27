@@ -10,32 +10,22 @@ import javax.swing.Icon;
 /**
  * @author kion
  */
-public class Recognizable {
-    
-    protected UUID id;
+public class Recognizable extends Identifiable {
     
     protected String caption;
     
     protected Icon icon;
     
     public Recognizable() {
-        // default constructor
+        super();
     }
     
     public Recognizable(UUID id, String caption, Icon icon) {
-        this.id = id;
+        super(id);
         this.caption = caption;
         this.icon = icon;
     }
     
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
     public String getCaption() {
         return caption;
     }

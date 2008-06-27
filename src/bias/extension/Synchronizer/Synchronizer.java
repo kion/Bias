@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.Map.Entry;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -107,8 +108,8 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     
     private ScheduledExecutorService executor;
     
-    public Synchronizer(byte[] data, byte[] settings) throws Throwable {
-        super(data, settings);
+    public Synchronizer(UUID id, byte[] data, byte[] settings) throws Throwable {
+        super(id, data, settings);
         initSettings();
         FrontEnd.addAfterSaveEventListener(this);
         FrontEnd.addStartUpEventListener(this);

@@ -3,6 +3,8 @@
  */
 package bias.extension;
 
+import java.util.UUID;
+
 import bias.i18n.I18nService;
 
 
@@ -28,6 +30,8 @@ public abstract class ToolExtension implements Extension {
         return modifiedMsg;
     }
     
+    private UUID id;
+    
     private byte[] data;
     
     private byte[] settings;
@@ -40,12 +44,25 @@ public abstract class ToolExtension implements Extension {
     /**
      * The only allowed constructor that is aware of initialization data and settings.
      * 
+     * @param id id to be assigned to extension instance
      * @param data data to be encapsulated by extension instance
      * @param settings extension instance settings
      */
-    public ToolExtension(byte[] data, byte[] settings) throws Throwable {
+    public ToolExtension(UUID id, byte[] data, byte[] settings) throws Throwable {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
+        this.id = id;
         this.data = data;
         this.settings = settings;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public byte[] getData() {

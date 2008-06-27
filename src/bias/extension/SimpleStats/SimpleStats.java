@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.Map.Entry;
 
 import javax.swing.ImageIcon;
@@ -74,8 +75,8 @@ public class SimpleStats extends ToolExtension {
     
     private JLabel label = null;
     
-    public SimpleStats(byte[] data, byte[] settings) throws Throwable {
-        super(data, settings);
+    public SimpleStats(UUID id, byte[] data, byte[] settings) throws Throwable {
+        super(id, data, settings);
         startDate = new Date();
         if (getData() != null) {
             dates = new String(getData()).split(SEPARATOR);

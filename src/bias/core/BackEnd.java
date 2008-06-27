@@ -105,7 +105,7 @@ public class BackEnd {
     
     private DataCategory data;
     
-    private Map<String, byte[]> toolsData = new HashMap<String, byte[]>();
+    private Map<String, ToolData> toolsData = new HashMap<String, ToolData>();
     
     private Document metadata;
     
@@ -307,16 +307,18 @@ public class BackEnd {
             for (File dataFile : Constants.DATA_DIR.listFiles(FILE_FILTER_TOOL_DATA)) {
                 data = FSUtils.readFile(dataFile);
                 decryptedData = decrypt(data);
-                String tool = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                String name = dataFile.getName();
+                UUID id = UUID.fromString(name.substring(name.indexOf('.') + 1, name.lastIndexOf('.')));
+                String tool = name.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                 tool = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                             + tool + Constants.PACKAGE_PATH_SEPARATOR + tool;
-                toolsData.put(tool, decryptedData);
+                toolsData.put(tool, new ToolData(id, decryptedData));
             }
         }
         // preferences file
         loadPreferences();
         // global config file
-        loadConfig();
+        loadConfig(Constants.GLOBAL_CONFIG_FILE, config);
         // metadata file
         File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
         if (metadataFile.exists()) {
@@ -504,9 +506,11 @@ public class BackEnd {
                         decryptedData = useCipher(cipher, data);
                         encryptedData = encrypt(decryptedData);
                         FSUtils.writeFile(localDataFile, encryptedData);
-                        String tool = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                        String name = dataFile.getName();
+                        UUID id = UUID.fromString(name.substring(name.indexOf('.') + 1, name.lastIndexOf('.')));
+                        String tool = name.replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                         tool = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + tool + Constants.PACKAGE_PATH_SEPARATOR + tool;
-                        toolsData.put(tool, decryptedData);
+                        toolsData.put(tool, new ToolData(id, decryptedData));
                     }
                 }
             }
@@ -640,12 +644,12 @@ public class BackEnd {
         }
     }
     
-    private void loadConfig() throws Exception {
-        File configFile = new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE);
+    private void loadConfig(String configFileName, Properties props) throws Exception {
+        File configFile = new File(Constants.CONFIG_DIR, configFileName);
         if (configFile.exists()) {
             byte[] data = FSUtils.readFile(configFile);
             ByteArrayInputStream bais = new ByteArrayInputStream(data);
-            config.load(bais);
+            props.load(bais);
             bais.close();
         }
     }
@@ -816,11 +820,11 @@ public class BackEnd {
         }
         // tools data files
         if (config.isExportToolsData()) {
-            for (Entry<String, byte[]> toolEntry : toolsData.entrySet()) {
-                if (getDataExportExtensionsList().contains(toolEntry.getKey()) && toolEntry.getValue() != null) {
+            for (Entry<String, ToolData> toolEntry : toolsData.entrySet()) {
+                if (getDataExportExtensionsList().contains(toolEntry.getKey()) && toolEntry.getValue().getData() != null) {
                     String tool = toolEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                    File toolDataFile = new File(dataDir, tool + Constants.TOOL_DATA_FILE_SUFFIX);
-                    FSUtils.writeFile(toolDataFile, useCipher(cipher, toolEntry.getValue()));
+                    File toolDataFile = new File(dataDir, tool + "." + toolEntry.getValue().getId().toString() + Constants.TOOL_DATA_FILE_SUFFIX);
+                    FSUtils.writeFile(toolDataFile, useCipher(cipher, toolEntry.getValue().getData()));
                 }
             }
         }
@@ -941,11 +945,11 @@ public class BackEnd {
         metadata.appendChild(rootNode);
         storeMetadata(metadata, metadataFile, CIPHER_ENCRYPT);
         // tools data files
-        for (Entry<String, byte[]> toolEntry : toolsData.entrySet()) {
-            if (toolEntry.getValue() != null) {
+        for (Entry<String, ToolData> toolEntry : toolsData.entrySet()) {
+            if (toolEntry.getValue().getData() != null) {
                 String tool = toolEntry.getKey().replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
-                File toolDataFile = new File(Constants.DATA_DIR, tool + Constants.TOOL_DATA_FILE_SUFFIX);
-                byte[] encryptedData = encrypt(toolEntry.getValue());
+                File toolDataFile = new File(Constants.DATA_DIR, tool + "." + toolEntry.getValue().getId().toString() + Constants.TOOL_DATA_FILE_SUFFIX);
+                byte[] encryptedData = encrypt(toolEntry.getValue().getData());
                 FSUtils.writeFile(toolDataFile, encryptedData);
             }
         }
@@ -2315,13 +2319,22 @@ public class BackEnd {
         }
         // attachments
         if (Constants.ATTACHMENTS_DIR.exists()) {
+            // collect list of existing tool ids
+            Collection<UUID> toolIDs = new ArrayList<UUID>();
+            for (File dataFile : Constants.DATA_DIR.listFiles(FILE_FILTER_TOOL_DATA)) {
+                String name = dataFile.getName();
+                UUID id = UUID.fromString(name.substring(name.indexOf('.') + 1, name.lastIndexOf('.')));
+                toolIDs.add(id);
+            }
+            // collect all attachment ids
             Collection<UUID> foundAttIds = new ArrayList<UUID>();
             for (File attFile : Constants.ATTACHMENTS_DIR.listFiles()) {
                 UUID id = UUID.fromString(attFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
                 foundAttIds.add(id);
             }
+            // delete attachments that do not belong to any existing data entry or tool
             for (UUID id : foundAttIds) {
-                if (!ids.contains(id)) {
+                if (!ids.contains(id) && !toolIDs.contains(id)) {
                     // orphaned attachments found, remove'em
                     removeAttachments(id);
                 }
@@ -2347,6 +2360,11 @@ public class BackEnd {
         }
     }
     
+    public UUID getToolID(String tool) {
+        ToolData td = toolsData.get(tool);
+        return td == null ? null : td.getId();
+    }
+
     public DataCategory getData() {
         return data;
     }
@@ -2354,12 +2372,13 @@ public class BackEnd {
     public void setData(DataCategory data) {
         this.data = data;
     }
-
+    
     public byte[] getToolData(String tool) {
-        return toolsData.get(tool);
+        ToolData td = toolsData.get(tool);
+        return td == null ? null : td.getData();
     }
 
-    public void setToolsData(Map<String, byte[]> toolsData) {
+    public void setToolsData(Map<String, ToolData> toolsData) {
         this.toolsData = toolsData;
     }
 
