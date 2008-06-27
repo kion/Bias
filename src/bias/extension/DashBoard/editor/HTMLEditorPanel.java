@@ -42,8 +42,6 @@ import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.filechooser.FileFilter;
@@ -64,6 +62,10 @@ import bias.Constants;
 import bias.core.Attachment;
 import bias.core.BackEnd;
 import bias.extension.DashBoard.DashBoard;
+import bias.extension.HTMLPage.editor.CustomHTMLCodeEditorKit;
+import bias.extension.HTMLPage.editor.CustomHTMLEditorKit;
+import bias.extension.HTMLPage.editor.HTMLEditor;
+import bias.extension.HTMLPage.editor.UndoRedoManager;
 import bias.gui.FrontEnd;
 import bias.gui.ImageFileChooser;
 import bias.gui.VisualEntryDescriptor;
@@ -139,10 +141,6 @@ public class HTMLEditorPanel extends JPanel {
         return fontSizes;
     }
     
-    private boolean dataChanged = false;
-    
-    private String code;
-    
     private Collection<String> processedAttachmentNames = new ArrayList<String>();
 
     private UUID entryID = null;
@@ -158,8 +156,6 @@ public class HTMLEditorPanel extends JPanel {
     private JToolBar jToolBar1 = null;
 
     private JPanel jPanel = null;
-
-    private JPanel jPanel2 = null;
 
     private JToggleButton jToggleButton = null;
 
@@ -177,9 +173,9 @@ public class HTMLEditorPanel extends JPanel {
 
     private JButton jButton5 = null;
 
-    private JButton jButton8 = null;
-
     private JButton jButton9 = null;
+
+    private JButton jButton8 = null;
 
     private JComboBox jComboBox = null;
 
@@ -193,38 +189,19 @@ public class HTMLEditorPanel extends JPanel {
     public HTMLEditorPanel(UUID dataEntryID, String code) {
         super();
         this.entryID = dataEntryID;
-        this.code = code;
         initialize(processOnLoad(code));
     }
     
     private void initialize(String code) {
         getJTextPane().setText(code);
         getJTextPane().getDocument().addUndoableEditListener(new UndoRedoManager(getJTextPane()));
-        getJTextPane().getDocument().addDocumentListener(new DocumentListener(){
-            public void changedUpdate(DocumentEvent e) {
-                dataChanged();
-            }
-            public void insertUpdate(DocumentEvent e) {
-                dataChanged();
-            }
-            public void removeUpdate(DocumentEvent e) {
-                dataChanged();
-            }
-            private void dataChanged() {
-                dataChanged = true;
-            }
-        });
         this.setLayout(new BorderLayout());
         this.add(getJScrollPane(), BorderLayout.CENTER); 
         this.add(getJPanel(), BorderLayout.SOUTH); 
     }
     
     public String getCode() {
-        if (dataChanged) {
-            return processOnSave(getJTextPane().getText());
-        } else {
-            return code;
-        }
+        return processOnSave(getJTextPane().getText());
     }
     
     public String getUnparsedCode() {
@@ -525,6 +502,8 @@ public class HTMLEditorPanel extends JPanel {
             jToolBar1.add(getJToggleButton()); 
             jToolBar1.add(getJToggleButton1()); 
             jToolBar1.add(getJToggleButton2()); 
+            jToolBar1.add(getJComboBox()); 
+            jToolBar1.add(getJComboBox1()); 
             jToolBar1.setVisible(false); 
         }
         return jToolBar1;
@@ -606,10 +585,11 @@ public class HTMLEditorPanel extends JPanel {
                     if (getJTextPane().isEditable()) {
                         getJTextPane().requestFocusInWindow();
                     }
-                    getJToolBar1().setVisible(!getJToolBar1().isVisible());
-                    getJPanel2().setVisible(!getJPanel2().isVisible());
-                    if (getJToolBar1().isVisible()) {
+                    if (!getJToolBar1().isVisible()) {
+                        getJToolBar1().setVisible(true);
                         synchronizeEditNoteControlsStates(getJTextPane());
+                    } else {
+                        getJToolBar1().setVisible(false);
                     }
                 }
             });
@@ -1163,22 +1143,6 @@ public class HTMLEditorPanel extends JPanel {
     }
 
     /**
-     * This method initializes jPanel2
-     * 
-     * @return javax.swing.JPanel
-     */
-    private JPanel getJPanel2() {
-        if (jPanel2 == null) {
-            jPanel2 = new JPanel();
-            jPanel2.setLayout(new BorderLayout()); 
-            jPanel2.add(getJComboBox(), BorderLayout.CENTER); 
-            jPanel2.add(getJComboBox1(), BorderLayout.WEST);
-            jPanel2.setVisible(false);
-        }
-        return jPanel2;
-    }
-
-    /**
      * This method initializes jPanel
      * 
      * @return javax.swing.JPanel
@@ -1188,8 +1152,7 @@ public class HTMLEditorPanel extends JPanel {
             jPanel = new JPanel();
             jPanel.setLayout(new BorderLayout()); 
             jPanel.add(getJToolBar1(), BorderLayout.CENTER); 
-            jPanel.add(getJToolBar(), BorderLayout.WEST);
-            jPanel.add(getJPanel2(), BorderLayout.NORTH);
+            jPanel.add(getJToolBar(), BorderLayout.WEST); 
         }
         return jPanel;
     }

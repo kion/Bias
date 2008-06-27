@@ -42,8 +42,6 @@ import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.filechooser.FileFilter;
@@ -63,6 +61,10 @@ import javax.swing.text.html.HTML.Tag;
 import bias.Constants;
 import bias.core.Attachment;
 import bias.core.BackEnd;
+import bias.extension.HTMLPage.editor.CustomHTMLCodeEditorKit;
+import bias.extension.HTMLPage.editor.CustomHTMLEditorKit;
+import bias.extension.HTMLPage.editor.HTMLEditor;
+import bias.extension.HTMLPage.editor.UndoRedoManager;
 import bias.extension.ToDoList.ToDoList;
 import bias.gui.FrontEnd;
 import bias.gui.ImageFileChooser;
@@ -139,10 +141,6 @@ public class HTMLEditorPanel extends JPanel {
         return fontSizes;
     }
     
-    private boolean dataChanged = false;
-    
-    private String code;
-    
     private Collection<String> processedAttachmentNames = new ArrayList<String>();
 
     private UUID entryID = null;
@@ -191,38 +189,19 @@ public class HTMLEditorPanel extends JPanel {
     public HTMLEditorPanel(UUID dataEntryID, String code) {
         super();
         this.entryID = dataEntryID;
-        this.code = code;
         initialize(processOnLoad(code));
     }
     
     private void initialize(String code) {
         getJTextPane().setText(code);
         getJTextPane().getDocument().addUndoableEditListener(new UndoRedoManager(getJTextPane()));
-        getJTextPane().getDocument().addDocumentListener(new DocumentListener(){
-            public void changedUpdate(DocumentEvent e) {
-                dataChanged();
-            }
-            public void insertUpdate(DocumentEvent e) {
-                dataChanged();
-            }
-            public void removeUpdate(DocumentEvent e) {
-                dataChanged();
-            }
-            private void dataChanged() {
-                dataChanged = true;
-            }
-        });
         this.setLayout(new BorderLayout());
         this.add(getJScrollPane(), BorderLayout.CENTER); 
         this.add(getJPanel(), BorderLayout.SOUTH); 
     }
     
     public String getCode() {
-        if (dataChanged) {
-            return processOnSave(getJTextPane().getText());
-        } else {
-            return code;
-        }
+        return processOnSave(getJTextPane().getText());
     }
     
     public String getUnparsedCode() {
