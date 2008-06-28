@@ -299,6 +299,24 @@
 	</target>
 
 	<!-- ================================= 
+          target: Build_Extension_Reminder
+         ================================= -->
+	<target name="Build_Extension_Reminder" description="Reminder Add-On">
+		<delete dir="build" includes="Reminder*.jar" />
+		<jar basedir="bin" destfile="build/Reminder_${Reminder_Version}.jar" includes="bias/extension/Reminder/** bias/res/Reminder/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/Reminder/**" />
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="Reminder" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="${Reminder_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Simple and easy to use reminder" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${Reminder_Dependencies}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<!-- ================================= 
           target: Build_Skin_JGLooksSkin             
          ================================= -->
 	<target name="Build_Skin_JGLooksSkin" description="JGoodies Looks Skin">
