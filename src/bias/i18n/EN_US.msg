@@ -203,7 +203,7 @@ history.back.to.first == Back to first
 history.back == Back
 history.forward == Forward
 history.forward.to.last == Forward to last
-running.tasks.wait == Some tasks are still running, please wait them to finish...
+running.tasks.wait == Some tasks are still running, please wait for them to finish...
 running.tasks.force.exit == Force exit (all incomplete tasks will be aborted)
 error.data.load.failure == Failed to load data!
 memory.usage == Memory Usage: $ of $ Mb
