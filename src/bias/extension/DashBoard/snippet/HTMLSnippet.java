@@ -64,7 +64,24 @@ public class HTMLSnippet extends InfoSnippet {
      */
     @Override
     public byte[] serializeContent() {
-        return getEditorPanel().getCode().getBytes();
+        String data  = getEditorPanel().getCode();
+        Collection<String> usedAttachmentNames = getEditorPanel().getProcessedAttachmentNames();
+        cleanUpUnUsedAttachments(usedAttachmentNames);
+        return data.getBytes();
+    }
+
+    private void cleanUpUnUsedAttachments(Collection<String> usedAttachmentNames) {
+        try {
+            Collection<Attachment> atts = BackEnd.getInstance().getAttachments(getId());
+            for (Attachment att : atts) {
+                if (!usedAttachmentNames.contains(att.getName())) {
+                    BackEnd.getInstance().removeAttachment(getId(), att.getName());
+                }
+            }
+        } catch (Exception ex) {
+            // if some error occurred while cleaning up unused attachments,
+            // ignore it, these attachments will be removed next time Bias persists data
+        }
     }
 
     /* (non-Javadoc)

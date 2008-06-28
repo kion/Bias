@@ -67,7 +67,7 @@ public class TextSnippet extends InfoSnippet {
 
     private int currentFontSize = DEFAULT_FONT_SIZE;
 
-    private boolean dataChanged = false;
+    private boolean contentChanged = false;
     
     private Properties settings;
     
@@ -129,7 +129,9 @@ public class TextSnippet extends InfoSnippet {
                 dataChanged();
             }
             private void dataChanged() {
-                dataChanged = true;
+                if (getJTextPane().isEditable()) {
+                    contentChanged = true;
+                }
             }
         });
         this.add(getJScrollPane(), BorderLayout.CENTER);  
@@ -357,8 +359,10 @@ public class TextSnippet extends InfoSnippet {
      */
     @Override
     public byte[] serializeContent() {
-        if (dataChanged) {
-            return getJTextPane().getText().getBytes();
+        if (contentChanged) {
+            byte[] content = getJTextPane().getText().getBytes();
+            contentChanged = false;
+            return content;
         } else {
             return getContent();
         }
