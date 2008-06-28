@@ -233,7 +233,9 @@ public class PlainText extends EntryExtension {
                 dataChanged();
             }
             private void dataChanged() {
-                dataChanged = true;
+                if (getJTextPane().isEditable()) {
+                    dataChanged = true;
+                }
             }
         });
         this.add(getJScrollPane(), BorderLayout.CENTER);  
