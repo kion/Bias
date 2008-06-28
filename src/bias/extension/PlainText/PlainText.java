@@ -160,7 +160,9 @@ public class PlainText extends EntryExtension {
      */
     public byte[] serializeData() throws Throwable {
         if (dataChanged) {
-            return getJTextPane().getText().getBytes();
+            byte[] data = getJTextPane().getText().getBytes();
+            dataChanged = false;
+            return data;
         } else {
             return getData();
         }
