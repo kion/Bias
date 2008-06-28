@@ -2052,9 +2052,8 @@ public class BackEnd {
                     in.close();
                     if (iconsetRegBytes != null) {
                         String[] iconsList = new String(iconsetRegBytes).split(Constants.NEW_LINE);
-                        for (String iconId : iconsList) {
-                            if (!Validator.isNullOrBlank(iconId)) {
-                                String iconName = iconId + Constants.ICON_FILE_SUFFIX;
+                        for (String iconName : iconsList) {
+                            if (!Validator.isNullOrBlank(iconName)) {
                                 if (iconBytes.keySet().contains(iconName)) {
                                     ImageIcon icon = addIcon(iconName, new ByteArrayInputStream(iconBytes.get(iconName)));
                                     if (icon != null) {
