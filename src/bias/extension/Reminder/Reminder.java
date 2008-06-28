@@ -662,24 +662,31 @@ public class Reminder extends ToolExtension {
     }
     
     private void runTask(final ScheduledExecutorService taskExecutor, final ReminderEntry reminderEntry, final boolean periodic, final int calendarField, final Calendar initialDate) {
+        final JDialog dialog = new JDialog(null, ModalityType.MODELESS);
         JTextPane detailsTextPane = new JTextPane();
         detailsTextPane.setEditable(false);
         detailsTextPane.setEditorKit(new CustomHTMLEditorKit());
         detailsTextPane.addHyperlinkListener(new HyperlinkListener() {
             public void hyperlinkUpdate(HyperlinkEvent e) {
                 if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
-                    try {
-                        AppManager.getInstance().handleAddress(e.getDescription());
-                    } catch (Exception ex) {
-                        FrontEnd.displayErrorMessage(ex);
+                    if (e.getDescription().startsWith(Constants.ENTRY_PROTOCOL_PREFIX)) {
+                        String idStr = e.getDescription().substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
+                        dialog.setVisible(false);
+                        FrontEnd.restoreMainWindow();
+                        FrontEnd.switchToVisualEntry(UUID.fromString(idStr));
+                        dialog.setVisible(true);
+                    } else {
+                        try {
+                            AppManager.getInstance().handleAddress(e.getDescription());
+                        } catch (Exception ex) {
+                            FrontEnd.displayErrorMessage(ex);
+                        }
                     }
                 }
             }
         });
         JScrollPane detailsPane = new JScrollPane(detailsTextPane);
         detailsTextPane.setText(editorPanels.get(reminderEntry.getId()).getUnparsedCode());
-        Toolkit.getDefaultToolkit().beep();
-        final JDialog dialog = new JDialog(null, ModalityType.MODELESS);
         JPanel p = new JPanel(new BorderLayout());
         p.add(new JLabel(reminderEntry.getTitle()), BorderLayout.NORTH);
         p.add(detailsPane, BorderLayout.CENTER);
@@ -743,6 +750,7 @@ public class Reminder extends ToolExtension {
         dialog.setLocation(
                 (Toolkit.getDefaultToolkit().getScreenSize().width - dialog.getWidth()) / 2, 
                 (Toolkit.getDefaultToolkit().getScreenSize().height - dialog.getHeight()) / 2);
+        Toolkit.getDefaultToolkit().beep();
         dialog.setVisible(true);
     }
     

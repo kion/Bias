@@ -808,6 +808,17 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    public static void restoreMainWindow() {
+        if (instance != null) {
+            instance.setVisible(true);
+            instance.setExtendedState(JFrame.NORMAL);
+            if (!Preferences.getInstance().useSysTrayIcon) {
+                hideSysTrayIcon();
+            }
+            instance.requestFocusInWindow();
+        }
+    }
+    
     private static void preInit() {
         try {
             BackEnd.getInstance().load();
