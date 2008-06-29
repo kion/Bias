@@ -725,6 +725,7 @@ public class Reminder extends ToolExtension {
         final JComboBox remComboBox = new JComboBox();
         remComboBox.addItem(TimeUnit.MINUTES);
         remComboBox.addItem(TimeUnit.HOURS);
+        remComboBox.addItem(TimeUnit.DAYS);
         remComboBox.setSelectedItem(TimeUnit.MINUTES);
         JButton remButt = new JButton("Remind again in");
         remButt.addActionListener(new ActionListener(){
