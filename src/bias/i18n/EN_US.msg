@@ -1,6 +1,7 @@
 app.title == Bias :: Versatile Information Manager
 addons.management.title == Bias :: Add-Ons Management
 version == Version
+username.preference.title == Username
 preferred.language.preference.title == Preferred language (needs Bias restart)
 preferred.datetime.format.preference.title == Preferred date-time format
 preferred.timeout.preference.title == Preferred timeout for network operations (in seconds)

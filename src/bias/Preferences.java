@@ -172,6 +172,10 @@ public class Preferences {
     public String preferredLanguage = Constants.DEFAULT_LANGUAGE;
     
     @Preference(
+            title = "username.preference.title")
+    public String username = Constants.USERNAME;
+    
+    @Preference(
             title = "preferred.datetime.format.preference.title")
     @PreferenceValidation(
             validationClass = PreferredDateFormatValidator.class)        

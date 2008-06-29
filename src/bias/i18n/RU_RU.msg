@@ -1,6 +1,7 @@
 app.title == Bias :: Многофункциональный информационный менеджер
 addons.management.title == Bias :: Управление Аддонами
 version == Версия
+username.preference.title == Имя пользователя
 preferred.language.preference.title == Предпочитаемый язык (требует перезагрузки Bias)
 preferred.datetime.format.preference.title == Предпочитаемый формат даты/времени
 preferred.timeout.preference.title == Предпочитаемый таймаут для сетевых операций (в секундах)

@@ -920,7 +920,7 @@ public class BackEnd {
                 fileNamesToSkipInCheckSumCalculation);
         Properties metaData = new Properties();
         metaData.setProperty(Constants.META_DATA_CHECKSUM, checkSum);
-        metaData.setProperty(Constants.META_DATA_USERNAME, Constants.USERNAME);
+        metaData.setProperty(Constants.META_DATA_USERNAME, !Validator.isNullOrBlank(Preferences.getInstance().username) ? Preferences.getInstance().username : Constants.USERNAME);
         metaData.setProperty(Constants.META_DATA_TIMESTAMP, "" + System.currentTimeMillis());
         metaData.setProperty(Constants.META_DATA_FILESIZE, "" + file.length());
         // read export data
