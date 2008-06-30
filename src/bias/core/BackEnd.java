@@ -500,7 +500,16 @@ public class BackEnd {
             if (config.isImportToolsData()) {
                 for (File dataFile : dataDir.listFiles(FILE_FILTER_TOOL_DATA)) {
                     String iDStr = dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
-                    File localDataFile = new File(Constants.DATA_DIR, iDStr + Constants.TOOL_DATA_FILE_SUFFIX);
+                    File localDataFile = null;
+                    for (File f : Constants.DATA_DIR.listFiles(FILE_FILTER_TOOL_DATA)) {
+                        if (f.getName().startsWith(iDStr) && f.getName().endsWith(Constants.TOOL_DATA_FILE_SUFFIX)) {
+                            localDataFile = f;
+                            break;
+                        }
+                    }
+                    if (localDataFile == null) {
+                        localDataFile = new File(Constants.DATA_DIR, dataFile.getName());
+                    }
                     if (!localDataFile.exists() || config.isOverwriteToolsData()) {
                         data = FSUtils.readFile(dataFile);
                         decryptedData = useCipher(cipher, data);

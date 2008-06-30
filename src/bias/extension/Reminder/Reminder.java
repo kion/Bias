@@ -17,6 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -155,6 +156,8 @@ public class Reminder extends ToolExtension {
     
     private Properties props;
     
+    private byte[] data;
+    
     private Map<UUID, ScheduledExecutorService> tasks;
     
     private static JAXBContext context;
@@ -262,16 +265,36 @@ public class Reminder extends ToolExtension {
     
     private void parseData() throws Throwable {
         try {
-            if (getData() != null && getData().length != 0) {
-                Entries entries = (Entries) getUnmarshaller().unmarshal(new ByteArrayInputStream(getData()));
-                for (Entry e : entries.getEntry()) {
-                    ReminderEntry reminderEntry = new ReminderEntry();
-                    reminderEntry.setId(UUID.fromString(e.getId()));
-                    reminderEntry.setTitle(e.getTitle());
-                    reminderEntry.setDescription(e.getDescription());
-                    reminderEntry.setDate(e.getDate());
-                    reminderEntry.setTime(e.getTime());
-                    addReminderEntry(reminderEntry);
+            if (getData() != null && !Arrays.equals(getData(), data)) {
+                data = getData();
+                Collection<ReminderEntry> newEntries = new LinkedList<ReminderEntry>();
+                if (data.length != 0) {
+                    Entries entries = (Entries) getUnmarshaller().unmarshal(new ByteArrayInputStream(getData()));
+                    for (Entry e : entries.getEntry()) {
+                        ReminderEntry reminderEntry = new ReminderEntry();
+                        reminderEntry.setId(UUID.fromString(e.getId()));
+                        reminderEntry.setTitle(e.getTitle());
+                        reminderEntry.setDescription(e.getDescription());
+                        reminderEntry.setDate(e.getDate());
+                        reminderEntry.setTime(e.getTime());
+                        newEntries.add(reminderEntry);
+                    }
+                }
+                Collection<ReminderEntry> existingEntries = getReminderEntries();
+                for (ReminderEntry re : existingEntries) {
+                    if (!newEntries.contains(re)) {
+                        int idx = findRowIdxByID(re.getId().toString());
+                        if (idx != -1) {
+                            ((DefaultTableModel) reminderEntriesTable.getModel()).removeRow(idx);
+                            cleanUpUnUsedAttachments(re.getId());
+                            tasks.remove(re.getId());
+                        }
+                    }
+                }
+                for (ReminderEntry re : newEntries) {
+                    if (!existingEntries.contains(re)) {
+                        addReminderEntry(re);
+                    }
                 }
             }
         } catch (Throwable t) {
@@ -796,7 +819,12 @@ public class Reminder extends ToolExtension {
         JButton button = new JButton(ICON);
         button.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
-                FrontEnd.displayDialog(mainPanel, Reminder.class.getSimpleName());
+                try {
+                    parseData();
+                    FrontEnd.displayDialog(mainPanel, Reminder.class.getSimpleName());
+                } catch (Throwable t) {
+                    FrontEnd.displayErrorMessage(Reminder.class.getSimpleName() +  " :: failed to parse data file!", t);
+                }
             }
         });
         return new ToolRepresentation(button, null);
