@@ -70,6 +70,8 @@ public class PlainText extends EntryExtension {
     
     private Properties settings;
     
+    private byte[] data;
+    
     private JScrollPane jScrollPane = null;
     private JTextPane jTextPane = null;
     private JToolBar jToolBar = null;
@@ -160,11 +162,11 @@ public class PlainText extends EntryExtension {
      */
     public byte[] serializeData() throws Throwable {
         if (dataChanged) {
-            byte[] data = getJTextPane().getText().getBytes();
+            data = getJTextPane().getText().getBytes();
             dataChanged = false;
             return data;
         } else {
-            return getData();
+            return data;
         }
     }
 
