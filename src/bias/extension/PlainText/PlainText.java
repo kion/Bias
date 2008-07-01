@@ -164,10 +164,8 @@ public class PlainText extends EntryExtension {
         if (dataChanged) {
             data = getJTextPane().getText().getBytes();
             dataChanged = false;
-            return data;
-        } else {
-            return data;
         }
+        return data;
     }
 
     /* (non-Javadoc)

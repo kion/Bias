@@ -71,6 +71,8 @@ public class TextSnippet extends InfoSnippet {
     
     private Properties settings;
     
+    private byte[] content;
+
     private JScrollPane jScrollPane = null;
     private JTextPane jTextPane = null;
     private JToolBar jToolBar = null;
@@ -87,7 +89,8 @@ public class TextSnippet extends InfoSnippet {
         this.setSize(733, 515);
         this.setLayout(new BorderLayout());
         if (getContent() != null) {
-            getJTextPane().setText(new String(getContent()));
+            content = getContent();
+            getJTextPane().setText(new String(content));
         }
         settings = PropertiesUtils.deserializeProperties(getSettings());
         applySettings();
@@ -360,12 +363,10 @@ public class TextSnippet extends InfoSnippet {
     @Override
     public byte[] serializeContent() {
         if (contentChanged) {
-            byte[] content = getJTextPane().getText().getBytes();
+            content = getJTextPane().getText().getBytes();
             contentChanged = false;
-            return content;
-        } else {
-            return getContent();
         }
+        return content;
     }
     
     /* (non-Javadoc)
