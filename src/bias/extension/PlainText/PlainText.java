@@ -196,7 +196,8 @@ public class PlainText extends EntryExtension {
         this.setSize(733, 515);
         this.setLayout(new BorderLayout());
         if (getData() != null) {
-            getJTextPane().setText(new String(getData()));
+            data = getData();
+            getJTextPane().setText(new String(data));
         }
         applySettings(getSettings());
         JScrollBar sb = getJScrollPane().getVerticalScrollBar();
