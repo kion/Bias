@@ -21,6 +21,8 @@ public class DataCategory extends Recognizable {
     
     private Collection<Recognizable> data;
     
+    private boolean recursivelyExported;
+    
 	public DataCategory() {
 		super();
         this.data = new LinkedList<Recognizable>();
@@ -66,6 +68,14 @@ public class DataCategory extends Recognizable {
 
     public boolean addDataItems(Collection<Recognizable> dataItems) {
         return data.addAll(dataItems);
+    }
+
+    public boolean isRecursivelyExported() {
+        return recursivelyExported;
+    }
+
+    public void setRecursivelyExported(boolean recursivelyExported) {
+        this.recursivelyExported = recursivelyExported;
     }
 
 }

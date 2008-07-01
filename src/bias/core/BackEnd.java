@@ -680,6 +680,10 @@ public class BackEnd {
     
     private void buildData(DataCategory data, Node node, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs, boolean overwrite) throws Exception {
         if (node.getNodeName().equals(Constants.XML_ELEMENT_ROOT_CONTAINER)) {
+            Node recursivelyExported = node.getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_RECURSIVELY_EXPORTED);
+            if (recursivelyExported != null && Boolean.valueOf(recursivelyExported.getNodeValue())) {
+                data.setRecursivelyExported(true);
+            }
             NodeList nodes = node.getChildNodes();
             for (int i = 0; i < nodes.getLength(); i++) {
                 Node n = nodes.item(i);
@@ -712,6 +716,10 @@ public class BackEnd {
                 if (attActiveIdx != null) {
                     Integer activeIdx = Integer.valueOf(attActiveIdx.getNodeValue());
                     dc.setActiveIndex(activeIdx);
+                }
+                Node recursivelyExported = attributes.getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_RECURSIVELY_EXPORTED);
+                if (recursivelyExported != null && Boolean.valueOf(recursivelyExported.getNodeValue())) {
+                    dc.setRecursivelyExported(true);
                 }
                 data.addDataItem(dc);
                 NodeList nodes = node.getChildNodes();
@@ -766,28 +774,26 @@ public class BackEnd {
         File dataDir = new File(exportDir, Constants.DATA_DIR.getName());
         dataDir.mkdir();
         Collection<UUID> ids = buildNode(metadata, rootNode, data, false);
-        if (!ids.isEmpty()) {
-            metadata.appendChild(rootNode);
-            File metadataFile = new File(dataDir, Constants.METADATA_FILE_NAME);
-            storeMetadata(metadata, metadataFile, cipher);
-            for (File dataFile : Constants.DATA_DIR.listFiles(FILE_FILTER_DATA)) {
-                UUID id = UUID.fromString(dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
-                if (ids.contains(id)) {
-                    reencryptFile(dataFile, dataDir, cipher);
-                }
+        metadata.appendChild(rootNode);
+        File metadataFile = new File(dataDir, Constants.METADATA_FILE_NAME);
+        storeMetadata(metadata, metadataFile, cipher);
+        for (File dataFile : Constants.DATA_DIR.listFiles(FILE_FILTER_DATA)) {
+            UUID id = UUID.fromString(dataFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
+            if (ids.contains(id)) {
+                reencryptFile(dataFile, dataDir, cipher);
             }
-            // attachments
-            Map<UUID, Collection<Attachment>> atts = new HashMap<UUID, Collection<Attachment>>();
-            for (UUID id : ids) {
-                atts.put(id, getAttachments(id));
-            }
-            if (!atts.isEmpty()) {
-                File attsDir = new File(exportDir, Constants.ATTACHMENTS_DIR.getName());
-                attsDir.mkdir();
-                for (Entry<UUID, Collection<Attachment>> entryAtts : atts.entrySet()) {
-                    for (Attachment att : entryAtts.getValue()) {
-                        addAttachment(entryAtts.getKey(), att, attsDir, cipher);
-                    }
+        }
+        // attachments
+        Map<UUID, Collection<Attachment>> atts = new HashMap<UUID, Collection<Attachment>>();
+        for (UUID id : ids) {
+            atts.put(id, getAttachments(id));
+        }
+        if (!atts.isEmpty()) {
+            File attsDir = new File(exportDir, Constants.ATTACHMENTS_DIR.getName());
+            attsDir.mkdir();
+            for (Entry<UUID, Collection<Attachment>> entryAtts : atts.entrySet()) {
+                for (Attachment att : entryAtts.getValue()) {
+                    addAttachment(entryAtts.getKey(), att, attsDir, cipher);
                 }
             }
         }
@@ -1308,8 +1314,11 @@ public class BackEnd {
         FSUtils.writeFile(file, encryptedData);
     }
     
-    private Collection<UUID> buildNode(Document metadata, Node node, DataCategory data, boolean writeDataMode) throws Exception {
+    private Collection<UUID> buildNode(Document metadata, Element node, DataCategory data, boolean writeDataMode) throws Exception {
         Collection<UUID> ids = new ArrayList<UUID>();
+        if (data.isRecursivelyExported()) {
+            node.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_RECURSIVELY_EXPORTED, Boolean.TRUE.toString());
+        }
         for (Recognizable item : data.getData()) {
             if (item.getIcon() != null) {
                 String idStr = ((ImageIcon) item.getIcon()).getDescription();
@@ -1348,6 +1357,9 @@ public class BackEnd {
             } else if (item instanceof DataCategory) {
                 DataCategory dc = (DataCategory) item;
                 Element catNode = metadata.createElement(Constants.XML_ELEMENT_CATEGORY);
+                if (((DataCategory) item).isRecursivelyExported()) {
+                    catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_RECURSIVELY_EXPORTED, Boolean.TRUE.toString());
+                }
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_ID, dc.getId().toString());
                 String encodedCaption = URLEncoder.encode(dc.getCaption(), Constants.DEFAULT_ENCODING);
                 catNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_CAPTION, encodedCaption);

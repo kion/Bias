@@ -224,6 +224,8 @@ public class FrontEnd extends JFrame {
             "<b><i>" + Constants.HTML_COLOR_HIGHLIGHT_INFO + getMessage("export.info") + Constants.HTML_COLOR_SUFFIX + "</i></b>" + 
             Constants.HTML_SUFFIX);
     
+    private static final UUID rootID = UUID.fromString("e83310de-3a52-454b-940c-78ce65bd51ec");
+
     private static AddOnFileChooser addOnFileChooser = new AddOnFileChooser();
 
     private static IconsFileChooser iconsFileChooser = new IconsFileChooser();
@@ -273,6 +275,8 @@ public class FrontEnd extends JFrame {
     
     private boolean hotKeysBindingsChanged = true;
 
+    private boolean tabsInitialized;
+    
     private String lastAddedEntryType = null;
     
     private Map<String, Integer> depCounters;
@@ -1243,7 +1247,6 @@ public class FrontEnd extends JFrame {
         return panel;
     }
     
-    private boolean tabsInitialized;
     private void representData(DataCategory data) {
         int rootActiveIdx = getJTabbedPane().getSelectedIndex();
         UUID id = getSelectedVisualEntryID();
@@ -1251,7 +1254,21 @@ public class FrontEnd extends JFrame {
             getJTabbedPane().setTabPlacement(data.getPlacement());
         }
         tabsInitialized = false;
-        representData(getJTabbedPane(), data);
+        recursivelyExportedEntries.clear();
+        data.setId(rootID);
+        representData(getJTabbedPane(), data, data.isRecursivelyExported());
+        if (recursivelyExportedEntries != null && !recursivelyExportedEntries.isEmpty()) {
+            for (Entry<UUID, Collection<UUID>> entry : recursivelyExportedEntries.entrySet()) {
+                JTabbedPane tabPane = entry.getKey().equals(rootID) ? getJTabbedPane() : (JTabbedPane) getComponentById(entry.getKey());
+                if (tabPane != null) {
+                    for (UUID eid : getFirstLevelVisualEntriesIDs(tabPane)) {
+                        if (!entry.getValue().contains(eid)) {
+                            removeVisualEntryByID(tabPane, eid);
+                        }
+                    }
+                }
+            }
+        }
         tabsInitialized = true;
         if (data.getActiveIndex() != null) {
             try {
@@ -1261,7 +1278,11 @@ public class FrontEnd extends JFrame {
             }
             currentTabPane = getJTabbedPane();
         } else if (rootActiveIdx != -1) { 
-            getJTabbedPane().setSelectedIndex(rootActiveIdx);
+            try {
+                getJTabbedPane().setSelectedIndex(rootActiveIdx);
+            } catch (IndexOutOfBoundsException ioobe) {
+                // simply ignore incorrect index settings
+            }
             currentTabPane = getJTabbedPane();
         }
         if (id != null && !id.equals(getSelectedVisualEntryID())) {
@@ -1271,14 +1292,23 @@ public class FrontEnd extends JFrame {
         handleNavigationHistory();
     }
 
-    private void representData(JTabbedPane tabbedPane, DataCategory data) {
+    private Map<UUID, Collection<UUID>> recursivelyExportedEntries = new HashMap<UUID, Collection<UUID>>();
+    private void representData(JTabbedPane tabbedPane, DataCategory data, boolean recursivelyExported) {
         try {
+            Collection<UUID> reEntries = null;
+            if (recursivelyExported) {
+                reEntries = new ArrayList<UUID>();
+                recursivelyExportedEntries.put(data.getId(), reEntries);
+            }
             for (Recognizable item : data.getData()) {
                 if (item instanceof DataEntry) {
                     DataEntry de = (DataEntry) item;
                     String caption = de.getCaption();
                     dataEntries.put(de.getId().toString(), de);
                     putTab(tabbedPane, caption, item.getIcon(), getEntryExtensionPanel(de.getId(), null));
+                    if (reEntries != null) {
+                        reEntries.add(item.getId());
+                    }
                 } else if (item instanceof DataCategory) {
                     String caption = item.getCaption();
                     JTabbedPane categoryTabPane = new JTabbedPane();
@@ -1290,7 +1320,10 @@ public class FrontEnd extends JFrame {
                     addTabPaneListeners(categoryTabPane);
                     categoryTabPane = (JTabbedPane) putTab(tabbedPane, caption, item.getIcon(), categoryTabPane);
                     currentTabPane = categoryTabPane;
-                    representData(categoryTabPane, dc);
+                    if (reEntries != null) {
+                        reEntries.add(item.getId());
+                    }
+                    representData(categoryTabPane, dc, (recursivelyExported || dc.isRecursivelyExported()));
                     if (dc.getActiveIndex() != null) {
                         if (categoryTabPane.getTabCount() - 1 < dc.getActiveIndex()) {
                             categoryTabPane.setSelectedIndex(Integer.valueOf(categoryTabPane.getTabCount() - 1));
@@ -1785,6 +1818,16 @@ public class FrontEnd extends JFrame {
         return ids;
     }
 
+    private Collection<UUID> getFirstLevelVisualEntriesIDs(JTabbedPane rootTabPane) {
+        Collection<UUID> ids = new LinkedList<UUID>();
+        for (Component c : rootTabPane.getComponents()) {
+            if (c.getName() != null) {
+                ids.add(UUID.fromString(c.getName()));
+            }
+        }
+        return ids;
+    }
+
     // TODO [P2] optimization: do not iterate over all tabs (to get full extensions list) each time, some caching would be nice
     
     public static Map<UUID, EntryExtension> getEntryExtensions() throws Throwable {
@@ -1963,6 +2006,17 @@ public class FrontEnd extends JFrame {
                 currentTabPane = (JTabbedPane) selComp;
             }
         }
+    }
+    
+    private boolean removeVisualEntryByID(JTabbedPane tabPane, UUID id) {
+        for (Component c : tabPane.getComponents()) {
+            String idStr = c.getName();
+            if (idStr != null && UUID.fromString(idStr).equals(id)) {
+                tabPane.remove(c);
+                return true;
+            }
+        }
+        return false;
     }
 
     public static JTabbedPane getActiveTabPane() {
@@ -3590,9 +3644,7 @@ public class FrontEnd extends JFrame {
                                                         importConfig.setOverwriteImportExportConfigs(overwriteImportExportConfigsCB.isSelected());
                                                         importConfig.setPassword(password);                                                        
                                                         DataCategory data = BackEnd.getInstance().importData(importDir, getVisualEntriesIDs(), importConfig);
-                                                        if (!data.getData().isEmpty()) {
-                                                            representData(data);
-                                                        }
+                                                        representData(data);
                                                         if (importToolsDataCB.isSelected()) {
                                                             initTools();
                                                         }
@@ -3741,9 +3793,7 @@ public class FrontEnd extends JFrame {
                     FSUtils.delete(importDir);
                     ArchUtils.extract(importedData, importDir);
                     DataCategory data = BackEnd.getInstance().importData(importDir, instance.getVisualEntriesIDs(), importConfig);
-                    if (!data.getData().isEmpty()) {
-                        instance.representData(data);
-                    }
+                    instance.representData(data);
                     if (importConfig.isImportToolsData()) {
                         initTools();
                     }
@@ -4058,6 +4108,7 @@ public class FrontEnd extends JFrame {
                                                         DefaultMutableTreeNode node = it.next();
                                                         if (node.isRoot()) {
                                                             exportAll = true;
+                                                            data.setRecursivelyExported(true);
                                                             break;
                                                         } else {
                                                             selectedRecursiveEntries.add(nodeEntries.get(node).getId());
@@ -4225,6 +4276,8 @@ public class FrontEnd extends JFrame {
                 final ExportConfiguration exportConfig = BackEnd.getInstance().getPopulatedExportConfigurations().get(configName);
                 if (!exportConfig.isExportAll()) {
                     instance.filterData(data, exportConfig.getSelectedIds(), exportConfig.getSelectedRecursiveIds());
+                } else {
+                    data.setRecursivelyExported(true);
                 }
                 byte[] transferOptions = BackEnd.getInstance().getExportOptions(configName);
                 final TransferExtension transferrer = ExtensionFactory.getTransferExtension(exportConfig.getTransferProvider());
@@ -4338,6 +4391,9 @@ public class FrontEnd extends JFrame {
     }
     
     private void filterData(DataCategory data, Collection<UUID> filterEntries, Collection<UUID> selectedRecursiveEntries) {
+        if (selectedRecursiveEntries.contains(data.getId())) {
+            data.setRecursivelyExported(true);
+        }
         Collection<Recognizable> initialData = new ArrayList<Recognizable>(data.getData());
         for (Recognizable r : initialData) {
             if (!filterEntries.contains(r.getId())) {
@@ -4345,6 +4401,8 @@ public class FrontEnd extends JFrame {
             } else if (r instanceof DataCategory) {
                 if (!selectedRecursiveEntries.contains(r.getId())) {
                     filterData((DataCategory) r, filterEntries, selectedRecursiveEntries);
+                } else {
+                    ((DataCategory) r).setRecursivelyExported(true);
                 }
             }
         }
