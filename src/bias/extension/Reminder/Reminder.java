@@ -32,12 +32,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -109,35 +111,59 @@ public class Reminder extends ToolExtension {
     private static final String PERIODIC_DATE_MONTHLY = "Monthly";
     private static final String PERIODIC_DATE_YEARLY = "Yearly";
 
-    private static final String[] PERIODIC_DATE_VALUES = new String[] { 
+    private String[] PERIODIC_DATE_VALUES = new String[] { 
         PERIODIC_DATE_DAILY, 
         PERIODIC_DATE_WEEKLY, 
         PERIODIC_DATE_MONTHLY, 
         PERIODIC_DATE_YEARLY
     };
     
-    private static final Map<Integer, String> DAYS = buildDays();
+    private Map<Integer, String> DAYS = buildDays();
     
-    private static final Map<Integer, String> buildDays() {
+    private Map<Integer, String> buildDays() {
         Map<Integer, String> map = new HashMap<Integer, String>();
-        map.put(1, "Sunday");
-        map.put(2, "Monday");
-        map.put(3, "Tuesday");
-        map.put(4, "Wednesday");
-        map.put(5, "Thursday");
-        map.put(6, "Friday");
-        map.put(7, "Saturday");
+        map.put(1, getMessage("Sunday"));
+        map.put(2, getMessage("Monday"));
+        map.put(3, getMessage("Tuesday"));
+        map.put(4, getMessage("Wednesday"));
+        map.put(5, getMessage("Thursday"));
+        map.put(6, getMessage("Friday"));
+        map.put(7, getMessage("Saturday"));
         return map;
     }
     
-    private static final Map<String, String> PERIODIC_DATE_LABELS = buildPeriodicDateLabels();
+    private Map<Integer, String> MONTHES = buildMonthes();
     
-    private static final Map<String, String> buildPeriodicDateLabels() {
-        Map<String, String> map = new HashMap<String, String>();
-        map.put(PERIODIC_DATE_WEEKLY, "Every specified day of the week (Sunday is first day)");
-        map.put(PERIODIC_DATE_MONTHLY, "Every specified day number of the month");
-        map.put(PERIODIC_DATE_YEARLY, "Every specified date of the year");
+    private Map<Integer, String> buildMonthes() {
+        Map<Integer, String> map = new HashMap<Integer, String>();
+        map.put(1, getMessage("January"));
+        map.put(2, getMessage("February"));
+        map.put(3, getMessage("March"));
+        map.put(4, getMessage("April"));
+        map.put(5, getMessage("May"));
+        map.put(6, getMessage("June"));
+        map.put(7, getMessage("July"));
+        map.put(8, getMessage("August"));
+        map.put(9, getMessage("September"));
+        map.put(10, getMessage("October"));
+        map.put(11, getMessage("November"));
+        map.put(12, getMessage("December"));
         return map;
+    }
+    
+    private Map<String, String> PERIODIC_DATE_LABELS = buildPeriodicDateLabels();
+    
+    private Map<String, String> buildPeriodicDateLabels() {
+        Map<String, String> map = new HashMap<String, String>();
+        map.put(PERIODIC_DATE_WEEKLY, getMessage("tooltip.weekly"));
+        map.put(PERIODIC_DATE_MONTHLY, getMessage("tooltip.monthly"));
+        map.put(PERIODIC_DATE_YEARLY, getMessage("tooltip.yearly"));
+        return map;
+    }
+    
+    private static Calendar currCal = new GregorianCalendar();
+    static {
+        currCal.setTime(new Date());
     }
     
     private static final String PROPERTY_SORT_BY_COLUMN = "SORT_BY_COLUMN";
@@ -158,6 +184,8 @@ public class Reminder extends ToolExtension {
     private SortOrder[] sortOrder = new SortOrder[MAX_SORT_KEYS_NUMBER];
     
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    
+    private SimpleDateFormat sdf2 = new SimpleDateFormat("MM-dd");
     
     private Map<UUID, HTMLEditorPanel> editorPanels = new HashMap<UUID, HTMLEditorPanel>();
 
@@ -334,9 +362,9 @@ public class Reminder extends ToolExtension {
                 reminderEntriesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                 
                 model.addColumn("ID");
-                model.addColumn("Title");
-                model.addColumn("Date");
-                model.addColumn("Time");
+                model.addColumn(getMessage("Title"));
+                model.addColumn(getMessage("Date"));
+                model.addColumn(getMessage("Time"));
                 
                 reminderEntriesTable.getColumnModel().getColumn(2).setCellRenderer(new DayOfWeekRenderer());
 
@@ -415,7 +443,7 @@ public class Reminder extends ToolExtension {
                     }
                 });
                 JPanel filterPanel = new JPanel(new BorderLayout());
-                filterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
+                filterPanel.add(new JLabel(getMessage("Filter")), BorderLayout.WEST);
                 filterPanel.add(filterText, BorderLayout.CENTER);
                 mainPanel.add(filterPanel, BorderLayout.NORTH);
                 mainPanel.add(toolbar, BorderLayout.SOUTH);
@@ -430,16 +458,24 @@ public class Reminder extends ToolExtension {
         JToolBar toolbar = new JToolBar();
         toolbar.setFloatable(false);
         JButton buttAdd = new JButton(ICON_ADD);
-        buttAdd.setToolTipText("add entry");
+        buttAdd.setToolTipText(getMessage("Add.Reminder"));
         buttAdd.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
                 JPanel p = new JPanel(new GridLayout(8, 1));
-                p.add(new JLabel("Date:"));
+                p.add(new JLabel(getMessage("Date")));
                 final JDateChooser dateChooser = new JDateChooser(new Date());
                 p.add(dateChooser);
-                final JCheckBox periodicCB = new JCheckBox("periodic");
+                final JCheckBox periodicCB = new JCheckBox(getMessage("Periodic"));
                 p.add(periodicCB);
                 final JComboBox perCB = new JComboBox(PERIODIC_DATE_VALUES);
+                perCB.setRenderer(new DefaultListCellRenderer(){
+                    private static final long serialVersionUID = 1L;
+                    @Override
+                    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                        String dValue = getMessage((String) value);
+                        return super.getListCellRendererComponent(list, dValue, index, isSelected, cellHasFocus);
+                    }
+                });
                 perCB.setEnabled(false);
                 p.add(perCB);
                 final SpinnerNumberModel perSM = new SpinnerNumberModel();
@@ -517,35 +553,37 @@ public class Reminder extends ToolExtension {
                         perCB.setToolTipText(PERIODIC_DATE_LABELS.get(perCB.getSelectedItem()));
                     }
                 });
-                p.add(new JLabel("Time:"));
+                Calendar currCal = new GregorianCalendar();
+                currCal.setTime(new Date());
+                p.add(new JLabel(getMessage("Time")));
                 final JPanel timeP = new JPanel(new GridLayout(1, 2));
                 SpinnerNumberModel sm = new SpinnerNumberModel();
                 sm.setMinimum(0);
                 sm.setMaximum(23);
                 sm.setStepSize(1);
-                sm.setValue(12);
+                sm.setValue(currCal.get(Calendar.HOUR));
                 final JSpinner hour = new JSpinner(sm);
                 SpinnerNumberModel sm2 = new SpinnerNumberModel();
                 sm2.setMinimum(0);
                 sm2.setMaximum(60);
                 sm2.setStepSize(1);
-                sm2.setValue(0);
+                sm2.setValue(currCal.get(Calendar.MINUTE));
                 final JSpinner minute = new JSpinner(sm2);
                 timeP.add(hour);
                 timeP.add(minute);
                 p.add(timeP);
-                p.add(new JLabel("Title:"));
+                p.add(new JLabel(getMessage("Title")));
                 String title = JOptionPane.showInputDialog(
                         mainPanel, 
                         new Component[]{p},
-                        "New entry:",
+                        getMessage("New.Reminder"),
                         JOptionPane.PLAIN_MESSAGE
                         );
                 if (!Validator.isNullOrBlank(title)) {
                     ReminderEntry reminderEntry = new ReminderEntry();
                     reminderEntry.setId(UUID.randomUUID());
                     reminderEntry.setDate(dateChooser.isEnabled() ? 
-                                (periodicCB.isSelected() ? "Yearly/" : Constants.EMPTY_STR) + sdf.format(dateChooser.getDate()) : 
+                                (periodicCB.isSelected() ? PERIODIC_DATE_YEARLY + "/" : Constants.EMPTY_STR) + sdf2.format(dateChooser.getDate()) : 
                                 (String) perCB.getSelectedItem() + (perSpinner.isEnabled() ? "/" + perSpinner.getValue().toString() : Constants.EMPTY_STR));
                     reminderEntry.setTime(formatTime(hour.getValue().toString(), minute.getValue().toString()));
                     reminderEntry.setTitle(title);
@@ -555,7 +593,7 @@ public class Reminder extends ToolExtension {
             }
         });
         JButton buttDel = new JButton(ICON_DELETE);
-        buttDel.setToolTipText("delete entry");
+        buttDel.setToolTipText(getMessage("Delete.Reminder"));
         buttDel.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
                 DefaultTableModel model = (DefaultTableModel) reminderEntriesTable.getModel();
@@ -583,9 +621,24 @@ public class Reminder extends ToolExtension {
             super();
         }
         public void setValue(Object value) {
-            if ((value != null) && (value instanceof String) && ((String) value).startsWith(PERIODIC_DATE_WEEKLY)) {
-                Integer day = Integer.valueOf(((String) value).split("/")[1]);
-                value = PERIODIC_DATE_WEEKLY + "/" + DAYS.get(day);
+            if ((value != null)) {
+                String v = ((String) value);
+                if (v.contains("/")) {
+                    String[] vv = v.split("/");
+                    String s = vv[0];
+                    if (s.equals(PERIODIC_DATE_WEEKLY)) {
+                        Integer day = Integer.valueOf(vv[1]);
+                        value = getMessage(PERIODIC_DATE_WEEKLY) + "/" + DAYS.get(day);
+                    } else if (s.equals(PERIODIC_DATE_MONTHLY)) {
+                        value = getMessage(s) + "/" + vv[1];
+                    } else if (s.equals(PERIODIC_DATE_YEARLY)) {
+                        String[] vvv = vv[1].split("-");
+                        Integer month = Integer.valueOf(vvv[0]);
+                        value = getMessage(s) + "/" + MONTHES.get(month) + "/" + vvv[1];
+                    }
+                } else if (v.equals(PERIODIC_DATE_DAILY)) {
+                    value = getMessage(PERIODIC_DATE_DAILY);
+                }
             }
             super.setValue(value);
         }
@@ -688,11 +741,12 @@ public class Reminder extends ToolExtension {
                     calendarField = Calendar.MONTH;
                 } else if (reminderEntry.getDate().startsWith(PERIODIC_DATE_YEARLY)) {
                     String dateStr = reminderEntry.getDate().split("/")[1];
-                    Date date = sdf.parse(dateStr);
+                    Date date = sdf2.parse(dateStr);
                     String[] time = reminderEntry.getTime().split(":");
                     Integer hour = Integer.valueOf(time[0]);
                     Integer minute = Integer.valueOf(time[1]);
                     cal.setTime(date);
+                    cal.set(Calendar.YEAR, currCal.get(Calendar.YEAR));
                     cal.set(Calendar.HOUR_OF_DAY, hour);
                     cal.set(Calendar.MINUTE, minute);
                     cal.set(Calendar.SECOND, 0);
@@ -769,7 +823,7 @@ public class Reminder extends ToolExtension {
         p.add(new JLabel(reminderEntry.getTitle()), BorderLayout.NORTH);
         p.add(detailsPane, BorderLayout.CENTER);
         JPanel pControls = new JPanel(new GridLayout(2, 1));
-        JButton doneButt = new JButton("Done! (" + (periodic ? "remind next time" : "delete this entry") + ")");
+        JButton doneButt = new JButton(getMessage("Done") + "(" + (periodic ? getMessage("remind.next.time") : getMessage("delete.this.reminder")) + ")");
         doneButt.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
                 dialog.setVisible(false);
@@ -805,7 +859,7 @@ public class Reminder extends ToolExtension {
         remComboBox.addItem(TimeUnit.HOURS);
         remComboBox.addItem(TimeUnit.DAYS);
         remComboBox.setSelectedItem(TimeUnit.MINUTES);
-        JButton remButt = new JButton("Remind again in");
+        JButton remButt = new JButton(getMessage("Remind.again.in"));
         remButt.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
                 dialog.setVisible(false);

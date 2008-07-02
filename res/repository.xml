@@ -14,7 +14,7 @@
 	<pack type="Extension" name="MainEntry" version="0.3.5" author="R. Kasianenko" description="Keep certain entry as main" file-size="4402" url="file:///home/kion/bias-build/MainEntry_0.3.5.jar" />
 	<pack type="Extension" name="Synchronizer" version="0.2.5" author="R. Kasianenko" description="Schedule/Event-driven data synchronizer" file-size="24626" url="file:///home/kion/bias-build/Synchronizer_0.2.5.jar" />
 	<pack type="Extension" name="DashBoard" version="0.2.9" author="R. Kasianenko" description="Simple dashboard for chaotic info-snippets placement" file-size="88411" url="file:///home/kion/bias-build/DashBoard_0.2.9.jar" />
-	<pack type="Extension" name="Reminder" version="0.1.1" author="R. Kasianenko" description="Simple and easy to use reminder" file-size="91293" url="file:///home/kion/bias-build/Reminder_0.1.1.jar">
+	<pack type="Extension" name="Reminder" version="0.2.1" author="R. Kasianenko" description="Simple and easy to use reminder manager" file-size="91293" url="file:///home/kion/bias-build/Reminder_0.1.1.jar">
 		<dependency type="Library" name="JCalendar" version="1.3.2"/>
 	</pack>
 	<pack type="Extension" name="FinancialFlows" version="0.2.7" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="34482" url="file:///home/kion/bias-build/FinancialFlows_0.2.7.jar">
