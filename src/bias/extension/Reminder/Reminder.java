@@ -64,6 +64,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
@@ -114,6 +115,20 @@ public class Reminder extends ToolExtension {
         PERIODIC_DATE_MONTHLY, 
         PERIODIC_DATE_YEARLY
     };
+    
+    private static final Map<Integer, String> DAYS = buildDays();
+    
+    private static final Map<Integer, String> buildDays() {
+        Map<Integer, String> map = new HashMap<Integer, String>();
+        map.put(1, "Sunday");
+        map.put(2, "Monday");
+        map.put(3, "Tuesday");
+        map.put(4, "Wednesday");
+        map.put(5, "Thursday");
+        map.put(6, "Friday");
+        map.put(7, "Saturday");
+        return map;
+    }
     
     private static final Map<String, String> PERIODIC_DATE_LABELS = buildPeriodicDateLabels();
     
@@ -323,6 +338,8 @@ public class Reminder extends ToolExtension {
                 model.addColumn("Date");
                 model.addColumn("Time");
                 
+                reminderEntriesTable.getColumnModel().getColumn(2).setCellRenderer(new DayOfWeekRenderer());
+
                 // hide ID column
                 TableColumn idCol = reminderEntriesTable.getColumnModel().getColumn(0);
                 reminderEntriesTable.getColumnModel().removeColumn(idCol);
@@ -430,9 +447,21 @@ public class Reminder extends ToolExtension {
                 perSM.setMaximum(7);
                 perSM.setStepSize(1);
                 perSM.setValue(1);
+                final JLabel dayL = new JLabel();
+                dayL.setVisible(false);
                 final JSpinner perSpinner = new JSpinner(perSM);
+                perSpinner.addChangeListener(new ChangeListener(){
+                    public void stateChanged(ChangeEvent e) {
+                        if (perCB.getSelectedItem().equals(PERIODIC_DATE_WEEKLY)) {
+                            dayL.setText(DAYS.get(((Number) perSpinner.getValue()).intValue()));
+                        }
+                    }
+                });
                 perSpinner.setEnabled(false);
-                p.add(perSpinner);
+                JPanel perP = new JPanel(new GridLayout(1, 2));
+                perP.add(dayL);
+                perP.add(perSpinner);
+                p.add(perP);
                 periodicCB.addChangeListener(new ChangeListener(){
                     public void stateChanged(ChangeEvent e) {
                         if (periodicCB.isSelected()) {
@@ -440,16 +469,23 @@ public class Reminder extends ToolExtension {
                             if (perCB.getSelectedItem().equals(PERIODIC_DATE_YEARLY)) {
                                 dateChooser.setEnabled(true);
                                 perSpinner.setEnabled(false);
+                                dayL.setVisible(false);
                             } else if (perCB.getSelectedItem().equals(PERIODIC_DATE_DAILY)) {
                                 dateChooser.setEnabled(false);
                                 perSpinner.setEnabled(false);
+                                dayL.setVisible(false);
                             } else {
                                 dateChooser.setEnabled(false);
                                 perSpinner.setEnabled(true);
+                                if (perCB.getSelectedItem().equals(PERIODIC_DATE_WEEKLY)) {
+                                    dayL.setVisible(true);
+                                    dayL.setText(DAYS.get(((Number) perSpinner.getValue()).intValue()));
+                                }
                             }
                         } else {
                             perCB.setEnabled(false);
                             perSpinner.setEnabled(false);
+                            dayL.setVisible(false);
                             dateChooser.setEnabled(true);
                         }
                     }
@@ -459,18 +495,23 @@ public class Reminder extends ToolExtension {
                         if (perCB.getSelectedItem().equals(PERIODIC_DATE_YEARLY)) {
                             dateChooser.setEnabled(true);
                             perSpinner.setEnabled(false);
+                            dayL.setVisible(false);
                         } else {
                             dateChooser.setEnabled(false);
                             if (perCB.getSelectedItem().equals(PERIODIC_DATE_WEEKLY)) {
                                 perSM.setMaximum(7);
                                 perSM.setValue(1);
                                 perSpinner.setEnabled(true);
+                                dayL.setVisible(true);
+                                dayL.setText(DAYS.get(((Number) perSpinner.getValue()).intValue()));
                             } else if (perCB.getSelectedItem().equals(PERIODIC_DATE_MONTHLY)) {
                                 perSM.setMaximum(31);
                                 perSM.setValue(1);
                                 perSpinner.setEnabled(true);
+                                dayL.setVisible(false);
                             } else {
                                 perSpinner.setEnabled(false);
+                                dayL.setVisible(false);
                             }
                         }
                         perCB.setToolTipText(PERIODIC_DATE_LABELS.get(perCB.getSelectedItem()));
@@ -536,6 +577,20 @@ public class Reminder extends ToolExtension {
         return toolbar;
     }
     
+    private class DayOfWeekRenderer extends DefaultTableCellRenderer {
+        private static final long serialVersionUID = 1L;
+        public DayOfWeekRenderer() {
+            super();
+        }
+        public void setValue(Object value) {
+            if ((value != null) && (value instanceof String) && ((String) value).startsWith(PERIODIC_DATE_WEEKLY)) {
+                Integer day = Integer.valueOf(((String) value).split("/")[1]);
+                value = PERIODIC_DATE_WEEKLY + "/" + DAYS.get(day);
+            }
+            super.setValue(value);
+        }
+    }
+
     private int findRowIdxByID(String id) {
         DefaultTableModel model = (DefaultTableModel) reminderEntriesTable.getModel();
         for (int i = 0; i < model.getRowCount(); i++) {
