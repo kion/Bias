@@ -12,6 +12,8 @@ import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
@@ -194,6 +196,8 @@ public class FrontEnd extends JFrame {
     
     private static final long serialVersionUID = 1L;
     
+    private static final GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+
     private static final Map<String, String> MESSAGES = I18nService.getInstance().getMessages();
     
     private static final String DEFAULT_SKIN = "DefaultSkin";
@@ -734,35 +738,41 @@ public class FrontEnd extends JFrame {
     // TODO [P3] hot-keys-bindings should be customizable
     private void bindHotKeys() {
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK), saveAction.getValue(Action.NAME));
-        getJPanel().getActionMap().put(saveAction.getValue(Action.NAME), saveAction);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK), saveAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(saveAction.getValue(Action.NAME), saveAction);
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK), importAction.getValue(Action.NAME));
-        getJPanel().getActionMap().put(importAction.getValue(Action.NAME), importAction);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK), importAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(importAction.getValue(Action.NAME), importAction);
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK), exportAction.getValue(Action.NAME));
-        getJPanel().getActionMap().put(exportAction.getValue(Action.NAME), exportAction);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK), exportAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(exportAction.getValue(Action.NAME), exportAction);
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK), preferencesAction.getValue(Action.NAME));
-        getJPanel().getActionMap().put(preferencesAction.getValue(Action.NAME), preferencesAction);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK), preferencesAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(preferencesAction.getValue(Action.NAME), preferencesAction);
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK), manageAddOnsAction.getValue(Action.NAME));
-        getJPanel().getActionMap().put(manageAddOnsAction.getValue(Action.NAME), manageAddOnsAction);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK), manageAddOnsAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(manageAddOnsAction.getValue(Action.NAME), manageAddOnsAction);
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK), exitAction.getValue(Action.NAME));
-        getJPanel().getActionMap().put(exitAction.getValue(Action.NAME), exitAction);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK), exitAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(exitAction.getValue(Action.NAME), exitAction);
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_MASK), backAction.getValue(Action.NAME));
-        getJPanel().getActionMap().put(backAction.getValue(Action.NAME), backAction);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK), closeAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(closeAction.getValue(Action.NAME), closeAction);
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK), forwardAction.getValue(Action.NAME));
-        getJPanel().getActionMap().put(forwardAction.getValue(Action.NAME), forwardAction);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_MASK), fullScreenAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(fullScreenAction.getValue(Action.NAME), fullScreenAction);
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.ALT_MASK), backToFirstAction.getValue(Action.NAME));
-        getJPanel().getActionMap().put(backToFirstAction.getValue(Action.NAME), backToFirstAction);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_MASK), backAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(backAction.getValue(Action.NAME), backAction);
         
-        getJPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.ALT_MASK), forwardToLastAction.getValue(Action.NAME));
-        getJPanel().getActionMap().put(forwardToLastAction.getValue(Action.NAME), forwardToLastAction);
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK), forwardAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(forwardAction.getValue(Action.NAME), forwardAction);
+        
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.ALT_MASK), backToFirstAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(backToFirstAction.getValue(Action.NAME), backToFirstAction);
+        
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.ALT_MASK), forwardToLastAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(forwardToLastAction.getValue(Action.NAME), forwardToLastAction);
         
     }
     
@@ -4545,6 +4555,64 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             store(false);
+        }
+    };
+    
+    private FullScreenAction fullScreenAction = new FullScreenAction();
+    private class FullScreenAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public FullScreenAction() {
+            putValue(Action.NAME, "full-screen");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("switch full-screen mode"));
+        }
+
+        public void actionPerformed(ActionEvent evt) {
+            switchDisplayMode();
+        }
+    };
+    
+    private void switchToFullScreenMode() {
+        boolean failure = false;
+        try {
+            // enter full-screen mode
+            gd.setFullScreenWindow(this);
+            validate();
+        } catch (Throwable t) {
+            displayErrorMessage("Failed to enter full-screen mode!", t);
+            failure = true;
+        } finally {
+            if (failure) {
+                switchToWindowedMode();
+            }
+        }
+    }
+
+    private void switchToWindowedMode() {
+        // enter windowed mode
+        gd.setFullScreenWindow(null);
+    }
+
+    private void switchDisplayMode() {
+        Window w = gd.getFullScreenWindow();
+        if (w != null && w.equals(this)) {
+            switchToWindowedMode();
+        } else {
+            switchToFullScreenMode();
+        }
+    }
+
+    private CloseAction closeAction = new CloseAction();
+    private class CloseAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public CloseAction() {
+            putValue(Action.NAME, "close");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("close window"));
+        }
+
+        public void actionPerformed(ActionEvent evt) {
+            FrontEnd.this.dispatchEvent(new WindowEvent(FrontEnd.this, WindowEvent.WINDOW_CLOSING));
         }
     };
     
