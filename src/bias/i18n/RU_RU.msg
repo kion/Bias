@@ -243,6 +243,17 @@ description == Описание
 status == Статус
 type == Тип
 size == Размер
+AddOnStatusImported == [Импортировано] (нужен рестарт)
+AddOnStatusInstalled == [Установлено] (нужен рестарт)
+AddOnStatusUpdated == [Обновлено] (нужен рестарт)
+AddOnStatusLoaded == [Загружено]
+AddOnStatusNew == [Новое]
+AddOnStatusUpdate == [Обновление]
+AddOnStatusUnused == [Не используется]
+AddOnStatusBroken == [Сломано]
+AddOnStatusBrokenDependencies == [Сломанные зависимости]
+AddOnStatusRegisteredInstalled == [Зарегистрировано/установлено]
+AddOnStatusNotRegisteredInstalled == [Не зарегистрировано/установлено]
 info.message.refreshing.online.packages.list == обновление онлайн списка пакетов...
 error.message.packages.list.parse.failure == Не удалось произвести разбор списка доступных пакетов!
 error.message.packages.list.retrieve.failure == Не удалось загрузить список доступных аддонов!

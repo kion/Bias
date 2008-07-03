@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import bias.Constants;
+import bias.Constants.ADDON_STATUS;
 import bias.core.AddOnInfo;
 import bias.core.BackEnd;
 import bias.core.DataEntry;
@@ -26,7 +27,7 @@ public class ExtensionFactory {
     private static Map<String, TransferExtension> annotatedTransferTypes = null;
     private static Map<String, TransferExtension> transferTypes = null;
 
-    private static Map<String, String> extensionStatuses = new HashMap<String, String>();
+    private static Map<String, ADDON_STATUS> extensionStatuses = new HashMap<String, ADDON_STATUS>();
     
     private ExtensionFactory() {
         // hidden default constructor
@@ -86,7 +87,7 @@ public class ExtensionFactory {
     public static Map<String, Class<? extends EntryExtension>> getAnnotatedEntryExtensionClasses() throws Throwable {
         if (annotatedEntryTypes == null) {
             annotatedEntryTypes = new LinkedHashMap<String, Class<? extends EntryExtension>>();
-            Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
+            Map<AddOnInfo, ADDON_STATUS> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
             for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
                     if (statuses == null || statuses.get(extension) == null) { // skip new installed/imported extensions
@@ -99,13 +100,13 @@ public class ExtensionFactory {
                             // extension is ok, add it to the list
                             String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
                             annotatedEntryTypes.put(annotationStr, (Class<? extends EntryExtension>) extClass);
-                            extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
+                            extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS.Loaded);
                         }
                     }
                 } catch (Throwable t) {
                     System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
                     t.printStackTrace(System.err);
-                    String status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(extension) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
+                    ADDON_STATUS status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(extension) ? Constants.ADDON_STATUS.BrokenDependencies : Constants.ADDON_STATUS.Broken; 
                     extensionStatuses.put(extension.getName(), status);
                 }
             }
@@ -117,7 +118,7 @@ public class ExtensionFactory {
     public static Map<ToolExtension, String> getAnnotatedToolExtensions() throws Throwable {
         if (annotatedToolTypes == null) {
             annotatedToolTypes = new LinkedHashMap<ToolExtension, String>();
-            Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
+            Map<AddOnInfo, ADDON_STATUS> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
             for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
                     if (statuses == null || statuses.get(extension) == null) { // skip new installed/imported extensions
@@ -130,13 +131,13 @@ public class ExtensionFactory {
                             // extension is ok, add it to the list
                             String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
                             annotatedToolTypes.put(ext, annotationStr);
-                            extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
+                            extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS.Loaded);
                         }
                     }
                 } catch (Throwable t) {
                     System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
                     t.printStackTrace(System.err);
-                    String status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(extension) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
+                    ADDON_STATUS status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(extension) ? Constants.ADDON_STATUS.BrokenDependencies : Constants.ADDON_STATUS.Broken; 
                     extensionStatuses.put(extension.getName(), status);
                 }
             }
@@ -152,7 +153,7 @@ public class ExtensionFactory {
             TransferExtension ext = newTransferExtension(LocalTransfer.class);
             annotatedTransferTypes.put("LocalTransfer [Transfer from/to local file system]", ext);
             transferTypes.put(LocalTransfer.class.getSimpleName(), ext);
-            Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
+            Map<AddOnInfo, ADDON_STATUS> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
             for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
                     if (statuses == null || statuses.get(extension) == null) { // skip new installed/imported extensions
@@ -166,13 +167,13 @@ public class ExtensionFactory {
                             String annotationStr = extension.getName() + " [" + (extension.getDescription() != null ? extension.getDescription() : "No description") + "]";
                             annotatedTransferTypes.put(annotationStr, ext);
                             transferTypes.put(extClass.getSimpleName(), ext);
-                            extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS_LOADED);
+                            extensionStatuses.put(extension.getName(), Constants.ADDON_STATUS.Loaded);
                         }
                     }
                 } catch (Throwable t) {
                     System.err.println("Extension [ " + extension.getName() + " ] failed to initialize!");
                     t.printStackTrace(System.err);
-                    String status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(extension) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
+                    ADDON_STATUS status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(extension) ? Constants.ADDON_STATUS.BrokenDependencies : Constants.ADDON_STATUS.Broken; 
                     extensionStatuses.put(extension.getName(), status);
                 }
             }
@@ -180,7 +181,7 @@ public class ExtensionFactory {
         return annotatedTransferTypes;
     }
     
-    public static String getExtensionStatus(String extName) {
+    public static ADDON_STATUS getExtensionStatus(String extName) {
         return extensionStatuses.get(extName);
     }
 

@@ -113,6 +113,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
@@ -130,6 +131,7 @@ import javax.xml.bind.Unmarshaller;
 import bias.Constants;
 import bias.Preferences;
 import bias.Splash;
+import bias.Constants.ADDON_STATUS;
 import bias.Constants.TRANSFER_TYPE;
 import bias.Preferences.PreferenceChoiceProvider;
 import bias.Preferences.PreferenceValidator;
@@ -4961,7 +4963,7 @@ public class FrontEnd extends JFrame {
                 addOnInfo.getDescription() != null ? addOnInfo.getDescription() : Constants.ADDON_FIELD_VALUE_NA };
     }
     
-    private Object[] getAddOnInfoRow(Boolean selected, AddOnInfo addOnInfo, String status) {
+    private Object[] getAddOnInfoRow(Boolean selected, AddOnInfo addOnInfo, ADDON_STATUS status) {
         if (selected != null) {
             return new Object[] {
                     selected,
@@ -4980,7 +4982,7 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    private Object[] getPackRow(Pack pack, String status) {
+    private Object[] getPackRow(Pack pack, ADDON_STATUS status) {
         return new Object[]{
                 Boolean.FALSE,
                 pack.getType().value(), 
@@ -5003,7 +5005,7 @@ public class FrontEnd extends JFrame {
         // ensure entry extensions map has been initialized even if no data-entries have been added so far;
         ExtensionFactory.getAnnotatedEntryExtensionClasses();
         // ... now extensions can be listed
-        Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
+        Map<AddOnInfo, ADDON_STATUS> statuses = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
         for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
             if (statuses != null && statuses.get(extension) != null) {
                 addOrReplaceTableModelAddOnRow(getExtensionsModel(), extension, true, 1, statuses.get(extension));
@@ -5018,9 +5020,9 @@ public class FrontEnd extends JFrame {
         if (getSkinModel().getRowCount() == 0) {
             getSkinModel().insertRow(0, new Object[]{Boolean.FALSE, DEFAULT_SKIN, Constants.EMPTY_STR, Constants.EMPTY_STR, getMessage("default.skin")});
         }
-        Map<AddOnInfo, String> statuses = BackEnd.getInstance().getNewAddOns(PackType.SKIN);
+        Map<AddOnInfo, ADDON_STATUS> statuses = BackEnd.getInstance().getNewAddOns(PackType.SKIN);
         for (AddOnInfo skin : BackEnd.getInstance().getAddOns(PackType.SKIN)) {
-            String status;
+            ADDON_STATUS status;
             try {
                 if (statuses != null && statuses.get(skin) != null) {
                     status = statuses.get(skin);
@@ -5031,13 +5033,13 @@ public class FrontEnd extends JFrame {
                     Class<Skin> skinClass = (Class<Skin>) Class.forName(fullSkinName);
                     // skin instantiation test
                     skinClass.newInstance();
-                    status = Constants.ADDON_STATUS_LOADED;
+                    status = Constants.ADDON_STATUS.Loaded;
                 }
             } catch (Throwable t) {
                 // skin is broken
                 System.err.println(getMessage("error.message.skin.initialization.failure", skin.getName()));
                 t.printStackTrace(System.err);
-                status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(skin) ? Constants.ADDON_STATUS_BROKEN_DEPENDENCIES : Constants.ADDON_STATUS_BROKEN; 
+                status = BackEnd.getInstance().unresolvedAddOnDependenciesPresent(skin) ? Constants.ADDON_STATUS.BrokenDependencies : Constants.ADDON_STATUS.Broken; 
             }
             addOrReplaceTableModelAddOnRow(getSkinModel(), skin, true, 1, status);
         }
@@ -5062,23 +5064,37 @@ public class FrontEnd extends JFrame {
     private void listLibs() throws Throwable {
         Collection<AddOnInfo> addOnInfos = BackEnd.getInstance().getAddOns(PackType.LIBRARY);
         for (AddOnInfo addOnInfo : addOnInfos) {
-            String status;
-            Map<AddOnInfo, String> libStatuses = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY);
+            ADDON_STATUS status;
+            Map<AddOnInfo, ADDON_STATUS> libStatuses = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY);
             if (libStatuses != null) {
                 status = libStatuses.get(addOnInfo);
             } else {
-                status = Constants.ADDON_STATUS_LOADED;
+                status = Constants.ADDON_STATUS.Loaded;
             }
             addOrReplaceTableModelAddOnRow(getLibModel(), addOnInfo, false, 0, status);
         }
     }
     
+    private static class StatusCellRenderer extends DefaultTableCellRenderer {
+        private static final long serialVersionUID = 1L;
+        public StatusCellRenderer() {
+            super();
+        }
+        public void setValue(Object value) {
+            if (value != null) {
+                value = Constants.getAddOnStatusCaption((ADDON_STATUS) value);
+            }
+            super.setValue(value);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private void initAddOnsManagementDialog() {
         if (addOnsManagementDialog == null) {
             try {
                 // extensions
                 extList = new JTable(getExtensionsModel());
+                extList.getColumnModel().getColumn(5).setCellRenderer(new StatusCellRenderer());
                 final TableRowSorter<TableModel> extSorter = new TableRowSorter<TableModel>(getExtensionsModel());
                 extSorter.setSortsOnUpdates(true);
                 extList.setRowSorter(extSorter);
@@ -5123,7 +5139,7 @@ public class FrontEnd extends JFrame {
                         if (idx != -1) {
                             try {
                                 String ext = (String) extList.getValueAt(idx, 1);
-                                Map<AddOnInfo, String> newExts = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
+                                Map<AddOnInfo, ADDON_STATUS> newExts = BackEnd.getInstance().getNewAddOns(PackType.EXTENSION);
                                 if (newExts != null && newExts.containsKey(new AddOnInfo(ext))) {
                                     displayMessage(
                                             getMessage("info.message.extension.is.not.yet.configurable") + Constants.NEW_LINE +
@@ -5205,6 +5221,7 @@ public class FrontEnd extends JFrame {
                         return c;
                     }
                 };
+                skinList.getColumnModel().getColumn(5).setCellRenderer(new StatusCellRenderer());
                 final TableRowSorter<TableModel> skinSorter = new TableRowSorter<TableModel>(getSkinModel());
                 skinSorter.setSortsOnUpdates(true);
                 skinList.setRowSorter(skinSorter);
@@ -5260,7 +5277,7 @@ public class FrontEnd extends JFrame {
                                     displayErrorMessage(getMessage("error.message.skin.reactivation.failure"), t);
                                 }
                             } else {
-                                Map<AddOnInfo, String> newSkins = BackEnd.getInstance().getNewAddOns(PackType.SKIN);
+                                Map<AddOnInfo, ADDON_STATUS> newSkins = BackEnd.getInstance().getNewAddOns(PackType.SKIN);
                                 if (newSkins != null && newSkins.containsKey(new AddOnInfo(skin))) {
                                     displayMessage(
                                             getMessage("info.message.skin.is.not.yet.activable") + Constants.NEW_LINE +
@@ -5509,6 +5526,7 @@ public class FrontEnd extends JFrame {
                 
                 // online list of available addons
                 onlineList = new JTable(getOnlineModel());
+                onlineList.getColumnModel().getColumn(7).setCellRenderer(new StatusCellRenderer());
                 final TableRowSorter<TableModel> onlineSorter = new TableRowSorter<TableModel>(getOnlineModel());
                 onlineSorter.setSortsOnUpdates(true);
                 onlineList.setRowSorter(onlineSorter);
@@ -5777,7 +5795,7 @@ public class FrontEnd extends JFrame {
                             for (int i = 0; i < getLibModel().getRowCount(); i++) {
                                 String libName = (String) getLibModel().getValueAt(i, 0);
                                 if (!deps.contains(libName)) {
-                                    getLibModel().setValueAt(Constants.ADDON_STATUS_UNUSED, i, 4);
+                                    getLibModel().setValueAt(Constants.ADDON_STATUS.Unused, i, 4);
                                     cleanButt.setText(getMessage("uninstall.unused.libraries"));
                                     cleanButt.setEnabled(true);
                                     cleanLabel.setVisible(true);
@@ -5793,7 +5811,7 @@ public class FrontEnd extends JFrame {
                         try {
                             int i = 0;
                             while  (i < getLibModel().getRowCount()) {
-                                if (getLibModel().getValueAt(i, 4).equals(Constants.ADDON_STATUS_UNUSED)) {
+                                if (getLibModel().getValueAt(i, 4).equals(Constants.ADDON_STATUS.Unused)) {
                                     String lib = (String) getLibModel().getValueAt(i, 0);
                                     BackEnd.getInstance().uninstallAddOn(lib, PackType.LIBRARY);
                                     getLibModel().removeRow(i);
@@ -5976,7 +5994,7 @@ public class FrontEnd extends JFrame {
                 public boolean isCellEditable(int rowIndex, int mColIndex) {
                     return mColIndex == 0 
                                     && (!getValueAt(rowIndex, 1).equals(PackType.LIBRARY.value()) 
-                                    || getValueAt(rowIndex, 7).equals(Constants.ADDON_STATUS_UPDATE)) ? true : false;
+                                    || getValueAt(rowIndex, 7).equals(Constants.ADDON_STATUS.Update)) ? true : false;
                 }
                 @Override
                 public Class<?> getColumnClass(int columnIndex) {
@@ -6043,7 +6061,7 @@ public class FrontEnd extends JFrame {
     
     private boolean updatesAvailable() {
         for (int i = 0; i < getOnlineModel().getRowCount(); i++) {
-            if (getOnlineModel().getValueAt(i, 7).equals(Constants.ADDON_STATUS_UPDATE)) {
+            if (getOnlineModel().getValueAt(i, 7).equals(Constants.ADDON_STATUS.Update)) {
                 return true;
             }
         }
@@ -6052,7 +6070,7 @@ public class FrontEnd extends JFrame {
     
     private void selectAllUpdates() {
         for (int i = 0; i < getOnlineModel().getRowCount(); i++) {
-            if (getOnlineModel().getValueAt(i, 7).equals(Constants.ADDON_STATUS_UPDATE)) {
+            if (Constants.ADDON_STATUS.Update.equals(getOnlineModel().getValueAt(i, 7))) {
                 getOnlineModel().setValueAt(Boolean.TRUE, i, 0);
             }
         }
@@ -6142,7 +6160,7 @@ public class FrontEnd extends JFrame {
             try {
                 boolean lib = addOnModel.equals(getLibModel());
                 AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(addons.getValue(), addOnType);
-                String status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
+                ADDON_STATUS status = BackEnd.getInstance().getNewAddOns(addOnType).get(installedAddOn);
                 int idx = findDataRowIndex(addOnModel, lib ? 0 : 1, installedAddOn.getName());
                 if (idx != -1) {
                     addOnModel.removeRow(idx);
@@ -6184,11 +6202,11 @@ public class FrontEnd extends JFrame {
                                 Boolean isInstalledAndUpToDate = BackEnd.getInstance().isAddOnInstalledAndUpToDate(pack);
                                 Object[] row = null;
                                 if (isInstalledAndUpToDate == null) {
-                                    row = getPackRow(pack, Constants.ADDON_STATUS_NEW);
+                                    row = getPackRow(pack, Constants.ADDON_STATUS.New);
                                 } else if (!isInstalledAndUpToDate) {
-                                    row = getPackRow(pack, Constants.ADDON_STATUS_UPDATE);
+                                    row = getPackRow(pack, Constants.ADDON_STATUS.Update);
                                 } else if (showAll) {
-                                    row = getPackRow(pack, Constants.EMPTY_STR);
+                                    row = getPackRow(pack, null);
                                 }
                                 if (row != null) {
                                     getAvailableOnlinePackages().put(pack.getName(), pack);
@@ -6332,7 +6350,7 @@ public class FrontEnd extends JFrame {
                                     libInfo.addAllDependencies(pack.getDependency());
                                 }
                                 BackEnd.getInstance().installAddOn(file, PackType.LIBRARY);
-                                String status = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY).get(libInfo);
+                                ADDON_STATUS status = BackEnd.getInstance().getNewAddOns(PackType.LIBRARY).get(libInfo);
                                 addOrReplaceTableModelAddOnRow(getLibModel(), libInfo, false, 0, status);
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("success.message.package.downloaded.and.installed", getMessage(pack.getType().value().toLowerCase()), pack.getName(), pack.getVersion()) + Constants.HTML_COLOR_SUFFIX + "</li>");
                             } else if (pack.getType() == PackType.APP_CORE) {
@@ -6344,7 +6362,7 @@ public class FrontEnd extends JFrame {
                                 launcherUpdated = true;
                             } else {
                                 AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, pack.getType());
-                                String status = BackEnd.getInstance().getNewAddOns(pack.getType()).get(installedAddOn);
+                                ADDON_STATUS status = BackEnd.getInstance().getNewAddOns(pack.getType()).get(installedAddOn);
                                 DefaultTableModel model = pack.getType() == PackType.EXTENSION ? getExtensionsModel() : getSkinModel();
                                 int idx = findDataRowIndex(model, 1, installedAddOn.getName());
                                 if (idx != -1) {
@@ -6536,6 +6554,7 @@ public class FrontEnd extends JFrame {
     
     private JTable getLibsList() throws Throwable {
         final JTable addOnList = new JTable(getLibModel());
+        addOnList.getColumnModel().getColumn(4).setCellRenderer(new StatusCellRenderer());
         listLibs();
         addOnList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         final TableRowSorter<TableModel> addOnSorter = new TableRowSorter<TableModel>(getLibModel());
@@ -6544,13 +6563,13 @@ public class FrontEnd extends JFrame {
         return addOnList;
     }
     
-    private void addOrReplaceTableModelAddOnRow(DefaultTableModel addOnModel, AddOnInfo addOnInfo, boolean withCheckBox, int searchIdx, String status) {
+    private void addOrReplaceTableModelAddOnRow(DefaultTableModel addOnModel, AddOnInfo addOnInfo, boolean withCheckBox, int searchIdx, ADDON_STATUS status) {
         int idx = findDataRowIndex(addOnModel, searchIdx, addOnInfo.getName());
         if (idx != -1) {
             addOnModel.removeRow(idx);
             if (status != null 
-                    && !status.equals(Constants.ADDON_STATUS_INSTALLED) 
-                    && !status.equals(Constants.ADDON_STATUS_IMPORTED)) status = Constants.ADDON_STATUS_UPDATED;
+                    && !status.equals(Constants.ADDON_STATUS.Installed) 
+                    && !status.equals(Constants.ADDON_STATUS.Imported)) status = Constants.ADDON_STATUS.Updated;
             addOnModel.insertRow(idx, getAddOnInfoRow((withCheckBox ? Boolean.FALSE : null), addOnInfo, status));
         } else {
             addOnModel.addRow(getAddOnInfoRow((withCheckBox ? Boolean.FALSE : null), addOnInfo, status));
@@ -6653,13 +6672,14 @@ public class FrontEnd extends JFrame {
             text.append(getMessage("addon.dependencies") + ":<br/><ul>");
             for (Dependency dep : dependencies) {
                 AddOnInfo dependentAddOnInfo = BackEnd.getInstance().getAddOnInfo(dep.getName(), dep.getType());
-                String status = dependentAddOnInfo != null && (dep.getVersion() == null || VersionComparator.getInstance().compare(dependentAddOnInfo.getVersion(), dep.getVersion()) >= 0) ? 
-                        Constants.ADDON_STATUS_REGISTERED_INSTALLED : Constants.ADDON_STATUS_NOT_REGISTERED_INSTALLED; 
+                ADDON_STATUS status = BackEnd.getInstance().isAddOnRegisteredAndInstalled(dep.getName(), dep.getType()) 
+                        && (dep.getVersion() == null || VersionComparator.getInstance().compare(dependentAddOnInfo.getVersion(), dep.getVersion()) >= 0) ? 
+                                Constants.ADDON_STATUS.RegisteredInstalled : Constants.ADDON_STATUS.NotRegisteredInstalled; 
                 text.append(
                         "<li>" + 
                         getMessage(dep.getType().value().toLowerCase()) + " '" + dep.getName() + "' " + 
                         (Validator.isNullOrBlank(dep.getVersion()) ? Constants.BLANK_STR : getMessage("version.x.or.higher", dep.getVersion()) + Constants.BLANK_STR) + 
-                        status + 
+                        Constants.getAddOnStatusCaption(status) + 
                         "</li>");
             }
             text.append("</ul>");

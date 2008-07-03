@@ -4,6 +4,8 @@
 package bias;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import bias.extension.Extension;
 import bias.i18n.I18nService;
@@ -67,18 +69,41 @@ public class Constants {
     public static final String HTML_COLOR_SUFFIX = "</font>";
     public static final String HTML_SUFFIX = "</html>";
     public static final String ADDON_FIELD_VALUE_NA = "N/A";
-
-    public static final String ADDON_STATUS_IMPORTED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "Imported  [restart needed]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
-    public static final String ADDON_STATUS_INSTALLED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "Installed [restart needed]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
-    public static final String ADDON_STATUS_UPDATED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "Updated [restart needed]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
-    public static final String ADDON_STATUS_LOADED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_OK + "[Loaded]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
-    public static final String ADDON_STATUS_NEW = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_OK + "[New]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
-    public static final String ADDON_STATUS_UPDATE = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "[Update]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
-    public static final String ADDON_STATUS_UNUSED = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + "[Unused]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
-    public static final String ADDON_STATUS_BROKEN = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + "[Broken]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
-    public static final String ADDON_STATUS_BROKEN_DEPENDENCIES = HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + "[Broken dependencies]" + HTML_COLOR_SUFFIX + HTML_SUFFIX;
-    public static final String ADDON_STATUS_REGISTERED_INSTALLED = HTML_COLOR_HIGHLIGHT_OK + "[Registered/installed]" + HTML_COLOR_SUFFIX;
-    public static final String ADDON_STATUS_NOT_REGISTERED_INSTALLED = HTML_COLOR_HIGHLIGHT_ERROR + "[Not registered/installed]" + HTML_COLOR_SUFFIX;
+    
+    public static enum ADDON_STATUS {
+        Imported,
+        Installed,
+        Updated,
+        Loaded,
+        New,
+        Update,
+        Unused,
+        Broken,
+        BrokenDependencies,
+        RegisteredInstalled,
+        NotRegisteredInstalled,
+    }
+    
+    private static Map<ADDON_STATUS, String> statuses;
+    private static final String ADDON_STATUS_KEY_PREFIX = "AddOnStatus";
+    public static String getAddOnStatusCaption(ADDON_STATUS status) {
+        if (statuses == null) {
+            statuses = new HashMap<ADDON_STATUS, String>();
+            Map<String, String> messages = I18nService.getInstance().getMessages();
+            statuses.put(ADDON_STATUS.Imported, HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + messages.get(ADDON_STATUS_KEY_PREFIX + ADDON_STATUS.Imported.name()) + HTML_COLOR_SUFFIX + HTML_SUFFIX);
+            statuses.put(ADDON_STATUS.Installed, HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + messages.get(ADDON_STATUS_KEY_PREFIX + ADDON_STATUS.Installed.name()) + HTML_COLOR_SUFFIX + HTML_SUFFIX);
+            statuses.put(ADDON_STATUS.Updated, HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + messages.get(ADDON_STATUS_KEY_PREFIX + ADDON_STATUS.Updated.name()) + HTML_COLOR_SUFFIX + HTML_SUFFIX);
+            statuses.put(ADDON_STATUS.Loaded, HTML_PREFIX + HTML_COLOR_HIGHLIGHT_OK + messages.get(ADDON_STATUS_KEY_PREFIX + ADDON_STATUS.Loaded.name()) + HTML_COLOR_SUFFIX + HTML_SUFFIX);
+            statuses.put(ADDON_STATUS.New, HTML_PREFIX + HTML_COLOR_HIGHLIGHT_OK + messages.get(ADDON_STATUS_KEY_PREFIX + ADDON_STATUS.New.name()) + HTML_COLOR_SUFFIX + HTML_SUFFIX);
+            statuses.put(ADDON_STATUS.Update, HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + messages.get(ADDON_STATUS_KEY_PREFIX + ADDON_STATUS.Update.name()) + HTML_COLOR_SUFFIX + HTML_SUFFIX);
+            statuses.put(ADDON_STATUS.Unused, HTML_PREFIX + HTML_COLOR_HIGHLIGHT_INFO + messages.get(ADDON_STATUS_KEY_PREFIX + ADDON_STATUS.Unused.name()) + HTML_COLOR_SUFFIX + HTML_SUFFIX);
+            statuses.put(ADDON_STATUS.Broken, HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + messages.get(ADDON_STATUS_KEY_PREFIX + ADDON_STATUS.Broken.name()) + HTML_COLOR_SUFFIX + HTML_SUFFIX);
+            statuses.put(ADDON_STATUS.BrokenDependencies, HTML_PREFIX + HTML_COLOR_HIGHLIGHT_ERROR + messages.get(ADDON_STATUS_KEY_PREFIX + ADDON_STATUS.BrokenDependencies.name()) + HTML_COLOR_SUFFIX + HTML_SUFFIX);
+            statuses.put(ADDON_STATUS.RegisteredInstalled, HTML_COLOR_HIGHLIGHT_OK + messages.get(ADDON_STATUS_KEY_PREFIX + ADDON_STATUS.RegisteredInstalled.name()) + HTML_COLOR_SUFFIX);
+            statuses.put(ADDON_STATUS.NotRegisteredInstalled, HTML_COLOR_HIGHLIGHT_ERROR + messages.get(ADDON_STATUS_KEY_PREFIX + ADDON_STATUS.NotRegisteredInstalled.name()) + HTML_COLOR_SUFFIX);
+        }
+        return statuses.get(status);
+    }
     
     public static final String DEFAULT_ENCODING = "UTF-8";
     

@@ -52,6 +52,7 @@ import org.w3c.dom.NodeList;
 
 import bias.Constants;
 import bias.Preferences;
+import bias.Constants.ADDON_STATUS;
 import bias.Constants.TRANSFER_TYPE;
 import bias.core.pack.Dependency;
 import bias.core.pack.Pack;
@@ -95,7 +96,7 @@ public class BackEnd {
 
     private static Collection<AddOnInfo> loadedAddOns;
 
-    private static Map<PackType, Map<AddOnInfo, String>> newAddOns = new LinkedHashMap<PackType, Map<AddOnInfo, String>>();
+    private static Map<PackType, Map<AddOnInfo, ADDON_STATUS>> newAddOns = new LinkedHashMap<PackType, Map<AddOnInfo, ADDON_STATUS>>();
 
     private static Collection<String> uninstallAddOnsList = new ArrayList<String>();
     
@@ -633,7 +634,7 @@ public class BackEnd {
                 } else if (addOnInfoFile.getName().endsWith(Constants.ADDON_LIB_INFO_FILE_SUFFIX)) {
                     addOnType = PackType.LIBRARY;
                 }
-                registerNewAddOn(addOnType, addOnInfo, Constants.ADDON_STATUS_IMPORTED);
+                registerNewAddOn(addOnType, addOnInfo, Constants.ADDON_STATUS.Imported);
             }
         }
         // parse metadata file
@@ -1434,7 +1435,7 @@ public class BackEnd {
         }
     }
     
-    public Map<AddOnInfo, String> getNewAddOns(PackType addOnType) {
+    public Map<AddOnInfo, ADDON_STATUS> getNewAddOns(PackType addOnType) {
         return newAddOns.get(addOnType);
     }
     
@@ -1638,11 +1639,32 @@ public class BackEnd {
         return addOn;
     }
     
+    public boolean isAddOnRegisteredAndInstalled(String addOnName, PackType addOnType) throws Throwable {
+        boolean isAddOnRegisteredInstalled = false;
+        String infoFileSuffix = getAddOnInfoFilenameSuffix(addOnType);
+        File addOnInfoFile = new File(Constants.CONFIG_DIR, addOnName + infoFileSuffix);
+        File addOnFile = null;
+        String jarFileSuffix = null;
+        if (addOnInfoFile.getName().endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX)) {
+            jarFileSuffix = Constants.EXTENSION_JAR_FILE_SUFFIX;
+        } else if (addOnInfoFile.getName().endsWith(Constants.ADDON_SKIN_INFO_FILE_SUFFIX)) {
+            jarFileSuffix = Constants.SKIN_JAR_FILE_SUFFIX;
+        } else if (addOnInfoFile.getName().endsWith(Constants.ADDON_LIB_INFO_FILE_SUFFIX)) {
+            jarFileSuffix = Constants.LIB_JAR_FILE_SUFFIX;
+        }
+        if (jarFileSuffix != null) {
+            addOnFile = new File(Constants.ADDONS_DIR, addOnName + jarFileSuffix);
+        }
+        if (addOnInfoFile.exists() && (addOnFile == null || addOnFile.exists())) { // addOnFile == null when icon-set is processed
+            isAddOnRegisteredInstalled = true;
+        }
+        return isAddOnRegisteredInstalled;
+    }
+    
     public Collection<AddOnInfo> getAddOns(PackType addOnType) throws Throwable {
         Collection<AddOnInfo> addOns = new HashSet<AddOnInfo>();
         FilenameFilter ff = getAddOnInfoFilenameFilter(addOnType);
         for (File addOnInfoFile : Constants.CONFIG_DIR.listFiles(ff)) {
-            File addOnDir = Constants.ADDONS_DIR;
             File addOnFile = null;
             String suffix = null;
             if (addOnInfoFile.getName().endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX)) {
@@ -1653,9 +1675,9 @@ public class BackEnd {
                 suffix = Constants.LIB_JAR_FILE_SUFFIX;
             }
             if (suffix != null) {
-                addOnFile = new File(addOnDir, addOnInfoFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR) + suffix);
+                addOnFile = new File(Constants.ADDONS_DIR, addOnInfoFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR) + suffix);
             }
-            if (addOnFile == null || addOnFile.exists()) {
+            if (addOnFile == null || addOnFile.exists()) { // addOnFile == null when icon-set is processed
                 addOns.add(readAddOnInfo(addOnInfoFile));
             }
         }
@@ -1808,10 +1830,10 @@ public class BackEnd {
     public AddOnInfo installAddOn(File addOnFile, PackType addOnType) throws Throwable {
         AddOnInfo addOnInfo = getAddOnInfoAndDependencies(addOnFile, addOnType, true);
         boolean update = false;
-        String status = Constants.ADDON_STATUS_INSTALLED;
+        ADDON_STATUS status = Constants.ADDON_STATUS.Installed;
         if (getAddOns(addOnType).contains(addOnInfo) || loadedAddOns.contains(addOnInfo)) {
             update = true;
-            status = Constants.ADDON_STATUS_UPDATED;
+            status = Constants.ADDON_STATUS.Updated;
         }
         String fileSuffix = null;
         switch (addOnType) {
@@ -1841,10 +1863,10 @@ public class BackEnd {
         return addOnInfo;
     }
     
-    private void registerNewAddOn(PackType addOnType, AddOnInfo addOnInfo, String status) {
-        Map<AddOnInfo, String> addons = newAddOns.get(addOnType);
+    private void registerNewAddOn(PackType addOnType, AddOnInfo addOnInfo, ADDON_STATUS status) {
+        Map<AddOnInfo, ADDON_STATUS> addons = newAddOns.get(addOnType);
         if (addons == null) {
-            addons = new LinkedHashMap<AddOnInfo, String>();
+            addons = new LinkedHashMap<AddOnInfo, ADDON_STATUS>();
             newAddOns.put(addOnType, addons);
         }
         addons.put(addOnInfo, status);

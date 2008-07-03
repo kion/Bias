@@ -243,6 +243,17 @@ description == Description
 status == Status
 type == Type
 size == Size
+AddOnStatusImported == [Imported] (restart needed)
+AddOnStatusInstalled == [Installed] (restart needed)
+AddOnStatusUpdated == [Updated] (restart needed)
+AddOnStatusLoaded == [Loaded]
+AddOnStatusNew == [New]
+AddOnStatusUpdate == [Update]
+AddOnStatusUnused == [Unused]
+AddOnStatusBroken == [Broken]
+AddOnStatusBrokenDependencies == [Broken dependencies]
+AddOnStatusRegisteredInstalled == [Registered/installed]
+AddOnStatusNotRegisteredInstalled == [Not registered/installed]
 info.message.refreshing.online.packages.list == refreshing online packages list...
 error.message.packages.list.parse.failure == Failed to parse list of available packages!
 error.message.packages.list.retrieve.failure == Failed to retrieve list of available addons!
