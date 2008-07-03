@@ -21,6 +21,9 @@ September == Сентябрь
 October == Октябрь
 November == Ноябрь
 December == Декабрь
+Minutes == Минут
+Hours == Часов
+Days == Дней
 Title == Заголовок
 Date == Дата
 Time == Время

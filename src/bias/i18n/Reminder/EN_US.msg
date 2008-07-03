@@ -21,6 +21,9 @@ September == September
 October == October
 November == November
 December == December
+Minutes == Minutes
+Hours == Hours
+Days == Days
 Title == Title
 Date == Date
 Time == Time

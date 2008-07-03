@@ -106,6 +106,8 @@ public class Reminder extends ToolExtension {
     private static final ImageIcon ICON_ADD = new ImageIcon(CommonUtils.getResourceURL(Reminder.class, "add.png"));
     private static final ImageIcon ICON_DELETE = new ImageIcon(CommonUtils.getResourceURL(Reminder.class, "del.png"));
     
+    private static final String SEPARATOR = "/";
+    
     private static final String PERIODIC_DATE_DAILY = "Daily";
     private static final String PERIODIC_DATE_WEEKLY = "Weekly";
     private static final String PERIODIC_DATE_MONTHLY = "Monthly";
@@ -148,6 +150,16 @@ public class Reminder extends ToolExtension {
         map.put(10, getMessage("October"));
         map.put(11, getMessage("November"));
         map.put(12, getMessage("December"));
+        return map;
+    }
+    
+    private Map<TimeUnit, String> PERIODS = buildPeriods();
+    
+    private Map<TimeUnit, String> buildPeriods() {
+        Map<TimeUnit, String> map = new HashMap<TimeUnit, String>();
+        map.put(TimeUnit.MINUTES, getMessage("Minutes"));
+        map.put(TimeUnit.HOURS, getMessage("Hours"));
+        map.put(TimeUnit.DAYS, getMessage("Days"));
         return map;
     }
     
@@ -366,7 +378,7 @@ public class Reminder extends ToolExtension {
                 model.addColumn(getMessage("Date"));
                 model.addColumn(getMessage("Time"));
                 
-                reminderEntriesTable.getColumnModel().getColumn(2).setCellRenderer(new DayOfWeekRenderer());
+                reminderEntriesTable.getColumnModel().getColumn(2).setCellRenderer(new DateCellRenderer());
 
                 // hide ID column
                 TableColumn idCol = reminderEntriesTable.getColumnModel().getColumn(0);
@@ -583,8 +595,8 @@ public class Reminder extends ToolExtension {
                     ReminderEntry reminderEntry = new ReminderEntry();
                     reminderEntry.setId(UUID.randomUUID());
                     reminderEntry.setDate(dateChooser.isEnabled() ? 
-                                (periodicCB.isSelected() ? PERIODIC_DATE_YEARLY + "/" : Constants.EMPTY_STR) + sdf2.format(dateChooser.getDate()) : 
-                                (String) perCB.getSelectedItem() + (perSpinner.isEnabled() ? "/" + perSpinner.getValue().toString() : Constants.EMPTY_STR));
+                                (periodicCB.isSelected() ? PERIODIC_DATE_YEARLY + SEPARATOR : Constants.EMPTY_STR) + (periodicCB.isSelected() ? sdf2.format(dateChooser.getDate()) : sdf.format(dateChooser.getDate())) : 
+                                (String) perCB.getSelectedItem() + (perSpinner.isEnabled() ? SEPARATOR + perSpinner.getValue().toString() : Constants.EMPTY_STR));
                     reminderEntry.setTime(formatTime(hour.getValue().toString(), minute.getValue().toString()));
                     reminderEntry.setTitle(title);
                     reminderEntry.setDescription(Constants.EMPTY_STR);
@@ -615,29 +627,33 @@ public class Reminder extends ToolExtension {
         return toolbar;
     }
     
-    private class DayOfWeekRenderer extends DefaultTableCellRenderer {
+    private class DateCellRenderer extends DefaultTableCellRenderer {
         private static final long serialVersionUID = 1L;
-        public DayOfWeekRenderer() {
+        public DateCellRenderer() {
             super();
         }
         public void setValue(Object value) {
             if ((value != null)) {
                 String v = ((String) value);
-                if (v.contains("/")) {
-                    String[] vv = v.split("/");
+                if (v.contains(SEPARATOR)) {
+                    String[] vv = v.split(SEPARATOR);
                     String s = vv[0];
                     if (s.equals(PERIODIC_DATE_WEEKLY)) {
                         Integer day = Integer.valueOf(vv[1]);
-                        value = getMessage(PERIODIC_DATE_WEEKLY) + "/" + DAYS.get(day);
+                        value = getMessage(PERIODIC_DATE_WEEKLY) + SEPARATOR + DAYS.get(day);
                     } else if (s.equals(PERIODIC_DATE_MONTHLY)) {
-                        value = getMessage(s) + "/" + vv[1];
+                        value = getMessage(s) + SEPARATOR + vv[1];
                     } else if (s.equals(PERIODIC_DATE_YEARLY)) {
                         String[] vvv = vv[1].split("-");
                         Integer month = Integer.valueOf(vvv[0]);
-                        value = getMessage(s) + "/" + MONTHES.get(month) + "/" + vvv[1];
+                        value = getMessage(s) + SEPARATOR + MONTHES.get(month) + SEPARATOR + vvv[1];
                     }
                 } else if (v.equals(PERIODIC_DATE_DAILY)) {
                     value = getMessage(PERIODIC_DATE_DAILY);
+                } else {
+                    String[] vv = v.split("-");
+                    Integer month = Integer.valueOf(vv[1]);
+                    value = vv[0] + SEPARATOR + MONTHES.get(month) + SEPARATOR + vv[2];
                 }
             }
             super.setValue(value);
@@ -706,7 +722,7 @@ public class Reminder extends ToolExtension {
                     }
                     calendarField = Calendar.DAY_OF_YEAR;
                 } else if (reminderEntry.getDate().startsWith(PERIODIC_DATE_WEEKLY)) {
-                    Integer day = Integer.valueOf(reminderEntry.getDate().split("/")[1]);
+                    Integer day = Integer.valueOf(reminderEntry.getDate().split(SEPARATOR)[1]);
                     String[] time = reminderEntry.getTime().split(":");
                     Integer hour = Integer.valueOf(time[0]);
                     Integer minute = Integer.valueOf(time[1]);
@@ -723,7 +739,7 @@ public class Reminder extends ToolExtension {
                     }
                     calendarField = Calendar.WEEK_OF_YEAR;
                 } else if (reminderEntry.getDate().startsWith(PERIODIC_DATE_MONTHLY)) {
-                    Integer day = Integer.valueOf(reminderEntry.getDate().split("/")[1]);
+                    Integer day = Integer.valueOf(reminderEntry.getDate().split(SEPARATOR)[1]);
                     String[] time = reminderEntry.getTime().split(":");
                     Integer hour = Integer.valueOf(time[0]);
                     Integer minute = Integer.valueOf(time[1]);
@@ -740,7 +756,7 @@ public class Reminder extends ToolExtension {
                     }
                     calendarField = Calendar.MONTH;
                 } else if (reminderEntry.getDate().startsWith(PERIODIC_DATE_YEARLY)) {
-                    String dateStr = reminderEntry.getDate().split("/")[1];
+                    String dateStr = reminderEntry.getDate().split(SEPARATOR)[1];
                     Date date = sdf2.parse(dateStr);
                     String[] time = reminderEntry.getTime().split(":");
                     Integer hour = Integer.valueOf(time[0]);
@@ -858,6 +874,14 @@ public class Reminder extends ToolExtension {
         remComboBox.addItem(TimeUnit.MINUTES);
         remComboBox.addItem(TimeUnit.HOURS);
         remComboBox.addItem(TimeUnit.DAYS);
+        remComboBox.setRenderer(new DefaultListCellRenderer(){
+            private static final long serialVersionUID = 1L;
+            @Override
+            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                String dValue = PERIODS.get((TimeUnit) value);
+                return super.getListCellRendererComponent(list, dValue, index, isSelected, cellHasFocus);
+            }
+        });
         remComboBox.setSelectedItem(TimeUnit.MINUTES);
         JButton remButt = new JButton(getMessage("Remind.again.in"));
         remButt.addActionListener(new ActionListener(){
