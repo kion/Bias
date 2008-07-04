@@ -10,6 +10,9 @@ import java.awt.GridBagLayout;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -17,15 +20,19 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
+import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.border.LineBorder;
 
+import bias.Constants;
 import bias.extension.EntryExtension;
 import bias.extension.Graffiti.brush.LiveBrush;
 import bias.extension.Graffiti.brush.PaintBrush;
 import bias.extension.Graffiti.brush.PencilBrush;
+import bias.gui.FrontEnd;
+import bias.gui.ImageFileChooser;
 import bias.utils.CommonUtils;
 
 import com.sun.image.codec.jpeg.ImageFormatException;
@@ -51,6 +58,15 @@ public class Graffiti extends EntryExtension {
     private static final ImageIcon ICON_ERASER = new ImageIcon(CommonUtils.getResourceURL(Graffiti.class, "eraser.png"));
 
     private static final ImageIcon ICON_COLOR = new ImageIcon(CommonUtils.getResourceURL(Graffiti.class, "color.png"));
+    
+    private static final ImageIcon ICON_LOAD_IMAGE = new ImageIcon(CommonUtils.getResourceURL(Graffiti.class, "load_image.png"));
+
+    private static final ImageIcon ICON_SAVE_IMAGE = new ImageIcon(CommonUtils.getResourceURL(Graffiti.class, "save_image.png"));
+
+    // TODO [P2] default dimension should be customizable
+    private static final Dimension DEFAULT_DIMENSION = new Dimension(500, 500);
+
+    private static final ImageFileChooser ifc = new ImageFileChooser(false);
 
     private PaintingPanel pp;
     
@@ -80,14 +96,17 @@ public class Graffiti extends EntryExtension {
         }
         return liveBrush;
     }
-    
+
+    private JPanel panel = null;
+    private JPanel panel2 = null;
     private JToolBar jToolBar = null;
     private JButton jButton = null;
     private JButton jButton3 = null;
     private JButton jButton1 = null;
     private JButton jButton4 = null;
-
     private JButton jButton2 = null;
+    private JButton jButton5 = null;
+    private JButton jButton6 = null;
 
     /**
      * This is the default constructor
@@ -109,22 +128,34 @@ public class Graffiti extends EntryExtension {
     private void initialize() throws ImageFormatException, IOException {
         this.setLayout(new BorderLayout());  
         this.add(getJToolBar(), BorderLayout.SOUTH);  
-        JPanel panel = new JPanel(new GridBagLayout());
-        // TODO [P2] dimension should be customizable
-        Dimension d = new Dimension(500,500);
-        JPanel cp = new JPanel();
-        pp = new PaintingPanel(d, getPencilBrushInstance(), Color.BLACK);
-        cp.add(pp);
-        cp.setBorder(new LineBorder(Color.black));
-        panel.add(cp);
-        this.add(new JScrollPane(panel), BorderLayout.CENTER);  
-                
+
+        BufferedImage image = null;
+        Dimension dim = DEFAULT_DIMENSION;
         if (getData() != null && getData().length > 0) {
             ByteArrayInputStream bais = new ByteArrayInputStream(getData());
-            BufferedImage image = ImageIO.read(bais);
+            image = ImageIO.read(bais);
+            dim = new Dimension(image.getWidth(), image.getHeight());
+        }
+
+        pp = new PaintingPanel(dim, getPencilBrushInstance(), Color.BLACK);
+        if (image != null) { 
             pp.setImage(image);
         }
+        this.add(new JScrollPane(initPaintingPanelContainer()), BorderLayout.CENTER);  
         
+    }
+    
+    private JPanel initPaintingPanelContainer() {
+        if (panel == null || panel2 == null) {
+            panel = new JPanel(new GridBagLayout());
+            panel2 = new JPanel();
+            panel2.setBorder(new LineBorder(Color.black));
+        }
+        panel.removeAll();
+        panel2.removeAll();
+        panel2.add(pp);
+        panel.add(panel2);
+        return panel;
     }
 
     /* (non-Javadoc)
@@ -146,6 +177,9 @@ public class Graffiti extends EntryExtension {
         if (jToolBar == null) {
             jToolBar = new JToolBar();
             jToolBar.setFloatable(false);  
+            jToolBar.add(getJButton5());  
+            jToolBar.add(getJButton6());
+            jToolBar.addSeparator();
             jToolBar.add(getJButton3());  
             jToolBar.add(getJButton());  
             jToolBar.add(getJButton1());  
@@ -191,6 +225,70 @@ public class Graffiti extends EntryExtension {
             });
         }
         return jButton;
+    }
+
+    /**
+     * This method initializes jButton5  
+     *  
+     * @return javax.swing.JButton  
+     */
+    private JButton getJButton5() {
+        if (jButton5 == null) {
+            jButton5 = new JButton();
+            jButton5.setToolTipText("load image from file");  
+            jButton5.setIcon(ICON_LOAD_IMAGE);
+            jButton5.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    try {
+                        if (JFileChooser.APPROVE_OPTION == ifc.showOpenDialog(FrontEnd.getActiveWindow())) {
+                            BufferedImage image = ImageIO.read(new FileInputStream(ifc.getSelectedFile()));
+                            pp.init(new Dimension(image.getWidth(), image.getHeight()));
+                            pp.setImage(image);
+                            initPaintingPanelContainer();
+                        }
+                    } catch (Throwable t) {
+                        FrontEnd.displayErrorMessage("Failed to load image!", t);
+                    }
+                }
+            });
+        }
+        return jButton5;
+    }
+
+    /**
+     * This method initializes jButton6  
+     *  
+     * @return javax.swing.JButton  
+     */
+    private JButton getJButton6() {
+        if (jButton6 == null) {
+            jButton6 = new JButton();
+            jButton6.setToolTipText("save image to file");  
+            jButton6.setIcon(ICON_SAVE_IMAGE);
+            jButton6.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    try {
+                        if (JFileChooser.APPROVE_OPTION == ifc.showSaveDialog(FrontEnd.getActiveWindow())) {
+                            ImageIO.write(pp.getImage(), getFileFormat(ifc.getSelectedFile()), new FileOutputStream(ifc.getSelectedFile()));
+                        }
+                    } catch (Throwable t) {
+                        FrontEnd.displayErrorMessage("Failed to save image!", t);
+                    }
+                }
+            });
+        }
+        return jButton6;
+    }
+    
+    private String getFileFormat(File f) {
+        String format = ifc.getSelectedFile().getName();
+        int idx = format.lastIndexOf('.');
+        if (idx != -1) {
+            format = format.substring(idx+1);
+        } else {
+            format = Constants.DEFAULT_IMAGE_FORMAT;
+        }
+        return format;
     }
 
     /**

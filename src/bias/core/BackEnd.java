@@ -2166,7 +2166,7 @@ public class BackEnd {
                 }
                 icon.setDescription(id.toString());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(image, Constants.ICON_FORMAT, baos);
+                ImageIO.write(image, Constants.DEFAULT_IMAGE_FORMAT, baos);
                 byte[] iconBytes = baos.toByteArray();
                 File iconFile = new File(Constants.ICONS_DIR, id.toString() + Constants.ICON_FILE_SUFFIX);
                 FSUtils.writeFile(iconFile, iconBytes);

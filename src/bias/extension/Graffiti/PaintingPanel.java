@@ -35,10 +35,9 @@ public class PaintingPanel extends JPanel implements MouseListener, MouseMotionL
     
     public PaintingPanel(Dimension dimension, Brush brush, Color color) {
         super();
-        this.dimension = dimension;
         this.currentBrush = brush;
         this.currentColor = color;
-        init();
+        init(dimension);
     }
     
     public Brush getCurrentBrush() {
@@ -57,7 +56,8 @@ public class PaintingPanel extends JPanel implements MouseListener, MouseMotionL
         this.currentColor = currentColor;
     }
     
-    public void init() {
+    public void init(Dimension dimension) {
+        this.dimension = dimension;
         setPreferredSize(dimension);
         setMinimumSize(dimension);
         setMaximumSize(dimension);

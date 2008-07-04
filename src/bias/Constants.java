@@ -157,7 +157,7 @@ public class Constants {
     public static final String TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX = ".transfer.conf";
     public static final String EXTENSION_PACKAGE_NAME = Extension.class.getPackage().getName();
     public static final String SKIN_PACKAGE_NAME = Skin.class.getPackage().getName();
-    public static final String ICON_FORMAT = "PNG";
+    public static final String DEFAULT_IMAGE_FORMAT = "PNG";
     public static final String ICON_FILE_SUFFIX = ".png";
     public static final String CHECKSUM_CONFIG_FILE_SUFFIX = ".checksum.properties";
     public static final String EXTENSION_CONFIG_FILE_SUFFIX = ".ext.conf";
