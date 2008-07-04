@@ -4,14 +4,16 @@
 package bias.extension.Graffiti.brush;
 
 import java.awt.Color;
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 
 /**
  * @author kion
  */
-public interface Brush {
+public abstract class Brush {
     
-    void mousePaint(Graphics graphics, MouseEvent event, Color color);
+    public abstract void mousePaint(Graphics2D graphics, MouseEvent event, Color color);
+    
+    public void stopPaint() {};
     
 }

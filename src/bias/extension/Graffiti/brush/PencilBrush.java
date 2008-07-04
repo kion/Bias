@@ -1,5 +1,5 @@
 /**
- * Created on Feb 27, 2007
+ * Created on Jul 4, 2008
  */
 package bias.extension.Graffiti.brush;
 
@@ -11,7 +11,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author kion
  */
-public class PaintBrush extends Brush {
+public class PencilBrush extends Brush {
     
     private int x = -1;
     private int y = -1;
@@ -24,7 +24,7 @@ public class PaintBrush extends Brush {
             int x = event.getX();
             int y = event.getY();
             if (this.x != -1 && this.y != -1) {
-                graphics.setStroke(new BasicStroke(10));
+                graphics.setStroke(new BasicStroke(1));
                 graphics.setColor(color);
                 graphics.drawLine(this.x, this.y, x, y);
             }

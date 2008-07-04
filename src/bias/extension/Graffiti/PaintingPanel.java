@@ -6,6 +6,7 @@ package bias.extension.Graffiti;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -26,7 +27,7 @@ public class PaintingPanel extends JPanel implements MouseListener, MouseMotionL
 
     private BufferedImage backbuffer;
 
-    private Graphics backg;
+    private Graphics2D backg;
     
     private Color currentColor;
     
@@ -61,7 +62,7 @@ public class PaintingPanel extends JPanel implements MouseListener, MouseMotionL
         setMinimumSize(dimension);
         setMaximumSize(dimension);
         backbuffer = new BufferedImage(dimension.width, dimension.height, BufferedImage.TYPE_INT_RGB);
-        backg = backbuffer.getGraphics();
+        backg = (Graphics2D) backbuffer.getGraphics();
         clear();
         addMouseListener(this);
         addMouseMotionListener(this);
@@ -85,6 +86,9 @@ public class PaintingPanel extends JPanel implements MouseListener, MouseMotionL
     }
 
     public void mouseReleased(MouseEvent arg0) {
+        if (currentBrush != null && currentColor != null) {
+            currentBrush.stopPaint();
+        }
     }
 
     public void mouseMoved(MouseEvent e) {
@@ -119,7 +123,7 @@ public class PaintingPanel extends JPanel implements MouseListener, MouseMotionL
     
     public void setImage(BufferedImage image) {
         backbuffer = image;
-        backg = backbuffer.getGraphics();
+        backg = (Graphics2D) backbuffer.getGraphics();
     }
 
 }

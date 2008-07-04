@@ -25,6 +25,7 @@ import javax.swing.border.LineBorder;
 import bias.extension.EntryExtension;
 import bias.extension.Graffiti.brush.LiveBrush;
 import bias.extension.Graffiti.brush.PaintBrush;
+import bias.extension.Graffiti.brush.PencilBrush;
 import bias.utils.CommonUtils;
 
 import com.sun.image.codec.jpeg.ImageFormatException;
@@ -41,6 +42,8 @@ public class Graffiti extends EntryExtension {
     
     private static final String IMG_FORMAT = "PNG";
     
+    private static final ImageIcon ICON_PENCIL_BRUSH = new ImageIcon(CommonUtils.getResourceURL(Graffiti.class, "pencil_brush.png"));
+
     private static final ImageIcon ICON_PAINT_BRUSH = new ImageIcon(CommonUtils.getResourceURL(Graffiti.class, "paint_brush.png"));
 
     private static final ImageIcon ICON_LIVE_BRUSH = new ImageIcon(CommonUtils.getResourceURL(Graffiti.class, "live_brush.png"));
@@ -51,11 +54,20 @@ public class Graffiti extends EntryExtension {
 
     private PaintingPanel pp;
     
+    private PencilBrush pencilBrush;
+    
     private PaintBrush paintBrush;
     
     private LiveBrush liveBrush;
     
-    public PaintBrush getSimpleBrushInstance() {
+    public PencilBrush getPencilBrushInstance() {
+        if (pencilBrush == null) {
+            pencilBrush = new PencilBrush();
+        }
+        return pencilBrush;
+    }
+    
+    public PaintBrush getPaintBrushInstance() {
         if (paintBrush == null) {
             paintBrush = new PaintBrush();
         }
@@ -71,6 +83,7 @@ public class Graffiti extends EntryExtension {
     
     private JToolBar jToolBar = null;
     private JButton jButton = null;
+    private JButton jButton3 = null;
     private JButton jButton1 = null;
     private JButton jButton4 = null;
 
@@ -100,7 +113,7 @@ public class Graffiti extends EntryExtension {
         // TODO [P2] dimension should be customizable
         Dimension d = new Dimension(500,500);
         JPanel cp = new JPanel();
-        pp = new PaintingPanel(d, getSimpleBrushInstance(), Color.BLACK);
+        pp = new PaintingPanel(d, getPencilBrushInstance(), Color.BLACK);
         cp.add(pp);
         cp.setBorder(new LineBorder(Color.black));
         panel.add(cp);
@@ -133,12 +146,32 @@ public class Graffiti extends EntryExtension {
         if (jToolBar == null) {
             jToolBar = new JToolBar();
             jToolBar.setFloatable(false);  
+            jToolBar.add(getJButton3());  
             jToolBar.add(getJButton());  
             jToolBar.add(getJButton1());  
             jToolBar.add(getJButton4());  
             jToolBar.add(getJButton2());  
         }
         return jToolBar;
+    }
+
+    /**
+     * This method initializes jButton3  
+     *  
+     * @return javax.swing.JButton  
+     */
+    private JButton getJButton3() {
+        if (jButton3 == null) {
+            jButton3 = new JButton();
+            jButton3.setToolTipText("pencil brush");  
+            jButton3.setIcon(ICON_PENCIL_BRUSH);
+            jButton3.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    pp.setCurrentBrush(getPencilBrushInstance());
+                }
+            });
+        }
+        return jButton3;
     }
 
     /**
@@ -153,7 +186,7 @@ public class Graffiti extends EntryExtension {
             jButton.setIcon(ICON_PAINT_BRUSH);
             jButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    pp.setCurrentBrush(getSimpleBrushInstance());
+                    pp.setCurrentBrush(getPaintBrushInstance());
                 }
             });
         }
