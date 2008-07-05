@@ -5608,14 +5608,14 @@ public class FrontEnd extends JFrame {
                                 URL addOnURL = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
                                 try {
                                     // try to load addon-info file for preferred locale first...
-                                    loadAndDisplayPackageDetails(BackEnd.getInstance().getRepositoryBaseURL(), addOnURL, pack);
+                                    loadAndDisplayPackageDetails(new URL(BackEnd.getInstance().getRepositoryBaseURL() + pack.getName() + Constants.PATH_SEPARATOR), addOnURL, pack);
                                 } catch (Throwable t) {
                                     // ... if failed, try to load it for default locale
                                     fileName = pack.getName() + Constants.PATH_SEPARATOR + 
                                                     Constants.DEFAULT_LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX;
                                     addOnURL = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
                                     try {
-                                        loadAndDisplayPackageDetails(BackEnd.getInstance().getRepositoryBaseURL(), addOnURL, pack);
+                                        loadAndDisplayPackageDetails(new URL(BackEnd.getInstance().getRepositoryBaseURL() + pack.getName() + Constants.PATH_SEPARATOR), addOnURL, pack);
                                     } catch (Throwable t2) {
                                         displayErrorMessage(getMessage("error.message.pack.details.page.load.failure"), t2);
                                     }
