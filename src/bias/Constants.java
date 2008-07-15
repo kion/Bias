@@ -57,6 +57,7 @@ public class Constants {
     public static final String USERNAME = System.getProperty("user.name");
     
     public static final String MAIN_REPOSITORY_KEY = "Main Repository";
+    // TODO [P0] define correct main repository URL
     public static final String MAIN_REPOSITORY_VALUE = "http://bias.sourceforge.net/repository/"; // http://bias.svn.sourceforge.net/viewvc/*checkout*/bias/trunk/res/META-INF/ADDON-INFO/
     
     public static final String HTML_PREFIX = "<html>";
