@@ -1,66 +1,66 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <bias:repository xmlns:bias="http://bias.sourceforge.net">
 	<pack type="AppLauncher" name="AppLauncher" version="0.9.7" author="R. Kasianenko" description="Bias Application Launcher" file-size="39321" url="file:///home/kion/bias-build/AppLauncher_0.9.7.jar" />
-	<pack type="AppCore" name="AppCore" version="0.9.7" author="R. Kasianenko" description="Bias Application Core" file-size="403161" url="file:///home/kion/bias-build/AppCore_0.9.7.jar" />
-	<pack type="Extension" name="FTPTransfer" version="0.1.1" author="R. Kasianenko" description="Import/Export through FTP" file-size="4971" url="file:///home/kion/bias-build/FTPTransfer_0.1.1.jar" />
-	<pack type="Extension" name="SMBTransfer" version="0.1.1" author="R. Kasianenko" description="Import/Export through SMB (CIFS)" file-size="5000" url="file:///home/kion/bias-build/SMBTransfer_0.1.1.jar">
+	<pack type="AppCore" name="AppCore" version="0.9.7" author="R. Kasianenko" description="Bias Application Core" file-size="410713" url="file:///home/kion/bias-build/AppCore_0.9.7.jar" />
+	<pack type="Extension" name="FTPTransfer" version="0.1.1" author="R. Kasianenko" description="Import/Export through FTP" file-size="5362" url="file:///home/kion/bias-build/FTPTransfer_0.1.1.jar" />
+	<pack type="Extension" name="SMBTransfer" version="0.1.1" author="R. Kasianenko" description="Import/Export through SMB (CIFS)" file-size="5487" url="file:///home/kion/bias-build/SMBTransfer_0.1.1.jar">
 		<dependency type="Library" name="JCIFS" version="1.2.18"/>
 	</pack>
-	<pack type="Extension" name="HTMLPage" version="0.6.1" author="R. Kasianenko" description="WYSIWYG HTML page editor" file-size="58746" url="file:///home/kion/bias-build/HTMLPage_0.6.1.jar" />
-	<pack type="Extension" name="ToDoList" version="0.7.5" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="77519" url="file:///home/kion/bias-build/ToDoList_0.7.5.jar" />
-	<pack type="Extension" name="Graffiti" version="0.2.3" author="R. Kasianenko" description="Basic paint editor" file-size="14039" url="file:///home/kion/bias-build/Graffiti_0.2.3.jar" />
-	<pack type="Extension" name="PlainText" version="0.9.1" author="R. Kasianenko" description="Simple plain text editor" file-size="16659" url="file:///home/kion/bias-build/PlainText_0.9.1.jar" />
-	<pack type="Extension" name="FilePack" version="0.3.3" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="18830" url="file:///home/kion/bias-build/FilePack_0.3.3.jar" />
-	<pack type="Extension" name="MainEntry" version="0.3.5" author="R. Kasianenko" description="Keep certain entry as main" file-size="4402" url="file:///home/kion/bias-build/MainEntry_0.3.5.jar" />
-	<pack type="Extension" name="Synchronizer" version="0.2.5" author="R. Kasianenko" description="Schedule/Event-driven data synchronizer" file-size="24626" url="file:///home/kion/bias-build/Synchronizer_0.2.5.jar" />
-	<pack type="Extension" name="DashBoard" version="0.2.9" author="R. Kasianenko" description="Simple dashboard for chaotic info-snippets placement" file-size="88411" url="file:///home/kion/bias-build/DashBoard_0.2.9.jar" />
-	<pack type="Extension" name="Reminder" version="0.2.1" author="R. Kasianenko" description="Simple and easy to use reminder manager" file-size="91293" url="file:///home/kion/bias-build/Reminder_0.2.1.jar">
+	<pack type="Extension" name="HTMLPage" version="0.6.1" author="R. Kasianenko" description="WYSIWYG HTML page editor" file-size="196730" url="file:///home/kion/bias-build/HTMLPage_0.6.1.jar" />
+	<pack type="Extension" name="ToDoList" version="0.7.5" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="233698" url="file:///home/kion/bias-build/ToDoList_0.7.5.jar" />
+	<pack type="Extension" name="Graffiti" version="0.2.3" author="R. Kasianenko" description="Basic paint editor" file-size="326734" url="file:///home/kion/bias-build/Graffiti_0.2.3.jar" />
+	<pack type="Extension" name="PlainText" version="0.9.1" author="R. Kasianenko" description="Simple plain text editor" file-size="181176" url="file:///home/kion/bias-build/PlainText_0.9.1.jar" />
+	<pack type="Extension" name="FilePack" version="0.3.3" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="92091" url="file:///home/kion/bias-build/FilePack_0.3.3.jar" />
+	<pack type="Extension" name="MainEntry" version="0.3.5" author="R. Kasianenko" description="Keep certain entry as main" file-size="5116" url="file:///home/kion/bias-build/MainEntry_0.3.5.jar" />
+	<pack type="Extension" name="Synchronizer" version="0.2.5" author="R. Kasianenko" description="Schedule/Event-driven data synchronizer" file-size="61657" url="file:///home/kion/bias-build/Synchronizer_0.2.5.jar" />
+	<pack type="Extension" name="DashBoard" version="0.2.9" author="R. Kasianenko" description="Simple dashboard for chaotic info-snippets placement" file-size="167557" url="file:///home/kion/bias-build/DashBoard_0.2.9.jar" />
+	<pack type="Extension" name="Reminder" version="0.2.1" author="R. Kasianenko" description="Simple and easy to use reminder manager" file-size="285977" url="file:///home/kion/bias-build/Reminder_0.2.1.jar">
 		<dependency type="Library" name="JCalendar" version="1.3.2"/>
 	</pack>
-	<pack type="Extension" name="FinancialFlows" version="0.2.7" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="34482" url="file:///home/kion/bias-build/FinancialFlows_0.2.7.jar">
+	<pack type="Extension" name="FinancialFlows" version="0.2.7" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="35416" url="file:///home/kion/bias-build/FinancialFlows_0.2.7.jar">
 		<dependency type="Library" name="JFreeChart" version="1.0.9"/>
 		<dependency type="Library" name="JCalendar" version="1.3.2"/>
 	</pack>
-	<pack type="Extension" name="SimpleSearch" version="0.7.7" author="R. Kasianenko" description="Search through entries" file-size="20937" url="file:///home/kion/bias-build/SimpleSearch_0.7.7.jar" />
-	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="12289" url="file:///home/kion/bias-build/SimpleStats_0.3.9.jar" />
-	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Look-&amp;-Feel" file-size="4934" url="file:///home/kion/bias-build/JGLooksSkin_0.3.1.jar">
+	<pack type="Extension" name="SimpleSearch" version="0.7.7" author="R. Kasianenko" description="Search through entries" file-size="161561" url="file:///home/kion/bias-build/SimpleSearch_0.7.7.jar" />
+	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="152492" url="file:///home/kion/bias-build/SimpleStats_0.3.9.jar" />
+	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Look-&amp;-Feel" file-size="102604" url="file:///home/kion/bias-build/JGLooksSkin_0.3.1.jar">
 		<dependency type="Library" name="JGLooks"/>
 	</pack>
-	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNodeSkin Look-&amp;-Feel" file-size="1926" url="file:///home/kion/bias-build/InfoNodeSkin_0.1.1.jar">
+	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNodeSkin Look-&amp;-Feel" file-size="100953" url="file:///home/kion/bias-build/InfoNodeSkin_0.1.1.jar">
 		<dependency type="Library" name="InfoNodeLF"/>
 	</pack>
-	<pack type="Skin" name="LipstikSkin" version="0.1.1" author="R. Kasianenko" description="LipstikSkin Look-&amp;-Feel" file-size="1867" url="file:///home/kion/bias-build/LipstikSkin_0.1.1.jar">
+	<pack type="Skin" name="LipstikSkin" version="0.1.1" author="R. Kasianenko" description="LipstikSkin Look-&amp;-Feel" file-size="91663" url="file:///home/kion/bias-build/LipstikSkin_0.1.1.jar">
 		<dependency type="Library" name="LipstikLF"/>
 	</pack>
-	<pack type="Skin" name="LiquidSkin" version="0.1.1" author="R. Kasianenko" description="LiquidSkin Look-&amp;-Feel" file-size="1934" url="file:///home/kion/bias-build/LiquidSkin_0.1.1.jar">
+	<pack type="Skin" name="LiquidSkin" version="0.1.1" author="R. Kasianenko" description="LiquidSkin Look-&amp;-Feel" file-size="110760" url="file:///home/kion/bias-build/LiquidSkin_0.1.1.jar">
 		<dependency type="Library" name="LiquidLnF"/>
 	</pack>
-	<pack type="Skin" name="PgsSkin" version="0.1.1" author="R. Kasianenko" description="PgsSkin Look-&amp;-Feel" file-size="1833" url="file:///home/kion/bias-build/PgsSkin_0.1.1.jar">
+	<pack type="Skin" name="PgsSkin" version="0.1.1" author="R. Kasianenko" description="PgsSkin Look-&amp;-Feel" file-size="105568" url="file:///home/kion/bias-build/PgsSkin_0.1.1.jar">
 		<dependency type="Library" name="PgsLAF"/>
 	</pack>
-	<pack type="Skin" name="SquarenessSkin" version="0.1.1" author="R. Kasianenko" description="SquarenessSkin Look-&amp;-Feel" file-size="1932" url="file:///home/kion/bias-build/SquarenessSkin_0.1.1.jar">
+	<pack type="Skin" name="SquarenessSkin" version="0.1.1" author="R. Kasianenko" description="SquarenessSkin Look-&amp;-Feel" file-size="95814" url="file:///home/kion/bias-build/SquarenessSkin_0.1.1.jar">
 		<dependency type="Library" name="Squareness"/>
 	</pack>
-	<pack type="Skin" name="SubstanceSkin" version="0.1.2" author="R. Kasianenko" description="SubstanceSkin Look-&amp;-Feel" file-size="2038" url="file:///home/kion/bias-build/SubstanceSkin_0.1.2.jar">
+	<pack type="Skin" name="SubstanceSkin" version="0.1.2" author="R. Kasianenko" description="SubstanceSkin Look-&amp;-Feel" file-size="112562" url="file:///home/kion/bias-build/SubstanceSkin_0.1.2.jar">
 		<dependency type="Library" name="Substance"/>
 	</pack>
-	<pack type="Skin" name="TinySkin" version="0.1.1" author="R. Kasianenko" description="TinySkin Look-&amp;-Feel" file-size="1865" url="file:///home/kion/bias-build/TinySkin_0.1.1.jar">
+	<pack type="Skin" name="TinySkin" version="0.1.1" author="R. Kasianenko" description="TinySkin Look-&amp;-Feel" file-size="97150" url="file:///home/kion/bias-build/TinySkin_0.1.1.jar">
 		<dependency type="Library" name="TinyLAF"/>
 	</pack>
-	<pack type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="126473" url="file:///home/kion/bias-libs/Bitcons_1.0.jar" />
-	<pack type="IconSet" name="MiniIcons" version="2.0" author="Timothy Groves" description="MiniIcons iconset (Grayscale)" file-size="27211" url="file:///home/kion/bias-libs/MiniIcons_2.0.jar" />
-	<pack type="IconSet" name="TwoToneGray" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Gray)" file-size="17491" url="file:///home/kion/bias-libs/TwoToneGray_1.0.jar" />
-	<pack type="IconSet" name="TwoToneBiege" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Biege)" file-size="17491" url="file:///home/kion/bias-libs/TwoToneBiege_1.0.jar" />
-	<pack type="IconSet" name="TwoToneRed" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Red)" file-size="17491" url="file:///home/kion/bias-libs/TwoToneRed_1.0.jar" />
-	<pack type="IconSet" name="TwoToneBlue" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Blue)" file-size="17455" url="file:///home/kion/bias-libs/TwoToneBlue_1.0.jar" />
-	<pack type="IconSet" name="TwoToneGreen" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Green)" file-size="17465" url="file:///home/kion/bias-libs/TwoToneGreen_1.0.jar" />
+	<pack type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="147137" url="file:///home/kion/bias-libs/Bitcons_1.0.jar" />
+	<pack type="IconSet" name="MiniIcons" version="2.0" author="Timothy Groves" description="MiniIcons iconset (Grayscale)" file-size="59595" url="file:///home/kion/bias-libs/MiniIcons_2.0.jar" />
+	<pack type="IconSet" name="TwoToneGray" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Gray)" file-size="26332" url="file:///home/kion/bias-libs/TwoToneGray_1.0.jar" />
+	<pack type="IconSet" name="TwoToneBiege" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Biege)" file-size="25463" url="file:///home/kion/bias-libs/TwoToneBiege_1.0.jar" />
+	<pack type="IconSet" name="TwoToneRed" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Red)" file-size="25445" url="file:///home/kion/bias-libs/TwoToneRed_1.0.jar" />
+	<pack type="IconSet" name="TwoToneBlue" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Blue)" file-size="25633" url="file:///home/kion/bias-libs/TwoToneBlue_1.0.jar" />
+	<pack type="IconSet" name="TwoToneGreen" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Green)" file-size="25640" url="file:///home/kion/bias-libs/TwoToneGreen_1.0.jar" />
 	<pack type="Library" name="JFreeChart" version="1.0.9" author="Object Refinery Limited and Contributors" description="JFreeChart is a free 100% Java chart library that makes it easy for developers to display professional quality charts in their applications" file-size="1292512" url="file:///home/kion/bias-libs/JFreeChart_1.0.9.jar">
 		<dependency type="Library" name="JCommon" version="1.0.12"/>
 	</pack>
 	<pack type="Library" name="JCommon" version="1.0.12" author="Object Refinery Limited and Contributors" description="The library contains the common classes, which provide some global utility functionality for both GUI and non-GUI applications" file-size="308723" url="file:///home/kion/bias-libs/JCommon_1.0.12.jar" />
 	<pack type="Library" name="JCalendar" version="1.3.2" author="Kai Toedter" description="JCalendar is a Java date chooser bean for graphically picking a date" file-size="127023" url="file:///home/kion/bias-libs/JCalendar_1.3.2.jar" />
 	<pack type="Library" name="JCIFS" version="1.2.18" author="The JCIFS Project" description="Open Source client library that implements the CIFS/SMB networking protocol in 100% Java" file-size="363031" url="file:///home/kion/bias-libs/JCIFS_1.2.18.jar" />
-	<pack type="Library" name="JGLooks" version="2.1.4" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="407744" url="file:///home/kion/bias-libs/JGLooks_2.1.4.jar" />
+	<pack type="Library" name="JGLooks" version="2.1.4" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="407753" url="file:///home/kion/bias-libs/JGLooks_2.1.4.jar" />
 	<pack type="Library" name="PgsLAF" version="1.0.1" author="pago" description="Look-&amp;-Feel for Java/Swing applications" file-size="196309" url="file:///home/kion/bias-libs/PgsLAF_1.0.1.jar" />
 	<pack type="Library" name="Substance" version="4.3" author="Kirill Grouchnikov and contributors" description="Substance Look-&amp;-Feel Provider Library" file-size="1832699" url="file:///home/kion/bias-libs/Substance_4.3.jar" />
 	<pack type="Library" name="LipstikLF" version="1.0" author="Michal Buczko" description="Look-&amp;-Feel for Java/Swing applications" file-size="233699" url="file:///home/kion/bias-libs/LipstikLF_1.0.jar" />
