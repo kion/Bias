@@ -6061,7 +6061,7 @@ public class FrontEnd extends JFrame {
     
     private boolean updatesAvailable() {
         for (int i = 0; i < getOnlineModel().getRowCount(); i++) {
-            if (getOnlineModel().getValueAt(i, 7).equals(Constants.ADDON_STATUS.Update)) {
+            if (Constants.ADDON_STATUS.Update.equals(getOnlineModel().getValueAt(i, 7))) {
                 return true;
             }
         }
