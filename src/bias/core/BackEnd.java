@@ -216,6 +216,18 @@ public class BackEnd {
         }
     };
     
+    private static final FilenameFilter FILE_FILTER_EXTENSION_CONFIG = new FilenameFilter(){
+        public boolean accept(File file, String name) {
+            return name.endsWith(Constants.EXTENSION_CONFIG_FILE_SUFFIX);
+        }
+    };
+    
+    private static final FilenameFilter FILE_FILTER_SKIN_CONFIG = new FilenameFilter(){
+        public boolean accept(File file, String name) {
+            return name.endsWith(Constants.SKIN_CONFIG_FILE_SUFFIX);
+        }
+    };
+    
     private static final FilenameFilter FILE_FILTER_TRANSFER_OPTIONS_CONFIG = new FilenameFilter(){
         public boolean accept(File file, String name) {
             return name.endsWith(Constants.TRANSFER_OPTIONS_CONFIG_FILE_SUFFIX);
@@ -381,6 +393,12 @@ public class BackEnd {
         try {
             for (Entry<ToolExtension, String> entry : ExtensionFactory.getAnnotatedToolExtensions().entrySet()) {
                 ToolExtension extension = entry.getKey();
+                if (!extension.skipConfigExport()) {
+                    extensions.add(extension.getClass().getName());
+                }
+            }
+            for (Entry<String, TransferExtension> entry : ExtensionFactory.getAnnotatedTransferExtensions().entrySet()) {
+                TransferExtension extension = entry.getValue();
                 if (!extension.skipConfigExport()) {
                     extensions.add(extension.getClass().getName());
                 }
@@ -566,15 +584,25 @@ public class BackEnd {
                 // reload import/export configs
                 loadTransferConfigurations();
             }
-            // add-on configs
+            // extension configs
             if (config.isImportAddOnConfigs()) {
-                for (File configFile : configDir.listFiles(FILE_FILTER_ADDON_CONFIG)) {
+                for (File configFile : configDir.listFiles(FILE_FILTER_EXTENSION_CONFIG)) {
                     File localConfigFile = new File(Constants.CONFIG_DIR, configFile.getName());
                     if (!localConfigFile.exists() || config.isOverwriteAddOnConfigs()) {
                         encryptedData = FSUtils.readFile(configFile);
                         decryptedData = useCipher(cipher, encryptedData);
                         encryptedData = encrypt(decryptedData);
                         FSUtils.writeFile(localConfigFile, encryptedData);
+                    }
+                }
+            }
+            // skin configs
+            if (config.isImportAddOnConfigs()) {
+                for (File configFile : configDir.listFiles(FILE_FILTER_SKIN_CONFIG)) {
+                    File localConfigFile = new File(Constants.CONFIG_DIR, configFile.getName());
+                    if (!localConfigFile.exists() || config.isOverwriteAddOnConfigs()) {
+                        data = FSUtils.readFile(configFile);
+                        FSUtils.writeFile(localConfigFile, data);
                     }
                 }
             }
@@ -903,15 +931,25 @@ public class BackEnd {
             File appCoreFile = new File(exportDir, Constants.APP_CORE_FILE_NAME);
             FSUtils.duplicateFile(localAppCoreFile, appCoreFile);
         }
-        // addon configs
+        // extension configs
         if (config.isExportAddOnConfigs()) {
-            for (File addOnConfig : Constants.CONFIG_DIR.listFiles(FILE_FILTER_ADDON_CONFIG)) {
+            for (File addOnConfig : Constants.CONFIG_DIR.listFiles(FILE_FILTER_EXTENSION_CONFIG)) {
                 String addOnName = addOnConfig.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                 addOnName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                                + addOnName  + Constants.PACKAGE_PATH_SEPARATOR + addOnName ;
+                                + addOnName  + Constants.PACKAGE_PATH_SEPARATOR + addOnName;
                 if (getConfigExportExtensionsList().contains(addOnName)) {
                     reencryptFile(addOnConfig, configDir, cipher);
                 }
+            }
+        }
+        // skin configs
+        if (config.isExportAddOnConfigs()) {
+            for (File addOnConfig : Constants.CONFIG_DIR.listFiles(FILE_FILTER_ADDON_INFO)) {
+                String addOnName = addOnConfig.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
+                addOnName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
+                                + addOnName  + Constants.PACKAGE_PATH_SEPARATOR + addOnName;
+                File addOnConfigFile = new File(configDir, addOnConfig.getName());
+                FSUtils.duplicateFile(addOnConfig, addOnConfigFile);
             }
         }
         // import/export configs
@@ -1417,7 +1455,7 @@ public class BackEnd {
                 settings = decrypt(FSUtils.readFile(dataEntryConfigFile));
             }
             if (settings == null) {
-                settings = getAddOnSettings(dataEntry.getType(), PackType.EXTENSION);
+                settings = loadAddOnSettings(dataEntry.getType(), PackType.EXTENSION);
             }
             dataEntry.setSettings(settings);
         }
@@ -1425,7 +1463,7 @@ public class BackEnd {
 
     public void storeDataEntrySettings(DataEntry dataEntry) throws Exception {
         if (dataEntry != null && dataEntry.getSettings() != null) {
-            byte[] defSettings = getAddOnSettings(dataEntry.getType(), PackType.EXTENSION);
+            byte[] defSettings = loadAddOnSettings(dataEntry.getType(), PackType.EXTENSION);
             File deConfigFile = new File(Constants.CONFIG_DIR, dataEntry.getId().toString() + Constants.DATA_ENTRY_CONFIG_FILE_SUFFIX);
             if (!Arrays.equals(defSettings, dataEntry.getSettings())) {
                 FSUtils.writeFile(deConfigFile, encrypt(dataEntry.getSettings()));
@@ -1684,7 +1722,7 @@ public class BackEnd {
         return addOns;
     }
 
-    public byte[] getAddOnSettings(String addOnName, PackType addOnType) throws Exception {
+    public byte[] loadAddOnSettings(String addOnName, PackType addOnType) throws Exception {
         byte[] settings = null;
         if (!Validator.isNullOrBlank(addOnName)) {
             addOnName = addOnName.replaceAll(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
@@ -1692,7 +1730,10 @@ public class BackEnd {
                     Constants.CONFIG_DIR, 
                     addOnName + (addOnType == PackType.EXTENSION ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.SKIN_CONFIG_FILE_SUFFIX));
             if (addOnConfigFile.exists()) {
-                settings = decrypt(FSUtils.readFile(addOnConfigFile));
+                settings = FSUtils.readFile(addOnConfigFile);
+                if (PackType.SKIN != addOnType) {
+                    settings = decrypt(settings);
+                }
             }
         }
         return settings;
@@ -1704,7 +1745,10 @@ public class BackEnd {
             File addOnConfigFile = new File(
                     Constants.CONFIG_DIR, 
                     addOnName + (addOnType == PackType.EXTENSION ? Constants.EXTENSION_CONFIG_FILE_SUFFIX : Constants.SKIN_CONFIG_FILE_SUFFIX));
-            FSUtils.writeFile(addOnConfigFile, encrypt(settings));
+            if (PackType.SKIN != addOnType) {
+                settings = encrypt(settings);
+            }
+            FSUtils.writeFile(addOnConfigFile, settings);
         }
     }
     
@@ -2219,7 +2263,7 @@ public class BackEnd {
     
     private static void reencryptSettings() throws Exception {
         reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_DATA_ENTRY_CONFIG));
-        reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_ADDON_CONFIG));
+        reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_EXTENSION_CONFIG));
         reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_IMPORT_EXPORT_CONFIG));
         reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_TRANSFER_OPTIONS_CONFIG));
         reencryptFiles(Constants.CONFIG_DIR.listFiles(FILE_FILTER_CHECKSUM_CONFIG));

@@ -55,18 +55,18 @@ public class ExtensionFactory {
     }
     
     public static Extension newExtension(Class<? extends Extension> clazz) throws Throwable {
-        byte[] defSettings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), PackType.EXTENSION);
+        byte[] defSettings = BackEnd.getInstance().loadAddOnSettings(clazz.getName(), PackType.EXTENSION);
         Extension extension = newExtension(clazz, null, new byte[]{}, defSettings);
         return extension;
     }
     
     private static ToolExtension newToolExtension(Class<? extends Extension> clazz, UUID id, byte[] data) throws Throwable {
-        byte[] settings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), PackType.EXTENSION);
+        byte[] settings = BackEnd.getInstance().loadAddOnSettings(clazz.getName(), PackType.EXTENSION);
         return (ToolExtension) newExtension(clazz, id, data, settings);
     }
     
     public static TransferExtension newTransferExtension(Class<? extends Extension> clazz) throws Throwable {
-        byte[] settings = BackEnd.getInstance().getAddOnSettings(clazz.getName(), PackType.EXTENSION);
+        byte[] settings = BackEnd.getInstance().loadAddOnSettings(clazz.getName(), PackType.EXTENSION);
         return (TransferExtension) newExtension(clazz, null, null, settings);
     }
     

@@ -970,7 +970,7 @@ public class FrontEnd extends JFrame {
                 String skinFullClassName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
                 Class<Skin> skinClass = (Class<Skin>) Class.forName(skinFullClassName);
                 Skin skinInstance = skinClass.newInstance();
-                byte[] skinSettings = BackEnd.getInstance().getAddOnSettings(skinFullClassName, PackType.SKIN);
+                byte[] skinSettings = BackEnd.getInstance().loadAddOnSettings(skinFullClassName, PackType.SKIN);
                 skinInstance.activate(skinSettings);
                 // use control icons defined by Skin if available
                 if (skinInstance.getUIIcons() != null) {
@@ -1035,7 +1035,7 @@ public class FrontEnd extends JFrame {
         if (skin != null) {
             Class<Skin> skinClass = (Class<Skin>) Class.forName(skin);
             Skin skinInstance = skinClass.newInstance();
-            byte[] skinSettings = BackEnd.getInstance().getAddOnSettings(skin, PackType.SKIN);
+            byte[] skinSettings = BackEnd.getInstance().loadAddOnSettings(skin, PackType.SKIN);
             byte[] settings = skinInstance.configure(skinSettings);
             // store if differs from stored version
             if (!PropertiesUtils.deserializeProperties(settings).equals(PropertiesUtils.deserializeProperties(skinSettings))) {
@@ -1059,7 +1059,7 @@ public class FrontEnd extends JFrame {
             try {
                 Class<? extends Extension> extensionClass = (Class<? extends Extension>) Class.forName(extension);
                 Extension extensionInstance = null;
-                byte[] extSettings = BackEnd.getInstance().getAddOnSettings(extension, PackType.EXTENSION);
+                byte[] extSettings = BackEnd.getInstance().loadAddOnSettings(extension, PackType.EXTENSION);
                 byte[] settings = null;
                 if (ToolExtension.class.isAssignableFrom(extensionClass)) {
                     extensionInstance = tools.get(extensionClass);
@@ -1200,7 +1200,7 @@ public class FrontEnd extends JFrame {
                 try {
                     String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + tool.getClass().getSimpleName() 
                                             + Constants.PACKAGE_PATH_SEPARATOR + tool.getClass().getSimpleName();
-                    tool.setSettings(BackEnd.getInstance().getAddOnSettings(fullExtName, PackType.EXTENSION));
+                    tool.setSettings(BackEnd.getInstance().loadAddOnSettings(fullExtName, PackType.EXTENSION));
                     tool.setData(BackEnd.getInstance().getToolData(fullExtName));
                     instance.representTool(tool);
                     tools.put(tool.getClass(), tool);
@@ -1235,7 +1235,7 @@ public class FrontEnd extends JFrame {
                 try {
                     String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + transferrer.getClass().getSimpleName() 
                                             + Constants.PACKAGE_PATH_SEPARATOR + transferrer.getClass().getSimpleName();
-                    transferrer.setSettings(BackEnd.getInstance().getAddOnSettings(fullExtName, PackType.EXTENSION));
+                    transferrer.setSettings(BackEnd.getInstance().loadAddOnSettings(fullExtName, PackType.EXTENSION));
                     transferrers.put(transferrer.getClass(), transferrer);
                 } catch (Throwable t) {
                     displayErrorMessage(
@@ -3156,7 +3156,7 @@ public class FrontEnd extends JFrame {
                         String typeDescription = (String) entryTypeComboBox.getSelectedItem();
                         lastAddedEntryType = typeDescription;
                         Class<? extends EntryExtension> type = extensions.get(typeDescription);
-                        byte[] defSettings = BackEnd.getInstance().getAddOnSettings(type.getName(), PackType.EXTENSION);
+                        byte[] defSettings = BackEnd.getInstance().loadAddOnSettings(type.getName(), PackType.EXTENSION);
                         if (defSettings == null) {
                             // extension's first time usage
                             configureExtension(type.getName(), true);
