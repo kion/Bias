@@ -47,13 +47,13 @@
 	<pack type="Skin" name="TinySkin" version="0.1.1" author="R. Kasianenko" description="TinySkin Look-&amp;-Feel" file-size="97150" url="file:///home/kion/bias-release/skin/TinySkin.jar">
 		<dependency type="Library" name="TinyLAF"/>
 	</pack>
-	<pack type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="147137" url="file:///home/kion/bias-libs/Bitcons.jar" />
-	<pack type="IconSet" name="MiniIcons" version="2.0" author="Timothy Groves" description="MiniIcons iconset (Grayscale)" file-size="59595" url="file:///home/kion/bias-libs/MiniIcons.jar" />
-	<pack type="IconSet" name="TwoToneGray" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Gray)" file-size="26332" url="file:///home/kion/bias-libs/TwoToneGray.jar" />
-	<pack type="IconSet" name="TwoToneBiege" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Biege)" file-size="25463" url="file:///home/kion/bias-libs/TwoToneBiege.jar" />
-	<pack type="IconSet" name="TwoToneRed" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Red)" file-size="25445" url="file:///home/kion/bias-libs/TwoToneRed.jar" />
-	<pack type="IconSet" name="TwoToneBlue" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Blue)" file-size="25633" url="file:///home/kion/bias-libs/TwoToneBlue.jar" />
-	<pack type="IconSet" name="TwoToneGreen" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Green)" file-size="25640" url="file:///home/kion/bias-libs/TwoToneGreen.jar" />
+	<pack type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="147137" url="file:///home/kion/bias-release/icons/Bitcons.jar" />
+	<pack type="IconSet" name="MiniIcons" version="2.0" author="Timothy Groves" description="MiniIcons iconset (Grayscale)" file-size="59595" url="file:///home/kion/bias-release/icons/MiniIcons.jar" />
+	<pack type="IconSet" name="TwoToneGray" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Gray)" file-size="26332" url="file:///home/kion/bias-release/icons/TwoToneGray.jar" />
+	<pack type="IconSet" name="TwoToneBiege" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Biege)" file-size="25463" url="file:///home/kion/bias-release/icons/TwoToneBiege.jar" />
+	<pack type="IconSet" name="TwoToneRed" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Red)" file-size="25445" url="file:///home/kion/bias-release/icons/TwoToneRed.jar" />
+	<pack type="IconSet" name="TwoToneBlue" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Blue)" file-size="25633" url="file:///home/kion/bias-release/icons/TwoToneBlue.jar" />
+	<pack type="IconSet" name="TwoToneGreen" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Green)" file-size="25640" url="file:///home/kion/bias-release/icons/TwoToneGreen.jar" />
 	<pack type="Library" name="JFreeChart" version="1.0.9" author="Object Refinery Limited and Contributors" description="JFreeChart is a free 100% Java chart library that makes it easy for developers to display professional quality charts in their applications" file-size="1292512" url="file:///home/kion/bias-release/lib/JFreeChart.jar">
 		<dependency type="Library" name="JCommon" version="1.0.12"/>
 	</pack>
