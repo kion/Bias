@@ -24,7 +24,7 @@
 	<pack type="Extension" name="SimpleSearch" version="0.7.7" author="R. Kasianenko" description="Search through entries" file-size="20937" url="file:///home/kion/bias-build/SimpleSearch_0.7.7.jar" />
 	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="12289" url="file:///home/kion/bias-build/SimpleStats_0.3.9.jar" />
 	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Look-&amp;-Feel" file-size="4934" url="file:///home/kion/bias-build/JGLooksSkin_0.3.1.jar">
-		<dependency type="Library" name="Looks"/>
+		<dependency type="Library" name="JGLooks"/>
 	</pack>
 	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNodeSkin Look-&amp;-Feel" file-size="1926" url="file:///home/kion/bias-build/InfoNodeSkin_0.1.1.jar">
 		<dependency type="Library" name="InfoNodeLF"/>
@@ -60,7 +60,7 @@
 	<pack type="Library" name="JCommon" version="1.0.12" author="Object Refinery Limited and Contributors" description="The library contains the common classes, which provide some global utility functionality for both GUI and non-GUI applications" file-size="308723" url="file:///home/kion/bias-libs/JCommon_1.0.12.jar" />
 	<pack type="Library" name="JCalendar" version="1.3.2" author="Kai Toedter" description="JCalendar is a Java date chooser bean for graphically picking a date" file-size="127023" url="file:///home/kion/bias-libs/JCalendar_1.3.2.jar" />
 	<pack type="Library" name="JCIFS" version="1.2.18" author="The JCIFS Project" description="Open Source client library that implements the CIFS/SMB networking protocol in 100% Java" file-size="363031" url="file:///home/kion/bias-libs/JCIFS_1.2.18.jar" />
-	<pack type="Library" name="Looks" version="2.1.4" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="407744" url="file:///home/kion/bias-libs/Looks_2.1.4.jar" />
+	<pack type="Library" name="JGLooks" version="2.1.4" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="407744" url="file:///home/kion/bias-libs/JGLooks_2.1.4.jar" />
 	<pack type="Library" name="PgsLAF" version="1.0.1" author="pago" description="Look-&amp;-Feel for Java/Swing applications" file-size="196309" url="file:///home/kion/bias-libs/PgsLAF_1.0.1.jar" />
 	<pack type="Library" name="Substance" version="4.3" author="Kirill Grouchnikov and contributors" description="Substance Look-&amp;-Feel Provider Library" file-size="1832699" url="file:///home/kion/bias-libs/Substance_4.3.jar" />
 	<pack type="Library" name="LipstikLF" version="1.0" author="Michal Buczko" description="Look-&amp;-Feel for Java/Swing applications" file-size="233699" url="file:///home/kion/bias-libs/LipstikLF_1.0.jar" />
