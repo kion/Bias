@@ -23,28 +23,28 @@
 	</pack>
 	<pack type="Extension" name="SimpleSearch" version="0.7.7" author="R. Kasianenko" description="Search through entries" file-size="161561" url="file:///home/kion/bias-release/ext/SimpleSearch.jar" />
 	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="152492" url="file:///home/kion/bias-release/ext/SimpleStats.jar" />
-	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Look-&amp;-Feel" file-size="102604" url="file:///home/kion/bias-release/skin/JGLooksSkin.jar">
+	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Skin" file-size="102604" url="file:///home/kion/bias-release/skin/JGLooksSkin.jar">
 		<dependency type="Library" name="JGLooks"/>
 	</pack>
-	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNodeSkin Look-&amp;-Feel" file-size="100953" url="file:///home/kion/bias-release/skin/InfoNodeSkin.jar">
+	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNode Skin" file-size="100953" url="file:///home/kion/bias-release/skin/InfoNodeSkin.jar">
 		<dependency type="Library" name="InfoNodeLF"/>
 	</pack>
-	<pack type="Skin" name="LipstikSkin" version="0.1.1" author="R. Kasianenko" description="LipstikSkin Look-&amp;-Feel" file-size="91663" url="file:///home/kion/bias-release/skin/LipstikSkin.jar">
+	<pack type="Skin" name="LipstikSkin" version="0.1.1" author="R. Kasianenko" description="Lipstik Skin" file-size="91663" url="file:///home/kion/bias-release/skin/LipstikSkin.jar">
 		<dependency type="Library" name="LipstikLF"/>
 	</pack>
-	<pack type="Skin" name="LiquidSkin" version="0.1.1" author="R. Kasianenko" description="LiquidSkin Look-&amp;-Feel" file-size="110760" url="file:///home/kion/bias-release/skin/LiquidSkin.jar">
+	<pack type="Skin" name="LiquidSkin" version="0.1.1" author="R. Kasianenko" description="Liquid Skin" file-size="110760" url="file:///home/kion/bias-release/skin/LiquidSkin.jar">
 		<dependency type="Library" name="LiquidLnF"/>
 	</pack>
-	<pack type="Skin" name="PgsSkin" version="0.1.1" author="R. Kasianenko" description="PgsSkin Look-&amp;-Feel" file-size="105568" url="file:///home/kion/bias-release/skin/PgsSkin.jar">
+	<pack type="Skin" name="PgsSkin" version="0.1.1" author="R. Kasianenko" description="Pgs Skin" file-size="105568" url="file:///home/kion/bias-release/skin/PgsSkin.jar">
 		<dependency type="Library" name="PgsLAF"/>
 	</pack>
-	<pack type="Skin" name="SquarenessSkin" version="0.1.1" author="R. Kasianenko" description="SquarenessSkin Look-&amp;-Feel" file-size="95814" url="file:///home/kion/bias-release/skin/SquarenessSkin.jar">
+	<pack type="Skin" name="SquarenessSkin" version="0.1.1" author="R. Kasianenko" description="Squareness Skin" file-size="95814" url="file:///home/kion/bias-release/skin/SquarenessSkin.jar">
 		<dependency type="Library" name="Squareness"/>
 	</pack>
-	<pack type="Skin" name="SubstanceSkin" version="0.1.2" author="R. Kasianenko" description="SubstanceSkin Look-&amp;-Feel" file-size="112562" url="file:///home/kion/bias-release/skin/SubstanceSkin.jar">
+	<pack type="Skin" name="SubstanceSkin" version="0.1.2" author="R. Kasianenko" description="Substance Skin" file-size="112562" url="file:///home/kion/bias-release/skin/SubstanceSkin.jar">
 		<dependency type="Library" name="Substance"/>
 	</pack>
-	<pack type="Skin" name="TinySkin" version="0.1.1" author="R. Kasianenko" description="TinySkin Look-&amp;-Feel" file-size="97150" url="file:///home/kion/bias-release/skin/TinySkin.jar">
+	<pack type="Skin" name="TinySkin" version="0.1.1" author="R. Kasianenko" description="Tiny Skin" file-size="97150" url="file:///home/kion/bias-release/skin/TinySkin.jar">
 		<dependency type="Library" name="TinyLAF"/>
 	</pack>
 	<pack type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="147137" url="file:///home/kion/bias-release/icons/Bitcons.jar" />
