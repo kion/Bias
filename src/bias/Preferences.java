@@ -183,7 +183,7 @@ public class Preferences {
     
     @Preference(
             title = "preferred.timeout.preference.title")
-    public int preferredTimeOut = 60;
+    public int preferredTimeOut = 300;
     
     @Preference(
             title = "use.systrayicon.preference.title",
