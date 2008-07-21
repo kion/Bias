@@ -84,6 +84,8 @@ public class BackEnd {
     
     private static String password;
     
+    private static URL repositoryBaseURL;
+    
     private String appCoreVersion;
     
     private String updatedAppCoreVersion;
@@ -1420,21 +1422,10 @@ public class BackEnd {
     }
     
     public URL getRepositoryBaseURL() throws Exception {
-        Properties p = new Properties();
-        File reposConfigFile = new File(Constants.CONFIG_DIR, Constants.REPOSITORY_CONFIG_FILE);
-        String urlStr = null;
-        if (reposConfigFile.exists()) {
-            FileInputStream fis = new FileInputStream(reposConfigFile);
-            p.load(fis);
-            fis.close();
-            urlStr = p.getProperty(Constants.MAIN_REPOSITORY_KEY);
+        if (repositoryBaseURL == null) {
+            repositoryBaseURL = new URL(Constants.REPOSITORY_BASE_URL);
         }
-        if (Validator.isNullOrBlank(urlStr)) {
-            urlStr = Constants.MAIN_REPOSITORY_VALUE;
-            p.setProperty(Constants.MAIN_REPOSITORY_KEY, urlStr);
-            p.store(new FileOutputStream(reposConfigFile), null);
-        }
-        return new URL(urlStr);
+        return repositoryBaseURL;
     }
     
     public void installAppCoreUpdate(File appCoreUpdateFile, String version) throws Throwable {

@@ -840,23 +840,23 @@ public class Reminder extends ToolExtension {
         p.add(new JLabel(reminderEntry.getTitle()), BorderLayout.NORTH);
         p.add(detailsPane, BorderLayout.CENTER);
         JPanel pControls = new JPanel(new GridLayout(2, 1));
-        JButton doneButt = new JButton(getMessage("Done") + "(" + (periodic ? getMessage("remind.next.time") : getMessage("delete.this.reminder")) + ")");
+        final int idx = findRowIdxByID(reminderEntry.getId().toString()); // check if reminder entry is still in the list
+        JButton doneButt = new JButton(getMessage("Done") + "(" + ((periodic && idx != -1) ? getMessage("remind.next.time") : getMessage("delete.this.reminder")) + ")");
         doneButt.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
                 dialog.setVisible(false);
-                if (periodic) {
-                    initialDate.set(calendarField, initialDate.get(calendarField) + 1);
-                    Runnable r = new Runnable(){
-                        public void run() {
-                            runTask(taskExecutor, reminderEntry, periodic, calendarField, initialDate);
-                        }
-                    };
-                    long currMS = new Date().getTime();
-                    long delay = initialDate.getTimeInMillis() - currMS;
-                    taskExecutor.schedule(r, delay, TimeUnit.MILLISECONDS);
-                } else {
-                    int idx = findRowIdxByID(reminderEntry.getId().toString());
-                    if (idx != -1) {
+                if (idx != -1) {
+                    if (periodic) {
+                        initialDate.set(calendarField, initialDate.get(calendarField) + 1);
+                        Runnable r = new Runnable(){
+                            public void run() {
+                                runTask(taskExecutor, reminderEntry, periodic, calendarField, initialDate);
+                            }
+                        };
+                        long currMS = new Date().getTime();
+                        long delay = initialDate.getTimeInMillis() - currMS;
+                        taskExecutor.schedule(r, delay, TimeUnit.MILLISECONDS);
+                    } else {
                         ((DefaultTableModel) reminderEntriesTable.getModel()).removeRow(idx);
                         cleanUpUnUsedAttachments(reminderEntry.getId());
                         tasks.remove(reminderEntry.getId());

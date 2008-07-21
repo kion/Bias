@@ -56,8 +56,7 @@ public class Constants {
     
     public static final String USERNAME = System.getProperty("user.name");
     
-    public static final String MAIN_REPOSITORY_KEY = "Main Repository";
-    public static final String MAIN_REPOSITORY_VALUE = "http://bias.svn.sourceforge.net/viewvc/*checkout*/bias/trunk/res/META-INF/ADDON-INFO/"; // "http://bias.sourceforge.net/repository/"
+    public static final String REPOSITORY_BASE_URL = "http://bias.sourceforge.net/repository/";
     
     public static final String HTML_PREFIX = "<html>";
     public static final String HTML_COLOR_NORMAL = "<font color=\"#000000\">";
@@ -141,7 +140,6 @@ public class Constants {
     
     public static final String GLOBAL_CONFIG_FILE = "config.properties";
     public static final String PREFERENCES_FILE = "preferences.properties";
-    public static final String REPOSITORY_CONFIG_FILE = "repository.properties";
     public static final String UNINSTALL_CONFIG_FILE = "uninstall.conf";
     public static final String METADATA_FILE_NAME = "metadata.xml";
     public static final String ICONS_CONFIG_FILE = "icons.conf";
