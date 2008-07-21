@@ -194,8 +194,6 @@ import bias.utils.Downloader.DownloadListener;
  */
 public class FrontEnd extends JFrame {
     
-    // TODO [P1] internationalization
-    
     private static final long serialVersionUID = 1L;
     
     private static final GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();

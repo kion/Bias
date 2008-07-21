@@ -809,6 +809,7 @@ public class Reminder extends ToolExtension {
         }
     }
     
+    // TODO [P1] do not run task if corresponding event has been deleted from list of events already
     private void runTask(final ScheduledExecutorService taskExecutor, final ReminderEntry reminderEntry, final boolean periodic, final int calendarField, final Calendar initialDate) {
         final JDialog dialog = new JDialog(null, ModalityType.MODELESS);
         JTextPane detailsTextPane = new JTextPane();
