@@ -63,8 +63,6 @@ import bias.utils.Validator;
 public class FilePack extends EntryExtension {
 	private static final long serialVersionUID = 1L;
     
-    // TODO [P2] column widths should be stored as relative (% of whole table width) values
-
 	private static final ImageIcon ICON_ADD = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "add.png"));
     private static final ImageIcon ICON_DELETE = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "delete.png"));
     private static final ImageIcon ICON_VIEW = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "view.png"));
@@ -76,6 +74,7 @@ public class FilePack extends EntryExtension {
     private static final String PROPERTY_SORT_BY_COLUMN = "SORT_BY_COLUMN";
     private static final String PROPERTY_SORT_ORDER = "SORT_BY_ORDER";
     private static final String PROPERTY_SELECTED_ROW = "SELECTED_ROW";
+    private static final String PROPERTY_COLUMNS_WIDTHS = "COLUMNS_WIDTHS";
 
     private int[] sortByColumn = new int[MAX_SORT_KEYS_NUMBER];
     
@@ -145,6 +144,14 @@ public class FilePack extends EntryExtension {
         if (!Validator.isNullOrBlank(selRow)) {
             jTable1.setRowSelectionInterval(Integer.valueOf(selRow), Integer.valueOf(selRow));
         }
+        String colW = s.getProperty(PROPERTY_COLUMNS_WIDTHS);
+        if (!Validator.isNullOrBlank(colW)) {
+            String[] colsWs = colW.split(":");
+            int cc = jTable1.getColumnModel().getColumnCount();
+            for (int i = 0; i < cc; i++) {
+                jTable1.getColumnModel().getColumn(i).setPreferredWidth(Integer.valueOf(colsWs[i]));
+            }
+        }
 	}
 
 	/* (non-Javadoc)
@@ -178,6 +185,15 @@ public class FilePack extends EntryExtension {
                 props.remove(PROPERTY_SORT_ORDER + i);
             }
         }
+        StringBuffer colW = new StringBuffer();
+        int cc = jTable1.getColumnModel().getColumnCount();
+        for (int i = 0; i < cc; i++) {
+            colW.append(jTable1.getColumnModel().getColumn(i).getWidth());
+            if (i < cc - 1) {
+                colW.append(":");
+            }
+        }
+        props.setProperty(PROPERTY_COLUMNS_WIDTHS, colW.toString());
         return PropertiesUtils.serializeProperties(props);
     }
 

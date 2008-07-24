@@ -37,6 +37,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SortOrder;
 import javax.swing.SwingConstants;
@@ -44,6 +45,8 @@ import javax.swing.RowSorter.SortKey;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.EventListenerList;
+import javax.swing.event.RowSorterEvent;
+import javax.swing.event.RowSorterListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
@@ -85,6 +88,7 @@ import bias.extension.FinancialFlows.xmlb.SingleFlows;
 import bias.gui.FrontEnd;
 import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
+import bias.utils.Validator;
 
 import com.toedter.calendar.JDateChooser;
 import com.toedter.calendar.JDateChooserCellEditor;
@@ -101,6 +105,8 @@ public class FinancialFlows extends EntryExtension {
     private static final ImageIcon ICON_DELETE = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "delete.png"));
     private static final ImageIcon ICON_CHART1 = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "chart1.png"));
     private static final ImageIcon ICON_CHART2 = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "chart2.png"));
+    private static final ImageIcon ICON_SINGLE = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "single.png"));
+    private static final ImageIcon ICON_REGULAR = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "regular.png"));
     
     private static enum DIRECTION {
         INCOME, OUTGO
@@ -108,15 +114,33 @@ public class FinancialFlows extends EntryExtension {
 
     private static final String SCHEMA_LOCATION = "http://bias.sourceforge.net/addons/FinancialFlowsSchema.xsd";
 
+    private static final String PROPERTY_ACTIVE_TAB = "ACTIVE_TAB";
+
+    private static final String PROPERTY_COLUMNS_WIDTHS_SINGLE = "COLUMNS_WIDTHS_SINGLE";
+
+    private static final String PROPERTY_COLUMNS_WIDTHS_REGULAR = "COLUMNS_WIDTHS_REGULAR";
+
+    private static final int MAX_SORT_KEYS_NUMBER = 4;
+    
+    private static final String PROPERTY_SORT_BY_COLUMN_SINGLE = "SORT_BY_COLUMN_SINGLE";
+    
+    private static final String PROPERTY_SORT_ORDER_SINGLE = "SORT_BY_ORDER_SINGLE";
+
+    private static final String PROPERTY_SORT_BY_COLUMN_REGULAR = "SORT_BY_COLUMN_REGULAR";
+    
+    private static final String PROPERTY_SORT_ORDER_REGULAR = "SORT_BY_ORDER_REGULAR";
+
     private static final int COLUMN_DIRECTION_IDX = 0;
 
     private static final int COLUMN_AMOUNT_IDX = 1;
 
     private static final int COLUMN_TYPE_IDX = 2;
 
-    private static final int COLUMN_DATE_IDX = 3;
+    private static final int COLUMN_PURPOSE_IDX = 3;
 
-    private static final int COLUMN_END_DATE_IDX = 4;
+    private static final int COLUMN_DATE_IDX = 4;
+
+    private static final int COLUMN_END_DATE_IDX = 5;
 
     private static JAXBContext context;
 
@@ -129,6 +153,14 @@ public class FinancialFlows extends EntryExtension {
     private TableRowSorter<TableModel> singleSorter;
 
     private TableRowSorter<TableModel> regularSorter;
+
+    private int[] sortByColumnSingle = new int[MAX_SORT_KEYS_NUMBER];
+    
+    private SortOrder[] sortOrderSingle = new SortOrder[MAX_SORT_KEYS_NUMBER];
+
+    private int[] sortByColumnRegular = new int[MAX_SORT_KEYS_NUMBER];
+    
+    private SortOrder[] sortOrderRegular = new SortOrder[MAX_SORT_KEYS_NUMBER];
 
     private String currency;
 
@@ -156,8 +188,6 @@ public class FinancialFlows extends EntryExtension {
 
     private JButton jButton1;
 
-    // TODO [P2] implement purpose-handling
-    
     private static JAXBContext getContext() throws JAXBException {
         if (context == null) {
             context = JAXBContext.newInstance(ObjectFactory.class.getPackage().getName());
@@ -187,25 +217,75 @@ public class FinancialFlows extends EntryExtension {
     }
 
     private void initialize() throws Throwable {
+        int idx = -1;
         try {
+            Properties s = PropertiesUtils.deserializeProperties(getSettings());
+            currency = s.getProperty("CURRENCY");
+            for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+                int sortByColumn = -1;
+                String sortByColumnStr = s.getProperty(PROPERTY_SORT_BY_COLUMN_SINGLE + i);
+                if (!Validator.isNullOrBlank(sortByColumnStr)) {
+                    sortByColumn = Integer.valueOf(sortByColumnStr);
+                }
+                this.sortByColumnSingle[i] = sortByColumn;
+                SortOrder sortOrder = null;
+                String sortOrderStr = s.getProperty(PROPERTY_SORT_ORDER_SINGLE + i);
+                if (!Validator.isNullOrBlank(sortOrderStr)) {
+                    sortOrder = SortOrder.valueOf(sortOrderStr);
+                }
+                this.sortOrderSingle[i] = sortOrder;
+                sortByColumn = -1;
+                sortByColumnStr = s.getProperty(PROPERTY_SORT_BY_COLUMN_REGULAR + i);
+                if (!Validator.isNullOrBlank(sortByColumnStr)) {
+                    sortByColumn = Integer.valueOf(sortByColumnStr);
+                }
+                this.sortByColumnRegular[i] = sortByColumn;
+                sortOrder = null;
+                sortOrderStr = s.getProperty(PROPERTY_SORT_ORDER_REGULAR + i);
+                if (!Validator.isNullOrBlank(sortOrderStr)) {
+                    sortOrder = SortOrder.valueOf(sortOrderStr);
+                }
+                this.sortOrderRegular[i] = sortOrder;
+            }
             if (getData() != null && getData().length != 0) {
                 Parts parts = (Parts) getUnmarshaller().unmarshal(new ByteArrayInputStream(getData()));
                 populateSingleTable(parts.getSingle());
                 populateRegularTable(parts.getRegular());
             }
-            Properties props = PropertiesUtils.deserializeProperties(getSettings());
-            currency = props.getProperty("CURRENCY");
+            String colW = s.getProperty(PROPERTY_COLUMNS_WIDTHS_SINGLE);
+            if (!Validator.isNullOrBlank(colW)) {
+                String[] colsWs = colW.split(":");
+                int cc = getJTableSingle().getColumnModel().getColumnCount();
+                for (int i = 0; i < cc; i++) {
+                    getJTableSingle().getColumnModel().getColumn(i).setPreferredWidth(Integer.valueOf(colsWs[i]));
+                }
+            }
+            colW = s.getProperty(PROPERTY_COLUMNS_WIDTHS_REGULAR);
+            if (!Validator.isNullOrBlank(colW)) {
+                String[] colsWs = colW.split(":");
+                int cc = getJTableRegular().getColumnModel().getColumnCount();
+                for (int i = 0; i < cc; i++) {
+                    getJTableRegular().getColumnModel().getColumn(i).setPreferredWidth(Integer.valueOf(colsWs[i]));
+                }
+            }
+            String atStr = s.getProperty(PROPERTY_ACTIVE_TAB);
+            if (!Validator.isNullOrBlank(atStr)) {
+                idx = Integer.valueOf(atStr);
+            }
         } catch (Throwable t) {
             FrontEnd.displayErrorMessage("Failed to initialize data/settings!", t);
             throw t;
         }
         initGUI();
+        if (idx != -1) {
+            jTabbedPane1.setSelectedIndex(idx);
+        }
     }
 
     private void populateSingleTable(SingleFlows flows) {
         for (SingleFlow f : flows.getFlow()) {
             DIRECTION direction = DIRECTION.valueOf(f.getDirection().name());
-            addRow(direction, f.getType(), f.getDate().toGregorianCalendar().getTime(), f.getAmount());
+            addRow(direction, f.getType(), f.getPurpose(), f.getDate() == null ? null : f.getDate().toGregorianCalendar().getTime(), f.getAmount());
             populateTypes(direction, f.getType());
         }
     }
@@ -213,8 +293,9 @@ public class FinancialFlows extends EntryExtension {
     private void populateRegularTable(RegularFlows flows) {
         for (RegularFlow f : flows.getFlow()) {
             DIRECTION direction = DIRECTION.valueOf(f.getDirection().name());
-            addRow(direction, f.getType(), f.getDate().toGregorianCalendar().getTime(), f.getEndDate().toGregorianCalendar().getTime(), f
-                    .getAmount());
+            addRow(direction, f.getType(), f.getPurpose(), 
+                    f.getDate() == null ? null : f.getDate().toGregorianCalendar().getTime(), 
+                            f.getEndDate() == null ? null : f.getEndDate().toGregorianCalendar().getTime(), f.getAmount());
             populateTypes(direction, f.getType());
         }
     }
@@ -247,23 +328,66 @@ public class FinancialFlows extends EntryExtension {
      * @see bias.extension.Extension#serializeSettings()
      */
     public byte[] serializeSettings() throws Throwable {
-        // TODO [P2] table-sorting options should be stored as well
-        Properties p = new Properties();
+        Properties props = new Properties();
         if (currency != null) {
-            p.setProperty("CURRENCY", currency);
+            props.setProperty("CURRENCY", currency);
         }
-        return PropertiesUtils.serializeProperties(p);
+        for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+            if (sortByColumnSingle[i] != -1 && sortOrderSingle[i] != null) {
+                props.setProperty(PROPERTY_SORT_BY_COLUMN_SINGLE + i, "" + sortByColumnSingle[i]);
+                props.setProperty(PROPERTY_SORT_ORDER_SINGLE + i, sortOrderSingle[i].name());
+            } else {
+                props.remove(PROPERTY_SORT_BY_COLUMN_SINGLE + i);
+                props.remove(PROPERTY_SORT_ORDER_SINGLE + i);
+            }
+            if (sortByColumnRegular[i] != -1 && sortOrderRegular[i] != null) {
+                props.setProperty(PROPERTY_SORT_BY_COLUMN_REGULAR + i, "" + sortByColumnRegular[i]);
+                props.setProperty(PROPERTY_SORT_ORDER_REGULAR + i, sortOrderRegular[i].name());
+            } else {
+                props.remove(PROPERTY_SORT_BY_COLUMN_REGULAR + i);
+                props.remove(PROPERTY_SORT_ORDER_REGULAR + i);
+            }
+        }
+        StringBuffer colW = new StringBuffer();
+        int cc = getJTableSingle().getColumnModel().getColumnCount();
+        for (int i = 0; i < cc; i++) {
+            colW.append(getJTableSingle().getColumnModel().getColumn(i).getWidth());
+            if (i < cc - 1) {
+                colW.append(":");
+            }
+        }
+        props.setProperty(PROPERTY_COLUMNS_WIDTHS_SINGLE, colW.toString());
+        colW = new StringBuffer();
+        cc = getJTableRegular().getColumnModel().getColumnCount();
+        for (int i = 0; i < cc; i++) {
+            colW.append(getJTableRegular().getColumnModel().getColumn(i).getWidth());
+            if (i < cc - 1) {
+                colW.append(":");
+            }
+        }
+        int idx = jTabbedPane1.getSelectedIndex();
+        if (idx != -1) {
+            props.setProperty(PROPERTY_ACTIVE_TAB, "" + idx);
+        }
+        props.setProperty(PROPERTY_COLUMNS_WIDTHS_REGULAR, colW.toString());
+        return PropertiesUtils.serializeProperties(props);
     }
 
     private SingleFlows serializeSingleFlows() throws Exception {
         SingleFlows flows = objFactory.createSingleFlows();
         for (int i = 0; i < getJTableSingle().getModel().getRowCount(); i++) {
             SingleFlow flow = objFactory.createSingleFlow();
-            GregorianCalendar cal = new GregorianCalendar();
-            cal.setTime((Date) getJTableSingle().getModel().getValueAt(i, COLUMN_DATE_IDX));
-            flow.setDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(cal));
+            Date date = (Date) getJTableSingle().getModel().getValueAt(i, COLUMN_DATE_IDX);
+            if (date != null) {
+                GregorianCalendar cal = new GregorianCalendar();
+                cal.setTime(date);
+                flow.setDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(cal));
+            } else {
+                flow.setDate(null);
+            }
             flow.setAmount((Float) getJTableSingle().getModel().getValueAt(i, COLUMN_AMOUNT_IDX));
             flow.setType((String) getJTableSingle().getModel().getValueAt(i, COLUMN_TYPE_IDX));
+            flow.setPurpose((String) getJTableSingle().getModel().getValueAt(i, COLUMN_PURPOSE_IDX));
             DIRECTION direction = (DIRECTION) getJTableSingle().getModel().getValueAt(i, COLUMN_DIRECTION_IDX);
             flow.setDirection(Direction.fromValue(direction.name()));
             flows.getFlow().add(flow);
@@ -275,14 +399,25 @@ public class FinancialFlows extends EntryExtension {
         RegularFlows flows = objFactory.createRegularFlows();
         for (int i = 0; i < getJTableRegular().getModel().getRowCount(); i++) {
             RegularFlow flow = objFactory.createRegularFlow();
-            GregorianCalendar cal1 = new GregorianCalendar();
-            cal1.setTime((Date) getJTableRegular().getModel().getValueAt(i, COLUMN_DATE_IDX));
-            flow.setDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(cal1));
-            GregorianCalendar cal2 = new GregorianCalendar();
-            cal2.setTime((Date) getJTableRegular().getModel().getValueAt(i, COLUMN_END_DATE_IDX));
-            flow.setEndDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(cal2));
+            Date date = (Date) getJTableRegular().getModel().getValueAt(i, COLUMN_DATE_IDX);
+            if (date != null) {
+                GregorianCalendar cal1 = new GregorianCalendar();
+                cal1.setTime(date);
+                flow.setDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(cal1));
+            } else {
+                flow.setDate(null);
+            }
+            date = (Date) getJTableRegular().getModel().getValueAt(i, COLUMN_END_DATE_IDX);
+            if (date != null) {
+                GregorianCalendar cal2 = new GregorianCalendar();
+                cal2.setTime(date);
+                flow.setEndDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(cal2));
+            } else {
+                flow.setEndDate(null);
+            }
             flow.setAmount((Float) getJTableRegular().getModel().getValueAt(i, COLUMN_AMOUNT_IDX));
             flow.setType((String) getJTableRegular().getModel().getValueAt(i, COLUMN_TYPE_IDX));
+            flow.setPurpose((String) getJTableRegular().getModel().getValueAt(i, COLUMN_PURPOSE_IDX));
             DIRECTION direction = (DIRECTION) getJTableRegular().getModel().getValueAt(i, COLUMN_DIRECTION_IDX);
             flow.setDirection(Direction.fromValue(direction.name()));
             flows.getFlow().add(flow);
@@ -297,7 +432,6 @@ public class FinancialFlows extends EntryExtension {
      */
     @Override
     public Collection<String> getSearchData() throws Throwable {
-        // TODO [P2] add purpose-data to search data
         Collection<String> searchData = new ArrayList<String>();
         searchData.addAll(incomeTypes);
         searchData.addAll(outgoTypes);
@@ -309,6 +443,7 @@ public class FinancialFlows extends EntryExtension {
     private void populateSearchData(Collection<String> searchData, JTable table) {
         for (int i = 0; i < table.getModel().getRowCount(); i++) {
             searchData.add(table.getModel().getValueAt(i, COLUMN_AMOUNT_IDX).toString());
+            searchData.add(table.getModel().getValueAt(i, COLUMN_PURPOSE_IDX).toString());
         }
     }
 
@@ -331,14 +466,14 @@ public class FinancialFlows extends EntryExtension {
                         jButton1.addActionListener(new ActionListener() {
                             public void actionPerformed(ActionEvent evt) {
                                 boolean ir = isRegularTableActive();
-                                JPanel p = new JPanel(new GridLayout(ir ? 9 : 7, 1));
-                                p.add(new JLabel("Direction:"));
+                                JPanel p = new JPanel(new GridLayout(ir ? 11 : 9, 1));
+                                p.add(new JLabel("Direction"));
                                 final JComboBox directionCombo = new JComboBox();
                                 directionCombo.addItem(DIRECTION.INCOME);
                                 directionCombo.addItem(DIRECTION.OUTGO);
                                 directionCombo.setSelectedItem(DIRECTION.INCOME);
                                 p.add(directionCombo);
-                                p.add(new JLabel("Type:"));
+                                p.add(new JLabel("Type"));
                                 final JComboBox typeCombo = new JComboBox();
                                 populateCombo(typeCombo, incomeTypes);
                                 typeCombo.setEditable(true);
@@ -353,26 +488,30 @@ public class FinancialFlows extends EntryExtension {
                                         }
                                     }
                                 });
-                                p.add(new JLabel(ir ? "Start date:" : "Date:"));
+                                p.add(new JLabel(ir ? "Start date" : "Date"));
                                 JDateChooser dateChooser = new JDateChooser(new Date());
                                 p.add(dateChooser);
                                 JDateChooser endDateChooser = null;
                                 if (ir) {
-                                    p.add(new JLabel("End date:"));
-                                    endDateChooser = new JDateChooser(new Date());
+                                    p.add(new JLabel("End date (leave blank for ongoing flows)"));
+                                    endDateChooser = new JDateChooser();
                                     p.add(endDateChooser);
                                 }
-                                p.add(new JLabel("Amount:"));
+                                p.add(new JLabel("Purpose"));
+                                JTextField purposeTF = new JTextField();
+                                p.add(purposeTF);
+                                p.add(new JLabel("Amount"));
                                 String amountStr = JOptionPane.showInputDialog(p);
                                 if (amountStr != null) {
                                     try {
                                         Float amount = Float.valueOf(amountStr);
                                         DIRECTION direction = (DIRECTION) directionCombo.getSelectedItem();
+                                        String purpose = purposeTF.getText();
                                         String type = (String) typeCombo.getSelectedItem();
                                         if (ir) {
-                                            addRow(direction, type, dateChooser.getDate(), endDateChooser.getDate(), amount);
+                                            addRow(direction, type, purpose, dateChooser.getDate(), endDateChooser.getDate(), amount);
                                         } else {
-                                            addRow(direction, type, dateChooser.getDate(), amount);
+                                            addRow(direction, type, purpose, dateChooser.getDate(), amount);
                                         }
                                         if (direction == DIRECTION.INCOME) {
                                             if (!incomeTypes.contains(type)) {
@@ -481,8 +620,8 @@ public class FinancialFlows extends EntryExtension {
                     jTabbedPane1 = new JTabbedPane();
                     jPanel1.add(jTabbedPane1, BorderLayout.CENTER);
                     {
-                        jTabbedPane1.addTab("Single Flows", new JScrollPane(getJTableSingle()));
-                        jTabbedPane1.addTab("Regular Flows", new JScrollPane(getJTableRegular()));
+                        jTabbedPane1.addTab("Single Flows", ICON_SINGLE, new JScrollPane(getJTableSingle()));
+                        jTabbedPane1.addTab("Regular Flows", ICON_REGULAR, new JScrollPane(getJTableRegular()));
                     }
                 }
             }
@@ -551,6 +690,7 @@ public class FinancialFlows extends EntryExtension {
         model.addColumn("Direction");
         model.addColumn("Amount");
         model.addColumn("Type");
+        model.addColumn("Purpose");
         model.addColumn("Date");
         getJTableSingle().setModel(model);
         getJTableSingle().setDefaultRenderer(Float.class, new CurrencyRenderer());
@@ -559,10 +699,32 @@ public class FinancialFlows extends EntryExtension {
         getJTableSingle().getColumnModel().removeColumn(getJTableSingle().getColumnModel().getColumn(COLUMN_DIRECTION_IDX));
         singleSorter = new TableRowSorter<TableModel>(model);
         singleSorter.setSortsOnUpdates(true);
-        // TODO [P2] table-sorting options should be restored from settings
+        singleSorter.setMaxSortKeys(MAX_SORT_KEYS_NUMBER);
         List<SortKey> sortKeys = new LinkedList<SortKey>();
-        sortKeys.add(new SortKey(COLUMN_DATE_IDX, SortOrder.ASCENDING));
+        for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+            if (sortByColumnSingle[i] != -1 && sortOrderSingle[i] != null) {
+                SortKey sortKey = new SortKey(sortByColumnSingle[i], sortOrderSingle[i]);
+                sortKeys.add(sortKey);
+            }
+        }
         singleSorter.setSortKeys(sortKeys);
+        singleSorter.addRowSorterListener(new RowSorterListener(){
+            public void sorterChanged(RowSorterEvent e) {
+                if (e.getType().equals(RowSorterEvent.Type.SORT_ORDER_CHANGED)) {
+                    List<? extends SortKey> sortKeys = singleSorter.getSortKeys();
+                    for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+                        if (i < sortKeys.size()) {
+                            SortKey sortKey = sortKeys.get(i);
+                            sortByColumnSingle[i] = sortKey.getColumn();
+                            sortOrderSingle[i] = sortKey.getSortOrder();
+                        } else {
+                            sortByColumnSingle[i] = -1;
+                            sortOrderSingle[i] = null;
+                        }
+                    }
+                }
+            }
+        });
         getJTableSingle().setRowSorter(singleSorter);
     }
 
@@ -571,6 +733,7 @@ public class FinancialFlows extends EntryExtension {
         model.addColumn("Direction");
         model.addColumn("Amount");
         model.addColumn("Type");
+        model.addColumn("Purpose");
         model.addColumn("Start date");
         model.addColumn("End date");
         getJTableRegular().setModel(model);
@@ -581,10 +744,32 @@ public class FinancialFlows extends EntryExtension {
         getJTableRegular().getColumnModel().removeColumn(getJTableRegular().getColumnModel().getColumn(COLUMN_DIRECTION_IDX));
         regularSorter = new TableRowSorter<TableModel>(model);
         regularSorter.setSortsOnUpdates(true);
-        // TODO [P2] table-sorting options should be restored from settings
+        regularSorter.setMaxSortKeys(MAX_SORT_KEYS_NUMBER);
         List<SortKey> sortKeys = new LinkedList<SortKey>();
-        sortKeys.add(new SortKey(COLUMN_DIRECTION_IDX, SortOrder.ASCENDING));
+        for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+            if (sortByColumnRegular[i] != -1 && sortOrderRegular[i] != null) {
+                SortKey sortKey = new SortKey(sortByColumnRegular[i], sortOrderRegular[i]);
+                sortKeys.add(sortKey);
+            }
+        }
         regularSorter.setSortKeys(sortKeys);
+        regularSorter.addRowSorterListener(new RowSorterListener(){
+            public void sorterChanged(RowSorterEvent e) {
+                if (e.getType().equals(RowSorterEvent.Type.SORT_ORDER_CHANGED)) {
+                    List<? extends SortKey> sortKeys = regularSorter.getSortKeys();
+                    for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
+                        if (i < sortKeys.size()) {
+                            SortKey sortKey = sortKeys.get(i);
+                            sortByColumnRegular[i] = sortKey.getColumn();
+                            sortOrderRegular[i] = sortKey.getSortOrder();
+                        } else {
+                            sortByColumnRegular[i] = -1;
+                            sortOrderRegular[i] = null;
+                        }
+                    }
+                }
+            }
+        });
         getJTableRegular().setRowSorter(regularSorter);
     }
 
@@ -707,14 +892,14 @@ public class FinancialFlows extends EntryExtension {
 
     }
 
-    private void addRow(DIRECTION direction, String type, Date date, Float amount) {
+    private void addRow(DIRECTION direction, String type, String purpose, Date date, Float amount) {
         DefaultTableModel model = (DefaultTableModel) getJTableSingle().getModel();
-        model.addRow(new Object[] { direction, amount, type, date });
+        model.addRow(new Object[] { direction, amount, type, purpose, date });
     }
 
-    private void addRow(DIRECTION direction, String type, Date date, Date endDate, Float amount) {
+    private void addRow(DIRECTION direction, String type, String purpose, Date date, Date endDate, Float amount) {
         DefaultTableModel model = (DefaultTableModel) getJTableRegular().getModel();
-        model.addRow(new Object[] { direction, amount, type, date, endDate });
+        model.addRow(new Object[] { direction, amount, type, purpose, date, endDate });
     }
 
     private void removeRow(JTable jTable, int rowIdx) {
@@ -827,11 +1012,11 @@ public class FinancialFlows extends EntryExtension {
                 DIRECTION d = (DIRECTION) model.getValueAt(i, COLUMN_DIRECTION_IDX);
                 if (d == direction) {
                     Date date = (Date) model.getValueAt(i, COLUMN_DATE_IDX);
-                    if (dateLow == null || date.before(dateLow)) {
+                    if (date != null && (dateLow == null || date.before(dateLow))) {
                         dateLow = date;
                     }
                     Date endDate = (Date) model.getValueAt(i, COLUMN_END_DATE_IDX);
-                    if (dateHigh == null || endDate.after(dateHigh)) {
+                    if (endDate != null && (dateHigh == null || endDate.after(dateHigh))) {
                         dateHigh = endDate;
                     }
                 }
@@ -843,7 +1028,7 @@ public class FinancialFlows extends EntryExtension {
                         DIRECTION d = (DIRECTION) model.getValueAt(i, COLUMN_DIRECTION_IDX);
                         Date date = (Date) model.getValueAt(i, COLUMN_DATE_IDX);
                         Date endDate = (Date) model.getValueAt(i, COLUMN_END_DATE_IDX);
-                        if (d == direction && date.getTime() >= dateLow.getTime() && endDate.getTime() <= dateHigh.getTime()) {
+                        if (d == direction && (date != null && date.getTime() >= dateLow.getTime()) && (endDate == null || endDate.getTime() <= dateHigh.getTime())) {
                             String type = (String) model.getValueAt(i, COLUMN_TYPE_IDX);
                             Number num = 0;
                             if (dataset.getKeys().contains(type)) {
