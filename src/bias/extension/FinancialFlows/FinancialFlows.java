@@ -107,6 +107,7 @@ public class FinancialFlows extends EntryExtension {
     private static final ImageIcon ICON_CHART2 = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "chart2.png"));
     private static final ImageIcon ICON_SINGLE = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "single.png"));
     private static final ImageIcon ICON_REGULAR = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "regular.png"));
+    private static final ImageIcon ICON_BALANCE = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "balance.png"));
     
     private static enum DIRECTION {
         INCOME, OUTGO
@@ -177,6 +178,8 @@ public class FinancialFlows extends EntryExtension {
     private JButton jButton4;
 
     private JButton jButton5;
+
+    private JButton jButton6;
 
     private JPanel jPanel1;
 
@@ -606,6 +609,33 @@ public class FinancialFlows extends EntryExtension {
                                     JLabel label = new JLabel();
                                     label.setIcon(new ImageIcon(image));
                                     JOptionPane.showMessageDialog(FinancialFlows.this, new JScrollPane(label));
+                                } catch (Exception e) {
+                                    FrontEnd.displayErrorMessage(e);
+                                }
+                            }
+                        });
+                    }
+                    {
+                        jButton6 = new JButton();
+                        jToolBar1.add(jButton6);
+                        jButton6.setIcon(ICON_BALANCE);
+                        jButton6.setToolTipText("Balance");
+                        jButton6.addActionListener(new ActionListener() {
+                            public void actionPerformed(ActionEvent evt) {
+                                try {
+                                    DefaultPieDataset iDataset = new DefaultPieDataset();
+                                    populatePieDataset(DIRECTION.INCOME, iDataset);
+                                    DefaultPieDataset oDataset = new DefaultPieDataset();
+                                    populatePieDataset(DIRECTION.OUTGO, oDataset);
+                                    double income = 0D;
+                                    for (int i = 0; i < iDataset.getItemCount(); i++) {
+                                        income += iDataset.getValue(i).doubleValue();
+                                    }
+                                    double outgo = 0D;
+                                    for (int i = 0; i < oDataset.getItemCount(); i++) {
+                                        outgo += oDataset.getValue(i).doubleValue();
+                                    }
+                                    JOptionPane.showMessageDialog(FinancialFlows.this, new JLabel("Balance: " + (income - outgo)));
                                 } catch (Exception e) {
                                     FrontEnd.displayErrorMessage(e);
                                 }
