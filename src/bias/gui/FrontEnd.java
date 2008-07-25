@@ -4284,6 +4284,7 @@ public class FrontEnd extends JFrame {
                 instance.displayProcessNotification(getMessage("exporting.data") + " ('" + configName + "')...", false);
                 DataCategory data = instance.collectData();
                 final ExportConfiguration exportConfig = BackEnd.getInstance().getPopulatedExportConfigurations().get(configName);
+                // FIXME [P0] exportConfig can be null here (check and add appropriate error message)
                 if (!exportConfig.isExportAll()) {
                     instance.filterData(data, exportConfig.getSelectedIds(), exportConfig.getSelectedRecursiveIds());
                 } else {
