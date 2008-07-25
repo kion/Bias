@@ -711,7 +711,6 @@ public class FinancialFlows extends EntryExtension {
                     {
                         jButton7 = new JButton("*$*");
                         jToolBar1.add(jButton7);
-                        // jButton7.setIcon(ICON_BALANCE);
                         jButton7.setToolTipText("Balance correction");
                         jButton7.addActionListener(new ActionListener() {
                             public void actionPerformed(ActionEvent evt) {
