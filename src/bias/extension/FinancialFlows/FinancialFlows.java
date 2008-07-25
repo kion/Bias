@@ -136,6 +136,8 @@ public class FinancialFlows extends EntryExtension {
 
     private static final String PROPERTY_OUTGO_TYPES = "OUTGO_TYPES";
 
+    private static final String PROPERTY_BALANCE_CORRECTION = "BALANCE_CORRECTION";
+    
     private static final String SEPARATOR_PATTERN = "\\s*,\\s*";
 
     private static final int COLUMN_DIRECTION_IDX = 0;
@@ -169,6 +171,8 @@ public class FinancialFlows extends EntryExtension {
     private int[] sortByColumnRegular = new int[MAX_SORT_KEYS_NUMBER];
     
     private SortOrder[] sortOrderRegular = new SortOrder[MAX_SORT_KEYS_NUMBER];
+    
+    private double balanceCorrection = 0;
 
     private String currency;
     
@@ -193,6 +197,8 @@ public class FinancialFlows extends EntryExtension {
     private JButton jButton5;
 
     private JButton jButton6;
+
+    private JButton jButton7;
 
     private JPanel jPanel1;
 
@@ -287,6 +293,10 @@ public class FinancialFlows extends EntryExtension {
             if (!Validator.isNullOrBlank(atStr)) {
                 idx = Integer.valueOf(atStr);
             }
+            String bSubtr = s.getProperty(PROPERTY_BALANCE_CORRECTION);
+            if (!Validator.isNullOrBlank(bSubtr)) {
+                balanceCorrection = Double.valueOf(bSubtr);
+            }
         } catch (Throwable t) {
             FrontEnd.displayErrorMessage("Failed to initialize data/settings!", t);
             throw t;
@@ -371,6 +381,7 @@ public class FinancialFlows extends EntryExtension {
             s.setProperty(PROPERTY_ACTIVE_TAB, "" + idx);
         }
         s.setProperty(PROPERTY_COLUMNS_WIDTHS_REGULAR, colW.toString());
+        s.setProperty(PROPERTY_BALANCE_CORRECTION, "" + balanceCorrection);
         return PropertiesUtils.serializeProperties(s);
     }
     
@@ -686,7 +697,29 @@ public class FinancialFlows extends EntryExtension {
                                     for (int i = 0; i < oDataset.getItemCount(); i++) {
                                         outgo += oDataset.getValue(i).doubleValue();
                                     }
-                                    JOptionPane.showMessageDialog(FinancialFlows.this, new JLabel("Balance: " + (income - outgo)));
+                                    Component[] cmp = new Component[]{
+                                            new JLabel("Total balance: " + (income - outgo)),
+                                            new JLabel("Corrected balance: " + (income - outgo + balanceCorrection))
+                                    };
+                                    JOptionPane.showMessageDialog(FinancialFlows.this, cmp);
+                                } catch (Exception e) {
+                                    FrontEnd.displayErrorMessage(e);
+                                }
+                            }
+                        });
+                    }
+                    {
+                        jButton7 = new JButton("*$*");
+                        jToolBar1.add(jButton7);
+                        // jButton7.setIcon(ICON_BALANCE);
+                        jButton7.setToolTipText("Balance correction");
+                        jButton7.addActionListener(new ActionListener() {
+                            public void actionPerformed(ActionEvent evt) {
+                                try {
+                                    String str = JOptionPane.showInputDialog(FinancialFlows.this, new JLabel("Input balance correction: "));
+                                    if (!Validator.isNullOrBlank(str)) {
+                                        balanceCorrection += Double.valueOf(str);
+                                    }
                                 } catch (Exception e) {
                                     FrontEnd.displayErrorMessage(e);
                                 }
