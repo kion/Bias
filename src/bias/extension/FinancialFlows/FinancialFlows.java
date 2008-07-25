@@ -11,14 +11,13 @@ import java.awt.Image;
 import java.awt.Paint;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EventObject;
@@ -131,6 +130,12 @@ public class FinancialFlows extends EntryExtension {
     
     private static final String PROPERTY_SORT_ORDER_REGULAR = "SORT_BY_ORDER_REGULAR";
 
+    private static final String PROPERTY_INCOME_TYPES = "INCOME_TYPES";
+
+    private static final String PROPERTY_OUTGO_TYPES = "OUTGO_TYPES";
+
+    private static final String SEPARATOR_PATTERN = "\\s*,\\s*";
+
     private static final int COLUMN_DIRECTION_IDX = 0;
 
     private static final int COLUMN_AMOUNT_IDX = 1;
@@ -164,10 +169,16 @@ public class FinancialFlows extends EntryExtension {
     private SortOrder[] sortOrderRegular = new SortOrder[MAX_SORT_KEYS_NUMBER];
 
     private String currency;
+    
+    private Properties s;
 
-    private List<String> incomeTypes = new LinkedList<String>();
+    private String[] incomeTypes;
 
-    private List<String> outgoTypes = new LinkedList<String>();
+    private String[] oldIncomeTypes;
+
+    private String[] outgoTypes;
+
+    private String[] oldOutgoTypes;
 
     private JToolBar jToolBar1;
 
@@ -222,8 +233,7 @@ public class FinancialFlows extends EntryExtension {
     private void initialize() throws Throwable {
         int idx = -1;
         try {
-            Properties s = PropertiesUtils.deserializeProperties(getSettings());
-            currency = s.getProperty("CURRENCY");
+            s = PropertiesUtils.deserializeProperties(getSettings());
             for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
                 int sortByColumn = -1;
                 String sortByColumnStr = s.getProperty(PROPERTY_SORT_BY_COLUMN_SINGLE + i);
@@ -280,6 +290,7 @@ public class FinancialFlows extends EntryExtension {
             throw t;
         }
         initGUI();
+        applySettings(getSettings());
         if (idx != -1) {
             jTabbedPane1.setSelectedIndex(idx);
         }
@@ -289,7 +300,6 @@ public class FinancialFlows extends EntryExtension {
         for (SingleFlow f : flows.getFlow()) {
             DIRECTION direction = DIRECTION.valueOf(f.getDirection().name());
             addRow(direction, f.getType(), f.getPurpose(), f.getDate() == null ? null : f.getDate().toGregorianCalendar().getTime(), f.getAmount());
-            populateTypes(direction, f.getType());
         }
     }
 
@@ -299,19 +309,6 @@ public class FinancialFlows extends EntryExtension {
             addRow(direction, f.getType(), f.getPurpose(), 
                     f.getDate() == null ? null : f.getDate().toGregorianCalendar().getTime(), 
                             f.getEndDate() == null ? null : f.getEndDate().toGregorianCalendar().getTime(), f.getAmount());
-            populateTypes(direction, f.getType());
-        }
-    }
-
-    private void populateTypes(DIRECTION direction, String type) {
-        if (direction == DIRECTION.INCOME) {
-            if (!incomeTypes.contains(type)) {
-                incomeTypes.add(type);
-            }
-        } else if (direction == DIRECTION.OUTGO) {
-            if (!outgoTypes.contains(type)) {
-                outgoTypes.add(type);
-            }
         }
     }
 
@@ -331,24 +328,23 @@ public class FinancialFlows extends EntryExtension {
      * @see bias.extension.Extension#serializeSettings()
      */
     public byte[] serializeSettings() throws Throwable {
-        Properties props = new Properties();
         if (currency != null) {
-            props.setProperty("CURRENCY", currency);
+            s.setProperty("CURRENCY", currency);
         }
         for (int i = 0; i < MAX_SORT_KEYS_NUMBER; i++) {
             if (sortByColumnSingle[i] != -1 && sortOrderSingle[i] != null) {
-                props.setProperty(PROPERTY_SORT_BY_COLUMN_SINGLE + i, "" + sortByColumnSingle[i]);
-                props.setProperty(PROPERTY_SORT_ORDER_SINGLE + i, sortOrderSingle[i].name());
+                s.setProperty(PROPERTY_SORT_BY_COLUMN_SINGLE + i, "" + sortByColumnSingle[i]);
+                s.setProperty(PROPERTY_SORT_ORDER_SINGLE + i, sortOrderSingle[i].name());
             } else {
-                props.remove(PROPERTY_SORT_BY_COLUMN_SINGLE + i);
-                props.remove(PROPERTY_SORT_ORDER_SINGLE + i);
+                s.remove(PROPERTY_SORT_BY_COLUMN_SINGLE + i);
+                s.remove(PROPERTY_SORT_ORDER_SINGLE + i);
             }
             if (sortByColumnRegular[i] != -1 && sortOrderRegular[i] != null) {
-                props.setProperty(PROPERTY_SORT_BY_COLUMN_REGULAR + i, "" + sortByColumnRegular[i]);
-                props.setProperty(PROPERTY_SORT_ORDER_REGULAR + i, sortOrderRegular[i].name());
+                s.setProperty(PROPERTY_SORT_BY_COLUMN_REGULAR + i, "" + sortByColumnRegular[i]);
+                s.setProperty(PROPERTY_SORT_ORDER_REGULAR + i, sortOrderRegular[i].name());
             } else {
-                props.remove(PROPERTY_SORT_BY_COLUMN_REGULAR + i);
-                props.remove(PROPERTY_SORT_ORDER_REGULAR + i);
+                s.remove(PROPERTY_SORT_BY_COLUMN_REGULAR + i);
+                s.remove(PROPERTY_SORT_ORDER_REGULAR + i);
             }
         }
         StringBuffer colW = new StringBuffer();
@@ -359,7 +355,7 @@ public class FinancialFlows extends EntryExtension {
                 colW.append(":");
             }
         }
-        props.setProperty(PROPERTY_COLUMNS_WIDTHS_SINGLE, colW.toString());
+        s.setProperty(PROPERTY_COLUMNS_WIDTHS_SINGLE, colW.toString());
         colW = new StringBuffer();
         cc = getJTableRegular().getColumnModel().getColumnCount();
         for (int i = 0; i < cc; i++) {
@@ -370,10 +366,72 @@ public class FinancialFlows extends EntryExtension {
         }
         int idx = jTabbedPane1.getSelectedIndex();
         if (idx != -1) {
-            props.setProperty(PROPERTY_ACTIVE_TAB, "" + idx);
+            s.setProperty(PROPERTY_ACTIVE_TAB, "" + idx);
         }
-        props.setProperty(PROPERTY_COLUMNS_WIDTHS_REGULAR, colW.toString());
-        return PropertiesUtils.serializeProperties(props);
+        s.setProperty(PROPERTY_COLUMNS_WIDTHS_REGULAR, colW.toString());
+        return PropertiesUtils.serializeProperties(s);
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#configure(byte[])
+     */
+    @Override
+    public byte[] configure(byte[] settings) throws Throwable {
+        s = PropertiesUtils.deserializeProperties(settings);
+        String incomeTypes = s.getProperty(PROPERTY_INCOME_TYPES);
+        JTextField incomeTypesTF = new JTextField();
+        if (!Validator.isNullOrBlank(incomeTypes)) {
+            incomeTypesTF.setText(incomeTypes);
+        }
+        String outgoTypes = s.getProperty(PROPERTY_OUTGO_TYPES);
+        JTextField outgoTypesTF = new JTextField();
+        if (!Validator.isNullOrBlank(outgoTypes)) {
+            outgoTypesTF.setText(outgoTypes);
+        }
+        int opt = JOptionPane.showConfirmDialog(
+                FrontEnd.getActiveWindow(), 
+                new Component[]{
+                        new JLabel("Comma-separated list of income types"),
+                        incomeTypesTF,
+                        new JLabel("Comma-separated list of outgo types"),
+                        outgoTypesTF
+                }, 
+                "Configuration", 
+                JOptionPane.OK_CANCEL_OPTION);
+        if (opt == JOptionPane.OK_OPTION) {
+            incomeTypes = incomeTypesTF.getText().trim();
+            s.setProperty(PROPERTY_INCOME_TYPES, incomeTypes);
+            outgoTypes = outgoTypesTF.getText().trim();
+            s.setProperty(PROPERTY_OUTGO_TYPES, outgoTypes);
+            byte[] bytes = PropertiesUtils.serializeProperties(s);
+            setSettings(bytes);
+            return bytes;
+        }
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#applySettings(byte[])
+     */
+    @Override
+    public void applySettings(byte[] settings) {
+        Properties s = PropertiesUtils.deserializeProperties(settings);
+        currency = s.getProperty("CURRENCY");
+        String types = s.getProperty(PROPERTY_INCOME_TYPES);
+        this.oldIncomeTypes = this.incomeTypes;
+        if (!Validator.isNullOrBlank(types)) {
+            this.incomeTypes = types.split(SEPARATOR_PATTERN);
+        } else {
+            this.incomeTypes = new String[]{};
+        }
+        types = s.getProperty(PROPERTY_OUTGO_TYPES);
+        this.oldOutgoTypes = this.outgoTypes;
+        if (!Validator.isNullOrBlank(types)) {
+            this.outgoTypes = types.split(SEPARATOR_PATTERN);
+        } else {
+            this.outgoTypes = new String[]{};
+        }
+        initTablesCells();
     }
 
     private SingleFlows serializeSingleFlows() throws Exception {
@@ -436,8 +494,8 @@ public class FinancialFlows extends EntryExtension {
     @Override
     public Collection<String> getSearchData() throws Throwable {
         Collection<String> searchData = new ArrayList<String>();
-        searchData.addAll(incomeTypes);
-        searchData.addAll(outgoTypes);
+        searchData.addAll(Arrays.asList(incomeTypes));
+        searchData.addAll(Arrays.asList(outgoTypes));
         populateSearchData(searchData, getJTableSingle());
         populateSearchData(searchData, getJTableRegular());
         return searchData;
@@ -477,20 +535,9 @@ public class FinancialFlows extends EntryExtension {
                                 directionCombo.setSelectedItem(DIRECTION.INCOME);
                                 p.add(directionCombo);
                                 p.add(new JLabel("Type"));
-                                final JComboBox typeCombo = new JComboBox();
-                                populateCombo(typeCombo, incomeTypes);
-                                typeCombo.setEditable(true);
+                                final JComboBox typeCombo = new JComboBox(incomeTypes);
+                                typeCombo.setEditable(false);
                                 p.add(typeCombo);
-                                directionCombo.addItemListener(new ItemListener() {
-                                    public void itemStateChanged(ItemEvent e) {
-                                        DIRECTION direction = (DIRECTION) directionCombo.getSelectedItem();
-                                        if (direction == DIRECTION.INCOME) {
-                                            populateCombo(typeCombo, incomeTypes);
-                                        } else if (direction == DIRECTION.OUTGO) {
-                                            populateCombo(typeCombo, outgoTypes);
-                                        }
-                                    }
-                                });
                                 p.add(new JLabel(ir ? "Start date" : "Date"));
                                 JDateChooser dateChooser = new JDateChooser(new Date());
                                 p.add(dateChooser);
@@ -515,15 +562,6 @@ public class FinancialFlows extends EntryExtension {
                                             addRow(direction, type, purpose, dateChooser.getDate(), endDateChooser.getDate(), amount);
                                         } else {
                                             addRow(direction, type, purpose, dateChooser.getDate(), amount);
-                                        }
-                                        if (direction == DIRECTION.INCOME) {
-                                            if (!incomeTypes.contains(type)) {
-                                                incomeTypes.add(type);
-                                            }
-                                        } else if (direction == DIRECTION.OUTGO) {
-                                            if (!outgoTypes.contains(type)) {
-                                                outgoTypes.add(type);
-                                            }
                                         }
                                     } catch (NumberFormatException nfe) {
                                         FrontEnd.displayErrorMessage("Invalid amount format!");
@@ -654,6 +692,7 @@ public class FinancialFlows extends EntryExtension {
                         jTabbedPane1.addTab("Regular Flows", ICON_REGULAR, new JScrollPane(getJTableRegular()));
                     }
                 }
+                initTablesCells();
             }
         } catch (Throwable t) {
             FrontEnd.displayErrorMessage("Failed to initialize GUI!", t);
@@ -661,12 +700,62 @@ public class FinancialFlows extends EntryExtension {
         }
     }
 
+    private void initTablesCells() {
+        initTableCells(getJTableSingle());
+        initTableCells(getJTableRegular());
+    }
+    
+    private void initTableCells(JTable table) {
+        if (table != null) {
+            // refresh combo-boxes in table cells
+            String[] types = null;
+            String[] oldTypes = null;
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            for (int i = 0; i < model.getRowCount(); i++){
+                DIRECTION direction = (DIRECTION) table.getModel().getValueAt(i, COLUMN_DIRECTION_IDX);
+                if (direction == DIRECTION.INCOME) {
+                    types = incomeTypes;
+                    oldTypes = oldIncomeTypes;
+                } else if (direction == DIRECTION.OUTGO) {
+                    types = outgoTypes;
+                    oldTypes = oldOutgoTypes;
+                }
+                if (types != null) {
+                    String type = (String) model.getValueAt(i, COLUMN_TYPE_IDX);
+                    if (!Arrays.asList(types).contains(type)) {
+                        String value = "";
+                        if (types.length != 0) {
+                            int idx = getElementIndex(oldTypes, type);
+                            if (idx != -1 && idx < types.length) {
+                                value = types[idx];
+                            } else {
+                                value = types[0];
+                            }
+                        }
+                        model.setValueAt(value, i, COLUMN_TYPE_IDX);
+                    }
+                }
+            }
+        }
+    }
+
+    private int getElementIndex(String[] elements, String element) {
+        if (elements != null) {
+            for (int i = 0; i < elements.length; i++) {
+                if (elements[i].equals(element)) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+    
     private boolean isRegularTableActive() {
         int idx = jTabbedPane1.getSelectedIndex();
         return idx == 1 ? true : false;
     }
 
-    private void populateCombo(JComboBox combo, List<String> values) {
+    private void populateCombo(JComboBox combo, String[] values) {
         combo.removeAllItems();
         for (String s : values) {
             combo.addItem(s);
@@ -872,6 +961,7 @@ public class FinancialFlows extends EntryExtension {
         }
 
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            row = table.getRowSorter().convertRowIndexToModel(row);
             DIRECTION direction = (DIRECTION) table.getModel().getValueAt(row, COLUMN_DIRECTION_IDX);
             if (direction == DIRECTION.INCOME) {
                 populateCombo(this, incomeTypes);
