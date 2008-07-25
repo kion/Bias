@@ -11,6 +11,8 @@ import java.awt.Image;
 import java.awt.Paint;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -538,6 +540,17 @@ public class FinancialFlows extends EntryExtension {
                                 final JComboBox typeCombo = new JComboBox(incomeTypes);
                                 typeCombo.setEditable(false);
                                 p.add(typeCombo);
+                                directionCombo.addItemListener(new ItemListener(){
+                                    @Override
+                                    public void itemStateChanged(ItemEvent e) {
+                                        if (e.getStateChange() == ItemEvent.SELECTED) {
+                                            typeCombo.removeAllItems();
+                                            for (String type : (DIRECTION.INCOME.equals(directionCombo.getSelectedItem()) ? incomeTypes : outgoTypes)) {
+                                                typeCombo.addItem(type);
+                                            }
+                                        }
+                                    }
+                                });
                                 p.add(new JLabel(ir ? "Start date" : "Date"));
                                 JDateChooser dateChooser = new JDateChooser(new Date());
                                 p.add(dateChooser);
