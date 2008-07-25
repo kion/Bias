@@ -1100,7 +1100,7 @@ public class FinancialFlows extends EntryExtension {
             periodLow = new Month(date);
         }
         if (periodHigh == null || (endDate != null && endDate.after(periodHigh.getStart()))) {
-            periodHigh = new Month(endDate);
+            periodHigh = new Month(endDate == null ? new Date() : endDate);
         }
         // update all periods visible on chart with regular amount
         while (periodLow.getStart().before(periodHigh.getEnd()) && (endDate == null || periodLow.getStart().before(endDate))) {
@@ -1153,6 +1153,9 @@ public class FinancialFlows extends EntryExtension {
                         dateHigh = endDate;
                     }
                 }
+            }
+            if (dateHigh == null) {
+                dateHigh = new Date();
             }
             if (dateLow != null && dateHigh != null) {
                 RegularTimePeriod month = new Month(dateLow);
