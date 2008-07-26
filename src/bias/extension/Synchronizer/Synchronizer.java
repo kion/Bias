@@ -98,6 +98,10 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
     
     private Map<String, Collection<Long>> importConfigs;
     
+    private Map<String, Long> exportConfigsValues;
+    
+    private Map<String, Long> importConfigsValues;
+    
     private DefaultTableModel exportConfigsModel;
     
     private DefaultTableModel importConfigsModel;
@@ -169,7 +173,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                                             JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
                                 }
                                 if (!BackEnd.getInstance().getExportConfigurations().contains(entry.getKey())) {
-                                    throw new Exception("Configuration does not exist anymore!");
+                                    throw new Exception("Export configuration does not exist anymore!");
                                 }
                                 if (export) FrontEnd.autoExport(entry.getKey(), false, verboseExport);
                             } catch (Throwable t) {
@@ -195,7 +199,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                                             JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
                                 }
                                 if (!BackEnd.getInstance().getImportConfigurations().contains(entry.getKey())) { 
-                                    throw new Exception("Configuration does not exist anymore!");
+                                    throw new Exception("Import configuration does not exist anymore!");
                                 }
                                 if (importt) FrontEnd.autoImport(entry.getKey(), false, verboseImport);
                             } catch (Throwable t) {
@@ -238,14 +242,18 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                                 for (int i = 0; i < cnt; i++) {
                                     if ((Boolean) model.getValueAt(i, 0)) {
                                         String configName = (String) model.getValueAt(i, 1);
-                                        FrontEnd.autoImport(configName, false, verboseImport);
+                                        if (!BackEnd.getInstance().getImportConfigurations().contains(configName)) { 
+                                            FrontEnd.displayStatusBarErrorMessage("Failed to invoke import action '" + configName + "': non-existing configuration!"); // FIXME
+                                        } else {
+                                            FrontEnd.autoImport(configName, false, verboseImport);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 } catch (Exception ex) {
-                    FrontEnd.displayErrorMessage("Failed to invoke import action(s)!", ex);
+                    FrontEnd.displayErrorMessage("Failed to invoke import action(s): " + CommonUtils.getFailureDetails(ex), ex);
                 }
             }
         });
@@ -281,14 +289,18 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                                 for (int i = 0; i < cnt; i++) {
                                     if ((Boolean) model.getValueAt(i, 0)) {
                                         String configName = (String) model.getValueAt(i, 1);
-                                        FrontEnd.autoExport(configName, false, verboseExport);
+                                        if (!BackEnd.getInstance().getExportConfigurations().contains(configName)) { 
+                                            FrontEnd.displayStatusBarErrorMessage("Failed to invoke export action '" + configName + "': non-existing configuration!"); // FIXME
+                                        } else {
+                                            FrontEnd.autoExport(configName, false, verboseExport);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 } catch (Exception ex) {
-                    FrontEnd.displayErrorMessage("Failed to invoke export action(s)!", ex);
+                    FrontEnd.displayErrorMessage("Failed to invoke export action(s): " + CommonUtils.getFailureDetails(ex), ex);
                 }
             }
         });
@@ -306,6 +318,20 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             importConfigs = new HashMap<String, Collection<Long>>();
         }
         return importConfigs;             
+    }
+    
+    private Map<String, Long> getExportConfigsValues() {
+        if (exportConfigsValues == null) {
+            exportConfigsValues = new HashMap<String, Long>();
+        }
+        return exportConfigsValues;             
+    }
+    
+    private Map<String, Long> getImportConfigsValues() {
+        if (importConfigsValues == null) {
+            importConfigsValues = new HashMap<String, Long>();
+        }
+        return importConfigsValues;             
     }
     
     /* (non-Javadoc)
@@ -406,7 +432,11 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                                 getExportConfigs().put(config, periods);
                             }
                             periods.add(period);
-                            getExportConfigsModel().addRow(new Object[] { config, period == 0 ? INVOKATION_TYPE_ON_SAVE : "Every " + FormatUtils.formatTimeDuration(period * 60 * 1000) });
+                            String formatted = "Every " + FormatUtils.formatTimeDuration(period * 60 * 1000);
+                            getExportConfigsModel().addRow(new Object[] { config, period == 0 ? INVOKATION_TYPE_ON_SAVE : formatted });
+                            if (period != 0) {
+                                getExportConfigsValues().put(config+formatted, period);
+                            }
                         }
                     }
                 } catch (Exception ex) {
@@ -419,7 +449,14 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             public void actionPerformed(ActionEvent e) {
                 int idx = getExportActionsTable().getSelectedRow();
                 if (idx != -1) {
-                    getExportConfigs().get(getExportActionsTable().getValueAt(idx, 0)).remove(getExportActionsTable().getValueAt(idx, 1));
+                    String config = (String) getExportActionsTable().getValueAt(idx, 0);
+                    Object obj = getExportActionsTable().getValueAt(idx, 1);
+                    if (INVOKATION_TYPE_ON_SAVE.equals(obj)) {
+                        obj = 0L;
+                    } else {
+                        obj = getExportConfigsValues().get(config + obj);
+                    }
+                    getExportConfigs().get(config).remove(obj);
                     getExportConfigsModel().removeRow(idx);
                 }
             }
@@ -468,7 +505,11 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                                 getImportConfigs().put(config, periods);
                             }
                             periods.add(period);
-                            getImportConfigsModel().addRow(new Object[] { config, period == 0 ? INVOKATION_TYPE_ON_STARTUP : "Every " + FormatUtils.formatTimeDuration(period * 60 * 1000) });
+                            String formatted = "Every " + FormatUtils.formatTimeDuration(period * 60 * 1000);
+                            getImportConfigsModel().addRow(new Object[] { config, period == 0 ? INVOKATION_TYPE_ON_STARTUP : formatted });
+                            if (period != 0) {
+                                getImportConfigsValues().put(config+formatted, period);
+                            }
                         }
                     }
                 } catch (Exception ex) {
@@ -481,7 +522,14 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
             public void actionPerformed(ActionEvent e) {
                 int idx = getImportActionsTable().getSelectedRow();
                 if (idx != -1) {
-                    getImportConfigs().get(getImportActionsTable().getValueAt(idx, 0)).remove(getImportActionsTable().getValueAt(idx, 1));
+                    String config = (String) getImportActionsTable().getValueAt(idx, 0);
+                    Object obj = getImportActionsTable().getValueAt(idx, 1);
+                    if (INVOKATION_TYPE_ON_STARTUP.equals(obj)) {
+                        obj = 0L;
+                    } else {
+                        obj = getImportConfigsValues().get(config + obj);
+                    }
+                    getImportConfigs().get(config).remove(obj);
                     getImportConfigsModel().removeRow(idx);
                 }
             }
