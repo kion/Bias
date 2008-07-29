@@ -684,7 +684,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                 }
             }
         }
-        populateConfigsModel(getExportConfigsModel(), getExportConfigs(), INVOKATION_TYPE_ON_SAVE);
+        populateConfigsModel(getExportConfigsModel(), getExportConfigs(), getExportConfigsValues(), INVOKATION_TYPE_ON_SAVE);
 
         String importConfigsStr = props.getProperty(PROPERTY_IMPORT_CONFIGS);
         if (!Validator.isNullOrBlank(importConfigsStr)) {
@@ -702,7 +702,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                 }
             }
         }
-        populateConfigsModel(getImportConfigsModel(), getImportConfigs(), INVOKATION_TYPE_ON_STARTUP);
+        populateConfigsModel(getImportConfigsModel(), getImportConfigs(), getImportConfigsValues(), INVOKATION_TYPE_ON_STARTUP);
     }
     
     private JComboBox getConfigChooser(Collection<String> configs) {
@@ -714,15 +714,19 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         return cb;
     }
     
-    private void populateConfigsModel(DefaultTableModel model, Map<String, Collection<Long>> configs, String eventStr) throws Exception {
+    private void populateConfigsModel(DefaultTableModel model, Map<String, Collection<Long>> configs, Map<String, Long> configsValues, String eventStr) throws Exception {
         while (model.getRowCount() > 0) {
             model.removeRow(0);
         }
         for (Entry<String, Collection<Long>> config : configs.entrySet()) {
             String name = config.getKey();
             for (Long period : config.getValue()) {
-                String periodStr = period == 0 ? eventStr : "Every " + FormatUtils.formatTimeDuration(period * 60 * 1000);
+                String formatted = "Every " + FormatUtils.formatTimeDuration(period * 60 * 1000);
+                String periodStr = period == 0 ? eventStr : formatted;
                 model.addRow(new Object[]{ name, periodStr });
+                if (period != 0) {
+                    configsValues.put(name+formatted, period);
+                }
             }
         }
     }
