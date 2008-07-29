@@ -26,7 +26,7 @@
 	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Skin" file-size="102604" url="http://downloads.sourceforge.net/bias/JGLooksSkin.jar?use_mirror=osdn">
 		<dependency type="Library" name="JGLooks"/>
 	</pack>
-	<pack type="Skin" name="JTattooSkin" version="0.3.1" author="R. Kasianenko" description="JTattoo Skin" file-size="100167" url="http://downloads.sourceforge.net/bias/JTattooSkin.jar?use_mirror=osdn">
+	<pack type="Skin" name="JTattooSkin" version="0.3.1" author="R. Kasianenko" description="JTattoo Skin" file-size="120785" url="http://downloads.sourceforge.net/bias/JTattooSkin.jar?use_mirror=osdn">
 		<dependency type="Library" name="JTattooLAF"/>
 	</pack>
 	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNode Skin" file-size="100953" url="http://downloads.sourceforge.net/bias/InfoNodeSkin.jar?use_mirror=osdn">
