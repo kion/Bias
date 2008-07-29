@@ -26,6 +26,9 @@
 	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Skin" file-size="102604" url="http://downloads.sourceforge.net/bias/JGLooksSkin.jar?use_mirror=osdn">
 		<dependency type="Library" name="JGLooks"/>
 	</pack>
+	<pack type="Skin" name="JTattooSkin" version="0.3.1" author="R. Kasianenko" description="JTattoo Skin" file-size="100167" url="http://downloads.sourceforge.net/bias/JTattooSkin.jar?use_mirror=osdn">
+		<dependency type="Library" name="JTattooLAF"/>
+	</pack>
 	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNode Skin" file-size="100953" url="http://downloads.sourceforge.net/bias/InfoNodeSkin.jar?use_mirror=osdn">
 		<dependency type="Library" name="InfoNodeLF"/>
 	</pack>
@@ -61,6 +64,7 @@
 	<pack type="Library" name="JCalendar" version="1.3.2" author="Kai Toedter" description="JCalendar is a Java date chooser bean for graphically picking a date" file-size="127023" url="http://downloads.sourceforge.net/bias/JCalendar.jar?use_mirror=osdn" />
 	<pack type="Library" name="JCIFS" version="1.2.18" author="The JCIFS Project" description="Open Source client library that implements the CIFS/SMB networking protocol in 100% Java" file-size="363031" url="http://downloads.sourceforge.net/bias/JCIFS.jar?use_mirror=osdn" />
 	<pack type="Library" name="JGLooks" version="2.1.4" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="407753" url="http://downloads.sourceforge.net/bias/JGLooks.jar?use_mirror=osdn" />
+	<pack type="Library" name="JTattooLAF" version="1.2.10" author="Michael Hagen" description="Look-&amp;-Feel for Java/Swing applications" file-size="577393" url="http://downloads.sourceforge.net/bias/JTattooLAF.jar?use_mirror=osdn" />
 	<pack type="Library" name="PgsLAF" version="1.0.1" author="pago" description="Look-&amp;-Feel for Java/Swing applications" file-size="196309" url="http://downloads.sourceforge.net/bias/PgsLAF.jar?use_mirror=osdn" />
 	<pack type="Library" name="Substance" version="4.3" author="Kirill Grouchnikov and contributors" description="Substance Look-&amp;-Feel Provider Library" file-size="1832699" url="http://downloads.sourceforge.net/bias/Substance.jar?use_mirror=osdn" />
 	<pack type="Library" name="LipstikLF" version="1.0" author="Michal Buczko" description="Look-&amp;-Feel for Java/Swing applications" file-size="233699" url="http://downloads.sourceforge.net/bias/LipstikLF.jar?use_mirror=osdn" />

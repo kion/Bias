@@ -460,5 +460,23 @@
 		</jar>
 	</target>
 
+	<!-- ================================= 
+          target: Build_Skin_JTattooSkin             
+         ================================= -->
+	<target name="Build_Skin_JTattooSkin" description="JTattoo Skin">
+		<delete dir="build" includes="JTattooSkin*.jar" />
+		<jar basedir="bin" destfile="build/JTattooSkin.jar" includes="bias/skin/JTattooSkin/** bias/res/JTattooSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/JTattooSkin/**" />
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="JTattooSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${JTattooSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="JTattoo Skin" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${JTattooSkin_Dependencies}" />
+			</manifest>
+		</jar>
+	</target>
+
 </project>
 
