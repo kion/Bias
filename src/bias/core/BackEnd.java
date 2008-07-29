@@ -275,6 +275,10 @@ public class BackEnd {
                 }
                 // now decryption cipher can be changed as well
                 CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, password);
+                if (instance != null) {
+                    // need to store data now to fully apply new password
+                    instance.store();
+                }
             } else {
                 throw new Exception("Current password is wrong!");
             }
