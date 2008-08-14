@@ -159,6 +159,8 @@ public class HTMLEditorPanel extends JPanel {
 
     private JPanel jPanel = null;
 
+    private JPanel jPanel2 = null;
+
     private JToggleButton jToggleButton = null;
 
     private JToggleButton jToggleButton1 = null;
@@ -534,8 +536,6 @@ public class HTMLEditorPanel extends JPanel {
             jToolBar1.add(getJToggleButton()); 
             jToolBar1.add(getJToggleButton1()); 
             jToolBar1.add(getJToggleButton2()); 
-            jToolBar1.add(getJComboBox()); 
-            jToolBar1.add(getJComboBox1()); 
             jToolBar1.setVisible(false); 
         }
         return jToolBar1;
@@ -617,11 +617,10 @@ public class HTMLEditorPanel extends JPanel {
                     if (getJTextPane().isEditable()) {
                         getJTextPane().requestFocusInWindow();
                     }
-                    if (!getJToolBar1().isVisible()) {
-                        getJToolBar1().setVisible(true);
+                    getJToolBar1().setVisible(!getJToolBar1().isVisible());
+                    getJPanel2().setVisible(!getJPanel2().isVisible());
+                    if (getJToolBar1().isVisible()) {
                         synchronizeEditNoteControlsStates(getJTextPane());
-                    } else {
-                        getJToolBar1().setVisible(false);
                     }
                 }
             });
@@ -1124,10 +1123,10 @@ public class HTMLEditorPanel extends JPanel {
     private JComboBox getJComboBox() {
         if (jComboBox == null) {
             jComboBox = new JComboBox();
-            jComboBox.setMaximumSize(new Dimension(150, 20)); 
-            jComboBox.setPreferredSize(new Dimension(150, 20)); 
+            jComboBox.setMaximumSize(new Dimension(140, 20)); 
+            jComboBox.setMinimumSize(new Dimension(140, 20)); 
+            jComboBox.setPreferredSize(new Dimension(140, 20)); 
             jComboBox.setToolTipText("font size"); 
-            jComboBox.setMinimumSize(new Dimension(150, 20)); 
             Iterator<String> it = FONT_SIZES.keySet().iterator();
             while (it.hasNext()) {
                 jComboBox.addItem(it.next());
@@ -1154,10 +1153,10 @@ public class HTMLEditorPanel extends JPanel {
     private JComboBox getJComboBox1() {
         if (jComboBox1 == null) {
             jComboBox1 = new JComboBox();
-            jComboBox1.setMaximumSize(new Dimension(150, 20)); 
-            jComboBox1.setPreferredSize(new Dimension(150, 20)); 
+            jComboBox1.setMaximumSize(new Dimension(140, 20)); 
+            jComboBox1.setMinimumSize(new Dimension(140, 20)); 
+            jComboBox1.setPreferredSize(new Dimension(140, 20)); 
             jComboBox1.setToolTipText("font family"); 
-            jComboBox1.setMinimumSize(new Dimension(150, 20)); 
             for (String ff : FONT_FAMILY_NAMES) {
                 jComboBox1.addItem(ff);
             }
@@ -1175,6 +1174,22 @@ public class HTMLEditorPanel extends JPanel {
     }
 
     /**
+     * This method initializes jPanel2
+     * 
+     * @return javax.swing.JPanel
+     */
+    private JPanel getJPanel2() {
+        if (jPanel2 == null) {
+            jPanel2 = new JPanel();
+            jPanel2.setLayout(new BorderLayout()); 
+            jPanel2.add(getJComboBox(), BorderLayout.CENTER); 
+            jPanel2.add(getJComboBox1(), BorderLayout.WEST);
+            jPanel2.setVisible(false);
+        }
+        return jPanel2;
+    }
+
+    /**
      * This method initializes jPanel
      * 
      * @return javax.swing.JPanel
@@ -1184,7 +1199,8 @@ public class HTMLEditorPanel extends JPanel {
             jPanel = new JPanel();
             jPanel.setLayout(new BorderLayout()); 
             jPanel.add(getJToolBar1(), BorderLayout.CENTER); 
-            jPanel.add(getJToolBar(), BorderLayout.WEST); 
+            jPanel.add(getJToolBar(), BorderLayout.WEST);
+            jPanel.add(getJPanel2(), BorderLayout.NORTH);
         }
         return jPanel;
     }
