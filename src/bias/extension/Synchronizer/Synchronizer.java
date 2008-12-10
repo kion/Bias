@@ -243,7 +243,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                                     if ((Boolean) model.getValueAt(i, 0)) {
                                         String configName = (String) model.getValueAt(i, 1);
                                         if (!BackEnd.getInstance().getImportConfigurations().contains(configName)) { 
-                                            FrontEnd.displayStatusBarErrorMessage("Failed to invoke import action '" + configName + "': non-existing configuration!"); // FIXME
+                                            FrontEnd.displayStatusBarErrorMessage("Failed to invoke import action '" + configName + "': non-existing configuration!"); // FIXME [P1] should be fixed, not ignored
                                         } else {
                                             FrontEnd.autoImport(configName, false, verboseImport);
                                         }
@@ -290,7 +290,7 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
                                     if ((Boolean) model.getValueAt(i, 0)) {
                                         String configName = (String) model.getValueAt(i, 1);
                                         if (!BackEnd.getInstance().getExportConfigurations().contains(configName)) { 
-                                            FrontEnd.displayStatusBarErrorMessage("Failed to invoke export action '" + configName + "': non-existing configuration!"); // FIXME
+                                            FrontEnd.displayStatusBarErrorMessage("Failed to invoke export action '" + configName + "': non-existing configuration!"); // FIXME [P1] should be fixed, not ignored
                                         } else {
                                             FrontEnd.autoExport(configName, false, verboseExport);
                                         }
