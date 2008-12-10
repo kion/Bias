@@ -6703,11 +6703,11 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             JLabel title1Label = new JLabel(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppCoreVersion() + " ]");
-            JLabel link1Label = new LinkLabel("http://bias.sourceforge.net/");
+            JLabel link1Label = new LinkLabel("http://bias.sourceforge.net");
             JLabel title2Label = new JLabel("© Roman Kasianenko ( kion ) 2006-2008");
-        	JLabel link2Label = new LinkLabel("http://kion.name/");
-            JLabel title3Label = new JLabel("@ EtweeSoft.Org");
-            JLabel link3Label = new LinkLabel("http://etweesoft.org/");
+        	JLabel link2Label = new LinkLabel("http://kion.name");
+            JLabel title3Label = new JLabel("@ EtweeStudio");
+            JLabel link3Label = new LinkLabel("http://etweestudio.com");
             JOptionPane.showMessageDialog(
                     FrontEnd.this, 
                     new Component[]{
