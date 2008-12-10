@@ -14,6 +14,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.SocketAddress;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -85,6 +88,10 @@ public class BackEnd {
     private static String password;
     
     private static URL repositoryBaseURL;
+    
+    private static SocketAddress proxyAddr;
+    
+    private static Map<Proxy.Type, Proxy> proxies;
     
     private String appCoreVersion;
     
@@ -1432,7 +1439,30 @@ public class BackEnd {
         return repositoryBaseURL;
     }
     
-    public void installAppCoreUpdate(File appCoreUpdateFile, String version) throws Throwable {
+    public static Proxy getProxy(Proxy.Type proxyType) {
+    	if (proxyAddr == null || proxies == null) return Proxy.NO_PROXY;
+    	Proxy proxy = proxies.get(proxyType);
+    	if (proxy == null) {
+    		proxy = new Proxy(proxyType, proxyAddr);
+    		proxies.put(proxyType, proxy);
+    	}
+		return proxy;
+	}
+
+	public static void initProxySettings() {
+        if (Preferences.getInstance().useProxy) {
+        	proxyAddr = new InetSocketAddress(Preferences.getInstance().proxyHost, Preferences.getInstance().proxyPort);
+        	if (proxies == null) {
+        		proxies = new HashMap<Proxy.Type, Proxy>();
+        	} else {
+        		proxies.clear();
+        	}
+        } else {
+        	proxyAddr = null;
+        }
+	}
+
+	public void installAppCoreUpdate(File appCoreUpdateFile, String version) throws Throwable {
         FSUtils.duplicateFile(appCoreUpdateFile, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME));
         updatedAppCoreVersion = version;
     }

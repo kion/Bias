@@ -182,10 +182,6 @@ public class Preferences {
     public String preferredDateTimeFormat = "dd.MM.yyyy @ HH:mm:ss";
     
     @Preference(
-            title = "preferred.timeout.preference.title")
-    public int preferredTimeOut = 300;
-    
-    @Preference(
             title = "use.systrayicon.preference.title",
             description = "use.systrayicon.preference.description")
     public boolean useSysTrayIcon = false;
@@ -229,6 +225,28 @@ public class Preferences {
             enabledByField = "enableAutoUpdate", 
             enabledByValue = "true")        
     public int autoUpdateInterval = 7;
+    
+    @Preference(
+            title = "preferred.timeout.preference.title")
+    public int preferredTimeOut = 300;
+    
+    @Preference(
+            title = "use.proxy")
+    public boolean useProxy = false;
+    
+    @Preference(
+            title = "proxy.host")
+    @PreferenceEnable(
+            enabledByField = "useProxy", 
+            enabledByValue = "true")        
+    public String proxyHost;
+    
+    @Preference(
+            title = "proxy.port")
+    @PreferenceEnable(
+            enabledByField = "useProxy", 
+            enabledByValue = "true")        
+    public int proxyPort;
     
     @Preference(
             title = "show.memory.usage.preference.title")

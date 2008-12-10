@@ -9,11 +9,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import bias.core.BackEnd;
 
 /**
  * @author kion
@@ -58,7 +61,7 @@ public class Downloader {
                 InputStream  in = null;
                 Throwable failure = null;
                 try {
-                    URLConnection conn = url.openConnection();
+                    URLConnection conn = url.openConnection(BackEnd.getProxy(Proxy.Type.HTTP));
                     conn.setConnectTimeout(timeout * 1000);
                     conn.setReadTimeout(timeout * 1000);
                     in = conn.getInputStream();
@@ -127,7 +130,7 @@ public class Downloader {
                     InputStream  in = null;
                     Throwable failure = null;
                     try {
-                        URLConnection conn = url.openConnection();
+                        URLConnection conn = url.openConnection(BackEnd.getProxy(Proxy.Type.HTTP));
                         conn.setConnectTimeout(timeout * 1000);
                         conn.setReadTimeout(timeout * 1000);
                         in = conn.getInputStream();

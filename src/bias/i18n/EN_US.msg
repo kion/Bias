@@ -5,6 +5,9 @@ username.preference.title == Username
 preferred.language.preference.title == Preferred language (needs Bias restart)
 preferred.datetime.format.preference.title == Preferred date-time format
 preferred.timeout.preference.title == Preferred timeout for network operations (in seconds)
+use.proxy == Use proxy-server for network operations
+proxy.host == Proxy-host (name or IP)
+proxy.port == Proxy-port
 use.systrayicon.preference.title == Use system tray icon
 use.systrayicon.preference.description == Allocates space in system tray and allows to hide/restore application to/from system tray icon
 remain.in.systray.on.window.close.preference.title == Remain in system tray when main window closes

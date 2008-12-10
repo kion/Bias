@@ -5,6 +5,9 @@ username.preference.title == Имя пользователя
 preferred.language.preference.title == Предпочитаемый язык (требует перезагрузки Bias)
 preferred.datetime.format.preference.title == Предпочитаемый формат даты/времени
 preferred.timeout.preference.title == Предпочитаемый таймаут для сетевых операций (в секундах)
+use.proxy == Использовать прокси-сервер для сетевых операций
+proxy.host == Прокси-хост (имя или IP)
+proxy.port == Прокси-порт
 use.systrayicon.preference.title == Использовать значок в системном лотке
 use.systrayicon.preference.description == Резервирует место в системном лотке и разрешает прятать/восстанавливать приложение при помощи значка
 remain.in.systray.on.window.close.preference.title == Оставаться в системном лотке при закрытии основного окна

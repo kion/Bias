@@ -676,7 +676,7 @@ public class FrontEnd extends JFrame {
             }
         }
     }
-
+    
     private void applyPreferences() {
         applyPreferences(false);
     }
@@ -708,6 +708,7 @@ public class FrontEnd extends JFrame {
                 memUsageIndicatorPanel.setVisible(false);
             }
         }
+        BackEnd.initProxySettings();
         handleAutoUpdate(isStartingUp);
         displayStatusBarMessage(getMessage("preferences.applied"));
     }
@@ -796,11 +797,15 @@ public class FrontEnd extends JFrame {
                             if (!Preferences.getInstance().useSysTrayIcon) {
                                 hideSysTrayIcon();
                             }
-                            if (instance.isVisible()) {
-                                instance.setExtendedState(JFrame.NORMAL);
-                                // TODO [P3] window does not get focus always here... maybe there's another, more reliable way to force focused window state
-                                instance.requestFocusInWindow();
-                            }
+                            SwingUtilities.invokeLater(new Runnable(){
+								@Override
+								public void run() {
+		                            if (instance.isVisible()) {
+		                                instance.setExtendedState(JFrame.NORMAL);
+		                                instance.requestFocusInWindow();
+		                            }
+								}
+                            });
                         }
                     });
                 }
@@ -4809,6 +4814,13 @@ public class FrontEnd extends JFrame {
                                 sm.setStepSize(1);
                                 sm.setValue(field.getInt(Preferences.getInstance()));
                                 prefControl = new JSpinner(sm);
+                                
+                                // FIXME [P3] // disable number formatting
+//                                JFormattedTextField tf = ((JSpinner.DefaultEditor) ((JSpinner) prefControl).getEditor()).getTextField();
+//                                DefaultFormatterFactory factory = (DefaultFormatterFactory) tf.getFormatterFactory();
+//                                NumberFormatter formatter = (NumberFormatter) factory.getDefaultFormatter();
+//                                formatter.setFormat(null);
+                                
                                 prefPanel.add(prefControl);
                             }
                             if (prefPanel != null && prefControl != null) {

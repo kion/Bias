@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Properties;
@@ -20,6 +21,7 @@ import javax.swing.JTextField;
 
 import bias.Constants;
 import bias.Preferences;
+import bias.core.BackEnd;
 import bias.extension.ObservableTransferExtension;
 import bias.gui.FrontEnd;
 import bias.utils.PropertiesUtils;
@@ -60,7 +62,7 @@ public class FTPTransfer extends ObservableTransferExtension {
         String password = opts.getProperty(TRANSFER_OPTION_PASSWORD);
         String filePath = opts.getProperty(TRANSFER_OPTION_FILEPATH);
         URL url = new URL(PROTOCOL_PREFIX + username + ":" + password + "@" + server + filePath + ";type=i");
-        URLConnection urlc = url.openConnection();
+        URLConnection urlc = url.openConnection(BackEnd.getProxy(Proxy.Type.SOCKS));
         urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut * 1000);
         urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut * 1000);
         urlc.connect();
@@ -90,7 +92,7 @@ public class FTPTransfer extends ObservableTransferExtension {
             }
         }
         URL url = new URL(PROTOCOL_PREFIX + username + ":" + password + "@" + server + filePath + ";type=i");
-        URLConnection urlc = url.openConnection();
+        URLConnection urlc = url.openConnection(BackEnd.getProxy(Proxy.Type.SOCKS));
         urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut * 1000);
         urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut * 1000);
         OutputStream os = urlc.getOutputStream();
@@ -137,7 +139,7 @@ public class FTPTransfer extends ObservableTransferExtension {
             server += PORT_SEPARATOR + DEFAULT_PORT;
         }
         URL url = new URL(PROTOCOL_PREFIX + username + ":" + password + "@" + server + filePath + ";type=i");
-        URLConnection urlc = url.openConnection();
+        URLConnection urlc = url.openConnection(BackEnd.getProxy(Proxy.Type.SOCKS));
         urlc.setConnectTimeout(Preferences.getInstance().preferredTimeOut * 1000);
         urlc.setReadTimeout(Preferences.getInstance().preferredTimeOut * 1000);
         ByteArrayOutputStream baos = null;
