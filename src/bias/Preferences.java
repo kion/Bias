@@ -198,10 +198,6 @@ public class Preferences {
     public boolean startHidden = false;
     
     @Preference(
-            title = "minimize.to.systray.preference.title")
-    public boolean minimizeToSysTray = false;
-    
-    @Preference(
             title = "auto.save.on.exit.preference.title")
     public boolean autoSaveOnExit = false;
     

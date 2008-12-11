@@ -610,6 +610,7 @@ public class FrontEnd extends JFrame {
             applyGlobalSettings();
 
             this.addWindowListener(new WindowAdapter() {
+            	
                 @Override
                 public void windowClosing(WindowEvent e) {
                     try {
@@ -625,15 +626,7 @@ public class FrontEnd extends JFrame {
                         displayErrorMessage(t);
                     }
                 }
-                @Override
-                public void windowIconified(WindowEvent e) {
-                    if (Preferences.getInstance().minimizeToSysTray) {
-                        showSysTrayIcon();
-                        if (sysTrayIconVisible) {
-                            instance.setVisible(false);
-                        }
-                    }
-                }
+                
             });
             
         } catch (Exception ex) {
@@ -793,19 +786,10 @@ public class FrontEnd extends JFrame {
                     trayIcon.addMouseListener(new MouseAdapter(){
                         @Override
                         public void mouseClicked(MouseEvent e) {
-                            instance.setVisible(!instance.isVisible());
                             if (!Preferences.getInstance().useSysTrayIcon) {
                                 hideSysTrayIcon();
                             }
-                            SwingUtilities.invokeLater(new Runnable(){
-								@Override
-								public void run() {
-		                            if (instance.isVisible()) {
-		                                instance.setExtendedState(JFrame.NORMAL);
-		                                instance.requestFocusInWindow();
-		                            }
-								}
-                            });
+                            instance.setVisible(!instance.isVisible());
                         }
                     });
                 }
