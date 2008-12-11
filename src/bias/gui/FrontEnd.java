@@ -629,6 +629,16 @@ public class FrontEnd extends JFrame {
                 
             });
             
+        	if (new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_LAUNCHER_FILE_NAME).exists()) {
+        		Splash.hideSplash();
+                JOptionPane.showMessageDialog(
+                        getActiveWindow(), 
+                        new JLabel(
+                                Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_INFO + 
+                                getMessage("info.message.launcher.updated", Constants.ROOT_DIR.toString()) + 
+                                Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX));
+        	}
+
         } catch (Exception ex) {
             displayErrorMessage(ex);
         }
@@ -6392,7 +6402,7 @@ public class FrontEnd extends JFrame {
                                         getActiveWindow(), 
                                         new JLabel(
                                                 Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_INFO + 
-                                                getMessage("info.message.launcher.updated") + 
+                                                getMessage("info.message.launcher.updated", Constants.ROOT_DIR.toString()) + 
                                                 Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX));
                             }
                             if (success && onFinishAction != null) {
