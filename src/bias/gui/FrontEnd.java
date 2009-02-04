@@ -4837,7 +4837,9 @@ public class FrontEnd extends JFrame {
                 } catch (Exception ex) {
                     displayErrorMessage(getMessage("error.message.preferences.load.failure"), ex);
                 }
-                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, prefsPanel, getMessage("preferences"), JOptionPane.OK_CANCEL_OPTION);
+                JScrollPane sp = new JScrollPane(prefsPanel);
+                sp.setPreferredSize(new Dimension(FrontEnd.this.getWidth()/5*4, FrontEnd.this.getHeight()/3*2));
+                int opt = JOptionPane.showConfirmDialog(FrontEnd.this, sp, getMessage("preferences"), JOptionPane.OK_CANCEL_OPTION);
                 if (opt == JOptionPane.OK_OPTION) {
                     if (prefsErr) {
                         displayErrorMessage(getMessage("warning.message.preferences.contain.error"));
