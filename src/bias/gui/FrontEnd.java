@@ -1765,7 +1765,6 @@ public class FrontEnd extends JFrame {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     private EntryExtension getSelectedExtensionEntry(JTabbedPane tabPane) {
         if (tabPane.getTabCount() > 0) {
             if (tabPane.getSelectedIndex() != -1) {
@@ -5095,7 +5094,6 @@ public class FrontEnd extends JFrame {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void initAddOnsManagementDialog() {
         if (addOnsManagementDialog == null) {
             try {

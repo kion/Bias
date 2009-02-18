@@ -15,8 +15,9 @@ import bias.i18n.I18nService;
  */
 
 public abstract class EntryExtension extends JComponent implements Extension {
+	private static final long serialVersionUID = 1L;
 
-    /**
+	/**
      * Internationalization support
      */
     protected String getMessage(String key) {
