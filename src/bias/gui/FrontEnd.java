@@ -102,6 +102,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -977,11 +978,11 @@ public class FrontEnd extends JFrame {
                     if (skin != null) {
                         activeSkin = skin;
                     } else {
-                        activeSkin = DEFAULT_SKIN;
+                        activateDefaultSkin();
                     }
                 }
             } catch (Throwable t) {
-                activeSkin = DEFAULT_SKIN;
+                activateDefaultSkin();
                 config.remove(Constants.PROPERTY_SKIN);
                 System.err.println(
                         "Current Skin '" + skin + "' failed to initialize!" + Constants.NEW_LINE +
@@ -990,8 +991,17 @@ public class FrontEnd extends JFrame {
                 t.printStackTrace(System.err);
             }
         } else {
-            activeSkin = DEFAULT_SKIN;
+            activateDefaultSkin();
         }
+    }
+    
+    private static void activateDefaultSkin() {
+    	try { // try to set system look-&-feed
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			// ignore, default cross-platform look-&-feel will be used automatically 
+		}
+        activeSkin = DEFAULT_SKIN;
     }
     
     private boolean setActiveSkin(String skin) throws Throwable {
