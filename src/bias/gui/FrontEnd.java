@@ -102,7 +102,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -251,8 +250,6 @@ public class FrontEnd extends JFrame {
     private static Properties config;
     
     private static String activeSkin = null;
-    
-    private static Map<String, byte[]> initialSkinSettings = new HashMap<String, byte[]>();
     
     private static Map<String, DataEntry> dataEntries = new HashMap<String, DataEntry>();
 
@@ -963,45 +960,35 @@ public class FrontEnd extends JFrame {
     @SuppressWarnings("unchecked")
     private static void activateSkin() {
         String skin = config.getProperty(Constants.PROPERTY_SKIN);
-        if (skin != null) {
-            try {
-                String skinFullClassName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
-                Class<Skin> skinClass = (Class<Skin>) Class.forName(skinFullClassName);
-                Skin skinInstance = skinClass.newInstance();
-                byte[] skinSettings = BackEnd.getInstance().loadAddOnSettings(skinFullClassName, PackType.SKIN);
-                skinInstance.activate(skinSettings);
-                // use control icons defined by Skin if available
-                if (skinInstance.getUIIcons() != null) {
-                    guiIcons = skinInstance.getUIIcons();
-                }
-                if (activeSkin == null) {
-                    if (skin != null) {
-                        activeSkin = skin;
-                    } else {
-                        activateDefaultSkin();
-                    }
-                }
-            } catch (Throwable t) {
-                activateDefaultSkin();
-                config.remove(Constants.PROPERTY_SKIN);
-                System.err.println(
-                        "Current Skin '" + skin + "' failed to initialize!" + Constants.NEW_LINE +
-                        "(Preferences will be auto-modified to use default Skin)" + Constants.NEW_LINE + 
-                        "Error details: " + Constants.NEW_LINE);
-                t.printStackTrace(System.err);
-            }
-        } else {
-            activateDefaultSkin();
+        if (skin == null) {
+        	skin = DEFAULT_SKIN;
         }
-    }
-    
-    private static void activateDefaultSkin() {
-    	try { // try to set system look-&-feed
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
-			// ignore, default cross-platform look-&-feel will be used automatically 
-		}
-        activeSkin = DEFAULT_SKIN;
+        try {
+            String skinFullClassName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
+            Class<Skin> skinClass = (Class<Skin>) Class.forName(skinFullClassName);
+            Skin skinInstance = skinClass.newInstance();
+            byte[] skinSettings = BackEnd.getInstance().loadAddOnSettings(skinFullClassName, PackType.SKIN);
+            skinInstance.activate(skinSettings);
+            // use control icons defined by Skin if available
+            if (skinInstance.getUIIcons() != null) {
+                guiIcons = skinInstance.getUIIcons();
+            }
+            if (activeSkin == null) {
+                if (skin != null) {
+                    activeSkin = skin;
+                } else {
+                    activeSkin = DEFAULT_SKIN;
+                }
+            }
+        } catch (Throwable t) {
+            activeSkin = DEFAULT_SKIN;
+            config.remove(Constants.PROPERTY_SKIN);
+            System.err.println(
+                    "Current Skin '" + skin + "' failed to initialize!" + Constants.NEW_LINE +
+                    "(Preferences will be auto-modified to use default Skin)" + Constants.NEW_LINE + 
+                    "Error details: " + Constants.NEW_LINE);
+            t.printStackTrace(System.err);
+        }
     }
     
     private boolean setActiveSkin(String skin) throws Throwable {
@@ -1047,14 +1034,8 @@ public class FrontEnd extends JFrame {
             // store if differs from stored version
             if (!PropertiesUtils.deserializeProperties(settings).equals(PropertiesUtils.deserializeProperties(skinSettings))) {
                 BackEnd.getInstance().storeAddOnSettings(skin, PackType.SKIN, settings);
+                skinChanged = true;
             }
-            // find out if differs from initial version
-            byte[] initialSettings = initialSkinSettings.get(skin);
-            if (initialSettings == null) {
-                initialSkinSettings.put(skin, settings);
-                initialSettings = settings;
-            }
-            skinChanged = !PropertiesUtils.deserializeProperties(settings).equals(PropertiesUtils.deserializeProperties(initialSettings));
         }
         return skinChanged;
     }
@@ -5286,7 +5267,10 @@ public class FrontEnd extends JFrame {
                             String skin = (String) skinList.getValueAt(idx, 1);
                             if (DEFAULT_SKIN.equals(skin)) {
                                 try {
-                                    setActiveSkin(null);
+                                    String fullSkinClassName = 
+                                        Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR
+                                                                + DEFAULT_SKIN + Constants.PACKAGE_PATH_SEPARATOR + DEFAULT_SKIN;
+                                    setActiveSkin(fullSkinClassName);
                                     skinList.repaint();
                                 } catch (Throwable t) {
                                     displayErrorMessage(getMessage("error.message.skin.reactivation.failure"), t);

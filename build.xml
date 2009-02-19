@@ -45,7 +45,7 @@
 				<attribute name="AppLauncher-Version" value="${AppLauncher_Version}" />
 			</manifest>
 		</jar>
-		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/res/*.* bias/utils/** bias/i18n/**" excludes="bias/Launcher** bias/res/load.gif">
+		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/skin/DefaultSkin/*.* bias/res/*.* bias/utils/** bias/i18n/**" excludes="bias/Launcher** bias/res/load.gif">
 			<manifest>
 				<attribute name="AppCore-Version" value="${AppCore_Version}" />
 			</manifest>
@@ -68,7 +68,7 @@
           target: Build_AppCore_Package
          ================================= -->
 	<target name="Build_AppCore_Package" description="AppCore Package">
-		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/res/*.* bias/utils/** bias/i18n/**" excludes="bias/Launcher** bias/res/load.gif">
+		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/skin/DefaultSkin/*.* bias/res/*.* bias/utils/** bias/i18n/**" excludes="bias/Launcher** bias/res/load.gif">
 			<manifest>
 				<attribute name="AppCore-Version" value="${AppCore_Version}" />
 			</manifest>
