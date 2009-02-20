@@ -1,3 +1,6 @@
+/**
+ * Created on Feb 19, 2009
+ */
 package bias.skin.DefaultSkin;
 
 import java.util.Properties;
@@ -9,6 +12,10 @@ import javax.swing.UIManager;
 import bias.gui.FrontEnd;
 import bias.skin.Skin;
 import bias.utils.PropertiesUtils;
+
+/**
+ * @author kion
+ */
 
 public class DefaultSkin extends Skin {
 
