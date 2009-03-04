@@ -146,7 +146,7 @@ public class Launcher {
         File appCoreFile = new File(rootDir, APP_CORE_FILE_NAME);
         File appCoreUpdateFile = new File(rootDir, UPDATE_FILE_PREFIX + APP_CORE_FILE_NAME);
         if (appCoreUpdateFile.exists()) {
-            FSUtils.duplicateFile(appCoreUpdateFile, appCoreFile);
+            FSUtils.copy(appCoreUpdateFile, appCoreFile);
             FSUtils.delete(appCoreUpdateFile);
         }
         addClassPathURL(FILE_PROTOCOL_PREFIX + appCoreFile.getAbsolutePath());
@@ -155,7 +155,7 @@ public class Launcher {
             for (File file : addonsDir.listFiles()) {
                 if (file.getName().startsWith(UPDATE_FILE_PREFIX)) {
                     File updatedFile = new File(addonsDir, file.getName().substring(UPDATE_FILE_PREFIX.length()));
-                    FSUtils.duplicateFile(file, updatedFile);
+                    FSUtils.copy(file, updatedFile);
                     FSUtils.delete(file);
                 }
                 addClassPathURL(FILE_PROTOCOL_PREFIX + file.getAbsolutePath());

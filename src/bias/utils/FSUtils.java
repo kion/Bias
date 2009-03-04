@@ -54,7 +54,12 @@ public class FSUtils {
         bais.close();
 	}
 	
-    public static void duplicateFile(File in, File out) throws IOException {
+    public static void move(File in, File out) throws IOException {
+    	copy(in, out);
+    	delete(in);
+    }
+    
+    public static void copy(File in, File out) throws IOException {
         if (in.exists() && in != null && out != null) {
             if (!out.exists()) {
                 if (in.isDirectory()) {
@@ -71,7 +76,7 @@ public class FSUtils {
                 if (source.equals("directory")) {
                     File[] files = in.listFiles();
                     for (File file : files) {
-                        duplicateFile(file, new File(out, file.getName()));
+                        copy(file, new File(out, file.getName()));
                     }
                 } else {
                     FileChannel inCh = new FileInputStream(in).getChannel();

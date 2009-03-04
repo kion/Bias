@@ -565,7 +565,7 @@ public class BackEnd {
                 if (prefsFile.exists()) {
                     File localPrefsFile = new File(Constants.CONFIG_DIR, Constants.PREFERENCES_FILE);
                     if (!localPrefsFile.exists() || config.isOverwritePrefs()) {
-                        FSUtils.duplicateFile(prefsFile, localPrefsFile);
+                        FSUtils.copy(prefsFile, localPrefsFile);
                         // reload preferences file
                         loadPreferences();
                     }
@@ -638,7 +638,7 @@ public class BackEnd {
                     }
                 }
                 for (File iconSetInfoOrRegFile : configDir.listFiles(FILE_FILTER_ICONSET_INFO_OR_REG)) {
-                    FSUtils.duplicateFile(iconSetInfoOrRegFile, new File(Constants.CONFIG_DIR, iconSetInfoOrRegFile.getName()));
+                    FSUtils.copy(iconSetInfoOrRegFile, new File(Constants.CONFIG_DIR, iconSetInfoOrRegFile.getName()));
                 }
             }
         }
@@ -647,7 +647,7 @@ public class BackEnd {
             File appCoreFile = new File(importDir, Constants.APP_CORE_FILE_NAME);
             if (appCoreFile.exists()) {
                 File localAppCoreUpdateFile = new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME);
-                FSUtils.duplicateFile(appCoreFile, localAppCoreUpdateFile);
+                FSUtils.copy(appCoreFile, localAppCoreUpdateFile);
             }
         }
         // addons/libs
@@ -657,15 +657,15 @@ public class BackEnd {
                 for (File addOnFile : addOnsDir.listFiles()) {
                     File localAddOnFile = new File(Constants.ADDONS_DIR, addOnFile.getName());
                     if (!localAddOnFile.exists()) {
-                        FSUtils.duplicateFile(addOnFile, localAddOnFile);
+                        FSUtils.copy(addOnFile, localAddOnFile);
                     } else if (config.isUpdateInstalledAddOnsAndLibs()) {
                         localAddOnFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + addOnFile.getName());
-                        FSUtils.duplicateFile(addOnFile, localAddOnFile);
+                        FSUtils.copy(addOnFile, localAddOnFile);
                     }
                 }
             }
             for (File addOnInfoFile : configDir.listFiles(FILE_FILTER_EXT_SKIN_LIB_INFO)) {
-                FSUtils.duplicateFile(addOnInfoFile, new File(Constants.CONFIG_DIR, addOnInfoFile.getName()));
+                FSUtils.copy(addOnInfoFile, new File(Constants.CONFIG_DIR, addOnInfoFile.getName()));
                 AddOnInfo addOnInfo = readAddOnInfo(addOnInfoFile);
                 PackType addOnType = null;
                 if (addOnInfoFile.getName().endsWith(Constants.ADDON_EXTENSION_INFO_FILE_SUFFIX)) {
@@ -871,7 +871,7 @@ public class BackEnd {
                 File iconsListFile = new File(configDir, Constants.ICONS_CONFIG_FILE);
                 FSUtils.writeFile(iconsListFile, iconsList.toString().getBytes());
                 for (File localIconSetInfoOrRegFile : Constants.CONFIG_DIR.listFiles(FILE_FILTER_ICONSET_INFO_OR_REG)) {
-                    FSUtils.duplicateFile(localIconSetInfoOrRegFile, new File(configDir, localIconSetInfoOrRegFile.getName()));
+                    FSUtils.copy(localIconSetInfoOrRegFile, new File(configDir, localIconSetInfoOrRegFile.getName()));
                 }
             }
         }
@@ -890,7 +890,7 @@ public class BackEnd {
             Collection<String> addOnNames = new ArrayList<String>();
             // 1) export addon-info files
             for (File localAddOnInfo : Constants.CONFIG_DIR.listFiles(FILE_FILTER_EXT_SKIN_LIB_INFO)) {
-                FSUtils.duplicateFile(localAddOnInfo, new File(configDir, localAddOnInfo.getName()));
+                FSUtils.copy(localAddOnInfo, new File(configDir, localAddOnInfo.getName()));
                 addOnNames.add(localAddOnInfo.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR));
             }
             // 2) export addons/libs
@@ -910,13 +910,13 @@ public class BackEnd {
                     String addOnName = updatedFile.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     if (addOnNames.contains(addOnName)) {
                         File exportFile = new File(addonsDir, updatedFile.getName());
-                        FSUtils.duplicateFile(file, exportFile);
+                        FSUtils.copy(file, exportFile);
                     }
                 } else {
                     String addOnName = file.getName().replaceFirst(Constants.FILE_SUFFIX_PATTERN, Constants.EMPTY_STR);
                     if (!updatedFiles.contains(file.getName()) && addOnNames.contains(addOnName)) {
                         File exportFile = new File(addonsDir, file.getName());
-                        FSUtils.duplicateFile(file, exportFile);
+                        FSUtils.copy(file, exportFile);
                     }
                 }
             }
@@ -928,7 +928,7 @@ public class BackEnd {
             for (File file : Constants.ADDON_INFO_DIR.listFiles()) {
                 if (file.isDirectory() && addOnNames.contains(file.getName())) {
                     File exportAddOnInfoDir = new File(addOnsInfoDir, file.getName());;
-                    FSUtils.duplicateFile(file, exportAddOnInfoDir);
+                    FSUtils.copy(file, exportAddOnInfoDir);
                 }
             }
             if (addOnsInfoDir.list().length == 0) {
@@ -942,7 +942,7 @@ public class BackEnd {
                 localAppCoreFile = new File(Constants.ROOT_DIR, Constants.APP_CORE_FILE_NAME);
             }
             File appCoreFile = new File(exportDir, Constants.APP_CORE_FILE_NAME);
-            FSUtils.duplicateFile(localAppCoreFile, appCoreFile);
+            FSUtils.copy(localAppCoreFile, appCoreFile);
         }
         // extension configs
         if (config.isExportAddOnConfigs()) {
@@ -962,7 +962,7 @@ public class BackEnd {
                 addOnName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
                                 + addOnName  + Constants.PACKAGE_PATH_SEPARATOR + addOnName;
                 File addOnConfigFile = new File(configDir, addOnConfig.getName());
-                FSUtils.duplicateFile(addOnConfig, addOnConfigFile);
+                FSUtils.copy(addOnConfig, addOnConfigFile);
             }
         }
         // import/export configs
@@ -1463,12 +1463,12 @@ public class BackEnd {
 	}
 
 	public void installAppCoreUpdate(File appCoreUpdateFile, String version) throws Throwable {
-        FSUtils.duplicateFile(appCoreUpdateFile, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME));
+        FSUtils.copy(appCoreUpdateFile, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_CORE_FILE_NAME));
         updatedAppCoreVersion = version;
     }
     
     public void installAppLauncherUpdate(File appLauncherUpdateFile, String version) throws Throwable {
-        FSUtils.duplicateFile(appLauncherUpdateFile, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_LAUNCHER_FILE_NAME));
+        FSUtils.copy(appLauncherUpdateFile, new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_LAUNCHER_FILE_NAME));
         updatedAppLauncherVersion = version;
     }
     
@@ -1919,9 +1919,9 @@ public class BackEnd {
         File installedAddOnFile = new File(Constants.ADDONS_DIR, addOnInfo.getName() + fileSuffix);
         if (update) {
             File updateAddOnFile = new File(Constants.ADDONS_DIR, Constants.UPDATE_FILE_PREFIX + addOnInfo.getName() + fileSuffix);
-            FSUtils.duplicateFile(addOnFile, updateAddOnFile);
+            FSUtils.copy(addOnFile, updateAddOnFile);
         } else {
-            FSUtils.duplicateFile(addOnFile, installedAddOnFile);
+            FSUtils.copy(addOnFile, installedAddOnFile);
         }
         storeAddOnInfo(addOnInfo, addOnType);
         registerNewAddOn(addOnType, addOnInfo, status);
