@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -103,6 +104,28 @@ public class FSUtils {
         for (File f : dir.listFiles()) {
             delete(f);
         }
+    }
+    
+    public static List<File> listFilesRecursively(File dir, boolean skipErrors) throws Throwable {
+    	List<File> fList = new LinkedList<File>();
+    	if (dir != null && dir.isDirectory()) {
+    		try {
+	    		fList = new LinkedList<File>();
+	    		File[] files = dir.listFiles();
+	    		for (File file : files) {
+	    			if (file.isDirectory()) {
+	    				fList.addAll(listFilesRecursively(file, skipErrors));
+	    			} else {
+	    				fList.add(file);
+	    			}
+	    		}
+    		} catch (Throwable t) {
+    			if (!skipErrors) {
+    				throw new Throwable("Failed to list directory " + dir + " recursively!", t);
+    			}
+    		}
+    	}
+    	return fList;
     }
     
     public static long getFileSize(File file) {
