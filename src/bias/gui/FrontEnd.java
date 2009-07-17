@@ -842,7 +842,7 @@ public class FrontEnd extends JFrame {
             BackEnd.getInstance().shutdown(-1);
         } catch (Throwable t) {
             Splash.hideSplash();
-            displayErrorMessage(getMessage("error.data.load.failure"), t);
+            displayErrorMessage(getMessage("error.data.load.failure") + (Validator.isNullOrBlank(t.getMessage()) ? Constants.EMPTY_STR : Constants.NEW_LINE.concat(t.getMessage())), t);
             BackEnd.getInstance().shutdown(-1);
         }
     }
