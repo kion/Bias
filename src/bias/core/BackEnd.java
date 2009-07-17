@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -350,7 +351,13 @@ public class BackEnd {
         if (metadataFile.exists()) {
             data = FSUtils.readFile(metadataFile);
             decryptedData = decrypt(data);
-            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
+            try {
+            	metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
+            } catch (Throwable t) {
+            	emergencyRestoreCheck(true);
+            }
+        } else {
+        	emergencyRestoreCheck(false);
         }
         // icon files
         if (Constants.ICONS_DIR.exists()) {
@@ -370,6 +377,35 @@ public class BackEnd {
         // read application core/launcher versions
         appCoreVersion = readAppCoreVersion();
         appLauncherVersion = readAppLauncherVersion();
+    }
+    
+    private void emergencyRestoreCheck(boolean metaDataFileExists) throws Throwable {
+    	StringBuffer err = new StringBuffer();
+    	if (metaDataFileExists) {
+    		err.append("Failed to process existing metadata file! Perhaps, it is damaged...\n");
+    	}
+		List<File> files = FSUtils.listFilesRecursively(Constants.ATTACHMENTS_DIR, true);
+    	File[] dFiles = Constants.DATA_DIR.listFiles(FILE_FILTER_DATA);
+		files.addAll(Arrays.asList(dFiles));
+    	if (files.size() > 0) {
+    		if (!metaDataFileExists) {
+        		err.append("Metadata file does not exist, but there's some data on the disk...\n");
+    		}
+    		File restoreDir = new File(Constants.ROOT_DIR, "restore");
+    		restoreDir.mkdir();
+    		for (File file : files) {
+                byte[] data = FSUtils.readFile(file);
+                byte[] decryptedData = decrypt(data);
+                File restoredFile = new File(restoreDir, file.getName());
+                FSUtils.writeFile(restoredFile, decryptedData);
+    		}
+    		err.append("Some data have been restored to the following dir: ".concat(restoreDir.getAbsolutePath()).concat(Constants.NEW_LINE));
+    		err.append("Review them manually and try to restore what's possible.\n");
+        	throw new Throwable(err.toString());
+    	} else if (metaDataFileExists) {
+    		err.append("Emergency restore discarded - no data to restore have been found :(");
+        	throw new Throwable(err.toString());
+    	}
     }
     
     private void loadIcons(File iconsListFile) throws IOException {
