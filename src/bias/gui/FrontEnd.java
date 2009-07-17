@@ -405,6 +405,8 @@ public class FrontEnd extends JFrame {
 
     private JToolBar jToolBar2 = null;
 
+    private JButton jButton3 = null;
+
     private JButton jButton6 = null;
 
     private JButton jButton7 = null;
@@ -740,40 +742,40 @@ public class FrontEnd extends JFrame {
     // TODO [P3] hot-keys-bindings should be customizable
     private void bindHotKeys() {
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK), saveAction.getValue(Action.NAME));
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK), saveAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(saveAction.getValue(Action.NAME), saveAction);
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_MASK), importAction.getValue(Action.NAME));
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK), importAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(importAction.getValue(Action.NAME), importAction);
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK), exportAction.getValue(Action.NAME));
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK), exportAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(exportAction.getValue(Action.NAME), exportAction);
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_MASK), preferencesAction.getValue(Action.NAME));
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK), preferencesAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(preferencesAction.getValue(Action.NAME), preferencesAction);
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_MASK), manageAddOnsAction.getValue(Action.NAME));
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_DOWN_MASK), manageAddOnsAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(manageAddOnsAction.getValue(Action.NAME), manageAddOnsAction);
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK), exitAction.getValue(Action.NAME));
-        getRootPane().getActionMap().put(exitAction.getValue(Action.NAME), exitAction);
-        
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK), closeAction.getValue(Action.NAME));
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), closeAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(closeAction.getValue(Action.NAME), closeAction);
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_MASK), fullScreenAction.getValue(Action.NAME));
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK + InputEvent.ALT_DOWN_MASK), exitAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(exitAction.getValue(Action.NAME), exitAction);
+        
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), fullScreenAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(fullScreenAction.getValue(Action.NAME), fullScreenAction);
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_MASK), backAction.getValue(Action.NAME));
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_DOWN_MASK), backAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(backAction.getValue(Action.NAME), backAction);
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK), forwardAction.getValue(Action.NAME));
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_DOWN_MASK), forwardAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(forwardAction.getValue(Action.NAME), forwardAction);
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.ALT_MASK), backToFirstAction.getValue(Action.NAME));
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.ALT_DOWN_MASK), backToFirstAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(backToFirstAction.getValue(Action.NAME), backToFirstAction);
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.ALT_MASK), forwardToLastAction.getValue(Action.NAME));
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.ALT_DOWN_MASK), forwardToLastAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(forwardToLastAction.getValue(Action.NAME), forwardToLastAction);
         
     }
@@ -2914,10 +2916,24 @@ public class FrontEnd extends JFrame {
             jToolBar2.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
             jToolBar2.add(getJButton10());
             jToolBar2.add(getJButton6());
+            jToolBar2.add(getJButton3());
             jToolBar2.add(getJButton8());
             jToolBar2.add(getJButton9());
         }
         return jToolBar2;
+    }
+
+    /**
+     * This method initializes jButton3
+     * 
+     * @return javax.swing.JButton
+     */
+    private JButton getJButton3() {
+        if (jButton3 == null) {
+            jButton3 = new JButton(displayHelpAction);
+            jButton3.setText(Constants.EMPTY_STR);
+        }
+        return jButton3;
     }
 
     /**
@@ -3405,7 +3421,7 @@ public class FrontEnd extends JFrame {
         
         public ImportAction() {
             putValue(Action.NAME, "import");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("data.import"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("data.import").concat(" {Ctrl+I}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconImport());
         }
         
@@ -3869,7 +3885,7 @@ public class FrontEnd extends JFrame {
         
         public ExportAction() {
             putValue(Action.NAME, "export");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("data.export"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("data.export").concat(" {Ctrl+E}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconExport());
         }
 
@@ -4539,7 +4555,7 @@ public class FrontEnd extends JFrame {
         
         public SaveAction() {
             putValue(Action.NAME, "save");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("save"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("save").concat(" {Ctrl+S}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconSave());
         }
 
@@ -4612,7 +4628,7 @@ public class FrontEnd extends JFrame {
         
         public ExitAction() {
             putValue(Action.NAME, "exit");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("exit"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("exit").concat(" {Ctrl+Alt+Q}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconExit());
         }
 
@@ -4627,7 +4643,7 @@ public class FrontEnd extends JFrame {
         
         public BackToFirstAction() {
             putValue(Action.NAME, "backToFirst");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("history.back.to.first"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("history.back.to.first").concat(" {Alt+Home}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconBackToFirst());
             setEnabled(false);
         }
@@ -4645,7 +4661,7 @@ public class FrontEnd extends JFrame {
         
         public BackAction() {
             putValue(Action.NAME, "back");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("history.back"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("history.back").concat(" {Alt+←}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconBack());
             setEnabled(false);
         }
@@ -4665,7 +4681,7 @@ public class FrontEnd extends JFrame {
         
         public ForwardAction() {
             putValue(Action.NAME, "forward");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("history.forward"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("history.forward").concat(" {Alt+→}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconForward());
             setEnabled(false);
         }
@@ -4685,7 +4701,7 @@ public class FrontEnd extends JFrame {
         
         public ForwardToLastAction() {
             putValue(Action.NAME, "forwardToLast");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("history.forward.to.last"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("history.forward.to.last").concat(" {Alt+End}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconForwardToLast());
             setEnabled(false);
         }
@@ -4703,7 +4719,7 @@ public class FrontEnd extends JFrame {
         
         public PreferencesAction() {
             putValue(Action.NAME, "preferences");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("preferences"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("preferences").concat(" {Ctrl+P}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconPreferences());
         }
 
@@ -4940,7 +4956,7 @@ public class FrontEnd extends JFrame {
         
         public ManageAddOnsAction() {
             putValue(Action.NAME, "manageAddOns");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("manage.addons"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("manage.addons").concat(" {Ctrl+M}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconAddOns());
         }
 
@@ -6639,6 +6655,10 @@ public class FrontEnd extends JFrame {
         return -1;
     }
     
+    private JScrollPane getDetailsPane(String detailsInfo) {
+    	return getDetailsPane(detailsInfo, null);
+    }
+    
     private JScrollPane getDetailsPane(String detailsInfo, URL baseURL) {
         if (detailsPane == null) {
             detailsTextPane = new JTextPane();
@@ -6657,7 +6677,9 @@ public class FrontEnd extends JFrame {
             });
             detailsPane = new JScrollPane(detailsTextPane);
         }
-        ((HTMLDocument) detailsTextPane.getDocument()).setBase(baseURL);
+        if (baseURL != null) {
+        	((HTMLDocument) detailsTextPane.getDocument()).setBase(baseURL);
+        }
         detailsTextPane.setText(detailsInfo);
         return detailsPane;
     }
@@ -6691,6 +6713,30 @@ public class FrontEnd extends JFrame {
         return dependenciesLabel;
     }
     
+    private HelpAction displayHelpAction = new HelpAction();
+    private class HelpAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public HelpAction() {
+            putValue(Action.NAME, "help");
+            putValue(Action.SHORT_DESCRIPTION, getMessage("help"));
+            putValue(Action.SMALL_ICON, guiIcons.getIconHelp());
+        }
+
+        public void actionPerformed(ActionEvent evt) {
+            JPanel p = new JPanel(new BorderLayout());
+            p.add(getDetailsPane(
+            		"<html>" +
+            		"<body>" +
+            			getMessage("help.info") +
+            		"</body>" +
+            		"</html>"
+            		), 
+            		BorderLayout.CENTER);
+            displayDialog(p, "Bias :: " + getMessage("help"));
+        }
+    }
+
     private AboutAction displayAboutInfoAction = new AboutAction();
     private class AboutAction extends AbstractAction {
         private static final long serialVersionUID = 1L;

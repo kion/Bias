@@ -16,6 +16,7 @@ public class GUIIcons {
      * Default control icons
      */
     private static final ImageIcon ICON_ABOUT = new ImageIcon(GUIIcons.class.getResource("/bias/res/about.png"));
+    private static final ImageIcon ICON_HELP = new ImageIcon(GUIIcons.class.getResource("/bias/res/help.png"));
     private static final ImageIcon ICON_IMPORT = new ImageIcon(GUIIcons.class.getResource("/bias/res/import.png"));
     private static final ImageIcon ICON_EXPORT = new ImageIcon(GUIIcons.class.getResource("/bias/res/export.png"));
     private static final ImageIcon ICON_DELETE = new ImageIcon(GUIIcons.class.getResource("/bias/res/delete.png"));
@@ -59,6 +60,7 @@ public class GUIIcons {
     private ImageIcon iconSkins;
     private ImageIcon iconIcons;
     private ImageIcon iconOnline;
+    private ImageIcon iconHelp;
     private ImageIcon iconAbout;
     
     /**
@@ -87,6 +89,7 @@ public class GUIIcons {
         this.iconSkins = ICON_SKINS;
         this.iconIcons = ICON_ICONS; 
         this.iconOnline = ICON_ONLINE; 
+        this.iconHelp = ICON_HELP;
         this.iconAbout = ICON_ABOUT;
     }
 
@@ -112,6 +115,7 @@ public class GUIIcons {
             ImageIcon iconSkins, 
             ImageIcon iconIcons, 
             ImageIcon iconOnline, 
+            ImageIcon iconHelp, 
             ImageIcon iconAbout) {
         this.iconSave = iconSave;
         this.iconImport = iconImport;
@@ -134,6 +138,7 @@ public class GUIIcons {
         this.iconSkins = iconSkins;
         this.iconIcons = iconIcons;
         this.iconOnline = iconOnline;
+        this.iconHelp = iconHelp;
         this.iconAbout = iconAbout;
     }
 
@@ -145,7 +150,15 @@ public class GUIIcons {
         this.iconAbout = iconAbout;
     }
 
-    public ImageIcon getIconAddOns() {
+    public ImageIcon getIconHelp() {
+		return iconHelp;
+	}
+
+	public void setIconHelp(ImageIcon iconHelp) {
+		this.iconHelp = iconHelp;
+	}
+
+	public ImageIcon getIconAddOns() {
         return iconAddOns;
     }
 

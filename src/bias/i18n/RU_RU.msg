@@ -278,3 +278,5 @@ extension == Расширение
 skin == Скин
 iconset == Набор иконок
 library == Библиотека
+help == Помощь
+help.info == <b>Горячие клавиши</b><br/><br/><ul>Сохранить - <i color="blue">{Ctrl+S}</i><li></li>Импорт - <i color="blue">{Ctrl+I}</i><li></li>Экспорт - <i color="blue">{Ctrl+E}</i><li></li>Предпочтения - <i color="blue">{Ctrl+P}</i><li></li>Управление расширениями - <i color="blue">{Ctrl+M}</i><li></li>Полноэкранный режим - <i color="blue">{Ctrl+F}</i><li></li>История/Назад - <i color="blue">{Alt+←}</i><li></li>История/Вперед - <i color="blue">{Alt+→}</i><li></li>История/В-Самое-Начало - <i color="blue">{Alt+Home}</i><li></li>История/В-Самый-Конец - <i color="blue">{Alt+End}</i><li></li>Закрыть (Спрятать) Окно - <i color="blue">{Ctrl+Q}</i><li></li>Выйти из Приложения - <i color="blue">{Ctrl+Alt+Q}</i><li></ul>

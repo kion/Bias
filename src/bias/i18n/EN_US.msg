@@ -278,3 +278,5 @@ extension == Extension
 skin == Skin
 iconset == Icon-set
 library == Library
+help == Help
+help.info == <b>Hotkeys</b><br/><br/><ul>Save - <i color="blue">{Ctrl+S}</i><li></li>Import - <i color="blue">{Ctrl+I}</i><li></li>Export - <i color="blue">{Ctrl+E}</i><li></li>Preferences - <i color="blue">{Ctrl+P}</i><li></li>AddOns Management - <i color="blue">{Ctrl+M}</i><li></li>FullScreen Mode - <i color="blue">{Ctrl+F}</i><li></li>History/Back - <i color="blue">{Alt+←}</i><li></li>History/Forward - <i color="blue">{Alt+→}</i><li></li>History/Back-To-First - <i color="blue">{Alt+Home}</i><li></li>History/Forward-To-Last - <i color="blue">{Alt+End}</i><li></li>Close (Hide) Window - <i color="blue">{Ctrl+Q}</i><li></li>Exit Application - <i color="blue">{Ctrl+Alt+Q}</i><li></ul>
