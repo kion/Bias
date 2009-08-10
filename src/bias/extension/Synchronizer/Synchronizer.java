@@ -672,16 +672,18 @@ public class Synchronizer extends ToolExtension implements AfterSaveEventListene
         if (!Validator.isNullOrBlank(exportConfigsStr)) {
             String[] configs = exportConfigsStr.split(PROPERTY_VALUES_SEPARATOR);
             for (String config : configs) {
-                String[] cfg = config.split(SCHEDULE_VALUE_SEPARATOR);
-                Collection<Long> periods = getExportConfigs().get(cfg[0]);
-                if (periods == null) {
-                    periods = new ArrayList<Long>();
-                    getExportConfigs().put(cfg[0], periods);
-                }
-                Long period = Long.valueOf(cfg[1]);
-                if (!periods.contains(period)) {
-                    periods.add(period);
-                }
+            	if (!Validator.isNullOrBlank(config)) {
+                    String[] cfg = config.split(SCHEDULE_VALUE_SEPARATOR);
+                    Collection<Long> periods = getExportConfigs().get(cfg[0]);
+                    if (periods == null) {
+                        periods = new ArrayList<Long>();
+                        getExportConfigs().put(cfg[0], periods);
+                    }
+                    Long period = Long.valueOf(cfg[1]);
+                    if (!periods.contains(period)) {
+                        periods.add(period);
+                    }
+            	}
             }
         }
         populateConfigsModel(getExportConfigsModel(), getExportConfigs(), getExportConfigsValues(), INVOKATION_TYPE_ON_SAVE);
