@@ -2430,6 +2430,10 @@ public class BackEnd {
             System.exit(code);
         }
     }
+
+    public void emergencyShutdown() {
+        FSUtils.delete(Constants.TMP_DIR);
+    }
     
     public Collection<UUID> getStoredDataEntryIDs() {
         return collectRecognizableIDs(data, true);

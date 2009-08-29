@@ -638,6 +638,13 @@ public class FrontEnd extends JFrame {
                                 getMessage("info.message.launcher.updated", Constants.ROOT_DIR.toString()) + 
                                 Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX));
         	}
+        	
+        	Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+				@Override
+				public void run() {
+					emergencyExit();
+				}
+			}));
 
         } catch (Exception ex) {
             displayErrorMessage(ex);
@@ -1395,14 +1402,24 @@ public class FrontEnd extends JFrame {
         return extension;
     }
     
-    private void store(final boolean beforeExit) {
-        if (beforeExit) finalizeUI();
-        fireBeforeSaveEvent(new SaveEvent(beforeExit));
-        syncExecute(new Runnable(){
-            public void run() { 
-                instance.displayProcessNotification(getMessage("data.saving"), false);
-            }
-        });
+    private void store(boolean showFinalizeUI) {
+    	store(showFinalizeUI, true);
+    }
+    
+    private void emergencyStore() {
+    	store(false, false);
+    }
+    
+    private void store(final boolean showUIHints, boolean fireEvents) {
+        if (showUIHints) finalizeUI();
+        if (fireEvents) fireBeforeSaveEvent(new SaveEvent(showUIHints));
+        if (showUIHints) {
+            syncExecute(new Runnable(){
+                public void run() { 
+                    instance.displayProcessNotification(getMessage("data.saving"), false);
+                }
+            });
+        }
         syncExecute(new Runnable(){
             public void run() { 
                 BackEnd.getInstance().setConfig(collectProperties());
@@ -1435,13 +1452,15 @@ public class FrontEnd extends JFrame {
                 }
             }
         });
-        syncExecute(new Runnable(){
-            public void run() { 
-                instance.hideProcessNotification();
-            }
-        });
-        displayStatusBarMessage(getMessage("data.saved"));
-        fireAfterSaveEvent(new SaveEvent(beforeExit));
+        if (showUIHints) {
+            syncExecute(new Runnable(){
+                public void run() { 
+                    instance.hideProcessNotification();
+                }
+            });
+            displayStatusBarMessage(getMessage("data.saved"));
+        }
+        if (fireEvents) fireAfterSaveEvent(new SaveEvent(showUIHints));
     }
     
     private Map<String, ToolData> collectToolsData() throws Throwable {
@@ -1651,7 +1670,9 @@ public class FrontEnd extends JFrame {
         }
     }
     
+    private boolean shutdownFlag = false;
     private void shutdown() {
+        shutdownFlag = true;
         finalizeUI();
         fireBeforeExitEvent(new ExitEvent());
         syncExecute(new Runnable(){
@@ -1659,6 +1680,13 @@ public class FrontEnd extends JFrame {
                 BackEnd.getInstance().shutdown(0);
             }
         });
+    }
+    
+    private void emergencyExit() {
+    	if (!shutdownFlag) {
+        	emergencyStore();
+        	BackEnd.getInstance().emergencyShutdown();
+    	}
     }
     
     private void exitWithOptionalAutoSave() {
