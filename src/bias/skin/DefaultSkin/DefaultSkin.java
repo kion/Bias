@@ -16,8 +16,6 @@ import bias.gui.FrontEnd;
 import bias.skin.Skin;
 import bias.utils.PropertiesUtils;
 
-import com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel;
-
 /**
  * @author kion
  */
@@ -41,7 +39,7 @@ public class DefaultSkin extends Skin {
     		}
         } else if (useNimbusLAF) {
         	try { // try to set Nimbus look-&-feel
-    			UIManager.setLookAndFeel(new NimbusLookAndFeel());
+    			UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
     		} catch (Throwable cause) {
     			// ignore, default cross-platform look-&-feel will be used automatically 
     		}
