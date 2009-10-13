@@ -113,7 +113,8 @@ public class TristateCheckBox extends JCheckBox {
 
         public void setArmed(boolean b) {}
 
-        public boolean isFocusTraversable() {
+        @SuppressWarnings("unused")
+		public boolean isFocusTraversable() {
             return isEnabled();
         }
 
