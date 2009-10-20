@@ -10,6 +10,8 @@ import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -24,7 +26,6 @@ import bias.gui.FrontEnd;
 import bias.i18n.I18nService;
 import bias.utils.Validator;
 
-import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
@@ -80,7 +81,7 @@ public class Preferences {
     }
     
     public byte[] serialize() throws Exception {
-        prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
+        prefs = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         Element rootNode = prefs.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
         prefs.appendChild(rootNode);
         Field[] fields = Preferences.class.getDeclaredFields();

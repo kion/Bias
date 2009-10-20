@@ -47,6 +47,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -71,7 +72,6 @@ import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 import bias.utils.VersionComparator;
 
-import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
@@ -352,7 +352,7 @@ public class BackEnd {
             data = FSUtils.readFile(metadataFile);
             decryptedData = decrypt(data);
             try {
-            	metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
+            	metadata = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
             } catch (Throwable t) {
             	emergencyRestoreCheck(true);
             }
@@ -561,7 +561,7 @@ public class BackEnd {
                 if (metadataFile.exists()) {
                     data = FSUtils.readFile(metadataFile);
                     decryptedData = useCipher(cipher, data);
-                    metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
+                    metadata = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(decryptedData));
                 }
             }
             // tools data files
@@ -726,7 +726,7 @@ public class BackEnd {
         if (prefsFile.exists()) {
             byte[] data = FSUtils.readFile(prefsFile);
             if (data.length != 0) {
-                prefs = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(data));
+                prefs = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(data));
             }
         }
     }
@@ -744,7 +744,7 @@ public class BackEnd {
     private DataCategory parseMetadata(Document metadata, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs, boolean overwrite) throws Exception {
         DataCategory data = new DataCategory();
         if (metadata == null) {
-            metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
+            metadata = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         } else {
             buildData(data, metadata.getFirstChild(), identifiedData, existingIDs, overwrite);
             data.setPlacement(Integer.valueOf(metadata.getFirstChild().getAttributes().getNamedItem(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT).getNodeValue()));
@@ -846,7 +846,7 @@ public class BackEnd {
         FSUtils.delete(exportDir);
         exportDir.mkdirs();
         // metadata file and data entries
-        Document metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
+        Document metadata = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         Element rootNode = metadata.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
         rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, data.getPlacement().toString());
         File dataDir = new File(exportDir, Constants.DATA_DIR.getName());
@@ -1037,7 +1037,7 @@ public class BackEnd {
     
     public void store() throws Exception {
         // metadata file and data entries
-        metadata = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
+        metadata = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         Element rootNode = metadata.createElement(Constants.XML_ELEMENT_ROOT_CONTAINER);
         rootNode.setAttribute(Constants.XML_ELEMENT_ATTRIBUTE_PLACEMENT, data.getPlacement().toString());
         if (data.getActiveIndex() != null) {

@@ -51,6 +51,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -68,7 +69,6 @@ import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 
-import com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl;
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
@@ -299,7 +299,7 @@ public class ToDoList extends EntryExtension {
         Document doc = null;
         try {
             if (getData() != null && getData().length != 0) {
-                doc = new DocumentBuilderFactoryImpl().newDocumentBuilder().parse(new ByteArrayInputStream(getData()));
+                doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(getData()));
             }
         } catch (Throwable t) {
             FrontEnd.displayErrorMessage("Failed to parse todo-list XML data file!", t);
@@ -588,7 +588,7 @@ public class ToDoList extends EntryExtension {
      * @see bias.extension.Extension#serializeData()
      */
     public byte[] serializeData() throws Throwable {
-        Document doc = new DocumentBuilderFactoryImpl().newDocumentBuilder().newDocument();
+        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         Element rootNode = doc.createElement(XML_ELEMENT_ROOT);
         doc.appendChild(rootNode);
         for (ToDoEntry entry : getToDoEntries()) {
