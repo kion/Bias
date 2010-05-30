@@ -575,7 +575,7 @@ public class FinancialFlows extends EntryExtension {
                                 JTextField purposeTF = new JTextField();
                                 p.add(purposeTF);
                                 p.add(new JLabel("Amount"));
-                                String amountStr = JOptionPane.showInputDialog(p);
+                                String amountStr = JOptionPane.showInputDialog(getParent(), p);
                                 if (amountStr != null) {
                                     try {
                                         Float amount = Float.valueOf(amountStr);
