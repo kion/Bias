@@ -3,5 +3,9 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/L&amp;F"/>
+	<classpathentry kind="lib" path="/mnt/stor/devel/libs/SwingComponents/jcalendar.jar"/>
+	<classpathentry kind="lib" path="/mnt/stor/devel/libs/ToolsAndUtils/jcifs.jar"/>
+	<classpathentry kind="lib" path="/mnt/stor/devel/libs/ToolsAndUtils/jcommon.jar"/>
+	<classpathentry kind="lib" path="/mnt/stor/devel/libs/ToolsAndUtils/jfreechart.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
