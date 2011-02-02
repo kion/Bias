@@ -2,7 +2,10 @@ app.title == Bias :: Versatile Information Manager
 addons.management.title == Bias :: Add-Ons Management
 version == Version
 username.preference.title == Username
-preferred.language.preference.title == Preferred language (needs Bias restart)
+preferred.language.preference.title == Preferred language (requires Bias restart)
+force.text.antialiasing.mode.title == Force text anti-aliasing mode (requires Bias restart)
+force.text.antialiasing.mode.description == Ignore system settings and use custom text anti-aliasing mode instead
+text.antialiasing.mode.title == Choose text anti-aliasing mode
 preferred.datetime.format.preference.title == Preferred date-time format
 preferred.timeout.preference.title == Preferred timeout for network operations (in seconds)
 use.proxy == Use proxy-server for network operations

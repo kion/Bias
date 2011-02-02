@@ -8,13 +8,18 @@
 		</xs:complexType>
 	</xs:element>
 	<xs:complexType name="frame">
+		<xs:attribute name="id" type="xs:string" use="required"/>
 		<xs:attribute name="x" type="xs:double" use="required"/>
 		<xs:attribute name="y" type="xs:double" use="required"/>
 		<xs:attribute name="h" type="xs:double" use="required"/>
 		<xs:attribute name="w" type="xs:double" use="required"/>
 		<xs:attribute name="z" type="xs:int" use="required"/>
+		<xs:attribute name="position" type="xs:int" use="required"/>
+		<xs:attribute name="iconified" type="xs:boolean" use="required"/>
+		<xs:attribute name="selected" type="xs:boolean" use="required"/>
 		<xs:attribute name="type" type="bias:frameType" use="required"/>
 		<xs:attribute name="title" type="xs:string" use="optional"/>
+		<xs:attribute name="icon" type="xs:string" use="optional"/>
 		<xs:attribute name="content" type="xs:base64Binary" use="required"/>
 		<xs:attribute name="settings" type="xs:base64Binary" use="required"/>
 	</xs:complexType>

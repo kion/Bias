@@ -274,7 +274,7 @@ public class PlainText extends EntryExtension {
                     Object family = attr.getAttribute(StyleConstants.FontFamily);
                     Object size = attr.getAttribute(StyleConstants.FontSize);
                     if (family == null && size == null) {
-                        return new Font("SansSerif", Font.PLAIN, currentFontSize);
+                        return new Font(Font.SANS_SERIF, Font.PLAIN, currentFontSize);
                     }
                     return super.getFont(attr);
                 }
@@ -384,17 +384,18 @@ public class PlainText extends EntryExtension {
     }
     
     private void setFontSize(ActionEvent e) {
-        String actionName = "Font size";
+    	int cPos = getJTextPane().getCaretPosition();
         getJTextPane().setSelectionStart(0);
         getJTextPane().setSelectionEnd(getJTextPane().getText().length());
-        new StyledEditorKit.FontSizeAction(actionName, currentFontSize).actionPerformed(
-                        new ActionEvent(e.getSource(), e.getID(), actionName));
+        String actionName = "Font size";
+        new StyledEditorKit.FontSizeAction(actionName, currentFontSize).actionPerformed(new ActionEvent(e.getSource(), e.getID(), actionName));
         getJTextPane().requestFocusInWindow();
         if (getJTextPane().isEditable()) {
             getJTextPane().requestFocusInWindow();
         }
         getJTextPane().setSelectionStart(0);
         getJTextPane().setSelectionEnd(0);
+        getJTextPane().setCaretPosition(cPos);
     }
 
 }

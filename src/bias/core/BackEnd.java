@@ -28,14 +28,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
-import java.util.Map.Entry;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
@@ -56,9 +55,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import bias.Constants;
-import bias.Preferences;
 import bias.Constants.ADDON_STATUS;
 import bias.Constants.TRANSFER_TYPE;
+import bias.Preferences;
 import bias.core.pack.Dependency;
 import bias.core.pack.Pack;
 import bias.core.pack.PackType;
@@ -111,6 +110,7 @@ public class BackEnd {
     private static Collection<String> uninstallAddOnsList = new ArrayList<String>();
     
     private Map<UUID, byte[]> icons = new LinkedHashMap<UUID, byte[]>();
+    private Map<UUID, ImageIcon> imageIcons = new LinkedHashMap<UUID, ImageIcon>();
     
     private Map<String, DataEntry> identifiedData = new LinkedHashMap<String, DataEntry>();
     
@@ -2117,12 +2117,18 @@ public class BackEnd {
     }
     
     public Collection<ImageIcon> getIcons() {
-        Collection<ImageIcon> icons = new LinkedHashSet<ImageIcon>();
         for (Entry<UUID, byte[]> iconEntry : this.icons.entrySet()) {
             ImageIcon icon = new ImageIcon(iconEntry.getValue(), iconEntry.getKey().toString());
-            icons.add(icon);
+            imageIcons.put(iconEntry.getKey(), icon);
         }
-        return icons;
+        return imageIcons.values();
+    }
+    
+    public ImageIcon getIcon(UUID id) {
+    	if (imageIcons.isEmpty()) {
+    		getIcons(); // will initialize UUID<->Icon map
+    	}
+    	return imageIcons.get(id);
     }
     
     public Collection<ImageIcon> addIcons(File file) throws Throwable {

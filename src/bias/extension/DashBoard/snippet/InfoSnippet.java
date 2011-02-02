@@ -29,7 +29,7 @@ public abstract class InfoSnippet extends JInternalFrame {
      * @param closable  Specifies whether snippet-class frames will be closable
      */
     public InfoSnippet(UUID id, byte[] content, byte[] settings, boolean resizable, boolean closable) {
-        super(null, resizable, closable, false, false);
+        super(null, resizable, closable, false, true);
         this.id = id;
         this.content = content;
         this.settings = settings;
@@ -37,7 +37,7 @@ public abstract class InfoSnippet extends JInternalFrame {
         setBorder(new EtchedBorder(EtchedBorder.RAISED));
     }
 
-    protected UUID getId() {
+    public UUID getId() {
         return id;
     }
 

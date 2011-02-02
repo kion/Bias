@@ -1,6 +1,9 @@
 Daily == Daily
+Daily.WeekDaysOnly == Daily / Weekdays only
+Daily.WeekEndOnly == Daily / Weekend only
 Weekly == Weekly
 Monthly == Monthly
+Quarterly == Quarterly
 Yearly == Yearly
 Sunday == Sunday
 Monday == Monday
@@ -38,4 +41,5 @@ delete.this.reminder == delete this reminder
 Remind.again.in == Remind again in...
 tooltip.weekly == Every specified day of the week (Sunday is first day)
 tooltip.monthly == Every specified day number of the month
+tooltip.quarterly == Every specified day number of the month of the each quarter
 tooltip.yearly == Every specified date of the year

@@ -215,6 +215,9 @@ public class Constants {
     public static final String PROPERTY_LAST_SELECTED_ID = "LAST_SELECTED_ID";
     public static final String PROPERTY_LAST_UPDATE_DATE = "LAST_UPDATE_DATE";
 
+    public static final String PROPERTY_FORCE_TEXT_ANTIALIASING_MODE = "FORCE_TEXT_ANTIALIASING_MODE";
+    public static final String PROPERTY_CUSTOM_TEXT_ANTIALIASING_MODE = "CUSTOM_TEXT_ANTIALIASING_MODE";
+
     public static final String META_DATA_CHECKSUM = "CHECKSUM";
     public static final String META_DATA_USERNAME = "USERNAME";
     public static final String META_DATA_TIMESTAMP = "TIMESTAMP";

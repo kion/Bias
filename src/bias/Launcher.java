@@ -5,10 +5,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.channels.FileLock;
+import java.util.Properties;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -24,10 +26,13 @@ public class Launcher {
     private static final String APP_CORE_FILE_NAME = "appcore.jar";
     private static final String FILE_PROTOCOL_PREFIX = "file:";
     private static final String CLASS_FILE_SUFFIX = ".class";
+    private static final String BIAS_CONFIG_FILE = "config.properties";
     private static final String UNINSTALL_CONFIG_FILE = "uninstall.conf";
     private static final String PROPERTY_VALUES_SEPARATOR = ",";
     private static final String APP_MAIN_CLASS = "bias.Bias";
     private static final String LOCK_FILE_NAME = ".lock";
+    private static final String PROPERTY_FORCE_TEXT_ANTIALIASING_MODE = "FORCE_TEXT_ANTIALIASING_MODE";
+    private static final String PROPERTY_CUSTOM_TEXT_ANTIALIASING_MODE = "CUSTOM_TEXT_ANTIALIASING_MODE";
     
     public static final URL SPLASH_IMAGE_LOAD = Launcher.class.getResource("/bias/res/load.gif");
 
@@ -45,13 +50,25 @@ public class Launcher {
     }
 
     public static void main(String[] args) throws Throwable {
-
         URL url = Launcher.class.getResource(Launcher.class.getSimpleName() + CLASS_FILE_SUFFIX);
         String jarFilePath = url.getFile().substring(0, url.getFile().indexOf(Launcher.class.getName().replaceAll("\\.", "/")) - 2);
         URL jarFileURL = new URL(jarFilePath);
         rootDir = new File(jarFileURL.toURI()).getParentFile();
         addonsDir = new File(rootDir, "addons");
         configDir = new File(rootDir, "conf");
+        
+    	File configFile = new File(configDir, BIAS_CONFIG_FILE);
+    	if (configFile.exists()) {
+	    	FileReader fr = new FileReader(configFile);
+	    	Properties props = new Properties();
+	    	props.load(fr);
+	    	fr.close();
+	
+	    	if (Boolean.valueOf(props.getProperty(PROPERTY_FORCE_TEXT_ANTIALIASING_MODE))) {
+	        	System.setProperty("swing.aatext", "true");
+	        	System.setProperty("awt.useSystemAAFontSettings", props.getProperty(PROPERTY_CUSTOM_TEXT_ANTIALIASING_MODE));
+	    	}
+    	}
 
         singleAppInstanceCheck();
 
@@ -84,8 +101,6 @@ public class Launcher {
                 } finally {
                     Splash.hideSplash();
                 }
-            } else {
-                System.exit(0);
             }
         } else {
             System.exit(0);
@@ -106,7 +121,7 @@ public class Launcher {
             if (lock != null) {
                 // Note: this is a trick to ensure there's only one instance of application is running at the same time; 
                 // create dummy thread...
-                new Thread(new Runnable(){
+                Thread t = new Thread(new Runnable(){
                     public void run() {
                         while (true) {
                             try {
@@ -117,7 +132,9 @@ public class Launcher {
                             }
                         }
                     }
-                }).start();
+                });
+                t.setDaemon(true); // do not block main code
+                t.start();
             }
             return lock != null;
         } catch (Exception ex) {

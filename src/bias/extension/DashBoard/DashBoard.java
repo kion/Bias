@@ -5,7 +5,9 @@ package bias.extension.DashBoard;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -14,25 +16,33 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.beans.PropertyVetoException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.Map.Entry;
 
 import javax.swing.DefaultDesktopManager;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
 import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.event.InternalFrameAdapter;
@@ -44,18 +54,21 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import bias.Constants;
+import bias.core.BackEnd;
 import bias.extension.EntryExtension;
+import bias.extension.DashBoard.snippet.BrokenSnippet;
 import bias.extension.DashBoard.snippet.HTMLSnippet;
 import bias.extension.DashBoard.snippet.InfoSnippet;
-import bias.extension.DashBoard.snippet.BrokenSnippet;
 import bias.extension.DashBoard.snippet.TextSnippet;
 import bias.extension.DashBoard.xmlb.Frame;
 import bias.extension.DashBoard.xmlb.FrameType;
 import bias.extension.DashBoard.xmlb.Frames;
 import bias.extension.DashBoard.xmlb.ObjectFactory;
 import bias.gui.FrontEnd;
+import bias.gui.IconChooserComboBox;
 import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
+import bias.utils.Validator;
 
 /**
  * @author kion
@@ -66,6 +79,8 @@ public class DashBoard extends EntryExtension {
     // TODO [P2] add more different snippet-types
 
     private static final String SCHEMA_LOCATION = "http://bias.sourceforge.net/addons/DashBoardSchema.xsd";
+    
+    private static final ImageIcon DEFAULT_FRAME_ICON = new ImageIcon(CommonUtils.getResourceURL(DashBoard.class, "default_frame_icon.png"));
 
     private static JAXBContext context;
 
@@ -79,11 +94,17 @@ public class DashBoard extends EntryExtension {
 
     private Map<InfoSnippet, Integer> snippetsZOrders;
 
+    private Map<UUID, JToggleButton> iconButtons;
+
     private Properties settings;
 
     private JDesktopPane dashBoardPanel;
 
+    private JPanel toolPanel;
+
     private JToolBar toolBar;
+
+    private JToolBar iconBar;
 
     private JComboBox addCB;
 
@@ -115,7 +136,9 @@ public class DashBoard extends EntryExtension {
     public DashBoard(UUID id, byte[] data, byte[] settings) throws Throwable {
         super(id, data, settings);
         setLayout(new BorderLayout());
-        add(getToolBar(), BorderLayout.SOUTH);
+        getToolPanel().add(getToolBar(), BorderLayout.WEST);
+        getToolPanel().add(getIconBar(), BorderLayout.CENTER);
+        add(getToolPanel(), BorderLayout.SOUTH);
         add(getDashBoardPanel(), BorderLayout.CENTER);
         initialize();
     }
@@ -127,6 +150,16 @@ public class DashBoard extends EntryExtension {
                 try {
                     if (getData() != null && getData().length != 0) {
                         Frames frames = (Frames) getUnmarshaller().unmarshal(new ByteArrayInputStream(getData()));
+                        Collections.sort(frames.getFrame(), new Comparator<Frame>() {
+							@Override
+							public int compare(Frame f1, Frame f2) {
+								if (f1.getPosition() > f2.getPosition()) {
+									return 1;
+								} else {
+									return -1;
+								}
+							}
+						});
                         for (Frame frame : frames.getFrame()) {
                             addFrame(frame, false);
                         }
@@ -138,9 +171,6 @@ public class DashBoard extends EntryExtension {
             }
         });
         FrontEnd.addMainWindowComponentListener(new ComponentAdapter(){
-            /* (non-Javadoc)
-             * @see java.awt.event.ComponentAdapter#componentResized(java.awt.event.ComponentEvent)
-             */
             @Override
             public void componentResized(ComponentEvent e) {
                 for (InfoSnippet f : getSnippets()) {
@@ -164,6 +194,13 @@ public class DashBoard extends EntryExtension {
         }
         return snippetsZOrders;
     }
+    
+	public Map<UUID, JToggleButton> getIconButtons() {
+        if (iconButtons == null) {
+        	iconButtons = new HashMap<UUID, JToggleButton>();
+        }
+		return iconButtons;
+	}
 
     /*
      * (non-Javadoc)
@@ -176,15 +213,23 @@ public class DashBoard extends EntryExtension {
         Frames frames = objFactory.createFrames();
         for (InfoSnippet f : getSnippets()) {
             Frame frame = new Frame();
-            frame.setX(f.getLocation().getX() / size.getWidth());
-            frame.setY(f.getLocation().getY() / size.getHeight());
-            frame.setW(f.getSize().getWidth() / size.getWidth());
-            frame.setH(f.getSize().getHeight() / size.getHeight());
+            Rectangle r = f.getNormalBounds();
+            frame.setId(f.getId().toString());
+            frame.setX(r.getX() / size.getWidth());
+            frame.setY(r.getY() / size.getHeight());
+            frame.setW(r.getWidth() / size.getWidth());
+            frame.setH(r.getHeight() / size.getHeight());
+            frame.setIconified(f.isIcon());
+            frame.setSelected(f.isSelected());
             frame.setContent(f.serializeContent());
             frame.setSettings(f.serializeSettings());
             frame.setTitle(f.getTitle());
+            if (f.getFrameIcon() != null && f.getFrameIcon() instanceof ImageIcon) {
+            	frame.setIcon(((ImageIcon) f.getFrameIcon()).getDescription());
+            }
             frame.setType(FrameType.fromValue(f.getName()));
             frame.setZ(getDashBoardPanel().getComponentZOrder(f));
+            frame.setPosition(getIconBar().getComponentIndex(getIconButtons().get(f.getId())));
             frames.getFrame().add(frame);
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -216,6 +261,13 @@ public class DashBoard extends EntryExtension {
         return searchData;
     }
 
+    private JPanel getToolPanel() {
+        if (toolPanel == null) {
+        	toolPanel = new JPanel(new BorderLayout());
+        }
+        return toolPanel;
+    }
+
     private JToolBar getToolBar() {
         if (toolBar == null) {
             toolBar = new JToolBar();
@@ -224,6 +276,14 @@ public class DashBoard extends EntryExtension {
             toolBar.add(getConfigButton());
         }
         return toolBar;
+    }
+
+    private JToolBar getIconBar() {
+        if (iconBar == null) {
+        	iconBar = new JToolBar(JToolBar.HORIZONTAL);
+        	iconBar.setFloatable(false);
+        }
+        return iconBar;
     }
 
     private JButton getConfigButton() {
@@ -272,9 +332,10 @@ public class DashBoard extends EntryExtension {
         return addCB;
     }
 
-    private static class CustomDesktopManager extends DefaultDesktopManager {
+    private class CustomDesktopManager extends DefaultDesktopManager {
         private static final long serialVersionUID = 1L;
 
+        @Override
         public void dragFrame(JComponent component, int xCordinate, int yCordinate) {
             if (component instanceof JInternalFrame) {
                 JInternalFrame frame = (JInternalFrame) component;
@@ -299,6 +360,7 @@ public class DashBoard extends EntryExtension {
             }
         }
 
+        @Override
         public void resizeFrame(JComponent component, int xCordinate, int yCordinate, int w, int h) {
             if (component instanceof JInternalFrame) {
                 JInternalFrame frame = (JInternalFrame) component;
@@ -332,6 +394,22 @@ public class DashBoard extends EntryExtension {
             }
             super.resizeFrame(component, xCordinate, yCordinate, w, h);
         }
+        
+        @Override
+        public void iconifyFrame(JInternalFrame f) {
+        	super.iconifyFrame(f);
+        	f.getDesktopIcon().setVisible(false);
+        	JToggleButton b = getIconButtons().get(((InfoSnippet) f).getId());
+        	b.setSelected(false);
+        }
+        
+        @Override
+        public void deiconifyFrame(JInternalFrame f) {
+        	super.deiconifyFrame(f);
+        	JToggleButton b = getIconButtons().get(((InfoSnippet) f).getId());
+        	b.setSelected(true);
+        }
+        
     }
 
     private JDesktopPane getDashBoardPanel() {
@@ -350,16 +428,29 @@ public class DashBoard extends EntryExtension {
             x = getDashBoardPanel().getSize().getWidth() - f.getSize().getWidth();
             relocate = true;
         }
+        if (f.getSize().getWidth() >= getDashBoardPanel().getSize().getWidth() - 15) {
+        	x = 0;
+        	relocate = true;
+        }
         double y = f.getLocation().getY();
         if (f.getLocation().getY() + f.getSize().getHeight() > getDashBoardPanel().getSize().getHeight()) {
             y = getDashBoardPanel().getSize().getHeight() - f.getSize().getHeight();
             relocate = true;
         }
-        if (relocate) f.setLocation((int) x, (int) y);
+        if (f.getSize().getHeight() >= getDashBoardPanel().getSize().getHeight() - 15) {
+        	y = 0;
+        	relocate = true;
+        }
+        if (relocate) {
+        	f.setLocation((int) x, (int) y);
+        }
     }
 
-    private void addFrame(Frame frame, boolean isNew) {
-        InfoSnippet f = createInternalFrame(frame);
+    private void addFrame(final Frame frame, boolean isNew) {
+    	if (frame.getId() == null) {
+    		frame.setId(UUID.randomUUID().toString());
+    	}
+        final InfoSnippet f = createInternalFrame(frame);
         getDashBoardPanel().add(f);
         int zOrder = isNew ? 0 : frame.getZ();
         if (isNew) {
@@ -367,13 +458,34 @@ public class DashBoard extends EntryExtension {
                 getDashBoardPanel().setComponentZOrder(f, zOrder);
                 updateZOrders();
                 f.setSelected(true);
+                JToggleButton b = getIconButtons().get(f.getId());
+            	b.setSelected(true);
             } catch (IllegalArgumentException iae) {
                 // ignore
             } catch (PropertyVetoException e) {
                 // ignore
             }
+        } else {
+            // restore snippet state
+            try {
+                f.setIcon(frame.isIconified());
+                JToggleButton b = getIconButtons().get(f.getId());
+            	b.setSelected(!frame.isIconified());
+                f.setSelected(frame.isSelected());
+    		} catch (PropertyVetoException e1) {
+    			// ignore, snippet state won't be restored (not critical)
+    		}
         }
         getSnippetsZOrders().put(f, zOrder);
+    	f.addInternalFrameListener(new InternalFrameAdapter() {
+    		@Override
+    		public void internalFrameClosing(InternalFrameEvent e) {
+    			JToggleButton b = getIconButtons().get(f.getId());
+    			getIconBar().remove(b);
+    			getIconBar().repaint();
+    			getIconButtons().remove(f.getId());
+    		}
+		});
     }
 
     private void updateZOrders() {
@@ -405,21 +517,46 @@ public class DashBoard extends EntryExtension {
         try {
             switch (frame.getType()) {
             case HTML_SNIPPET:
-                is = new HTMLSnippet(getId(), content, settings);
+                is = new HTMLSnippet(UUID.fromString(frame.getId()), content, settings);
                 break;
             case TEXT_SNIPPET:
-                is = new TextSnippet(getId(), content, settings);
+                is = new TextSnippet(UUID.fromString(frame.getId()), content, settings);
                 break;
             default:
-                is = null;
+                is = new BrokenSnippet(UUID.fromString(frame.getId()), content, settings);
             }
         } catch (Throwable t) {
-            is = new BrokenSnippet(getId(), content, settings);
+            is = new BrokenSnippet(UUID.fromString(frame.getId()), content, settings);
         }
         if (frame != null) {
             final InfoSnippet f = is;
             f.setName(frame.getType().value());
             f.setTitle(frame.getTitle());
+        	final JToggleButton b = new JToggleButton();
+        	b.setName(frame.getId());
+        	if (!Validator.isNullOrBlank(frame.getTitle())) {
+        		b.setToolTipText(frame.getTitle());
+        	}
+            if (!Validator.isNullOrBlank(frame.getIcon())) {
+            	ImageIcon icon = BackEnd.getInstance().getIcon(UUID.fromString(frame.getIcon()));
+            	f.setFrameIcon(icon);
+            	b.setIcon(icon);
+            } else {
+            	f.setFrameIcon(null);
+            	b.setIcon(DEFAULT_FRAME_ICON);
+            }
+            b.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					try {
+						f.setIcon(!b.isSelected());
+					} catch (PropertyVetoException e1) {
+						// ignore, shoudn't happen ever
+					}
+				}
+			});
+        	getIconBar().add(b);
+        	getIconButtons().put(f.getId(), b);
             Dimension minSize = f.getMinimumSize();
             if (frame.getContent() != null) {
                 Dimension size = FrontEnd.getMainWindowSize();
@@ -448,14 +585,54 @@ public class DashBoard extends EntryExtension {
             ((BasicInternalFrameUI) f.getUI()).getNorthPane().addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    if (!e.isPopupTrigger() && e.getClickCount() == 2) {
-                        String title = JOptionPane.showInputDialog(DashBoard.this, "Snippet title", f.getTitle());
-                        if (title != null) {
+                    if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
+                    	JLabel captionLabel = new JLabel("Caption");
+                    	JLabel iconLabel = new JLabel("Icon");
+                    	String selectedID = f.getFrameIcon() != null && f.getFrameIcon() instanceof ImageIcon ?
+                    							((ImageIcon) f.getFrameIcon()).getDescription() : null;
+                        IconChooserComboBox iconChooser = new IconChooserComboBox(selectedID);
+                        String title = JOptionPane.showInputDialog(
+                        		DashBoard.this,
+                        		new Component[]{ iconLabel, iconChooser, captionLabel },
+                        		f.getTitle());
+                        if (!Validator.isNullOrBlank(title)) {
                             f.setTitle(title);
+                    		b.setToolTipText(title);
+                        } else {
+                            f.setTitle(null);
+                    		b.setToolTipText(null);
+                        }
+                        JToggleButton b = getIconButtons().get(f.getId());
+                        if (iconChooser.getSelectedIcon() != null) {
+                        	ImageIcon icon = iconChooser.getSelectedIcon();
+                        	f.setFrameIcon(icon);
+                        	b.setIcon(icon);
+                        } else {
+                        	f.setFrameIcon(null);
+                        	b.setIcon(DEFAULT_FRAME_ICON);
                         }
                     }
                 }
             });
+            ((BasicInternalFrameUI) f.getUI()).getNorthPane().addMouseWheelListener(new MouseWheelListener() {
+				@Override
+				public void mouseWheelMoved(MouseWheelEvent e) {
+					if (e.getWheelRotation() != 0) {
+						if (e.getWheelRotation() > 0) {
+	                    	JToggleButton b = getIconButtons().get(f.getId());
+	                    	int idx = getIconBar().getComponentIndex(b);
+	                    	getIconBar().remove(b);
+	                    	getIconBar().add(b, idx - 1);
+						} else {
+	                    	JToggleButton b = getIconButtons().get(f.getId());
+	                    	int idx = getIconBar().getComponentIndex(b);
+	                    	getIconBar().remove(b);
+	                    	if (idx == getIconBar().getComponentCount()) idx = -1;
+	                    	getIconBar().add(b, idx + 1);
+						}
+					}
+				}
+			});
             getSnippets().add(f);
         }
         return is;

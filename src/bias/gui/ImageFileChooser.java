@@ -126,10 +126,10 @@ public class ImageFileChooser extends JFileChooser implements ActionListener, Pr
          */
         public boolean accept(File f) {
             return (f.isDirectory()
-                    || (f.isFile() && f.getName().endsWith(".jpg"))
-                    || (f.isFile() && f.getName().endsWith(".jpeg"))
-                    || (f.isFile() && f.getName().endsWith(".gif"))
-                    || (f.isFile() && f.getName().endsWith(".png")));
+                    || (f.isFile() && f.getName().toLowerCase().endsWith(".jpg"))
+                    || (f.isFile() && f.getName().toLowerCase().endsWith(".jpeg"))
+                    || (f.isFile() && f.getName().toLowerCase().endsWith(".gif"))
+                    || (f.isFile() && f.getName().toLowerCase().endsWith(".png")));
         }
 
         /*
@@ -173,7 +173,7 @@ public class ImageFileChooser extends JFileChooser implements ActionListener, Pr
                     previewWidth = imWidth;
                     previewHeight = imHeight;
                 }
-                this.image = image.getScaledInstance(previewWidth, previewHeight, Image.SCALE_FAST);
+                this.image = image.getScaledInstance(previewWidth, previewHeight, Image.SCALE_SMOOTH);
             } else {
                 this.image = null;
             }

@@ -9,6 +9,7 @@ import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dialog;
+import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -18,7 +19,6 @@ import java.awt.GridLayout;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.Window;
-import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentListener;
@@ -56,10 +56,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Stack;
 import java.util.UUID;
-import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -129,12 +129,12 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import bias.Constants;
-import bias.Preferences;
-import bias.Splash;
 import bias.Constants.ADDON_STATUS;
 import bias.Constants.TRANSFER_TYPE;
+import bias.Preferences;
 import bias.Preferences.PreferenceChoiceProvider;
 import bias.Preferences.PreferenceValidator;
+import bias.Splash;
 import bias.annotation.Preference;
 import bias.annotation.PreferenceChoice;
 import bias.annotation.PreferenceEnable;
@@ -181,12 +181,12 @@ import bias.utils.AppManager;
 import bias.utils.ArchUtils;
 import bias.utils.CommonUtils;
 import bias.utils.Downloader;
+import bias.utils.Downloader.DownloadListener;
 import bias.utils.FSUtils;
 import bias.utils.FormatUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 import bias.utils.VersionComparator;
-import bias.utils.Downloader.DownloadListener;
 
 
 /**
@@ -551,14 +551,14 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private static void addEventListener(Map listeners, EventListener l) {
         if (listeners.get(l.getClass()) == null) {
             listeners.put(l.getClass(), l);
         }
     }
     
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
     private static void removeEventListener(Map listeners, EventListener l) {
         if (listeners != null) {
             listeners.remove(l.getClass());
@@ -718,6 +718,7 @@ public class FrontEnd extends JFrame {
                 memUsageIndicatorPanel.setVisible(false);
             }
         }
+        instance.repaint(); // can be helpful when, for example, toggling antialiasing
         BackEnd.initProxySettings();
         handleAutoUpdate(isStartingUp);
         displayStatusBarMessage(getMessage("preferences.applied"));
@@ -983,11 +984,7 @@ public class FrontEnd extends JFrame {
                 guiIcons = skinInstance.getUIIcons();
             }
             if (activeSkin == null) {
-                if (skin != null) {
-                    activeSkin = skin;
-                } else {
-                    activeSkin = DEFAULT_SKIN;
-                }
+                activeSkin = skin;
             }
         } catch (Throwable t) {
             activeSkin = DEFAULT_SKIN;
@@ -1410,16 +1407,14 @@ public class FrontEnd extends JFrame {
     	store(false, false);
     }
     
-    private void store(final boolean showUIHints, boolean fireEvents) {
-        if (showUIHints) finalizeUI();
-        if (fireEvents) fireBeforeSaveEvent(new SaveEvent(showUIHints));
-        if (showUIHints) {
-            syncExecute(new Runnable(){
-                public void run() { 
-                    instance.displayProcessNotification(getMessage("data.saving"), false);
-                }
-            });
-        }
+    private void store(final boolean showFinalizeUI, boolean fireEvents) {
+        if (showFinalizeUI) finalizeUI();
+        if (fireEvents) fireBeforeSaveEvent(new SaveEvent(showFinalizeUI));
+        syncExecute(new Runnable(){
+            public void run() { 
+                instance.displayProcessNotification(getMessage("data.saving"), false);
+            }
+        });
         syncExecute(new Runnable(){
             public void run() { 
                 BackEnd.getInstance().setConfig(collectProperties());
@@ -1452,15 +1447,13 @@ public class FrontEnd extends JFrame {
                 }
             }
         });
-        if (showUIHints) {
-            syncExecute(new Runnable(){
-                public void run() { 
-                    instance.hideProcessNotification();
-                }
-            });
-            displayStatusBarMessage(getMessage("data.saved"));
-        }
-        if (fireEvents) fireAfterSaveEvent(new SaveEvent(showUIHints));
+        syncExecute(new Runnable(){
+            public void run() { 
+                instance.hideProcessNotification();
+            }
+        });
+        displayStatusBarMessage(getMessage("data.saved"));
+        if (fireEvents) fireAfterSaveEvent(new SaveEvent(showFinalizeUI));
     }
     
     private Map<String, ToolData> collectToolsData() throws Throwable {
@@ -1485,6 +1478,10 @@ public class FrontEnd extends JFrame {
                 Constants.EMPTY_STR + getSize().getHeight() / getToolkit().getScreenSize().getHeight());
         config.setProperty(Constants.PROPERTY_SHOW_ALL_ONLINE_PACKS, 
                 Constants.EMPTY_STR + getOnlineShowAllPackagesCheckBox().isSelected());
+        config.setProperty(Constants.PROPERTY_FORCE_TEXT_ANTIALIASING_MODE, 
+                Constants.EMPTY_STR + Preferences.getInstance().forceTextAntialiasingMode);
+        config.setProperty(Constants.PROPERTY_CUSTOM_TEXT_ANTIALIASING_MODE, 
+                Constants.EMPTY_STR + Preferences.getInstance().customTextAntialiasingMode);
         UUID lsid = getSelectedVisualEntryID();
         if (lsid != null) {
             config.setProperty(Constants.PROPERTY_LAST_SELECTED_ID, lsid.toString());
@@ -2219,20 +2216,8 @@ public class FrontEnd extends JFrame {
                 String caption = tabbedPane.getTitleAt(index);
                 
                 JLabel icLabel = new JLabel(getMessage("icon"));
-                JComboBox iconChooser = new JComboBox();
-                iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
-                for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-                    iconChooser.addItem(icon);
-                }
                 ImageIcon ic = (ImageIcon) tabbedPane.getIconAt(tabbedPane.getSelectedIndex());
-                if (ic != null) {
-                    for (int i = 0; i < iconChooser.getItemCount(); i++) {
-                    	if (((ImageIcon) iconChooser.getItemAt(i)).getDescription().equals(ic.getDescription())) {
-                    		iconChooser.setSelectedIndex(i);
-                    		break;
-                    	}
-                    }
-                }
+                IconChooserComboBox iconChooser = new IconChooserComboBox(ic.getDescription());
                 JLabel cLabel = new JLabel(getMessage("caption"));
                 
                 caption = JOptionPane.showInputDialog(
@@ -2241,7 +2226,7 @@ public class FrontEnd extends JFrame {
                         caption);
                 if (caption != null) {
                 	tabbedPane.setTitleAt(index, caption);
-                    ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+                    ImageIcon icon = iconChooser.getSelectedIcon();
                     if (icon != null) {
                     	tabbedPane.setIconAt(tabbedPane.getSelectedIndex(), icon);
                     }
@@ -3172,11 +3157,7 @@ public class FrontEnd extends JFrame {
                     }
                     entryTypeComboBox.setEditable(false);
                     JLabel icLabel = new JLabel(getMessage("icon"));
-                    JComboBox iconChooser = new JComboBox();
-                    iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
-                    for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-                        iconChooser.addItem(icon);
-                    }
+                    IconChooserComboBox iconChooser = new IconChooserComboBox();
                     JLabel cLabel = new JLabel(getMessage("caption"));
                     String caption = JOptionPane.showInputDialog(
                             FrontEnd.this, 
@@ -3198,7 +3179,7 @@ public class FrontEnd extends JFrame {
                             JTabbedPane tabPane = (addToRootCB != null && addToRootCB.isSelected()) || currentTabPane == null ? getJTabbedPane() : currentTabPane;
                             tabPane.addTab(caption, p);
                             tabPane.setSelectedComponent(p);
-                            ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+                            ImageIcon icon = iconChooser.getSelectedIcon();
                             if (icon != null) {
                                 tabPane.setIconAt(currentTabPane.getSelectedIndex(), icon);
                             }
@@ -4543,11 +4524,7 @@ public class FrontEnd extends JFrame {
                     placementsChooser.addItem(placement);
                 }
                 JLabel icLabel = new JLabel(getMessage("icon"));
-                JComboBox iconChooser = new JComboBox();
-                iconChooser.addItem(new ImageIcon(new byte[]{}, Constants.EMPTY_STR));
-                for (ImageIcon icon : BackEnd.getInstance().getIcons()) {
-                    iconChooser.addItem(icon);
-                }
+                IconChooserComboBox iconChooser = new IconChooserComboBox();
                 JLabel cLabel = new JLabel(getMessage("caption"));
                 String categoryCaption = JOptionPane.showInputDialog(
                         FrontEnd.this, 
@@ -4564,7 +4541,7 @@ public class FrontEnd extends JFrame {
                     tabPane.addTab(categoryCaption, categoryTabPane);
                     JTabbedPane parentTabPane = ((JTabbedPane) categoryTabPane.getParent());
                     parentTabPane.setSelectedComponent(categoryTabPane);
-                    ImageIcon icon = (ImageIcon) iconChooser.getSelectedItem();
+                    ImageIcon icon = iconChooser.getSelectedIcon();
                     if (icon != null) {
                         parentTabPane.setIconAt(parentTabPane.getSelectedIndex(), icon);
                     }
@@ -6721,7 +6698,11 @@ public class FrontEnd extends JFrame {
             text.append(getMessage("addon.dependencies") + ":<br/><ul>");
             for (Dependency dep : dependencies) {
                 AddOnInfo dependentAddOnInfo = BackEnd.getInstance().getAddOnInfo(dep.getName(), dep.getType());
-                ADDON_STATUS status = BackEnd.getInstance().isAddOnRegisteredAndInstalled(dep.getName(), dep.getType()) 
+                ADDON_STATUS status = dep.getType() == PackType.APP_CORE ?
+                		(VersionComparator.getInstance().compare(BackEnd.getInstance().getAppCoreVersion(), dep.getVersion()) >= 0 ? 
+                				Constants.ADDON_STATUS.RegisteredInstalled : Constants.ADDON_STATUS.NotRegisteredInstalled) 
+                		:
+                		BackEnd.getInstance().isAddOnRegisteredAndInstalled(dep.getName(), dep.getType()) 
                         && (dep.getVersion() == null || VersionComparator.getInstance().compare(dependentAddOnInfo.getVersion(), dep.getVersion()) >= 0) ? 
                                 Constants.ADDON_STATUS.RegisteredInstalled : Constants.ADDON_STATUS.NotRegisteredInstalled; 
                 text.append(
@@ -6780,14 +6761,11 @@ public class FrontEnd extends JFrame {
             JLabel link1Label = new LinkLabel("http://bias.sourceforge.net/");
             JLabel title2Label = new JLabel("© Roman Kasianenko ( kion )");
         	JLabel link2Label = new LinkLabel("http://kion.name/");
-            JLabel title3Label = new JLabel("@ EtweeStudio");
-            JLabel link3Label = new LinkLabel("http://etweestudio.com/");
             JOptionPane.showMessageDialog(
                     FrontEnd.this, 
                     new Component[]{
                             title1Label, link1Label, 
-                            title2Label, link2Label,
-                            title3Label, link3Label
+                            title2Label, link2Label
                             },
                     getMessage("about.bias") + "...",
                     JOptionPane.PLAIN_MESSAGE,

@@ -6,9 +6,9 @@ package bias.extension.Reminder;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dialog.ModalityType;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
-import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -52,9 +52,10 @@ import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
+import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.RowSorter.SortKey;
+import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -109,14 +110,20 @@ public class Reminder extends ToolExtension {
     private static final String SEPARATOR = "/";
     
     private static final String PERIODIC_DATE_DAILY = "Daily";
+    private static final String PERIODIC_DATE_DAILY_WEEKDAYS_ONLY = PERIODIC_DATE_DAILY + ".WeekDaysOnly";
+    private static final String PERIODIC_DATE_DAILY_WEEKEND_ONLY =  PERIODIC_DATE_DAILY + ".WeekEndOnly";
     private static final String PERIODIC_DATE_WEEKLY = "Weekly";
     private static final String PERIODIC_DATE_MONTHLY = "Monthly";
+    private static final String PERIODIC_DATE_QUARTERLY = "Quarterly";
     private static final String PERIODIC_DATE_YEARLY = "Yearly";
 
     private String[] PERIODIC_DATE_VALUES = new String[] { 
         PERIODIC_DATE_DAILY, 
+        PERIODIC_DATE_DAILY_WEEKDAYS_ONLY, 
+        PERIODIC_DATE_DAILY_WEEKEND_ONLY, 
         PERIODIC_DATE_WEEKLY, 
         PERIODIC_DATE_MONTHLY, 
+        PERIODIC_DATE_QUARTERLY, 
         PERIODIC_DATE_YEARLY
     };
     
@@ -169,6 +176,7 @@ public class Reminder extends ToolExtension {
         Map<String, String> map = new HashMap<String, String>();
         map.put(PERIODIC_DATE_WEEKLY, getMessage("tooltip.weekly"));
         map.put(PERIODIC_DATE_MONTHLY, getMessage("tooltip.monthly"));
+        map.put(PERIODIC_DATE_QUARTERLY, getMessage("tooltip.quarterly"));
         map.put(PERIODIC_DATE_YEARLY, getMessage("tooltip.yearly"));
         return map;
     }
@@ -195,10 +203,12 @@ public class Reminder extends ToolExtension {
     
     private SortOrder[] sortOrder = new SortOrder[MAX_SORT_KEYS_NUMBER];
     
-    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    private static final SimpleDateFormat DATE_FORMAT_LONG = new SimpleDateFormat("yyyy-MM-dd");
     
-    private SimpleDateFormat sdf2 = new SimpleDateFormat("MM-dd");
+    private static final SimpleDateFormat DATE_FORMAT_SHORT = new SimpleDateFormat("MM-dd");
     
+    private static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("dd.MM.yyyy @ HH:mm:ss");
+
     private Map<UUID, HTMLEditorPanel> editorPanels = new HashMap<UUID, HTMLEditorPanel>();
 
     private JPanel mainPanel = null;
@@ -214,6 +224,8 @@ public class Reminder extends ToolExtension {
     private byte[] data;
     
     private Map<UUID, ScheduledExecutorService> tasks;
+    
+    private Map<UUID, String> checkmarkDates;
     
     private static JAXBContext context;
 
@@ -251,7 +263,7 @@ public class Reminder extends ToolExtension {
         }
         return marshaller;
     }
-
+    
     private void initialize() throws Throwable {
         applySettings(getSettings());
         initGUI();
@@ -331,6 +343,7 @@ public class Reminder extends ToolExtension {
                         reminderEntry.setTitle(e.getTitle());
                         reminderEntry.setDescription(e.getDescription());
                         reminderEntry.setDate(e.getDate());
+                        reminderEntry.setCheckmarkDate(e.getCheckmarkDate());
                         reminderEntry.setTime(e.getTime());
                         newEntries.add(reminderEntry);
                     }
@@ -552,7 +565,7 @@ public class Reminder extends ToolExtension {
                                 perSpinner.setEnabled(true);
                                 dayL.setVisible(true);
                                 dayL.setText(DAYS.get(((Number) perSpinner.getValue()).intValue()));
-                            } else if (perCB.getSelectedItem().equals(PERIODIC_DATE_MONTHLY)) {
+                            } else if (perCB.getSelectedItem().equals(PERIODIC_DATE_MONTHLY) || perCB.getSelectedItem().equals(PERIODIC_DATE_QUARTERLY)) {
                                 perSM.setMaximum(31);
                                 perSM.setValue(1);
                                 perSpinner.setEnabled(true);
@@ -573,11 +586,11 @@ public class Reminder extends ToolExtension {
                 sm.setMinimum(0);
                 sm.setMaximum(23);
                 sm.setStepSize(1);
-                sm.setValue(currCal.get(Calendar.HOUR));
+                sm.setValue(currCal.get(Calendar.HOUR_OF_DAY));
                 final JSpinner hour = new JSpinner(sm);
                 SpinnerNumberModel sm2 = new SpinnerNumberModel();
                 sm2.setMinimum(0);
-                sm2.setMaximum(60);
+                sm2.setMaximum(59);
                 sm2.setStepSize(1);
                 sm2.setValue(currCal.get(Calendar.MINUTE));
                 final JSpinner minute = new JSpinner(sm2);
@@ -595,7 +608,7 @@ public class Reminder extends ToolExtension {
                     ReminderEntry reminderEntry = new ReminderEntry();
                     reminderEntry.setId(UUID.randomUUID());
                     reminderEntry.setDate(dateChooser.isEnabled() ? 
-                                (periodicCB.isSelected() ? PERIODIC_DATE_YEARLY + SEPARATOR : Constants.EMPTY_STR) + (periodicCB.isSelected() ? sdf2.format(dateChooser.getDate()) : sdf.format(dateChooser.getDate())) : 
+                                (periodicCB.isSelected() ? PERIODIC_DATE_YEARLY + SEPARATOR : Constants.EMPTY_STR) + (periodicCB.isSelected() ? DATE_FORMAT_SHORT.format(dateChooser.getDate()) : DATE_FORMAT_LONG.format(dateChooser.getDate())) : 
                                 (String) perCB.getSelectedItem() + (perSpinner.isEnabled() ? SEPARATOR + perSpinner.getValue().toString() : Constants.EMPTY_STR));
                     reminderEntry.setTime(formatTime(hour.getValue().toString(), minute.getValue().toString()));
                     reminderEntry.setTitle(title);
@@ -641,7 +654,7 @@ public class Reminder extends ToolExtension {
                     if (s.equals(PERIODIC_DATE_WEEKLY)) {
                         Integer day = Integer.valueOf(vv[1]);
                         value = getMessage(PERIODIC_DATE_WEEKLY) + SEPARATOR + DAYS.get(day);
-                    } else if (s.equals(PERIODIC_DATE_MONTHLY)) {
+                    } else if (s.equals(PERIODIC_DATE_MONTHLY) || s.equals(PERIODIC_DATE_QUARTERLY)) {
                         value = getMessage(s) + SEPARATOR + vv[1];
                     } else if (s.equals(PERIODIC_DATE_YEARLY)) {
                         String[] vvv = vv[1].split("-");
@@ -650,6 +663,10 @@ public class Reminder extends ToolExtension {
                     }
                 } else if (v.equals(PERIODIC_DATE_DAILY)) {
                     value = getMessage(PERIODIC_DATE_DAILY);
+                } else if (v.equals(PERIODIC_DATE_DAILY_WEEKDAYS_ONLY)) {
+                    value = getMessage(PERIODIC_DATE_DAILY_WEEKDAYS_ONLY);
+                } else if (v.equals(PERIODIC_DATE_DAILY_WEEKEND_ONLY)) {
+                    value = getMessage(PERIODIC_DATE_DAILY_WEEKEND_ONLY);
                 } else {
                     String[] vv = v.split("-");
                     Integer month = Integer.valueOf(vv[1]);
@@ -695,28 +712,44 @@ public class Reminder extends ToolExtension {
         if (tasks == null) {
             tasks = new HashMap<UUID, ScheduledExecutorService>();
         }
+        if (checkmarkDates == null) {
+        	checkmarkDates = new HashMap<UUID, String>();
+        }
         Date currDate = new Date();
         Long delay = null;
         boolean periodic;
         int calendarField = -1;
         Calendar cal = new GregorianCalendar();
+        Date checkmarkDate;
+        boolean displayNow = false;
         try {
-            if (PERIODIC_DATE_DAILY.equals(reminderEntry.getDate()) 
+        	checkmarkDate = Validator.isNullOrBlank(reminderEntry.getCheckmarkDate()) ? null : DATE_TIME_FORMAT.parse(reminderEntry.getCheckmarkDate());
+        	if (checkmarkDate != null) {
+    			checkmarkDates.put(reminderEntry.getId(), DATE_TIME_FORMAT.format(checkmarkDate));
+        	}
+            if (reminderEntry.getDate().startsWith(PERIODIC_DATE_DAILY) 
                     || reminderEntry.getDate().startsWith(PERIODIC_DATE_YEARLY) 
                     || reminderEntry.getDate().startsWith(PERIODIC_DATE_WEEKLY)
-                    || reminderEntry.getDate().startsWith(PERIODIC_DATE_MONTHLY)) {
+                    || reminderEntry.getDate().startsWith(PERIODIC_DATE_MONTHLY)
+                    || reminderEntry.getDate().startsWith(PERIODIC_DATE_QUARTERLY)) {
                 periodic = true;
-                if (PERIODIC_DATE_DAILY.equals(reminderEntry.getDate())) {
+                if (reminderEntry.getDate().startsWith(PERIODIC_DATE_DAILY)) {
                     String[] time = reminderEntry.getTime().split(":");
                     Integer hour = Integer.valueOf(time[0]);
                     Integer minute = Integer.valueOf(time[1]);
-                    Date date = new Date();
-                    cal.setTime(date);
+                    cal.setTime(currDate);
                     cal.set(Calendar.HOUR_OF_DAY, hour);
                     cal.set(Calendar.MINUTE, minute);
                     cal.set(Calendar.SECOND, 0);
                     delay = cal.getTimeInMillis() - currDate.getTime();
                     if (delay < 0) { 
+                        if (checkmarkDate != null) {
+                            Calendar checkmarkCal = new GregorianCalendar();
+                        	checkmarkCal.setTime(checkmarkDate);
+                        	displayNow = checkmarkCal.get(Calendar.DAY_OF_YEAR) != cal.get(Calendar.DAY_OF_YEAR);
+                        } else {
+                        	displayNow = true;
+                        }
                         cal.set(Calendar.DAY_OF_YEAR, cal.get(Calendar.DAY_OF_YEAR) + 1);
                         delay = cal.getTimeInMillis() - currDate.getTime();
                     }
@@ -726,38 +759,63 @@ public class Reminder extends ToolExtension {
                     String[] time = reminderEntry.getTime().split(":");
                     Integer hour = Integer.valueOf(time[0]);
                     Integer minute = Integer.valueOf(time[1]);
-                    Date date = new Date();
-                    cal.setTime(date);
+                    cal.setTime(currDate);
                     cal.set(Calendar.DAY_OF_WEEK, day);
                     cal.set(Calendar.HOUR_OF_DAY, hour);
                     cal.set(Calendar.MINUTE, minute);
                     cal.set(Calendar.SECOND, 0);
                     delay = cal.getTimeInMillis() - currDate.getTime();
                     if (delay < 0) { 
+                        if (checkmarkDate != null) {
+                            Calendar checkmarkCal = new GregorianCalendar();
+                        	checkmarkCal.setTime(checkmarkDate);
+                        	displayNow = checkmarkCal.get(Calendar.WEEK_OF_YEAR) != cal.get(Calendar.WEEK_OF_YEAR);
+                        } else {
+                        	displayNow = true;
+                        }
                         cal.set(Calendar.WEEK_OF_YEAR, cal.get(Calendar.WEEK_OF_YEAR) + 1);
                         delay = cal.getTimeInMillis() - currDate.getTime();
                     }
                     calendarField = Calendar.WEEK_OF_YEAR;
-                } else if (reminderEntry.getDate().startsWith(PERIODIC_DATE_MONTHLY)) {
+                } else if (reminderEntry.getDate().startsWith(PERIODIC_DATE_MONTHLY) || reminderEntry.getDate().startsWith(PERIODIC_DATE_QUARTERLY)) {
                     Integer day = Integer.valueOf(reminderEntry.getDate().split(SEPARATOR)[1]);
                     String[] time = reminderEntry.getTime().split(":");
                     Integer hour = Integer.valueOf(time[0]);
                     Integer minute = Integer.valueOf(time[1]);
-                    Date date = new Date();
-                    cal.setTime(date);
+                    cal.setTime(currDate);
                     cal.set(Calendar.DAY_OF_MONTH, day);
                     cal.set(Calendar.HOUR_OF_DAY, hour);
                     cal.set(Calendar.MINUTE, minute);
                     cal.set(Calendar.SECOND, 0);
+                    boolean quarterly = reminderEntry.getDate().startsWith(PERIODIC_DATE_QUARTERLY);
+                    if (quarterly) {
+                    	int month = cal.get(Calendar.MONTH);
+                    	if (month < 3) {
+                    		month = 3;
+                    	} else {
+                    		int diff = month % 3;
+                    		if (diff != 0) {
+                            	month += 3 - diff;
+                    		}
+                    	}
+                    	cal.set(Calendar.MONTH, month);
+                    }
                     delay = cal.getTimeInMillis() - currDate.getTime();
                     if (delay < 0) { 
-                        cal.set(Calendar.MONTH, cal.get(Calendar.MONTH) + 1);
+                        if (checkmarkDate != null) {
+                            Calendar checkmarkCal = new GregorianCalendar();
+                        	checkmarkCal.setTime(checkmarkDate);
+                        	displayNow = checkmarkCal.get(Calendar.MONTH) != cal.get(Calendar.MONTH);
+                        } else {
+                        	displayNow = true;
+                        }
+                        cal.set(Calendar.MONTH, cal.get(Calendar.MONTH) + (quarterly ? 3 : 1));
                         delay = cal.getTimeInMillis() - currDate.getTime();
                     }
                     calendarField = Calendar.MONTH;
                 } else if (reminderEntry.getDate().startsWith(PERIODIC_DATE_YEARLY)) {
                     String dateStr = reminderEntry.getDate().split(SEPARATOR)[1];
-                    Date date = sdf2.parse(dateStr);
+                    Date date = DATE_FORMAT_SHORT.parse(dateStr);
                     String[] time = reminderEntry.getTime().split(":");
                     Integer hour = Integer.valueOf(time[0]);
                     Integer minute = Integer.valueOf(time[1]);
@@ -768,6 +826,13 @@ public class Reminder extends ToolExtension {
                     cal.set(Calendar.SECOND, 0);
                     delay = cal.getTimeInMillis() - currDate.getTime();
                     if (delay < 0) { 
+                        if (checkmarkDate != null) {
+                            Calendar checkmarkCal = new GregorianCalendar();
+                        	checkmarkCal.setTime(checkmarkDate);
+                        	displayNow = checkmarkCal.get(Calendar.YEAR) != cal.get(Calendar.YEAR);
+                        } else {
+                        	displayNow = true;
+                        }
                         cal.set(Calendar.YEAR, cal.get(Calendar.YEAR) + 1);
                         delay = cal.getTimeInMillis() - currDate.getTime();
                     }
@@ -776,7 +841,7 @@ public class Reminder extends ToolExtension {
             } else {
                 periodic = false;
                 try {
-                    Date date = sdf.parse(reminderEntry.getDate());
+                    Date date = DATE_FORMAT_LONG.parse(reminderEntry.getDate());
                     String[] time = reminderEntry.getTime().split(":");
                     Integer hour = Integer.valueOf(time[0]);
                     Integer minute = Integer.valueOf(time[1]);
@@ -791,9 +856,14 @@ public class Reminder extends ToolExtension {
                 }
             }
             if (delay != null) {
-                final Long dl = delay;
+                final long dl = displayNow ? 60000L : delay;
                 final boolean pd = periodic;
                 final int cf = calendarField;
+    			Calendar now = new GregorianCalendar();
+    			now.setTime(new Date());
+    			while (cal.before(now)) {
+    				cal.set(calendarField, cal.get(calendarField) + (reminderEntry.getDate().startsWith(PERIODIC_DATE_QUARTERLY) ? 3 : 1));
+    			};
                 final Calendar initialDate = cal;
                 final ScheduledExecutorService taskExecutor = new ScheduledThreadPoolExecutor(1);
                 Runnable task = new Runnable(){
@@ -810,105 +880,149 @@ public class Reminder extends ToolExtension {
     }
     
     private void runTask(final ScheduledExecutorService taskExecutor, final ReminderEntry reminderEntry, final boolean periodic, final int calendarField, final Calendar initialDate) {
-        final JDialog dialog = new JDialog(null, ModalityType.MODELESS);
-        JTextPane detailsTextPane = new JTextPane();
-        detailsTextPane.setEditable(false);
-        detailsTextPane.setEditorKit(new CustomHTMLEditorKit());
-        detailsTextPane.addHyperlinkListener(new HyperlinkListener() {
-            public void hyperlinkUpdate(HyperlinkEvent e) {
-                if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
-                    if (e.getDescription().startsWith(Constants.ENTRY_PROTOCOL_PREFIX)) {
-                        String idStr = e.getDescription().substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
-                        dialog.setVisible(false);
-                        FrontEnd.restoreMainWindow();
-                        FrontEnd.switchToVisualEntry(UUID.fromString(idStr));
-                        dialog.setVisible(true);
-                    } else {
-                        try {
-                            AppManager.getInstance().handleAddress(e.getDescription());
-                        } catch (Exception ex) {
-                            FrontEnd.displayErrorMessage(ex);
+    	SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+            	Date currDate = new Date();
+    			Calendar now = new GregorianCalendar();
+    			now.setTime(currDate);
+				boolean postpone = false;
+				// if there was specified to display reminder on either weekdays or weekend only...
+				if (periodic && calendarField == Calendar.DAY_OF_YEAR && reminderEntry.getDate().startsWith(PERIODIC_DATE_DAILY)) {
+					int dayOfWeek = now.get(Calendar.DAY_OF_WEEK);
+					if (reminderEntry.getDate().equals(PERIODIC_DATE_DAILY_WEEKDAYS_ONLY)) {
+						if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
+							postpone = true;
+						}
+					} else if (reminderEntry.getDate().equals(PERIODIC_DATE_DAILY_WEEKEND_ONLY)) {
+						if (dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY) {
+							postpone = true;
+						}
+					}
+				}
+				if (postpone) {
+					// ... and it's not a time to display it - postpone reminder by one day...
+        			do {
+						initialDate.set(calendarField, initialDate.get(calendarField) + 1);
+        			} while (initialDate.before(now));
+                    Runnable r = new Runnable(){
+                        public void run() {
+                            runTask(taskExecutor, reminderEntry, periodic, calendarField, initialDate);
                         }
-                    }
-                }
-            }
-        });
-        JScrollPane detailsPane = new JScrollPane(detailsTextPane);
-        detailsTextPane.setText(editorPanels.get(reminderEntry.getId()).getUnparsedCode());
-        JPanel p = new JPanel(new BorderLayout());
-        p.add(new JLabel(reminderEntry.getTitle()), BorderLayout.NORTH);
-        p.add(detailsPane, BorderLayout.CENTER);
-        JPanel pControls = new JPanel(new GridLayout(2, 1));
-        final int idx = findRowIdxByID(reminderEntry.getId().toString()); // check if reminder entry is still in the list
-        JButton doneButt = new JButton(getMessage("Done") + "(" + ((periodic && idx != -1) ? getMessage("remind.next.time") : getMessage("delete.this.reminder")) + ")");
-        doneButt.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent e) {
-                dialog.setVisible(false);
-                if (idx != -1) {
-                    if (periodic) {
-                        initialDate.set(calendarField, initialDate.get(calendarField) + 1);
-                        Runnable r = new Runnable(){
-                            public void run() {
-                                runTask(taskExecutor, reminderEntry, periodic, calendarField, initialDate);
-                            }
-                        };
-                        long currMS = new Date().getTime();
-                        long delay = initialDate.getTimeInMillis() - currMS;
-                        taskExecutor.schedule(r, delay, TimeUnit.MILLISECONDS);
-                    } else {
-                        ((DefaultTableModel) reminderEntriesTable.getModel()).removeRow(idx);
-                        cleanUpUnUsedAttachments(reminderEntry.getId());
-                        tasks.remove(reminderEntry.getId());
-                    }
-                }
-            }
-        });
-        pControls.add(doneButt);
-        JPanel remPanel = new JPanel(new GridLayout(1, 3));
-        final SpinnerNumberModel sm = new SpinnerNumberModel();
-        sm.setMinimum(1);
-        sm.setStepSize(1);
-        sm.setValue(5);
-        final JSpinner remSpinner = new JSpinner(sm);
-        final JComboBox remComboBox = new JComboBox();
-        remComboBox.addItem(TimeUnit.MINUTES);
-        remComboBox.addItem(TimeUnit.HOURS);
-        remComboBox.addItem(TimeUnit.DAYS);
-        remComboBox.setRenderer(new DefaultListCellRenderer(){
-            private static final long serialVersionUID = 1L;
-            @Override
-            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                String dValue = PERIODS.get((TimeUnit) value);
-                return super.getListCellRendererComponent(list, dValue, index, isSelected, cellHasFocus);
-            }
-        });
-        remComboBox.setSelectedItem(TimeUnit.MINUTES);
-        JButton remButt = new JButton(getMessage("Remind.again.in"));
-        remButt.addActionListener(new ActionListener(){
-            public void actionPerformed(ActionEvent e) {
-                dialog.setVisible(false);
-                taskExecutor.schedule(new Runnable(){
-                    public void run() {
-                        runTask(taskExecutor, reminderEntry, periodic, calendarField, initialDate);
-                    }
-                }, ((Integer) remSpinner.getValue()).longValue(), (TimeUnit) remComboBox.getSelectedItem());
-            }
-        });
-        remPanel.add(remButt);
-        remPanel.add(remSpinner);
-        remPanel.add(remComboBox);
-        pControls.add(remPanel);
-        p.add(pControls, BorderLayout.SOUTH);
-        dialog.setAlwaysOnTop(true);
-        dialog.setUndecorated(true);
-        dialog.setContentPane(p);
-        dialog.getRootPane().setBorder(new LineBorder(Color.RED, 3, true));
-        dialog.pack();
-        dialog.setLocation(
-                (Toolkit.getDefaultToolkit().getScreenSize().width - dialog.getWidth()) / 2, 
-                (Toolkit.getDefaultToolkit().getScreenSize().height - dialog.getHeight()) / 2);
-        Toolkit.getDefaultToolkit().beep();
-        dialog.setVisible(true);
+                    };
+                    long currMS = currDate.getTime();
+                    long delay = initialDate.getTimeInMillis() - currMS;
+                    taskExecutor.schedule(r, delay, TimeUnit.MILLISECONDS);
+				} else {
+					// ... otherwise (no "weekdays/weekend only" restriction was specified) - display reminder
+			        final JDialog dialog = new JDialog(null, ModalityType.MODELESS);
+			        JTextPane detailsTextPane = new JTextPane();
+			        detailsTextPane.setEditable(false);
+			        detailsTextPane.setEditorKit(new CustomHTMLEditorKit());
+			        detailsTextPane.addHyperlinkListener(new HyperlinkListener() {
+			            public void hyperlinkUpdate(HyperlinkEvent e) {
+			                if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
+			                    if (e.getDescription().startsWith(Constants.ENTRY_PROTOCOL_PREFIX)) {
+			                        String idStr = e.getDescription().substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
+			                        dialog.setVisible(false);
+			                        FrontEnd.restoreMainWindow();
+			                        FrontEnd.switchToVisualEntry(UUID.fromString(idStr));
+			                        dialog.setVisible(true);
+			                    } else {
+			                        try {
+			                            AppManager.getInstance().handleAddress(e.getDescription());
+			                        } catch (Exception ex) {
+			                            FrontEnd.displayErrorMessage(ex);
+			                        }
+			                    }
+			                }
+			            }
+			        });
+			        JScrollPane detailsPane = new JScrollPane(detailsTextPane);
+			        detailsTextPane.setText(editorPanels.get(reminderEntry.getId()).getUnparsedCode());
+			        JPanel p = new JPanel(new BorderLayout());
+			        p.add(new JLabel(reminderEntry.getTitle()), BorderLayout.NORTH);
+			        p.add(detailsPane, BorderLayout.CENTER);
+			        JPanel pControls = new JPanel(new GridLayout(2, 1));
+			        final int idx = findRowIdxByID(reminderEntry.getId().toString()); // check if reminder entry is still in the list
+			        JButton doneButt = new JButton(getMessage("Done") + " (" + ((periodic && idx != -1) ? getMessage("remind.next.time") : getMessage("delete.this.reminder")) + ")");
+			        doneButt.addActionListener(new ActionListener(){
+			            public void actionPerformed(ActionEvent e) {
+			                dialog.setVisible(false);
+			                if (idx != -1) {
+			                    if (periodic) {
+			                    	Date currDate = new Date();
+			            			checkmarkDates.put(reminderEntry.getId(), DATE_TIME_FORMAT.format(currDate));
+			            			Calendar now = new GregorianCalendar();
+			            			now.setTime(currDate);
+			            			do {
+			            				initialDate.set(calendarField, initialDate.get(calendarField) + (reminderEntry.getDate().startsWith(PERIODIC_DATE_QUARTERLY) ? 3 : 1));
+			            			} while (initialDate.before(now));
+			                        Runnable r = new Runnable(){
+			                            public void run() {
+			                                runTask(taskExecutor, reminderEntry, periodic, calendarField, initialDate);
+			                            }
+			                        };
+			                        long currMS = currDate.getTime();
+			                        long delay = initialDate.getTimeInMillis() - currMS;
+			                        taskExecutor.schedule(r, delay, TimeUnit.MILLISECONDS);
+			                    } else {
+			                        ((DefaultTableModel) reminderEntriesTable.getModel()).removeRow(idx);
+			                        cleanUpUnUsedAttachments(reminderEntry.getId());
+			                        tasks.remove(reminderEntry.getId());
+			                    }
+			                }
+			            }
+			        });
+			        pControls.add(doneButt);
+			        JPanel remPanel = new JPanel(new GridLayout(1, 3));
+			        final SpinnerNumberModel sm = new SpinnerNumberModel();
+			        sm.setMinimum(1);
+			        sm.setStepSize(1);
+			        sm.setValue(5);
+			        final JSpinner remSpinner = new JSpinner(sm);
+			        final JComboBox remComboBox = new JComboBox();
+			        remComboBox.addItem(TimeUnit.MINUTES);
+			        remComboBox.addItem(TimeUnit.HOURS);
+			        remComboBox.addItem(TimeUnit.DAYS);
+			        remComboBox.setRenderer(new DefaultListCellRenderer(){
+			            private static final long serialVersionUID = 1L;
+			            @Override
+			            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+			                String dValue = PERIODS.get((TimeUnit) value);
+			                return super.getListCellRendererComponent(list, dValue, index, isSelected, cellHasFocus);
+			            }
+			        });
+			        remComboBox.setSelectedItem(TimeUnit.MINUTES);
+			        JButton remButt = new JButton(getMessage("Remind.again.in"));
+			        remButt.addActionListener(new ActionListener(){
+			            public void actionPerformed(ActionEvent e) {
+			                dialog.setVisible(false);
+			                taskExecutor.schedule(new Runnable(){
+			                    public void run() {
+			                        runTask(taskExecutor, reminderEntry, periodic, calendarField, initialDate);
+			                    }
+			                }, ((Integer) remSpinner.getValue()).longValue(), (TimeUnit) remComboBox.getSelectedItem());
+			            }
+			        });
+			        remPanel.add(remButt);
+			        remPanel.add(remSpinner);
+			        remPanel.add(remComboBox);
+			        pControls.add(remPanel);
+			        p.add(pControls, BorderLayout.SOUTH);
+			        dialog.setAlwaysOnTop(true);
+			        dialog.setUndecorated(true);
+			        dialog.setContentPane(p);
+			        dialog.getRootPane().setBorder(new LineBorder(Color.RED, 3, true));
+			        dialog.pack();
+			        dialog.setLocation(
+			                (Toolkit.getDefaultToolkit().getScreenSize().width - dialog.getWidth()) / 2, 
+			                (Toolkit.getDefaultToolkit().getScreenSize().height - dialog.getHeight()) / 2);
+			        Toolkit.getDefaultToolkit().beep();
+			        dialog.setVisible(true);
+				}
+			}
+		});
     }
     
     private Collection<ReminderEntry> getReminderEntries() {
@@ -974,6 +1088,7 @@ public class Reminder extends ToolExtension {
             e.setTitle(entry.getTitle());
             e.setDescription(entry.getDescription());
             e.setDate(entry.getDate());
+            e.setCheckmarkDate(checkmarkDates.get(entry.getId()));
             e.setTime(entry.getTime());
             entries.getEntry().add(e);
         }

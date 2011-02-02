@@ -1,6 +1,9 @@
 Daily == Ежедневно
+Daily.WeekDaysOnly == Ежедневно / только по будням
+Daily.WeekEndOnly == Ежедневно / только по выходным
 Weekly == Еженедельно
 Monthly == Ежемесячно
+Quarterly == Ежеквартально
 Yearly == Ежегодно
 Sunday == Воскресенье
 Monday == Понедельник
@@ -38,4 +41,5 @@ delete.this.reminder == удалить это напоминание
 Remind.again.in == Напомнить снова через...
 tooltip.weekly == Каждый заданный день недели (Воскресенье - первый день)
 tooltip.monthly == Каждое заданное число месяца
+tooltip.quarterly == Каждое заданное число первого месяца каждого квартала
 tooltip.yearly == Каждая заданная дата года

@@ -1,53 +1,89 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <bias:repository xmlns:bias="http://bias.sourceforge.net">
-	<pack type="AppLauncher" name="AppLauncher" version="0.9.7.1" author="R. Kasianenko" description="Bias Application Launcher" file-size="39230" url="http://downloads.sourceforge.net/bias/bias.jar" />
-	<pack type="AppCore" name="AppCore" version="1.0.2" author="R. Kasianenko" description="Bias Application Core" file-size="432848" url="http://downloads.sourceforge.net/bias/appcore.jar" />
-	<pack type="Extension" name="FTPTransfer" version="0.1.2" author="R. Kasianenko" description="Import/Export through FTP" file-size="5620" url="http://downloads.sourceforge.net/bias/FTPTransfer.jar" />
+	<pack type="AppLauncher" name="AppLauncher" version="1.0.1" author="R. Kasianenko" description="Bias Application Launcher" file-size="38937" url="http://downloads.sourceforge.net/bias/bias.jar" />
+	<pack type="AppCore" name="AppCore" version="1.0.3" author="R. Kasianenko" description="Bias Application Core" file-size="436722" url="http://downloads.sourceforge.net/bias/appcore.jar">
+		<dependency type="AppLauncher" name="AppLauncher" version="1.0.0"/>
+	</pack>
+	<pack type="Extension" name="FTPTransfer" version="0.1.2" author="R. Kasianenko" description="Import/Export through FTP" file-size="5620" url="http://downloads.sourceforge.net/bias/FTPTransfer.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+	</pack>
 	<pack type="Extension" name="SMBTransfer" version="0.1.1" author="R. Kasianenko" description="Import/Export through SMB (CIFS)" file-size="5487" url="http://downloads.sourceforge.net/bias/SMBTransfer.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="JCIFS" version="1.2.18"/>
 	</pack>
-	<pack type="Extension" name="HTMLPage" version="0.6.1" author="R. Kasianenko" description="WYSIWYG HTML page editor" file-size="196730" url="http://downloads.sourceforge.net/bias/HTMLPage.jar" />
-	<pack type="Extension" name="ToDoList" version="0.7.5" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="233698" url="http://downloads.sourceforge.net/bias/ToDoList.jar" />
-	<pack type="Extension" name="Graffiti" version="0.2.3" author="R. Kasianenko" description="Basic paint editor" file-size="326734" url="http://downloads.sourceforge.net/bias/Graffiti.jar" />
-	<pack type="Extension" name="PlainText" version="0.9.1" author="R. Kasianenko" description="Simple plain text editor" file-size="181176" url="http://downloads.sourceforge.net/bias/PlainText.jar" />
-	<pack type="Extension" name="FilePack" version="0.3.3.1" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="93007" url="http://downloads.sourceforge.net/bias/FilePack.jar" />
-	<pack type="Extension" name="MainEntry" version="0.3.5" author="R. Kasianenko" description="Keep certain entry as main" file-size="5116" url="http://downloads.sourceforge.net/bias/MainEntry.jar" />
-	<pack type="Extension" name="Synchronizer" version="0.2.7.2" author="R. Kasianenko" description="Schedule/Event-driven data synchronizer" file-size="64077" url="http://downloads.sourceforge.net/bias/Synchronizer.jar" />
-	<pack type="Extension" name="DashBoard" version="0.2.9.1" author="R. Kasianenko" description="Simple dashboard for chaotic info-snippets placement" file-size="169989" url="http://downloads.sourceforge.net/bias/DashBoard.jar" />
-	<pack type="Extension" name="Reminder" version="0.2.1.1" author="R. Kasianenko" description="Simple and easy to use reminder manager" file-size="288428" url="http://downloads.sourceforge.net/bias/Reminder.jar">
+	<pack type="Extension" name="HTMLPage" version="0.6.1" author="R. Kasianenko" description="WYSIWYG HTML page editor" file-size="196730" url="http://downloads.sourceforge.net/bias/HTMLPage.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+	</pack>
+	<pack type="Extension" name="ToDoList" version="0.7.5" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="233698" url="http://downloads.sourceforge.net/bias/ToDoList.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+	</pack>
+	<pack type="Extension" name="Graffiti" version="0.2.3" author="R. Kasianenko" description="Basic paint editor" file-size="326734" url="http://downloads.sourceforge.net/bias/Graffiti.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+	</pack>
+	<pack type="Extension" name="PlainText" version="0.9.2" author="R. Kasianenko" description="Simple plain text editor" file-size="181563" url="http://downloads.sourceforge.net/bias/PlainText.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.3"/>
+	</pack>
+	<pack type="Extension" name="FilePack" version="0.3.3.1" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="93007" url="http://downloads.sourceforge.net/bias/FilePack.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+	</pack>
+	<pack type="Extension" name="MainEntry" version="0.3.5" author="R. Kasianenko" description="Keep certain entry as main" file-size="5116" url="http://downloads.sourceforge.net/bias/MainEntry.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+	</pack>
+	<pack type="Extension" name="Synchronizer" version="0.2.7.2" author="R. Kasianenko" description="Schedule/Event-driven data synchronizer" file-size="64077" url="http://downloads.sourceforge.net/bias/Synchronizer.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+	</pack>
+	<pack type="Extension" name="DashBoard" version="0.3.1" author="R. Kasianenko" description="Simple dashboard for chaotic info-snippets placement" file-size="177068" url="http://downloads.sourceforge.net/bias/DashBoard.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.3"/>
+	</pack>
+	<pack type="Extension" name="Reminder" version="0.3.1" author="R. Kasianenko" description="Simple and easy to use reminder manager" file-size="293204" url="http://downloads.sourceforge.net/bias/Reminder.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.3"/>
 		<dependency type="Library" name="JCalendar" version="1.3.2"/>
 	</pack>
 	<pack type="Extension" name="FinancialFlows" version="0.3.5.3" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="285346" url="http://downloads.sourceforge.net/bias/FinancialFlows.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="JFreeChart" version="1.0.9"/>
 		<dependency type="Library" name="JCalendar" version="1.3.2"/>
 	</pack>
-	<pack type="Extension" name="SimpleSearch" version="0.7.7" author="R. Kasianenko" description="Search through entries" file-size="161561" url="http://downloads.sourceforge.net/bias/SimpleSearch.jar" />
-	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="152492" url="http://downloads.sourceforge.net/bias/SimpleStats.jar" />
+	<pack type="Extension" name="SimpleSearch" version="0.7.7" author="R. Kasianenko" description="Search through entries" file-size="161561" url="http://downloads.sourceforge.net/bias/SimpleSearch.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+	</pack>
+	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="152492" url="http://downloads.sourceforge.net/bias/SimpleStats.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+	</pack>
 	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Skin" file-size="102604" url="http://downloads.sourceforge.net/bias/JGLooksSkin.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="JGLooks"/>
 	</pack>
 	<pack type="Skin" name="JTattooSkin" version="0.3.1" author="R. Kasianenko" description="JTattoo Skin" file-size="120785" url="http://downloads.sourceforge.net/bias/JTattooSkin.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="JTattooLAF"/>
 	</pack>
 	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNode Skin" file-size="100953" url="http://downloads.sourceforge.net/bias/InfoNodeSkin.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="InfoNodeLF"/>
 	</pack>
 	<pack type="Skin" name="LipstikSkin" version="0.1.1" author="R. Kasianenko" description="Lipstik Skin" file-size="91663" url="http://downloads.sourceforge.net/bias/LipstikSkin.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="LipstikLF"/>
 	</pack>
 	<pack type="Skin" name="LiquidSkin" version="0.1.1" author="R. Kasianenko" description="Liquid Skin" file-size="110760" url="http://downloads.sourceforge.net/bias/LiquidSkin.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="LiquidLnF"/>
 	</pack>
 	<pack type="Skin" name="PgsSkin" version="0.1.1" author="R. Kasianenko" description="Pgs Skin" file-size="105568" url="http://downloads.sourceforge.net/bias/PgsSkin.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="PgsLAF"/>
 	</pack>
 	<pack type="Skin" name="SquarenessSkin" version="0.1.1" author="R. Kasianenko" description="Squareness Skin" file-size="95814" url="http://downloads.sourceforge.net/bias/SquarenessSkin.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="Squareness"/>
 	</pack>
 	<pack type="Skin" name="SubstanceSkin" version="0.1.2" author="R. Kasianenko" description="Substance Skin" file-size="112562" url="http://downloads.sourceforge.net/bias/SubstanceSkin.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="Substance"/>
 	</pack>
 	<pack type="Skin" name="TinySkin" version="0.1.1" author="R. Kasianenko" description="Tiny Skin" file-size="97150" url="http://downloads.sourceforge.net/bias/TinySkin.jar">
+		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="TinyLAF"/>
 	</pack>
 	<pack type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="147137" url="http://downloads.sourceforge.net/bias/Bitcons.jar" />

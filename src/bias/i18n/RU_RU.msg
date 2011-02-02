@@ -3,6 +3,9 @@ addons.management.title == Bias :: Управление Аддонами
 version == Версия
 username.preference.title == Имя пользователя
 preferred.language.preference.title == Предпочитаемый язык (требует перезагрузки Bias)
+force.text.antialiasing.mode.title == Включить принудительный режим сглаживания текста (требует перезагрузки Bias)
+force.text.antialiasing.mode.description == Игнорировать системные настройки и использовать пользовательский режим сглаживания текста
+text.antialiasing.mode.title == Выберите режим сглаживания текста
 preferred.datetime.format.preference.title == Предпочитаемый формат даты/времени
 preferred.timeout.preference.title == Предпочитаемый таймаут для сетевых операций (в секундах)
 use.proxy == Использовать прокси-сервер для сетевых операций

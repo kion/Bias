@@ -14,6 +14,8 @@ public class ReminderEntry {
 
     private String date;
 
+    private String checkmarkDate;
+
     private String time;
 
     private String title;
@@ -48,7 +50,15 @@ public class ReminderEntry {
         this.date = date;
     }
 
-    public String getTime() {
+    public String getCheckmarkDate() {
+		return checkmarkDate;
+	}
+
+	public void setCheckmarkDate(String checkmarkDate) {
+		this.checkmarkDate = checkmarkDate;
+	}
+
+	public String getTime() {
         return time;
     }
 

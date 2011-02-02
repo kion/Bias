@@ -47,10 +47,10 @@ public class I18nService {
             messages = addOnMessages.get(addOnClass);
             if (messages == null) {
                 String locale = getLanguageLocale(Preferences.getInstance().preferredLanguage);
-                InputStream is = addOnClass.getResourceAsStream(
+                InputStream is = I18nService.class.getResourceAsStream(
                         Constants.MESSAGES_PATH_PREFIX + addOnClass.getSimpleName() + Constants.PATH_SEPARATOR + locale + Constants.MESSAGE_FILE_ENDING);
                 if (is == null) {
-                    is = addOnClass.getResourceAsStream(
+                    is = I18nService.class.getResourceAsStream(
                             Constants.MESSAGES_PATH_PREFIX + addOnClass.getSimpleName() + Constants.PATH_SEPARATOR + Constants.DEFAULT_LOCALE + Constants.MESSAGE_FILE_ENDING);
                 }
                 messages = initLocale(is);

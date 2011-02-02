@@ -22,7 +22,7 @@ public class ToolRepresentation {
 
     public ToolRepresentation(JButton button, JComponent indicator) {
         if (button == null && indicator == null) {
-            throw new IllegalArgumentException("Both button and indicator can not be null!");
+            throw new IllegalArgumentException("Both button and indicator are null!");
         }
         this.button = button;
         this.indicator = indicator;
