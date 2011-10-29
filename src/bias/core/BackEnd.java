@@ -1645,6 +1645,33 @@ public class BackEnd {
         }
         return null;
     }
+
+    public Boolean isDependencyInstalledAndUpToDate(Dependency dep) throws Throwable {
+        if (dep.getType() == PackType.APP_CORE) {
+            if (VersionComparator.getInstance().compare(getAppCoreVersion(), dep.getVersion()) >= 0 || (updatedAppCoreVersion != null && VersionComparator.getInstance().compare(updatedAppCoreVersion, dep.getVersion()) >= 0)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else if (dep.getType() == PackType.APP_LAUNCHER) {
+            if (VersionComparator.getInstance().compare(getAppLauncherVersion(), dep.getVersion()) >= 0 || (updatedAppLauncherVersion != null && VersionComparator.getInstance().compare(updatedAppLauncherVersion, dep.getVersion()) >= 0)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            for (AddOnInfo addOn : getAddOns(dep.getType())) {
+                if (addOn.getName().equals(dep.getName())) {
+                    if (VersionComparator.getInstance().compare(addOn.getVersion(), dep.getVersion()) >= 0) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+            }
+        }
+        return null;
+    }
     
     public String getAppCoreVersion() {
         return appCoreVersion;

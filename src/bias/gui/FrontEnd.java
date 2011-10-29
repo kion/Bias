@@ -5562,7 +5562,8 @@ public class FrontEnd extends JFrame {
                                     Pack pack = getAvailableOnlinePackages().get((String) getOnlineModel().getValueAt(e.getFirstRow(), 2));
                                     if (pack.getDependency() != null && !pack.getDependency().isEmpty()) {
                                         for (Dependency dep : pack.getDependency()) {
-                                            if (!BackEnd.getInstance().getAddOns().contains(new AddOnInfo(dep.getName()))) {
+                                        	Boolean isDependencyInstalledAndUpToDate = BackEnd.getInstance().isDependencyInstalledAndUpToDate(dep);
+                                            if (isDependencyInstalledAndUpToDate != true) {
                                                 int idx = findDataRowIndex(getOnlineModel(), 2, dep.getName());
                                                 if (idx == -1) {
                                                     throw new Exception(

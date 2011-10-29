@@ -1196,7 +1196,7 @@ public class FinancialFlows extends EntryExtension {
                         DIRECTION d = (DIRECTION) model.getValueAt(i, COLUMN_DIRECTION_IDX);
                         Date date = (Date) model.getValueAt(i, COLUMN_DATE_IDX);
                         Date endDate = (Date) model.getValueAt(i, COLUMN_END_DATE_IDX);
-                        if (d == direction && (date != null && date.getTime() >= dateLow.getTime()) && (endDate == null || endDate.getTime() <= dateHigh.getTime())) {
+                        if (d == direction && (date != null && date.getTime() >= dateLow.getTime() && date.getTime() <= month.getStart().getTime()) && (endDate == null || (endDate.getTime() <= dateHigh.getTime() && endDate.getTime() >= month.getStart().getTime()))) {
                             String type = (String) model.getValueAt(i, COLUMN_TYPE_IDX);
                             Number num = 0;
                             if (dataset.getKeys().contains(type)) {
@@ -1217,8 +1217,10 @@ public class FinancialFlows extends EntryExtension {
 
         PiePlot3D plot = (PiePlot3D) chart.getPlot();
         plot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0} {1}"));
-
-        BufferedImage image = chart.createBufferedImage(500, 300);
+        
+        int w = FrontEnd.getMainWindowSize().width/10*8;
+        int h = w/5*3;
+        BufferedImage image = chart.createBufferedImage(w, h);
         return image;
     }
 
