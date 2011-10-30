@@ -1252,7 +1252,9 @@ public class FinancialFlows extends EntryExtension {
         DateAxis axis = (DateAxis) plot.getDomainAxis();
         axis.setDateFormatOverride(new SimpleDateFormat("MMM-yyyy"));
 
-        BufferedImage image = chart.createBufferedImage(1000, 500);
+        int w = FrontEnd.getMainWindowSize().width/10*8;
+        int h = w/5*3;
+        BufferedImage image = chart.createBufferedImage(w, h);
         return image;
     }
 
