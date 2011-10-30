@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <bias:repository xmlns:bias="http://bias.sourceforge.net">
 	<pack type="AppLauncher" name="AppLauncher" version="1.0.1" author="R. Kasianenko" description="Bias Application Launcher" file-size="38937" url="http://downloads.sourceforge.net/bias/bias.jar" />
-	<pack type="AppCore" name="AppCore" version="1.0.3.1" author="R. Kasianenko" description="Bias Application Core" file-size="436914" url="http://downloads.sourceforge.net/bias/appcore.jar">
+	<pack type="AppCore" name="AppCore" version="1.0.3.1" author="R. Kasianenko" description="Bias Application Core" file-size="436910" url="http://downloads.sourceforge.net/bias/appcore.jar">
 		<dependency type="AppLauncher" name="AppLauncher" version="1.0.0"/>
 	</pack>
 	<pack type="Extension" name="FTPTransfer" version="0.1.2" author="R. Kasianenko" description="Import/Export through FTP" file-size="5620" url="http://downloads.sourceforge.net/bias/FTPTransfer.jar">
@@ -39,7 +39,7 @@
 		<dependency type="AppCore" name="AppCore" version="1.0.3"/>
 		<dependency type="Library" name="JCalendar" version="1.3.2"/>
 	</pack>
-	<pack type="Extension" name="FinancialFlows" version="0.3.5.4" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="285561" url="http://downloads.sourceforge.net/bias/FinancialFlows.jar">
+	<pack type="Extension" name="FinancialFlows" version="0.3.5.4" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="285590" url="http://downloads.sourceforge.net/bias/FinancialFlows.jar">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="JFreeChart" version="1.0.13"/>
 		<dependency type="Library" name="JCalendar" version="1.3.2"/>
