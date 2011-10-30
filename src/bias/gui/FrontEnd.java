@@ -907,9 +907,8 @@ public class FrontEnd extends JFrame {
             // remember last update date
             config.setProperty(Constants.PROPERTY_LAST_UPDATE_DATE, "" + System.currentTimeMillis());
             // inform user about update complete
-            JOptionPane.showMessageDialog(
-                    getActiveWindow(), 
-                    Constants.HTML_PREFIX + 
+            displayMessage(
+            		Constants.HTML_PREFIX + 
                     getMessage("info.message.auto.update.complete") + "<br/><br/>" +
                     "<i>" +
                     getMessage("auto.update.disable.note") + "<br>" +
@@ -921,7 +920,7 @@ public class FrontEnd extends JFrame {
 
     private Runnable updateCommand = new Runnable(){
         public void run() {
-            long delay = 300000 /* 1000 * 60 * 5 */; // 5 minutes
+            long delay = 180000; // 3 minutes
             if (Preferences.getInstance().autoUpdateInterval == 0 || isTimeToUpdate()) {
                 try {
                     Thread.sleep(delay);
@@ -2177,22 +2176,22 @@ public class FrontEnd extends JFrame {
     public static void displayErrorMessage(Throwable t) {
         Splash.hideSplash();
         t.printStackTrace(System.err);
-        JOptionPane.showMessageDialog(getActiveWindow(), CommonUtils.getFailureDetails(t), getMessage("error"), JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), CommonUtils.getFailureDetails(t), "Bias :: " + getMessage("error"), JOptionPane.ERROR_MESSAGE);
     }
 
     public static void displayErrorMessage(String message, Throwable t) {
         Splash.hideSplash();
         t.printStackTrace(System.err);
-        JOptionPane.showMessageDialog(getActiveWindow(), message, getMessage("error"), JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), message, "Bias :: " + getMessage("error"), JOptionPane.ERROR_MESSAGE);
     }
 
     public static void displayErrorMessage(String message) {
         Splash.hideSplash();
-        JOptionPane.showMessageDialog(getActiveWindow(), message, getMessage("error"), JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), message, "Bias :: " + getMessage("error"), JOptionPane.ERROR_MESSAGE);
     }
     
     public static void displayMessage(String message) {
-        JOptionPane.showMessageDialog(getActiveWindow(), message, getMessage("information"), JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(getActiveWindow(), message, "Bias :: " + getMessage("information"), JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void addTabPaneListeners(JTabbedPane tabPane) {
@@ -6206,7 +6205,7 @@ public class FrontEnd extends JFrame {
             while (getOnlineModel().getRowCount() > 0) {
                 getOnlineModel().removeRow(0);
             }
-            URL addonsListURL = new URL(BackEnd.getInstance().getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
+            URL addonsListURL = new URL(BackEnd.getInstance().getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME + "?timestamp=" + new Date().getTime());
             final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             Downloader d = Downloader.createSingleFileDownloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
             displayProcessNotification(getMessage("info.message.refreshing.online.packages.list"), true);
