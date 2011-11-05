@@ -809,6 +809,9 @@ public class FrontEnd extends JFrame {
                                 hideSysTrayIcon();
                             }
                             instance.setVisible(!instance.isVisible());
+                            if (!instance.isVisible()) {
+                            	System.gc();
+                            }
                         }
                     });
                 }
