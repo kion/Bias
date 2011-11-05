@@ -367,6 +367,7 @@ public class SimpleSearch extends ToolExtension {
                                     }
                                     entryPathItemsPanel.setVisible(true);
                                 }
+                                System.gc();
                             }
                         } catch (Throwable t) {
                             processLabel.setText("<html><font color=red>Error while processing search!</font></html>");

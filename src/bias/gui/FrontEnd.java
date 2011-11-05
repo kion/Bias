@@ -619,6 +619,7 @@ public class FrontEnd extends JFrame {
                             if (sysTrayIconVisible) {
                                 instance.setVisible(false);
                             }
+                            System.gc();
                         } else {
                             exit();
                         }
@@ -5868,6 +5869,7 @@ public class FrontEnd extends JFrame {
                 doneButt.addActionListener(new ActionListener(){
                     public void actionPerformed(ActionEvent e) {
                         addOnsManagementDialog.setVisible(false);
+                        System.gc();
                     }
                 });
 
@@ -5881,6 +5883,12 @@ public class FrontEnd extends JFrame {
                 
                 addOnsManagementDialog = new JFrame(getMessage("addons.management.title"));
                 addOnsManagementDialog.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+                addOnsManagementDialog.addWindowListener(new WindowAdapter() {
+                	@Override
+                	public void windowClosing(WindowEvent e) {
+                        System.gc();
+                	}
+				});
                 addOnsManagementDialog.setContentPane(contentPane);
                 addOnsManagementDialog.pack();
                 int x = (getToolkit().getScreenSize().width - addOnsManagementDialog.getWidth()) / 2;
