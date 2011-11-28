@@ -20,6 +20,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EventObject;
@@ -40,9 +41,12 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.RowFilter;
+import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.SwingConstants;
-import javax.swing.RowSorter.SortKey;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.EventListenerList;
@@ -201,6 +205,8 @@ public class FinancialFlows extends EntryExtension {
     private JButton jButton7;
 
     private JPanel jPanel1;
+    
+    private JTextField filterText;
 
     private JTabbedPane jTabbedPane1;
 
@@ -730,6 +736,20 @@ public class FinancialFlows extends EntryExtension {
                     jPanel1 = new JPanel();
                     jPanel1.setLayout(new BorderLayout());
                     this.add(jPanel1, BorderLayout.CENTER);
+                    filterText = new JTextField();
+                    filterText.addCaretListener(new CaretListener(){
+                        @SuppressWarnings("unchecked")
+                        public void caretUpdate(CaretEvent e) {
+                            TableRowSorter<TableModel> sorterSingle = (TableRowSorter<TableModel>) getJTableSingle().getRowSorter();
+                            sorterSingle.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
+                            TableRowSorter<TableModel> sorterRegular = (TableRowSorter<TableModel>) getJTableRegular().getRowSorter();
+                            sorterRegular.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
+                        }
+                    });
+                    JPanel filterPanel = new JPanel(new BorderLayout());
+                    filterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
+                    filterPanel.add(filterText, BorderLayout.CENTER);
+                    jPanel1.add(filterPanel, BorderLayout.NORTH);
                     jTabbedPane1 = new JTabbedPane();
                     jPanel1.add(jTabbedPane1, BorderLayout.CENTER);
                     {
@@ -1149,64 +1169,88 @@ public class FinancialFlows extends EntryExtension {
     }
 
     private void populatePieDataset(DIRECTION direction, DefaultPieDataset dataset) {
-        if (getJTableSingle().getModel().getRowCount() > 0 || getJTableRegular().getModel().getRowCount() > 0) {
+        if (getJTableSingle().getRowCount() > 0 || getJTableRegular().getRowCount() > 0) {
             Date dateLow = null;
             Date dateHigh = null;
             TableModel model = getJTableSingle().getModel();
-            for (int i = 0; i < model.getRowCount(); i++) {
-                DIRECTION d = (DIRECTION) model.getValueAt(i, COLUMN_DIRECTION_IDX);
+            for (int i = 0; i < getJTableSingle().getRowCount(); i++) {
+                int idx = getJTableSingle().getRowSorter().convertRowIndexToModel(i);
+                DIRECTION d = (DIRECTION) model.getValueAt(idx, COLUMN_DIRECTION_IDX);
                 if (d == direction) {
-                    Date date = (Date) model.getValueAt(i, COLUMN_DATE_IDX);
+                    Date date = (Date) model.getValueAt(idx, COLUMN_DATE_IDX);
                     if (dateLow == null || date.before(dateLow)) {
                         dateLow = date;
                     }
                     if (dateHigh == null || date.after(dateHigh)) {
                         dateHigh = date;
                     }
-                    String type = (String) model.getValueAt(i, COLUMN_TYPE_IDX);
+                    String type = (String) model.getValueAt(idx, COLUMN_TYPE_IDX);
                     Number num = 0;
                     if (dataset.getKeys().contains(type)) {
                         num = dataset.getValue(type);
                     }
-                    num = num.floatValue() + (Float) model.getValueAt(i, COLUMN_AMOUNT_IDX);
+                    num = num.floatValue() + (Float) model.getValueAt(idx, COLUMN_AMOUNT_IDX);
                     dataset.setValue(type, num);
                 }
             }
             model = getJTableRegular().getModel();
-            for (int i = 0; i < model.getRowCount(); i++) {
-                DIRECTION d = (DIRECTION) model.getValueAt(i, COLUMN_DIRECTION_IDX);
-                if (d == direction) {
-                    Date date = (Date) model.getValueAt(i, COLUMN_DATE_IDX);
-                    if (date != null && (dateLow == null || date.before(dateLow))) {
-                        dateLow = date;
-                    }
-                    Date endDate = (Date) model.getValueAt(i, COLUMN_END_DATE_IDX);
-                    if (endDate != null && (dateHigh == null || endDate.after(dateHigh))) {
-                        dateHigh = endDate;
+            Calendar dateLowCal = new GregorianCalendar();
+            dateLowCal.setTime(dateLow);
+            Calendar dateHighCal = new GregorianCalendar();
+            dateHighCal.setTime(dateHigh);
+            boolean filteredBySingleMonth = dateLowCal.get(Calendar.YEAR) == dateHighCal.get(Calendar.YEAR) && dateLowCal.get(Calendar.MONTH) == dateHighCal.get(Calendar.MONTH);
+            if (!Validator.isNullOrBlank(filterText.getText()) && filteredBySingleMonth) {
+                for (int i = 0; i < getJTableRegular().getRowCount(); i++) {
+                    int idx = getJTableRegular().getRowSorter().convertRowIndexToModel(i);
+                    DIRECTION d = (DIRECTION) model.getValueAt(idx, COLUMN_DIRECTION_IDX);
+                    if (d == direction) {
+                        String type = (String) model.getValueAt(idx, COLUMN_TYPE_IDX);
+                        Number num = 0;
+                        if (dataset.getKeys().contains(type)) {
+                            num = dataset.getValue(type);
+                        }
+                        num = num.floatValue() + (Float) model.getValueAt(idx, COLUMN_AMOUNT_IDX);
+                        dataset.setValue(type, num);
                     }
                 }
-            }
-            if (dateHigh == null) {
-                dateHigh = new Date();
-            }
-            if (dateLow != null && dateHigh != null) {
-                RegularTimePeriod month = new Month(dateLow);
-                while (month.getStart().getTime() <= dateHigh.getTime()) {
-                    for (int i = 0; i < model.getRowCount(); i++) {
-                        DIRECTION d = (DIRECTION) model.getValueAt(i, COLUMN_DIRECTION_IDX);
-                        Date date = (Date) model.getValueAt(i, COLUMN_DATE_IDX);
-                        Date endDate = (Date) model.getValueAt(i, COLUMN_END_DATE_IDX);
-                        if (d == direction && (date != null && date.getTime() >= dateLow.getTime() && date.getTime() <= month.getStart().getTime()) && (endDate == null || (endDate.getTime() <= dateHigh.getTime() && endDate.getTime() >= month.getStart().getTime()))) {
-                            String type = (String) model.getValueAt(i, COLUMN_TYPE_IDX);
-                            Number num = 0;
-                            if (dataset.getKeys().contains(type)) {
-                                num = dataset.getValue(type);
-                            }
-                            num = num.floatValue() + (Float) model.getValueAt(i, COLUMN_AMOUNT_IDX);
-                            dataset.setValue(type, num);
+            } else {
+                for (int i = 0; i < getJTableRegular().getRowCount(); i++) {
+                    int idx = getJTableRegular().getRowSorter().convertRowIndexToModel(i);
+                    DIRECTION d = (DIRECTION) model.getValueAt(idx, COLUMN_DIRECTION_IDX);
+                    if (d == direction) {
+                        Date date = (Date) model.getValueAt(idx, COLUMN_DATE_IDX);
+                        if (date != null && (dateLow == null || date.before(dateLow))) {
+                            dateLow = date;
+                        }
+                        Date endDate = (Date) model.getValueAt(idx, COLUMN_END_DATE_IDX);
+                        if (endDate != null && (dateHigh == null || endDate.after(dateHigh))) {
+                            dateHigh = endDate;
                         }
                     }
-                    month = month.next();
+                }
+                if (dateHigh == null) {
+                    dateHigh = new Date();
+                }
+                if (dateLow != null && dateHigh != null) {
+                    RegularTimePeriod month = new Month(dateLow);
+                    while (month.getStart().getTime() <= dateHigh.getTime()) {
+                        for (int i = 0; i < getJTableRegular().getRowCount(); i++) {
+                            int idx = getJTableRegular().getRowSorter().convertRowIndexToModel(i);
+                            DIRECTION d = (DIRECTION) model.getValueAt(idx, COLUMN_DIRECTION_IDX);
+                            Date date = (Date) model.getValueAt(idx, COLUMN_DATE_IDX);
+                            Date endDate = (Date) model.getValueAt(idx, COLUMN_END_DATE_IDX);
+                            if (d == direction && (date != null && date.getTime() >= dateLow.getTime() && date.getTime() <= month.getStart().getTime()) && (endDate == null || (endDate.getTime() <= dateHigh.getTime() && endDate.getTime() >= month.getStart().getTime()))) {
+                                String type = (String) model.getValueAt(idx, COLUMN_TYPE_IDX);
+                                Number num = 0;
+                                if (dataset.getKeys().contains(type)) {
+                                    num = dataset.getValue(type);
+                                }
+                                num = num.floatValue() + (Float) model.getValueAt(idx, COLUMN_AMOUNT_IDX);
+                                dataset.setValue(type, num);
+                            }
+                        }
+                        month = month.next();
+                    }
                 }
             }
         }
