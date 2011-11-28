@@ -742,18 +742,18 @@ public class FinancialFlows extends EntryExtension {
                         public void caretUpdate(CaretEvent e) {
                             TableRowSorter<TableModel> sorterSingle = (TableRowSorter<TableModel>) getJTableSingle().getRowSorter();
                             sorterSingle.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
-//                            TableRowSorter<TableModel> sorterRegular = (TableRowSorter<TableModel>) getJTableRegular().getRowSorter();
-//                            sorterRegular.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
                         }
                     });
                     JPanel filterPanel = new JPanel(new BorderLayout());
                     filterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
                     filterPanel.add(filterText, BorderLayout.CENTER);
-                    jPanel1.add(filterPanel, BorderLayout.NORTH);
+                    JPanel singleFlowPanel = new JPanel(new BorderLayout());
+                    singleFlowPanel.add(filterPanel, BorderLayout.NORTH);
+                    singleFlowPanel.add(new JScrollPane(getJTableSingle()), BorderLayout.CENTER);
                     jTabbedPane1 = new JTabbedPane();
                     jPanel1.add(jTabbedPane1, BorderLayout.CENTER);
                     {
-                        jTabbedPane1.addTab("Single Flows", ICON_SINGLE, new JScrollPane(getJTableSingle()));
+                        jTabbedPane1.addTab("Single Flows", ICON_SINGLE, singleFlowPanel);
                         jTabbedPane1.addTab("Regular Flows", ICON_REGULAR, new JScrollPane(getJTableRegular()));
                     }
                 }
