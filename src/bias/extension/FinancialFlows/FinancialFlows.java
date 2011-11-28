@@ -742,8 +742,8 @@ public class FinancialFlows extends EntryExtension {
                         public void caretUpdate(CaretEvent e) {
                             TableRowSorter<TableModel> sorterSingle = (TableRowSorter<TableModel>) getJTableSingle().getRowSorter();
                             sorterSingle.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
-                            TableRowSorter<TableModel> sorterRegular = (TableRowSorter<TableModel>) getJTableRegular().getRowSorter();
-                            sorterRegular.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
+//                            TableRowSorter<TableModel> sorterRegular = (TableRowSorter<TableModel>) getJTableRegular().getRowSorter();
+//                            sorterRegular.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
                         }
                     });
                     JPanel filterPanel = new JPanel(new BorderLayout());
@@ -1170,6 +1170,9 @@ public class FinancialFlows extends EntryExtension {
 
     private void populatePieDataset(DIRECTION direction, DefaultPieDataset dataset) {
         if (getJTableSingle().getRowCount() > 0 || getJTableRegular().getRowCount() > 0) {
+        	int y = -1;
+        	int m = -1;
+        	boolean filteredBySingleMonth = true;
             Date dateLow = null;
             Date dateHigh = null;
             TableModel model = getJTableSingle().getModel();
@@ -1178,6 +1181,14 @@ public class FinancialFlows extends EntryExtension {
                 DIRECTION d = (DIRECTION) model.getValueAt(idx, COLUMN_DIRECTION_IDX);
                 if (d == direction) {
                     Date date = (Date) model.getValueAt(idx, COLUMN_DATE_IDX);
+                    Calendar cal = new GregorianCalendar();
+                    cal.setTime(date);
+                    if (y == -1 && m == -1) {
+                    	y = cal.get(Calendar.YEAR);
+                    	m = cal.get(Calendar.MONTH);
+                    } else if (filteredBySingleMonth && y != cal.get(Calendar.YEAR) && m != cal.get(Calendar.MONTH)) {
+                    	filteredBySingleMonth = false;
+                    }
                     if (dateLow == null || date.before(dateLow)) {
                         dateLow = date;
                     }
@@ -1194,16 +1205,14 @@ public class FinancialFlows extends EntryExtension {
                 }
             }
             model = getJTableRegular().getModel();
-            Calendar dateLowCal = new GregorianCalendar();
-            dateLowCal.setTime(dateLow);
-            Calendar dateHighCal = new GregorianCalendar();
-            dateHighCal.setTime(dateHigh);
-            boolean filteredBySingleMonth = dateLowCal.get(Calendar.YEAR) == dateHighCal.get(Calendar.YEAR) && dateLowCal.get(Calendar.MONTH) == dateHighCal.get(Calendar.MONTH);
-            if (!Validator.isNullOrBlank(filterText.getText()) && filteredBySingleMonth) {
+            if (dateLow != null && !Validator.isNullOrBlank(filterText.getText()) && filteredBySingleMonth) {
+            	RegularTimePeriod month = new Month(dateLow);
                 for (int i = 0; i < getJTableRegular().getRowCount(); i++) {
                     int idx = getJTableRegular().getRowSorter().convertRowIndexToModel(i);
                     DIRECTION d = (DIRECTION) model.getValueAt(idx, COLUMN_DIRECTION_IDX);
-                    if (d == direction) {
+                    Date date = (Date) model.getValueAt(idx, COLUMN_DATE_IDX);
+                    Date endDate = (Date) model.getValueAt(idx, COLUMN_END_DATE_IDX);
+                    if (d == direction && (date != null && date.getTime() <= month.getStart().getTime()) && (endDate == null || endDate.getTime() >= month.getStart().getTime())) {
                         String type = (String) model.getValueAt(idx, COLUMN_TYPE_IDX);
                         Number num = 0;
                         if (dataset.getKeys().contains(type)) {
