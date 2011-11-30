@@ -4822,13 +4822,7 @@ public class FrontEnd extends JFrame {
                                 sm.setStepSize(1);
                                 sm.setValue(field.getInt(Preferences.getInstance()));
                                 prefControl = new JSpinner(sm);
-                                
-                                // FIXME [P3] // disable number formatting
-//                                JFormattedTextField tf = ((JSpinner.DefaultEditor) ((JSpinner) prefControl).getEditor()).getTextField();
-//                                DefaultFormatterFactory factory = (DefaultFormatterFactory) tf.getFormatterFactory();
-//                                NumberFormatter formatter = (NumberFormatter) factory.getDefaultFormatter();
-//                                formatter.setFormat(null);
-                                
+                                ((JSpinner) prefControl).setEditor(new JSpinner.NumberEditor(((JSpinner) prefControl), "0"));
                                 prefPanel.add(prefControl);
                             }
                             if (prefPanel != null && prefControl != null) {
