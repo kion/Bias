@@ -99,7 +99,6 @@ import com.toedter.calendar.JDateChooser;
  * @author kion
  */
 public class Reminder extends ToolExtension {
-    private static final long serialVersionUID = 1L;
     
     // TODO [P2] column widths should be stored as relative (% of whole table width) values
     
@@ -851,6 +850,7 @@ public class Reminder extends ToolExtension {
                     cal.set(Calendar.SECOND, 0);
                     delay = cal.getTimeInMillis() - currDate.getTime();
                     if (delay < 0) delay = 0L;
+                    calendarField = Calendar.DAY_OF_YEAR;
                 } catch (ParseException e) {
                     FrontEnd.displayErrorMessage("Failed to parse date for reminder entry " + reminderEntry.getTitle(), e);
                 }
