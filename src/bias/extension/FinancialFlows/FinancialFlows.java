@@ -112,7 +112,6 @@ public class FinancialFlows extends EntryExtension {
     private static final ImageIcon ICON_CHART2 = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "chart2.png"));
     private static final ImageIcon ICON_SINGLE = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "single.png"));
     private static final ImageIcon ICON_REGULAR = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "regular.png"));
-    private static final ImageIcon ICON_BALANCE = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "balance.png"));
     
     private static enum DIRECTION {
         INCOME, OUTGO
@@ -140,8 +139,6 @@ public class FinancialFlows extends EntryExtension {
 
     private static final String PROPERTY_OUTGO_TYPES = "OUTGO_TYPES";
 
-    private static final String PROPERTY_BALANCE_CORRECTION = "BALANCE_CORRECTION";
-    
     private static final String SEPARATOR_PATTERN = "\\s*,\\s*";
 
     private static final int COLUMN_DIRECTION_IDX = 0;
@@ -176,8 +173,6 @@ public class FinancialFlows extends EntryExtension {
     
     private SortOrder[] sortOrderRegular = new SortOrder[MAX_SORT_KEYS_NUMBER];
     
-    private double balanceCorrection = 0;
-
     private String currency;
     
     private Properties s;
@@ -201,8 +196,6 @@ public class FinancialFlows extends EntryExtension {
     private JButton jButton5;
 
     private JButton jButton6;
-
-    private JButton jButton7;
 
     private JPanel jPanel1;
     
@@ -299,10 +292,6 @@ public class FinancialFlows extends EntryExtension {
             if (!Validator.isNullOrBlank(atStr)) {
                 idx = Integer.valueOf(atStr);
             }
-            String bSubtr = s.getProperty(PROPERTY_BALANCE_CORRECTION);
-            if (!Validator.isNullOrBlank(bSubtr)) {
-                balanceCorrection = Double.valueOf(bSubtr);
-            }
         } catch (Throwable t) {
             FrontEnd.displayErrorMessage("Failed to initialize data/settings!", t);
             throw t;
@@ -387,7 +376,6 @@ public class FinancialFlows extends EntryExtension {
             s.setProperty(PROPERTY_ACTIVE_TAB, "" + idx);
         }
         s.setProperty(PROPERTY_COLUMNS_WIDTHS_REGULAR, colW.toString());
-        s.setProperty(PROPERTY_BALANCE_CORRECTION, "" + balanceCorrection);
         return PropertiesUtils.serializeProperties(s);
     }
     
@@ -659,54 +647,39 @@ public class FinancialFlows extends EntryExtension {
                         });
                     }
                     {
-                        jButton5 = new JButton();
-                        jToolBar1.add(jButton5);
-                        jButton5.setIcon(ICON_CHART2);
-                        jButton5.setToolTipText("Income/Outgo Chart");
-                        jButton5.addActionListener(new ActionListener() {
-                            public void actionPerformed(ActionEvent evt) {
-                                try {
-                                    TimeSeriesCollection dataset = new TimeSeriesCollection();
-                                    TimeSeries incomeSeries = new TimeSeries("Income", Month.class);
-                                    TimeSeries outgoSeries = new TimeSeries("Outgo", Month.class);
-                                    populateTimeSeries(getJTableSingle(), incomeSeries, outgoSeries, false);
-                                    populateTimeSeries(getJTableRegular(), incomeSeries, outgoSeries, true);
-                                    dataset.addSeries(incomeSeries);
-                                    dataset.addSeries(outgoSeries);
-                                    Image image = buildTimeSeriesChart("Income/Outgo Chart", "Amount", dataset);
-                                    JLabel label = new JLabel();
-                                    label.setIcon(new ImageIcon(image));
-                                    JOptionPane.showMessageDialog(FinancialFlows.this, new JScrollPane(label));
-                                } catch (Exception e) {
-                                    FrontEnd.displayErrorMessage(e);
-                                }
-                            }
-                        });
-                    }
-                    {
                         jButton6 = new JButton();
                         jToolBar1.add(jButton6);
-                        jButton6.setIcon(ICON_BALANCE);
-                        jButton6.setToolTipText("Balance");
+                        jButton6.setIcon(ICON_CHART1);
+                        jButton6.setToolTipText("Income/Outgo Chart");
                         jButton6.addActionListener(new ActionListener() {
                             public void actionPerformed(ActionEvent evt) {
                                 try {
                                     DefaultPieDataset iDataset = new DefaultPieDataset();
                                     populatePieDataset(DIRECTION.INCOME, iDataset);
-                                    DefaultPieDataset oDataset = new DefaultPieDataset();
-                                    populatePieDataset(DIRECTION.OUTGO, oDataset);
                                     double income = 0D;
                                     for (int i = 0; i < iDataset.getItemCount(); i++) {
                                         income += iDataset.getValue(i).doubleValue();
                                     }
+                                    DefaultPieDataset oDataset = new DefaultPieDataset();
+                                    populatePieDataset(DIRECTION.OUTGO, oDataset);
                                     double outgo = 0D;
                                     for (int i = 0; i < oDataset.getItemCount(); i++) {
                                         outgo += oDataset.getValue(i).doubleValue();
                                     }
+                                    
+                                    DefaultPieDataset dataset = new DefaultPieDataset();
+                                    dataset.setValue("Income", income);
+                                    dataset.setValue("Outgo", outgo);
+                                    Image image = buildPieChart("Income/Outgo Chart", dataset);
+                                    JLabel label = new JLabel();
+                                    label.setIcon(new ImageIcon(image));
+                                    
+                                    double balance = income - outgo;
                                     Component[] cmp = new Component[]{
-                                            new JLabel("Total balance: " + (income - outgo)),
-                                            new JLabel("Corrected balance: " + (income - outgo + balanceCorrection))
+                                    		new JScrollPane(label),
+                                            new JLabel("Balance: " + balance)
                                     };
+                                    
                                     JOptionPane.showMessageDialog(FinancialFlows.this, cmp);
                                 } catch (Exception e) {
                                     FrontEnd.displayErrorMessage(e);
@@ -715,16 +688,38 @@ public class FinancialFlows extends EntryExtension {
                         });
                     }
                     {
-                        jButton7 = new JButton("*$*");
-                        jToolBar1.add(jButton7);
-                        jButton7.setToolTipText("Balance correction");
-                        jButton7.addActionListener(new ActionListener() {
+                        jButton5 = new JButton();
+                        jToolBar1.add(jButton5);
+                        jButton5.setIcon(ICON_CHART2);
+                        jButton5.setToolTipText("Income/Outgo Time Chart");
+                        jButton5.addActionListener(new ActionListener() {
                             public void actionPerformed(ActionEvent evt) {
                                 try {
-                                    String str = JOptionPane.showInputDialog(FinancialFlows.this, new JLabel("Input balance correction: "));
-                                    if (!Validator.isNullOrBlank(str)) {
-                                        balanceCorrection += Double.valueOf(str);
+                                    TimeSeriesCollection dataset = new TimeSeriesCollection();
+                                    TimeSeries incomeSeries = new TimeSeries("Income", Month.class);
+                                    TimeSeries outgoSeries = new TimeSeries("Outgo", Month.class);
+                                    
+                                    String typeFilter = null;
+                                    TableModel model = getJTableSingle().getModel();
+                                    for (int i = 0; i < getJTableSingle().getRowCount(); i++) {
+                                        int idx = getJTableSingle().getRowSorter().convertRowIndexToModel(i);
+                                        String type = (String) model.getValueAt(idx, COLUMN_TYPE_IDX);
+                                        if (typeFilter == null) {
+                                        	typeFilter = type;
+                                        } else if (!typeFilter.equals(type)) {
+                                        	typeFilter = null;
+                                        	break;
+                                        }
                                     }
+                                    
+                                    populateTimeSeries(getJTableSingle(), incomeSeries, outgoSeries, typeFilter, false);
+                                    populateTimeSeries(getJTableRegular(), incomeSeries, outgoSeries, typeFilter, true);
+                                    dataset.addSeries(incomeSeries);
+                                    dataset.addSeries(outgoSeries);
+                                    Image image = buildTimeSeriesChart("Income/Outgo Time Chart", "Amount", dataset);
+                                    JLabel label = new JLabel();
+                                    label.setIcon(new ImageIcon(image));
+                                    JOptionPane.showMessageDialog(FinancialFlows.this, new JScrollPane(label));
                                 } catch (Exception e) {
                                     FrontEnd.displayErrorMessage(e);
                                 }
@@ -741,7 +736,7 @@ public class FinancialFlows extends EntryExtension {
                         @SuppressWarnings("unchecked")
                         public void caretUpdate(CaretEvent e) {
                             TableRowSorter<TableModel> sorterSingle = (TableRowSorter<TableModel>) getJTableSingle().getRowSorter();
-                            sorterSingle.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
+                            sorterSingle.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText().replaceAll("\\s+", ".*")));
                         }
                     });
                     JPanel filterPanel = new JPanel(new BorderLayout());
@@ -1093,21 +1088,25 @@ public class FinancialFlows extends EntryExtension {
         model.removeRow(rowIdx);
     }
 
-    private void populateTimeSeries(JTable jTable, TimeSeries incomeSeries, TimeSeries outgoSeries, boolean regular) {
+    private void populateTimeSeries(JTable jTable, TimeSeries incomeSeries, TimeSeries outgoSeries, String typeFilter, boolean regular) {
         TableModel model = jTable.getModel();
-        for (int i = 0; i < model.getRowCount(); i++) {
-            DIRECTION d = (DIRECTION) model.getValueAt(i, COLUMN_DIRECTION_IDX);
-            if (d == DIRECTION.INCOME) {
-                if (regular) {
-                    populateTimeSeries(incomeSeries, outgoSeries, model, i);
-                } else {
-                    populateTimeSeries(incomeSeries, model, i);
-                }
-            } else if (d == DIRECTION.OUTGO) {
-                if (regular) {
-                    populateTimeSeries(outgoSeries, incomeSeries, model, i);
-                } else {
-                    populateTimeSeries(outgoSeries, model, i);
+        for (int i = 0; i < jTable.getRowCount(); i++) {
+            int idx = jTable.getRowSorter().convertRowIndexToModel(i);
+            String type = (String) model.getValueAt(idx, COLUMN_TYPE_IDX);
+            if (typeFilter == null || typeFilter.equals(type)) {
+                DIRECTION d = (DIRECTION) model.getValueAt(idx, COLUMN_DIRECTION_IDX);
+                if (d == DIRECTION.INCOME) {
+                    if (regular) {
+                        populateTimeSeries(incomeSeries, outgoSeries, model, idx);
+                    } else {
+                        populateTimeSeries(incomeSeries, model, idx);
+                    }
+                } else if (d == DIRECTION.OUTGO) {
+                    if (regular) {
+                        populateTimeSeries(outgoSeries, incomeSeries, model, idx);
+                    } else {
+                        populateTimeSeries(outgoSeries, model, idx);
+                    }
                 }
             }
         }
@@ -1204,6 +1203,7 @@ public class FinancialFlows extends EntryExtension {
                     dataset.setValue(type, num);
                 }
             }
+        	String typeFilter = dataset.getKeys().size() == 1 ? (String) dataset.getKeys().get(0) : null;
             model = getJTableRegular().getModel();
             if (dateLow != null && !Validator.isNullOrBlank(filterText.getText()) && filteredBySingleMonth) {
             	RegularTimePeriod month = new Month(dateLow);
@@ -1214,12 +1214,14 @@ public class FinancialFlows extends EntryExtension {
                     Date endDate = (Date) model.getValueAt(idx, COLUMN_END_DATE_IDX);
                     if (d == direction && (date != null && date.getTime() <= month.getStart().getTime()) && (endDate == null || endDate.getTime() >= month.getStart().getTime())) {
                         String type = (String) model.getValueAt(idx, COLUMN_TYPE_IDX);
-                        Number num = 0;
-                        if (dataset.getKeys().contains(type)) {
-                            num = dataset.getValue(type);
+                        if (typeFilter == null || typeFilter.equals(type)) {
+                            Number num = 0;
+                            if (dataset.getKeys().contains(type)) {
+                                num = dataset.getValue(type);
+                            }
+                            num = num.floatValue() + (Float) model.getValueAt(idx, COLUMN_AMOUNT_IDX);
+                            dataset.setValue(type, num);
                         }
-                        num = num.floatValue() + (Float) model.getValueAt(idx, COLUMN_AMOUNT_IDX);
-                        dataset.setValue(type, num);
                     }
                 }
             } else {
@@ -1250,12 +1252,14 @@ public class FinancialFlows extends EntryExtension {
                             Date endDate = (Date) model.getValueAt(idx, COLUMN_END_DATE_IDX);
                             if (d == direction && (date != null && date.getTime() >= dateLow.getTime() && date.getTime() <= month.getStart().getTime()) && (endDate == null || (endDate.getTime() <= dateHigh.getTime() && endDate.getTime() >= month.getStart().getTime()))) {
                                 String type = (String) model.getValueAt(idx, COLUMN_TYPE_IDX);
-                                Number num = 0;
-                                if (dataset.getKeys().contains(type)) {
-                                    num = dataset.getValue(type);
+                                if (typeFilter == null || typeFilter.equals(type)) {
+                                    Number num = 0;
+                                    if (dataset.getKeys().contains(type)) {
+                                        num = dataset.getValue(type);
+                                    }
+                                    num = num.floatValue() + (Float) model.getValueAt(idx, COLUMN_AMOUNT_IDX);
+                                    dataset.setValue(type, num);
                                 }
-                                num = num.floatValue() + (Float) model.getValueAt(idx, COLUMN_AMOUNT_IDX);
-                                dataset.setValue(type, num);
                             }
                         }
                         month = month.next();
