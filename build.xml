@@ -39,7 +39,7 @@
 				<include name="appcore.jar" />
 			</fileset>
 		</delete>
-		<jar basedir="bin" destfile="build/bias.jar" includes="bias/Launcher** bias/Splash** bias/utils/FSUtils** bias/res/load.gif">
+		<jar basedir="bin" destfile="build/bias.jar" includes="bias/Launcher** bias/Splash** bias/utils/FSUtils** bias/core/AddOnInfo** bias/core/pack/** bias/res/load.gif">
 			<manifest>
 				<attribute name="Main-Class" value="bias.Launcher" />
 				<attribute name="AppLauncher-Version" value="${AppLauncher_Version}" />
@@ -56,7 +56,7 @@
           target: Build_AppLauncher_Package
          ================================= -->
 	<target name="Build_AppLauncher_Package" description="AppCore Package">
-		<jar basedir="bin" destfile="build/bias.jar" includes="bias/Launcher** bias/Splash** bias/utils/FSUtils** bias/res/load.gif">
+		<jar basedir="bin" destfile="build/bias.jar" includes="bias/Launcher** bias/Splash** bias/utils/FSUtils** bias/core/AddOnInfo** bias/core/pack/** bias/res/load.gif">
 			<manifest>
 				<attribute name="Main-Class" value="bias.Launcher" />
 				<attribute name="AppLauncher-Version" value="${AppLauncher_Version}" />

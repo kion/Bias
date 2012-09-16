@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <bias:repository xmlns:bias="http://bias.sourceforge.net">
-	<pack type="AppLauncher" name="AppLauncher" version="1.0.1" author="R. Kasianenko" description="Bias Application Launcher" file-size="38937" url="http://downloads.sourceforge.net/bias/bias.jar" />
+	<pack type="AppLauncher" name="AppLauncher" version="1.0.2" author="R. Kasianenko" description="Bias Application Launcher" file-size="48324" url="http://downloads.sourceforge.net/bias/bias.jar" />
 	<pack type="AppCore" name="AppCore" version="1.0.3.2" author="R. Kasianenko" description="Bias Application Core" file-size="437565" url="http://downloads.sourceforge.net/bias/appcore.jar" />
 	<pack type="Extension" name="FTPTransfer" version="0.1.2" author="R. Kasianenko" description="Import/Export through FTP" file-size="5620" url="http://downloads.sourceforge.net/bias/FTPTransfer.jar">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
@@ -15,7 +15,7 @@
 	<pack type="Extension" name="ToDoList" version="0.7.5" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="233698" url="http://downloads.sourceforge.net/bias/ToDoList.jar">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="Graffiti" version="0.2.3" author="R. Kasianenko" description="Basic paint editor" file-size="326734" url="http://downloads.sourceforge.net/bias/Graffiti.jar">
+	<pack type="Extension" name="Graffiti" version="0.2.4" author="R. Kasianenko" description="Basic paint editor" file-size="326916" url="http://downloads.sourceforge.net/bias/Graffiti.jar">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
 	<pack type="Extension" name="PlainText" version="0.9.2" author="R. Kasianenko" description="Simple plain text editor" file-size="181563" url="http://downloads.sourceforge.net/bias/PlainText.jar">

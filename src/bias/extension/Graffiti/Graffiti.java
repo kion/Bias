@@ -35,8 +35,6 @@ import bias.gui.FrontEnd;
 import bias.gui.ImageFileChooser;
 import bias.utils.CommonUtils;
 
-import com.sun.image.codec.jpeg.ImageFormatException;
-
 /**
  * @author kion
  */
@@ -125,7 +123,7 @@ public class Graffiti extends EntryExtension {
      * @throws IOException 
      * @throws ImageFormatException 
      */
-    private void initialize() throws ImageFormatException, IOException {
+    private void initialize() throws Throwable {
         this.setLayout(new BorderLayout());  
         this.add(getJToolBar(), BorderLayout.SOUTH);  
 

@@ -4,21 +4,30 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.channels.FileLock;
+import java.util.Iterator;
 import java.util.Properties;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 import javax.swing.Timer;
 
+import bias.core.AddOnInfo;
+import bias.core.pack.Dependency;
+import bias.core.pack.PackType;
 import bias.utils.CommonUtils;
 import bias.utils.FSUtils;
+import bias.utils.PropertiesUtils;
+import bias.utils.Validator;
 
 public class Launcher {
 
@@ -29,8 +38,23 @@ public class Launcher {
     private static final String BIAS_CONFIG_FILE = "config.properties";
     private static final String UNINSTALL_CONFIG_FILE = "uninstall.conf";
     private static final String PROPERTY_VALUES_SEPARATOR = ",";
+    private static final String VALUES_SEPARATOR = "_";
+    private static final String NEW_LINE = "\n";
+    private static final String JAR_FILE_PATTERN = "(?i).+\\.jar$";
     private static final String APP_MAIN_CLASS = "bias.Bias";
     private static final String LOCK_FILE_NAME = ".lock";
+    private static final String ADDON_EXTENSION_JAR_FILE_SUFFIX = ".ext.jar";
+    private static final String ADDON_SKIN_JAR_FILE_SUFFIX = ".skin.jar";
+    private static final String ADDON_LIB_JAR_FILE_SUFFIX = ".lib.jar";
+    private static final String ADDON_EXTENSION_INFO_FILE_SUFFIX = ".ext.info";
+    private static final String ADDON_SKIN_INFO_FILE_SUFFIX = ".skin.info";
+    private static final String ADDON_LIB_INFO_FILE_SUFFIX = ".lib.info";
+    private static final String ATTRIBUTE_ADD_ON_NAME = "Bias-Add-On-Name";
+    private static final String ATTRIBUTE_ADD_ON_TYPE = "Bias-Add-On-Type";
+    private static final String ATTRIBUTE_ADD_ON_VERSION = "Bias-Add-On-Version";
+    private static final String ATTRIBUTE_ADD_ON_AUTHOR = "Bias-Add-On-Author";
+    private static final String ATTRIBUTE_ADD_ON_DESCRIPTION = "Bias-Add-On-Description";
+    private static final String ATTRIBUTE_ADD_ON_DEPENDENCIES = "Bias-Add-On-Dependencies";
     private static final String PROPERTY_FORCE_TEXT_ANTIALIASING_MODE = "FORCE_TEXT_ANTIALIASING_MODE";
     private static final String PROPERTY_CUSTOM_TEXT_ANTIALIASING_MODE = "CUSTOM_TEXT_ANTIALIASING_MODE";
     
@@ -173,13 +197,135 @@ public class Launcher {
                 if (file.getName().startsWith(UPDATE_FILE_PREFIX)) {
                     File updatedFile = new File(addonsDir, file.getName().substring(UPDATE_FILE_PREFIX.length()));
                     FSUtils.copy(file, updatedFile);
+                    // ensure updated addon info is up to date; 
+                    // this might be needed in case of custom addon update scenario, 
+                    // e.g. when update-JARs are copied to addons directory by external script 
+                    // (for example - to support Bias updates via standard Linux package update mechanism), etc.
+                    updateAddOnInfo(updatedFile);
                     FSUtils.delete(file);
                 }
                 addClassPathURL(FILE_PROTOCOL_PREFIX + file.getAbsolutePath());
             }
         }
     }
+    
+    private static void updateAddOnInfo(File addOnFile) throws Throwable {
+        String suffix = null;
+        PackType addOnType = null;
+        String addOnFileName = addOnFile.getName();
+        if (addOnFileName.endsWith(ADDON_EXTENSION_JAR_FILE_SUFFIX)) {
+            suffix = ADDON_EXTENSION_INFO_FILE_SUFFIX;
+            addOnType = PackType.EXTENSION;
+        } else if (addOnFileName.endsWith(ADDON_SKIN_JAR_FILE_SUFFIX)) {
+            suffix = ADDON_SKIN_INFO_FILE_SUFFIX;
+            addOnType = PackType.SKIN;
+        } else if (addOnFileName.endsWith(ADDON_LIB_JAR_FILE_SUFFIX)) {
+            suffix = ADDON_LIB_INFO_FILE_SUFFIX;
+            addOnType = PackType.LIBRARY;
+        }
+        if (suffix != null && addOnType != null) {
+        	AddOnInfo addOnInfo = getAddOnInfoAndDependencies(addOnFile, addOnType);
+            File addOnInfoFile = new File(configDir, addOnInfo.getName() + suffix);
+            if (addOnInfoFile.exists()) {
+                Properties info = new Properties();
+                info.setProperty(ATTRIBUTE_ADD_ON_VERSION, addOnInfo.getVersion());
+                info.setProperty(ATTRIBUTE_ADD_ON_AUTHOR, addOnInfo.getAuthor());
+                info.setProperty(ATTRIBUTE_ADD_ON_DESCRIPTION, addOnInfo.getDescription());
+                StringBuffer deps = new StringBuffer();
+                if (addOnInfo.getDependencies() != null && !addOnInfo.getDependencies().isEmpty()) {
+                    Iterator<Dependency> it = addOnInfo.getDependencies().iterator();
+                    while (it.hasNext()) {
+                        Dependency dep = it.next();
+                        deps.append(dep.getType().value());
+                        deps.append(VALUES_SEPARATOR);
+                        deps.append(dep.getName());
+                        if (!Validator.isNullOrBlank(dep.getVersion())) {
+                            deps.append(VALUES_SEPARATOR);
+                            deps.append(dep.getVersion());
+                        }
+                        if (it.hasNext()) {
+                            deps.append(PROPERTY_VALUES_SEPARATOR);
+                        }
+                    }
+                }
+                if (!Validator.isNullOrBlank(deps)) {
+                    info.setProperty(ATTRIBUTE_ADD_ON_DEPENDENCIES, deps.toString());
+                }
+                FSUtils.writeFile(addOnInfoFile, PropertiesUtils.serializeProperties(info));
+            }
+        }
+    }
 
+    private static AddOnInfo getAddOnInfoAndDependencies(File addOnFile, PackType addOnType) throws Throwable {
+        AddOnInfo addOnInfo = null;
+        if (addOnFile != null && addOnFile.exists() && !addOnFile.isDirectory()) {
+            String name = addOnFile.getName();
+            if (name.matches(JAR_FILE_PATTERN)) {
+                JarInputStream in = new JarInputStream(new FileInputStream(addOnFile));
+                Manifest manifest = in.getManifest();
+                if (manifest == null) {
+                    throw new Exception(
+                            "Invalid Add-On-Package:" + NEW_LINE +
+                            "MANIFEST.MF file is missing!");
+                }
+                String addOnTypeStr = manifest.getMainAttributes().getValue(ATTRIBUTE_ADD_ON_TYPE);
+                if (Validator.isNullOrBlank(addOnTypeStr)) {
+                    throw new Exception(
+                            "Invalid Add-On-Package: " + NEW_LINE +
+                            ATTRIBUTE_ADD_ON_TYPE 
+                            + " attribute in MANIFEST.MF file is missing/empty!");
+                }
+                if (!addOnTypeStr.equals(addOnType.value())) {
+                    throw new Exception(
+                            "Invalid Add-On-Package type: " + NEW_LINE +
+                            "(actual: '" + addOnTypeStr + "', expected: '" + addOnType.value() + "')!");
+                }
+                String addOnName = manifest.getMainAttributes().getValue(ATTRIBUTE_ADD_ON_NAME);
+                if (Validator.isNullOrBlank(addOnName)) {
+                    throw new Exception(
+                            "Invalid Add-On-Package: " + NEW_LINE +
+                            ATTRIBUTE_ADD_ON_NAME 
+                            + " attribute in MANIFEST.MF file is missing/empty!");
+                }
+                String addOnVersion = manifest.getMainAttributes().getValue(ATTRIBUTE_ADD_ON_VERSION);
+                if (Validator.isNullOrBlank(addOnVersion)) {
+                    throw new Exception(
+                            "Invalid Add-On-Package: " + NEW_LINE +
+                            ATTRIBUTE_ADD_ON_VERSION 
+                            + " attribute in MANIFEST.MF file is missing/empty!");
+                }
+                String addOnAuthor = manifest.getMainAttributes().getValue(ATTRIBUTE_ADD_ON_AUTHOR);
+                String addOnDescription = manifest.getMainAttributes().getValue(ATTRIBUTE_ADD_ON_DESCRIPTION);
+                addOnInfo = new AddOnInfo(addOnName, addOnVersion, addOnAuthor, addOnDescription);
+                String addOnDependencies = manifest.getMainAttributes().getValue(ATTRIBUTE_ADD_ON_DEPENDENCIES);
+                if (!Validator.isNullOrBlank(addOnDependencies)) {
+                    String[] deps = addOnDependencies.split(PROPERTY_VALUES_SEPARATOR);
+                    for (String dep : deps) {
+                        String[] depInfo = dep.trim().split(VALUES_SEPARATOR);
+                        if (depInfo.length != 2 && depInfo.length != 3) {
+                            throw new Exception(
+                                    "Invalid Add-On-Package: " + NEW_LINE +
+                                    ATTRIBUTE_ADD_ON_DEPENDENCIES 
+                                    + " attribute in MANIFEST.MF file has invalid value!" + NEW_LINE
+                                    + "[At least dependency type and name should be specified (version is optional)]");
+                        }
+                        Dependency d = new Dependency();
+                        d.setType(PackType.fromValue(depInfo[0]));
+                        d.setName(depInfo[1]);
+                        if (depInfo.length == 3) { 
+                            d.setVersion(depInfo[2]);
+                        }
+                        addOnInfo.addDependency(d);
+                    }
+                }
+                in.close();
+            }
+        } else {
+            throw new Exception("Invalid Add-On-Package!");
+        }
+        return addOnInfo;
+    }
+    
     private static void addClassPathURL(String path) throws Throwable {
         URL u = new URL(path);
         URLClassLoader urlClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
