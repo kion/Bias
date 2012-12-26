@@ -463,7 +463,7 @@ public class Reminder extends ToolExtension {
                     @SuppressWarnings("unchecked")
                     public void caretUpdate(CaretEvent e) {
                         TableRowSorter<TableModel> sorter = (TableRowSorter<TableModel>) reminderEntriesTable.getRowSorter();
-                        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
+                        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText().replaceAll("\\s+", ".*")));
                     }
                 });
                 JPanel filterPanel = new JPanel(new BorderLayout());

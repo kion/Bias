@@ -448,7 +448,7 @@ public class ToDoList extends EntryExtension {
                     @SuppressWarnings("unchecked")
                     public void caretUpdate(CaretEvent e) {
                         TableRowSorter<TableModel> sorter = (TableRowSorter<TableModel>) todoEntriesTable.getRowSorter();
-                        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
+                        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText().replaceAll("\\s+", ".*")));
                     }
                 });
                 JPanel filterPanel = new JPanel(new BorderLayout());

@@ -337,7 +337,7 @@ public class FilePack extends EntryExtension {
 			                final JTextField filterText = new JTextField();
 			                filterText.addCaretListener(new CaretListener(){
 			                    public void caretUpdate(CaretEvent e) {
-			                        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText()));
+			                        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText().replaceAll("\\s+", ".*")));
 			                    }
 			                });
 			                topPanel.add(filterText, BorderLayout.SOUTH);

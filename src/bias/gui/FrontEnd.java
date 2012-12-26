@@ -5676,7 +5676,7 @@ public class FrontEnd extends JFrame {
                 final JTextField extFilterText = new JTextField();
                 extFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
-                        extSorter.setRowFilter(RowFilter.regexFilter("(?i)" + extFilterText.getText()));
+                        extSorter.setRowFilter(RowFilter.regexFilter("(?i)" + extFilterText.getText().replaceAll("\\s+", ".*")));
                     }
                 });
                 extTopPanel.add(extFilterText, BorderLayout.SOUTH);
@@ -5697,7 +5697,7 @@ public class FrontEnd extends JFrame {
                 final JTextField skinFilterText = new JTextField();
                 skinFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
-                        skinSorter.setRowFilter(RowFilter.regexFilter("(?i)" + skinFilterText.getText()));
+                        skinSorter.setRowFilter(RowFilter.regexFilter("(?i)" + skinFilterText.getText().replaceAll("\\s+", ".*")));
                     }
                 });
                 skinTopPanel.add(skinFilterText, BorderLayout.SOUTH);
@@ -5718,7 +5718,7 @@ public class FrontEnd extends JFrame {
                 final JTextField icSetFilterText = new JTextField();
                 icSetFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
-                        icSetSorter.setRowFilter(RowFilter.regexFilter("(?i)" + icSetFilterText.getText()));
+                        icSetSorter.setRowFilter(RowFilter.regexFilter("(?i)" + icSetFilterText.getText().replaceAll("\\s+", ".*")));
                     }
                 });
                 icTopPanel.add(icSetFilterText, BorderLayout.CENTER);
@@ -5742,7 +5742,7 @@ public class FrontEnd extends JFrame {
                 final JTextField onlineFilterText = new JTextField();
                 onlineFilterText.addCaretListener(new CaretListener(){
                     public void caretUpdate(CaretEvent e) {
-                        onlineSorter.setRowFilter(RowFilter.regexFilter("(?i)" + onlineFilterText.getText()));
+                        onlineSorter.setRowFilter(RowFilter.regexFilter("(?i)" + onlineFilterText.getText().replaceAll("\\s+", ".*")));
                     }
                 });
                 onlineTopPanel.add(onlineFilterText, BorderLayout.CENTER);
@@ -6763,9 +6763,9 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             JLabel title1Label = new JLabel(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppCoreVersion() + " ]");
-            JLabel link1Label = new LinkLabel("http://bias.sourceforge.net/");
-            JLabel title2Label = new JLabel("© Roman Kasianenko ( kion )");
-        	JLabel link2Label = new LinkLabel("http://kion.name/");
+            JLabel link1Label = new LinkLabel("http://bias.sf.net");
+            JLabel title2Label = new JLabel("© R. Kasianenko (kion)");
+        	JLabel link2Label = new LinkLabel("http://kion.name");
             JOptionPane.showMessageDialog(
                     FrontEnd.this, 
                     new Component[]{
