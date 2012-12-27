@@ -1,0 +1,51 @@
+Bias :: Versatile information management application (organizer)
+
+☛ http://bias.sf.net
+
+====================================
+
+* open source — project code is available to everyone interested, meaning independent developers can get involved into add-ons development process
+
+* cross-platform — application runs under any modern OS, having Java Runtime Environment installed: Linux, Mac OS, Windows, Solaris, etc.
+
+* portable — application’s workspace is not coupled to OS and is stored in single directory; thus, application can be easily stored on USB-drive and user can work with it (same data) in any place (home, at work, in the internet-cafe) on any PC available (independently from OS)
+
+* secure — data user works with are password-protected and encrypted/decrypted “on the fly” (this is implemented on core level, so does not depend on certain extension and data type), meaning even if USB-flash-drive will be lost and unauthorized person will get access to it, data still remain unavailable for him; same applies to network-transferred data (even if data will be interceptd – it remain encrypted)
+
+* extensible — application’s functionality is extended via 3rd-party addons: extensions (“bricks” which are used to biuld full data structure), tools (like search, statistics, etc.), transferrers (data transfer protocols support, like FTP, SMB and so on), icon sets and skins (aka “themes”) — special addon type, that allows to modify application’s look and feel; different application functional “effects” are attained by different addons combining
+
+* flexible — application’s “skeleton” allows to create hierarchical data structures with any nesting level, thus giving to user full freedom in workspace organization; another quite handy function supported is: different data entries can be linked to each other (for example, this may look like a link in text of one entry by clicking on which redirection to another entry is performed)
+
+* usable — Bias is designed to be as comfortable to work with as possible: when application is started it’s state, saved on previous session shutdown is restored: main window (independently from PC used, OS and screen resolution) restores it’s position on the screen, entry user was working with last time activates and so on...
+
+====================================
+
+Installation
+
+* If you're running Ubuntu, it's recommended to install Bias via PPA-repository using the following command:
+
+sudo add-apt-repository ppa:ki0n/desktop-apps && sudo apt-get update && sudo apt-get install bias
+
+* If you're running other Debian-based distro, you can simply download/install DEB package and run Bias using "Applications -> Accessories -> Bias" menu item or "bias" command
+
+* Otherwise, unzip "bias.zip" file into location of your choice and double-click "bias.jar" or run it using "java -jar bias.jar" command 
+
+NOTE: You must have Java installed to run Bias.
+If you don't have it installed yet, you can download it from here: http://www.java.com/download
+(Installing from DEB or PPA resolves dependencies automatically though ;))
+
+====================================
+
+Download
+
+* ZIP -> http://sourceforge.net/projects/bias/files/bias.zip
+* DEB -> http://sourceforge.net/projects/bias/files/bias.deb
+
+====================================
+
+Bias is Free and Open Source software (distributed under the GNU General Public License).
+Source code is hosted on GitHub: https://github.com/kion/Bias
+
+Need support or have suggestions? Get in touch with me on Twitter: http://twitter.com/kion ;)
+
+© http://kion.name
