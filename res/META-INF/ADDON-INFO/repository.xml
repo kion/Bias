@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <bias:repository xmlns:bias="http://bias.sourceforge.net">
 	<pack type="AppLauncher" name="AppLauncher" version="1.0.2" author="R. Kasianenko" description="Bias Application Launcher" file-size="48324" url="http://downloads.sourceforge.net/bias/bias.jar" />
-	<pack type="AppCore" name="AppCore" version="1.0.3.2" author="R. Kasianenko" description="Bias Application Core" file-size="437565" url="http://downloads.sourceforge.net/bias/appcore.jar" />
+	<pack type="AppCore" name="AppCore" version="1.0.3.2" author="R. Kasianenko" description="Bias Application Core" file-size="437907" url="http://downloads.sourceforge.net/bias/appcore.jar" />
 	<pack type="Extension" name="FTPTransfer" version="0.1.2" author="R. Kasianenko" description="Import/Export through FTP" file-size="5620" url="http://downloads.sourceforge.net/bias/FTPTransfer.jar">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>

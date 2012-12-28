@@ -107,7 +107,11 @@ public class I18nService {
     }
     
     public String getLanguageLocale(String lang) {
-        return getAvailableLangsLocales().get(lang);
+        String ll = getAvailableLangsLocales().get(lang);
+        if (ll == null) {
+        	ll = getAvailableLangsLocales().get(Constants.DEFAULT_LANGUAGE);
+        }
+        return ll;
     }
     
     public Map<String, String> getAvailableLangsLocales() {
