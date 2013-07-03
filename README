@@ -8,15 +8,15 @@ Bias :: Versatile Information Manager / Organizer
 
 * cross-platform — application runs under any modern OS, having Java Runtime Environment installed: Linux, Mac OS, Windows, Solaris, etc.
 
-* portable — application’s workspace is not coupled to OS and is stored in single directory; thus, application can be easily stored on USB-drive and user can work with it (same data) in any place (home, at work, in the internet-cafe) on any PC available (independently from OS)
+* portable — application workspace is not coupled to OS and is stored in single directory; thus, application can simply be put on USB-drive and you can work with your data everywhere (at home/office/internet-cafe/etc.) and on any workstation available
 
-* secure — data user works with are password-protected and encrypted/decrypted “on the fly” (this is implemented on core level, so does not depend on certain extension and data type), meaning even if USB-flash-drive will be lost and unauthorized person will get access to it, data still remain unavailable for him; same applies to network-transferred data (even if data will be interceptd – it remain encrypted)
+* secure — your data is password-protected and encrypted/decrypted "on the fly" (this is implemented on core level and does not depend on specific extension and data type); thus, even if you lose your USB-drive and unauthorized person gets access to it, your data would still remain unavailable to that person; same applies to data transmissions over network: even if data is intercepted – it would remain encrypted
 
-* extensible — application’s functionality is extended via 3rd-party addons: extensions (“bricks” which are used to biuld full data structure), tools (like search, statistics, etc.), transferrers (data transfer protocols support, like FTP, SMB and so on), icon sets and skins (aka “themes”) — special addon type, that allows to modify application’s look and feel; different application functional “effects” are attained by different addons combining
+* extensible — application functionality can be extended via 3rd-party add-ons: extensions (to represent and manage specific data structures), tools (like search, statistics, etc.), transferrers (to support specific data transfer protocols, like FTP, SMB, etc.), skins and icon sets (aka "themes") to modify application look and feel
 
-* flexible — application’s “skeleton” allows to create hierarchical data structures with any nesting level, thus giving to user full freedom in workspace organization; another quite handy function supported is: different data entries can be linked to each other (for example, this may look like a link in text of one entry by clicking on which redirection to another entry is performed)
+* flexible — application "core" is designed the way that allows you to organize your data in hierarchy of any desired level of complexity (i.e. unlimited level of nesting for sub-items); another handy feature is: different data entries can be linked to each other (i.e. similar to how web pages are linked to each other on the World Wide Web)
 
-* usable — Bias is designed to be as comfortable to work with as possible: when application is started it’s state, saved on previous session shutdown is restored: main window (independently from PC used, OS and screen resolution) restores it’s position on the screen, entry user was working with last time activates and so on...
+* usable — Bias is designed to be as comfortable to work with as possible: when application is started, its state (saved upon previous session shutdown) is restored: size and position of the window on the screen, last active data entry, etc.
 
 ====================================
 
