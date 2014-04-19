@@ -213,7 +213,7 @@ public class Preferences {
 	public boolean startHidden = false;
 
 	@Preference(title = "auto.save.on.exit.preference.title")
-	public boolean autoSaveOnExit = false;
+	public boolean autoSaveOnExit = true;
 
 	@Preference(title = "display.confirmation.dialogs.preference.title", description = "display.confirmation.dialogs.preference.description")
 	public boolean displayConfirmationDialogs = true;
