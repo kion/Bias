@@ -36,7 +36,7 @@ public class AppManager {
             if (!desktop.isSupported(Desktop.Action.BROWSE)) {
                 throw new Exception("Desktop Browse API is not available on this platform!");
             }
-            if (!address.startsWith("http://")) {
+            if (!address.startsWith("http://") && !address.startsWith("https://")) {
                 address = "http://" + address;
             }
             URI uri = new URI(address);

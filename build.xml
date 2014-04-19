@@ -55,7 +55,7 @@
 	<!-- ================================= 
           target: Build_AppLauncher_Package
          ================================= -->
-	<target name="Build_AppLauncher_Package" description="AppCore Package">
+	<target name="Build_AppLauncher_Package" description="AppLauncher Package">
 		<jar basedir="bin" destfile="build/bias.jar" includes="bias/Launcher** bias/Splash** bias/utils/FSUtils** bias/core/AddOnInfo** bias/core/pack/** bias/res/load.gif">
 			<manifest>
 				<attribute name="Main-Class" value="bias.Launcher" />
