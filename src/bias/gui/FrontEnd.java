@@ -2219,21 +2219,23 @@ public class FrontEnd extends JFrame {
                 String caption = tabbedPane.getTitleAt(index);
                 
                 JLabel icLabel = new JLabel(getMessage("icon"));
-                ImageIcon ic = (ImageIcon) tabbedPane.getIconAt(tabbedPane.getSelectedIndex());
-                IconChooserComboBox iconChooser = new IconChooserComboBox(ic.getDescription());
+                ImageIcon icon = (ImageIcon) tabbedPane.getIconAt(tabbedPane.getSelectedIndex());
+                IconChooserComboBox iconChooser = new IconChooserComboBox(icon != null ? icon.getDescription() : null);
                 JLabel cLabel = new JLabel(getMessage("caption"));
                 
-                caption = JOptionPane.showInputDialog(
+                String newCaption = JOptionPane.showInputDialog(
                         FrontEnd.this, 
                         new Component[] { icLabel, iconChooser, cLabel },
                         caption);
-                if (caption != null) {
+                
+            	if (newCaption != null) {
+                	tabbedPane.setTitleAt(index, newCaption);
+                    ImageIcon newIcon = iconChooser.getSelectedIcon();
+                	tabbedPane.setIconAt(tabbedPane.getSelectedIndex(), newIcon != null ? newIcon : icon);
+            	} else {
                 	tabbedPane.setTitleAt(index, caption);
-                    ImageIcon icon = iconChooser.getSelectedIcon();
-                    if (icon != null) {
-                    	tabbedPane.setIconAt(tabbedPane.getSelectedIndex(), icon);
-                    }
-                }
+                	tabbedPane.setIconAt(index, icon);
+            	}
             }
         }
     };

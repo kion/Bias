@@ -6,6 +6,7 @@ package bias.extension.DashBoard.snippet;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import javax.swing.JInternalFrame;
@@ -17,6 +18,7 @@ import javax.swing.border.EtchedBorder;
 public abstract class InfoSnippet extends JInternalFrame {
     private static final long serialVersionUID = 1L;
     
+    private UUID dataEntryID;
     private UUID id;
     private byte[] content;
     private byte[] settings;
@@ -28,14 +30,19 @@ public abstract class InfoSnippet extends JInternalFrame {
      * @param resizable Specifies whether snippet-class frames will be resizable
      * @param closable  Specifies whether snippet-class frames will be closable
      */
-    public InfoSnippet(UUID id, byte[] content, byte[] settings, boolean resizable, boolean closable) {
+    public InfoSnippet(UUID dataEntryID, UUID id, byte[] content, byte[] settings, boolean resizable, boolean closable) {
         super(null, resizable, closable, false, true);
+        this.dataEntryID = dataEntryID;
         this.id = id;
         this.content = content;
         this.settings = settings;
         setContentPane(getRepresentation());
         setBorder(new EtchedBorder(EtchedBorder.RAISED));
     }
+    
+	public UUID getDataEntryID() {
+		return dataEntryID;
+	}
 
     public UUID getId() {
         return id;
@@ -92,10 +99,13 @@ public abstract class InfoSnippet extends JInternalFrame {
     }
     
     /**
-     * If certain snippet-class uses attachments, this method should be overridden 
-     * to implement clean-up procedure for unused attachments.  
+     * If certain snippet-class uses attachments, this method should be overridden
+     * to return list of referenced attachment names. This is needed to properly 
+     * clean-up unused attachments once they are not referenced anymore.  
      */
-    public void cleanUpUnUsedAttachments(){};
+    public Collection<String> getReferencedAttachmentNames(){
+    	return null;
+    };
     
     /* (non-Javadoc)
      * @see javax.swing.JComponent#getMinimumSize()

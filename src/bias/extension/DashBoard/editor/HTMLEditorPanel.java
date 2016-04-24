@@ -21,8 +21,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.UUID;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,6 +47,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.text.AbstractDocument.BranchElement;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -55,10 +56,9 @@ import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledEditorKit;
-import javax.swing.text.AbstractDocument.BranchElement;
 import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTML.Tag;
+import javax.swing.text.html.HTMLDocument;
 
 import bias.Constants;
 import bias.core.Attachment;
@@ -101,6 +101,10 @@ public class HTMLEditorPanel extends JPanel {
 
     private static final String HTML_PAGE_FILE_NAME_PATTERN = "(?i).+\\.(htm|html)$";
 
+    private static final Pattern IMG_ATT_REF_PATTERN = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")*\\s+src=)\"att://([^\"]+)\"");
+    
+    private static final Pattern IMG_FILE_REF_PATTERN = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")*\\s+src=)\"(file://[^\"]+)\"");
+    
     private static final Collection<String> FONT_FAMILY_NAMES = fontFamilies();
     
     private static final Collection<String> fontFamilies() {
@@ -251,6 +255,19 @@ public class HTMLEditorPanel extends JPanel {
             // ignore, shouldn't happen ever
         }
         return text;
+    }
+    
+    private String filePathToImageSrc(File file) {
+    	String filePath = file.getAbsolutePath();
+    	// ==============================================
+    	// on Windows OS, need to prepend path with "/", 
+    	// as well as replace all "\" with "/"
+    	// ==============================================
+    	if (!filePath.startsWith("/")) {
+    		filePath = "/" + filePath.replace("\\", "/");
+    	}
+    	// ==============================================
+        return "file://" + filePath;
     }
     
     /**
@@ -414,12 +431,11 @@ public class HTMLEditorPanel extends JPanel {
 
     private String processOnLoad(String htmlCode) {
         StringBuffer parsedHtmlCode = new StringBuffer();
-        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")*\\s+src=)\"att://([^\"]+)\"");
-        Matcher m = p.matcher(htmlCode);
+        Matcher m = IMG_ATT_REF_PATTERN.matcher(htmlCode);
         while (m.find()) {
             File f = extractAttachmentImage(m.group(3));
             if (f != null) {
-                m.appendReplacement(parsedHtmlCode, m.group(1) + "\"file://" + f.getAbsolutePath() + "\"");
+                m.appendReplacement(parsedHtmlCode, m.group(1) + "\"" + filePathToImageSrc(f) + "\"");
             }
         }
         m.appendTail(parsedHtmlCode);
@@ -429,8 +445,7 @@ public class HTMLEditorPanel extends JPanel {
     private String processOnSave(String htmlCode) {
         processedAttachmentNames.clear();
         StringBuffer parsedHtmlCode = new StringBuffer();
-        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")*\\s+src=)\"(file://[^\"]+)\"");
-        Matcher m = p.matcher(htmlCode);
+        Matcher m = IMG_FILE_REF_PATTERN.matcher(htmlCode);
         while (m.find()) {
             String attName = m.group(3);
             attName = attName.substring(attName.lastIndexOf("/")+1);
@@ -447,8 +462,7 @@ public class HTMLEditorPanel extends JPanel {
 
     private void saveToFile(File htmlFile, String htmlCode) throws Exception {
         StringBuffer parsedHtmlCode = new StringBuffer();
-        Pattern p = Pattern.compile("(<img(\\s+\\w+=\"[^\"]*\")*\\s+src=)\"(file://[^\"]+)\"");
-        Matcher m = p.matcher(htmlCode);
+        Matcher m = IMG_FILE_REF_PATTERN.matcher(htmlCode);
         while (m.find()) {
             String attName = m.group(3);
             attName = attName.substring(attName.lastIndexOf("/")+1);
@@ -1049,7 +1063,9 @@ public class HTMLEditorPanel extends JPanel {
                                         BackEnd.getInstance().addAttachment(entryID, att);
                                         // now get it back (in decrypted form) and extract actual image-file
                                         File f = extractAttachmentImage(att.getName());
-                                        imgHTML.append("file://" + f.getAbsolutePath());
+                                        if (f != null) {
+                                            imgHTML.append(filePathToImageSrc(f));
+                                        }
                                     } catch (Exception ex) {
                                         FrontEnd.displayErrorMessage("Failed to attach image to data entry!\n" + ex.getMessage(), ex);
                                     }

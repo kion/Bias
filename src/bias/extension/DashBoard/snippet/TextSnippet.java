@@ -80,8 +80,8 @@ public class TextSnippet extends InfoSnippet {
     private JButton jButton1 = null;
     private JButton jButton2 = null;
 
-    public TextSnippet(UUID id, byte[] content, byte[] settings) {
-        super(id, content, settings, true, true);
+    public TextSnippet(UUID dataEntryID, UUID id, byte[] content, byte[] settings) {
+        super(dataEntryID, id, content, settings, true, true);
         initialize();
     }
 

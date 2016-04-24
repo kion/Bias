@@ -17,8 +17,8 @@ import bias.extension.DashBoard.DashBoard;
 public class BrokenSnippet extends InfoSnippet {
     private static final long serialVersionUID = 1L;
 
-    public BrokenSnippet(UUID id, byte[] content, byte[] settings) {
-        super(id, content, settings, false, false);
+    public BrokenSnippet(UUID dataEntryID, UUID id, byte[] content, byte[] settings) {
+        super(dataEntryID, id, content, settings, false, false);
     }
 
     /* (non-Javadoc)

@@ -54,6 +54,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import bias.Constants;
+import bias.core.Attachment;
 import bias.core.BackEnd;
 import bias.extension.EntryExtension;
 import bias.extension.DashBoard.snippet.BrokenSnippet;
@@ -202,6 +203,24 @@ public class DashBoard extends EntryExtension {
 		return iconButtons;
 	}
 
+    private void cleanUpUnUsedAttachments(Collection<String> referencedAttachmentNames) {
+        try {
+        	if (referencedAttachmentNames == null || referencedAttachmentNames.isEmpty()) {
+        		BackEnd.getInstance().removeAttachments(getId());
+        	} else {
+                Collection<Attachment> atts = BackEnd.getInstance().getAttachments(getId());
+                for (Attachment att : atts) {
+                    if (!referencedAttachmentNames.contains(att.getName())) {
+                        BackEnd.getInstance().removeAttachment(getId(), att.getName());
+                    }
+                }
+        	}
+        } catch (Exception ex) {
+            // if some error occurred while cleaning up unused attachments,
+            // ignore it, these attachments will be removed next time Bias persists data
+        }
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -209,6 +228,7 @@ public class DashBoard extends EntryExtension {
      */
     @Override
     public byte[] serializeData() throws Throwable {
+    	Collection<String> refAttNames = null;
         Dimension size = FrontEnd.getMainWindowSize();
         Frames frames = objFactory.createFrames();
         for (InfoSnippet f : getSnippets()) {
@@ -231,7 +251,16 @@ public class DashBoard extends EntryExtension {
             frame.setZ(getDashBoardPanel().getComponentZOrder(f));
             frame.setPosition(getIconBar().getComponentIndex(getIconButtons().get(f.getId())));
             frames.getFrame().add(frame);
+            Collection<String> attNames = f.getReferencedAttachmentNames();
+            if (attNames != null && !attNames.isEmpty()) {
+            	if (refAttNames == null) {
+            		refAttNames = new ArrayList<>(attNames);
+            	} else {
+            		refAttNames.addAll(attNames);
+            	}
+            }
         }
+        cleanUpUnUsedAttachments(refAttNames);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         getMarshaller().marshal(frames, baos);
         return baos.toByteArray();
@@ -517,22 +546,25 @@ public class DashBoard extends EntryExtension {
         try {
             switch (frame.getType()) {
             case HTML_SNIPPET:
-                is = new HTMLSnippet(UUID.fromString(frame.getId()), content, settings);
+                is = new HTMLSnippet(getId(), UUID.fromString(frame.getId()), content, settings);
                 break;
             case TEXT_SNIPPET:
-                is = new TextSnippet(UUID.fromString(frame.getId()), content, settings);
+                is = new TextSnippet(getId(), UUID.fromString(frame.getId()), content, settings);
                 break;
             default:
-                is = new BrokenSnippet(UUID.fromString(frame.getId()), content, settings);
+                is = new BrokenSnippet(getId(), UUID.fromString(frame.getId()), content, settings);
             }
         } catch (Throwable t) {
-            is = new BrokenSnippet(UUID.fromString(frame.getId()), content, settings);
+            is = new BrokenSnippet(getId(), UUID.fromString(frame.getId()), content, settings);
         }
         if (frame != null) {
             final InfoSnippet f = is;
             f.setName(frame.getType().value());
             f.setTitle(frame.getTitle());
         	final JToggleButton b = new JToggleButton();
+        	b.setPreferredSize(new Dimension(28, 28));
+        	b.setMinimumSize(new Dimension(28, 28));
+        	b.setMaximumSize(new Dimension(28, 28));
         	b.setName(frame.getId());
         	if (!Validator.isNullOrBlank(frame.getTitle())) {
         		b.setToolTipText(frame.getTitle());
@@ -579,7 +611,6 @@ public class DashBoard extends EntryExtension {
                 @Override
                 public void internalFrameClosed(InternalFrameEvent e) {
                     getSnippets().remove(f);
-                    f.cleanUpUnUsedAttachments();
                 }
             });
             ((BasicInternalFrameUI) f.getUI()).getNorthPane().addMouseListener(new MouseAdapter() {
@@ -588,28 +619,23 @@ public class DashBoard extends EntryExtension {
                     if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
                     	JLabel captionLabel = new JLabel("Caption");
                     	JLabel iconLabel = new JLabel("Icon");
-                    	String selectedID = f.getFrameIcon() != null && f.getFrameIcon() instanceof ImageIcon ?
-                    							((ImageIcon) f.getFrameIcon()).getDescription() : null;
+                    	String title = f.getTitle();
+                    	ImageIcon icon = f.getFrameIcon() != null && f.getFrameIcon() instanceof ImageIcon ? ((ImageIcon) f.getFrameIcon()) : null;
+                    	String selectedID = icon != null ? icon.getDescription() : null;
                         IconChooserComboBox iconChooser = new IconChooserComboBox(selectedID);
-                        String title = JOptionPane.showInputDialog(
+                        
+                        String newTitle = JOptionPane.showInputDialog(
                         		DashBoard.this,
                         		new Component[]{ iconLabel, iconChooser, captionLabel },
-                        		f.getTitle());
-                        if (!Validator.isNullOrBlank(title)) {
-                            f.setTitle(title);
-                    		b.setToolTipText(title);
-                        } else {
-                            f.setTitle(null);
-                    		b.setToolTipText(null);
-                        }
-                        JToggleButton b = getIconButtons().get(f.getId());
-                        if (iconChooser.getSelectedIcon() != null) {
-                        	ImageIcon icon = iconChooser.getSelectedIcon();
-                        	f.setFrameIcon(icon);
-                        	b.setIcon(icon);
-                        } else {
-                        	f.setFrameIcon(null);
-                        	b.setIcon(DEFAULT_FRAME_ICON);
+                        		title);
+                        
+                        JToggleButton btn = getIconButtons().get(f.getId());
+                        if (newTitle != null) {
+                            f.setTitle(newTitle);
+                            btn.setToolTipText(newTitle);
+                        	ImageIcon newIcon = iconChooser.getSelectedIcon();
+                        	f.setFrameIcon(newIcon);
+                        	btn.setIcon(newIcon != null ? newIcon : DEFAULT_FRAME_ICON);
                         }
                     }
                 }

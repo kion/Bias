@@ -54,6 +54,9 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.sun.org.apache.xml.internal.serialize.OutputFormat;
+import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
+
 import bias.Constants;
 import bias.Constants.ADDON_STATUS;
 import bias.Constants.TRANSFER_TYPE;
@@ -70,9 +73,6 @@ import bias.utils.FormatUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 import bias.utils.VersionComparator;
-
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
 /**
  * @author kion
@@ -312,7 +312,7 @@ public class BackEnd {
         return useCipher(CIPHER_ENCRYPT, data);
     }
     
-    private static byte[] useCipher(Cipher cipher, byte[] data) throws Exception {
+    private synchronized static byte[] useCipher(Cipher cipher, byte[] data) throws Exception {
         if (data == null) {
             return null;
         }
@@ -1683,30 +1683,32 @@ public class BackEnd {
 
     private String readAppCoreVersion() throws Exception {
         File appCoreFile = new File(Constants.ROOT_DIR, Constants.APP_CORE_FILE_NAME);
-        JarInputStream in = new JarInputStream(new FileInputStream(appCoreFile));
-        Manifest manifest = in.getManifest();
-        String appVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_APP_CORE_VERSION);
-        if (Validator.isNullOrBlank(appVersion)) {
-            throw new Exception(
-                    "Invalid Application Core JAR File:" + Constants.NEW_LINE +
-                    Constants.ATTRIBUTE_APP_CORE_VERSION
-                    + " attribute in MANIFEST.MF file is missing/empty!");
+        try (JarInputStream in = new JarInputStream(new FileInputStream(appCoreFile))) {
+	        Manifest manifest = in.getManifest();
+	        String appVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_APP_CORE_VERSION);
+	        if (Validator.isNullOrBlank(appVersion)) {
+	            throw new Exception(
+	                    "Invalid Application Core JAR File:" + Constants.NEW_LINE +
+	                    Constants.ATTRIBUTE_APP_CORE_VERSION
+	                    + " attribute in MANIFEST.MF file is missing/empty!");
+	        }
+	        return appVersion;
         }
-        return appVersion;
     }
     
     private String readAppLauncherVersion() throws Exception {
         File appCoreFile = new File(Constants.ROOT_DIR, Constants.APP_LAUNCHER_FILE_NAME);
-        JarInputStream in = new JarInputStream(new FileInputStream(appCoreFile));
-        Manifest manifest = in.getManifest();
-        String launcherVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_APP_LAUNCHER_VERSION);
-        if (Validator.isNullOrBlank(launcherVersion)) {
-            throw new Exception(
-                    "Invalid Application Launcher JAR File:" + Constants.NEW_LINE +
-                    Constants.ATTRIBUTE_APP_LAUNCHER_VERSION
-                    + " attribute in MANIFEST.MF file is missing/empty!");
+        try (JarInputStream in = new JarInputStream(new FileInputStream(appCoreFile))) {
+	        Manifest manifest = in.getManifest();
+	        String launcherVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_APP_LAUNCHER_VERSION);
+	        if (Validator.isNullOrBlank(launcherVersion)) {
+	            throw new Exception(
+	                    "Invalid Application Launcher JAR File:" + Constants.NEW_LINE +
+	                    Constants.ATTRIBUTE_APP_LAUNCHER_VERSION
+	                    + " attribute in MANIFEST.MF file is missing/empty!");
+	        }
+	        return launcherVersion;
         }
-        return launcherVersion;
     }
     
     public Collection<AddOnInfo> getAddOns() throws Throwable {
@@ -1891,67 +1893,67 @@ public class BackEnd {
         if (addOnFile != null && addOnFile.exists() && !addOnFile.isDirectory()) {
             String name = addOnFile.getName();
             if (name.matches(Constants.JAR_FILE_PATTERN)) {
-                JarInputStream in = new JarInputStream(new FileInputStream(addOnFile));
-                Manifest manifest = in.getManifest();
-                if (manifest == null) {
-                    throw new Exception(
-                            "Invalid Add-On-Package:" + Constants.NEW_LINE +
-                            "MANIFEST.MF file is missing!");
+                try (JarInputStream in = new JarInputStream(new FileInputStream(addOnFile))) {
+	                Manifest manifest = in.getManifest();
+	                if (manifest == null) {
+	                    throw new Exception(
+	                            "Invalid Add-On-Package:" + Constants.NEW_LINE +
+	                            "MANIFEST.MF file is missing!");
+	                }
+	                String addOnTypeStr = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_TYPE);
+	                if (Validator.isNullOrBlank(addOnTypeStr)) {
+	                    throw new Exception(
+	                            "Invalid Add-On-Package: " + Constants.NEW_LINE +
+	                            Constants.ATTRIBUTE_ADD_ON_TYPE 
+	                            + " attribute in MANIFEST.MF file is missing/empty!");
+	                }
+	                if (!addOnTypeStr.equals(addOnType.value())) {
+	                    throw new Exception(
+	                            "Invalid Add-On-Package type: " + Constants.NEW_LINE +
+	                            "(actual: '" + addOnTypeStr + "', expected: '" + addOnType.value() + "')!");
+	                }
+	                String addOnName = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_NAME);
+	                if (Validator.isNullOrBlank(addOnName)) {
+	                    throw new Exception(
+	                            "Invalid Add-On-Package: " + Constants.NEW_LINE +
+	                            Constants.ATTRIBUTE_ADD_ON_NAME 
+	                            + " attribute in MANIFEST.MF file is missing/empty!");
+	                }
+	                String addOnVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_VERSION);
+	                if (Validator.isNullOrBlank(addOnVersion)) {
+	                    throw new Exception(
+	                            "Invalid Add-On-Package: " + Constants.NEW_LINE +
+	                            Constants.ATTRIBUTE_ADD_ON_VERSION 
+	                            + " attribute in MANIFEST.MF file is missing/empty!");
+	                }
+	                String addOnAuthor = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_AUTHOR);
+	                String addOnDescription = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION);
+	                addOnInfo = new AddOnInfo(addOnName, addOnVersion, addOnAuthor, addOnDescription);
+	                String addOnDependencies = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DEPENDENCIES);
+	                if (!Validator.isNullOrBlank(addOnDependencies)) {
+	                    String[] deps = addOnDependencies.split(Constants.PROPERTY_VALUES_SEPARATOR);
+	                    for (String dep : deps) {
+	                        String[] depInfo = dep.trim().split(Constants.VALUES_SEPARATOR);
+	                        if (depInfo.length != 2 && depInfo.length != 3) {
+	                            throw new Exception(
+	                                    "Invalid Add-On-Package: " + Constants.NEW_LINE +
+	                                    Constants.ATTRIBUTE_ADD_ON_DEPENDENCIES 
+	                                    + " attribute in MANIFEST.MF file has invalid value!" + Constants.NEW_LINE
+	                                    + "[At least dependency type and name should be specified (version is optional)]");
+	                        }
+	                        Dependency d = new Dependency();
+	                        d.setType(PackType.fromValue(depInfo[0]));
+	                        d.setName(depInfo[1]);
+	                        if (depInfo.length == 3) { 
+	                            d.setVersion(depInfo[2]);
+	                        }
+	                        addOnInfo.addDependency(d);
+	                    }
+	                }
+	                if (extractAddOnInfo) {
+	                    extractAddOnInfo(in, addOnName);
+	                }
                 }
-                String addOnTypeStr = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_TYPE);
-                if (Validator.isNullOrBlank(addOnTypeStr)) {
-                    throw new Exception(
-                            "Invalid Add-On-Package: " + Constants.NEW_LINE +
-                            Constants.ATTRIBUTE_ADD_ON_TYPE 
-                            + " attribute in MANIFEST.MF file is missing/empty!");
-                }
-                if (!addOnTypeStr.equals(addOnType.value())) {
-                    throw new Exception(
-                            "Invalid Add-On-Package type: " + Constants.NEW_LINE +
-                            "(actual: '" + addOnTypeStr + "', expected: '" + addOnType.value() + "')!");
-                }
-                String addOnName = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_NAME);
-                if (Validator.isNullOrBlank(addOnName)) {
-                    throw new Exception(
-                            "Invalid Add-On-Package: " + Constants.NEW_LINE +
-                            Constants.ATTRIBUTE_ADD_ON_NAME 
-                            + " attribute in MANIFEST.MF file is missing/empty!");
-                }
-                String addOnVersion = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_VERSION);
-                if (Validator.isNullOrBlank(addOnVersion)) {
-                    throw new Exception(
-                            "Invalid Add-On-Package: " + Constants.NEW_LINE +
-                            Constants.ATTRIBUTE_ADD_ON_VERSION 
-                            + " attribute in MANIFEST.MF file is missing/empty!");
-                }
-                String addOnAuthor = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_AUTHOR);
-                String addOnDescription = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DESCRIPTION);
-                addOnInfo = new AddOnInfo(addOnName, addOnVersion, addOnAuthor, addOnDescription);
-                String addOnDependencies = manifest.getMainAttributes().getValue(Constants.ATTRIBUTE_ADD_ON_DEPENDENCIES);
-                if (!Validator.isNullOrBlank(addOnDependencies)) {
-                    String[] deps = addOnDependencies.split(Constants.PROPERTY_VALUES_SEPARATOR);
-                    for (String dep : deps) {
-                        String[] depInfo = dep.trim().split(Constants.VALUES_SEPARATOR);
-                        if (depInfo.length != 2 && depInfo.length != 3) {
-                            throw new Exception(
-                                    "Invalid Add-On-Package: " + Constants.NEW_LINE +
-                                    Constants.ATTRIBUTE_ADD_ON_DEPENDENCIES 
-                                    + " attribute in MANIFEST.MF file has invalid value!" + Constants.NEW_LINE
-                                    + "[At least dependency type and name should be specified (version is optional)]");
-                        }
-                        Dependency d = new Dependency();
-                        d.setType(PackType.fromValue(depInfo[0]));
-                        d.setName(depInfo[1]);
-                        if (depInfo.length == 3) { 
-                            d.setVersion(depInfo[2]);
-                        }
-                        addOnInfo.addDependency(d);
-                    }
-                }
-                if (extractAddOnInfo) {
-                    extractAddOnInfo(in, addOnName);
-                }
-                in.close();
             }
         } else {
             throw new Exception("Invalid Add-On-Package!");
@@ -2422,11 +2424,10 @@ public class BackEnd {
                 entryAttsDir.mkdir();
             }
             File att = new File(entryAttsDir, attachment.getName());
-            if (att.exists()) {
-                throw new Exception("Duplicate attachment name!");
+            if (!att.exists()) {
+                byte[] encryptedData = useCipher(cipher, attachment.getData());
+                FSUtils.writeFile(att, encryptedData);
             }
-            byte[] encryptedData = useCipher(cipher, attachment.getData());
-            FSUtils.writeFile(att, encryptedData);
         } else {
             throw new Exception("Invalid parameters!");
         }
