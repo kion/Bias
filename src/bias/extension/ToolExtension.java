@@ -5,6 +5,9 @@ package bias.extension;
 
 import java.util.UUID;
 
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+
 import bias.i18n.I18nService;
 
 
@@ -124,6 +127,18 @@ public abstract class ToolExtension implements Extension {
     public ToolRepresentation getRepresentation() {
         return null;
     }
+    
+    /**
+     * Binds tool-specific hotkeys.
+     * Should be overridden by certain extending tool-class to define corresponding tool's hotkeys.
+     * Binds no hotkeys by default.
+     * 
+     * @param inputMap to put input-event <-> key-object binding to
+     * @param actionMap to put key-object <-> action binding to
+     */
+    public void bindHotkeys(InputMap inputMap, ActionMap actionMap) {
+        // does nothing by default
+    }
 
     /**
      * Defines whether extension's data should be skipped on export
@@ -139,6 +154,17 @@ public abstract class ToolExtension implements Extension {
      */
     public boolean skipConfigExport() {
         return false;
+    }
+    
+    /**
+     * Returns help information that renders on application help dialog.
+     * Should be overridden by certain extending tool-class to return help info for corresponding tool.
+     * Returns nothing by default.
+     * 
+     * @return help information string, HTML formatting is allowed
+     */
+    public String getHelpInfo() {
+        return null;
     }
 
 }

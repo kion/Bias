@@ -1,0 +1,8 @@
+body {
+	padding: 0 16px;
+}
+
+li {
+	padding: 8px 0;
+	list-style: disc !important;
+}

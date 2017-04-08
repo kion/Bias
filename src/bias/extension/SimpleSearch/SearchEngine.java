@@ -18,6 +18,8 @@ import bias.utils.Validator;
  */
 public class SearchEngine {
     
+    private static final int SCOPE_LIMIT = 120;
+    
     public static class HighLightMarker {
         private Integer beginIndex;
         private Integer endIndex;
@@ -63,23 +65,24 @@ public class SearchEngine {
                                     int index = matcher.start();
                                     int length = matcher.end() - matcher.start();
                                     Integer hlIndex = null;
-                                    int scope = (searchDataPiece.length() - length) > 50 ? 
-                                            50 : searchDataPiece.length() - length;
+                                    int scope = (searchDataPiece.length() - length) > SCOPE_LIMIT ? 
+                                            SCOPE_LIMIT : searchDataPiece.length() - length;
                                     int beginIndex;
                                     int endIndex;
-                                    if (index <= 25) {
+                                    if (index <= scope/2) {
                                         beginIndex = 0;
                                         endIndex = scope + length;
                                         hlIndex = index;
                                     } else {
-                                        beginIndex = index - scope/2;
-                                        endIndex = index + scope/2 + length;
+                                        beginIndex = index;
+                                        endIndex = index + scope + length;
                                         hlIndex = index - beginIndex;
                                     }
-                                    if (endIndex >= searchDataPiece.length()) {
+                                    boolean full = endIndex >= searchDataPiece.length();
+                                    if (full) {
                                         endIndex = searchDataPiece.length();
                                     }
-                                    searchDataPiece = searchDataPiece.substring(beginIndex, endIndex);
+                                    searchDataPiece = searchDataPiece.substring(beginIndex, endIndex) + (full ? "" : "...");
                                     stringsFound.put(searchDataPiece, new HighLightMarker(hlIndex, hlIndex + length));
                                     matchesFound.put(entry.getKey(), stringsFound);
                                 }
@@ -100,23 +103,24 @@ public class SearchEngine {
                                         stringsFound = new LinkedHashMap<String, HighLightMarker>();
                                     }
                                     Integer hlIndex = null;
-                                    int scope = (searchDataPiece.length() - sc.getSearchExpression().length()) > 50 ? 
-                                            50 : searchDataPiece.length() - sc.getSearchExpression().length();
+                                    int scope = (searchDataPiece.length() - sc.getSearchExpression().length()) > SCOPE_LIMIT ? 
+                                            SCOPE_LIMIT : searchDataPiece.length() - sc.getSearchExpression().length();
                                     int beginIndex;
                                     int endIndex;
-                                    if (index <= 25) {
+                                    if (index <= scope/2) {
                                         beginIndex = 0;
                                         endIndex = scope + sc.getSearchExpression().length();
                                         hlIndex = index;
                                     } else {
-                                        beginIndex = index - scope/2;
-                                        endIndex = index + scope/2 + sc.getSearchExpression().length();
+                                        beginIndex = index;
+                                        endIndex = index + scope + sc.getSearchExpression().length();
                                         hlIndex = index - beginIndex;
                                     }
-                                    if (endIndex >= searchDataPiece.length()) {
+                                    boolean full = endIndex >= searchDataPiece.length();
+                                    if (full) {
                                         endIndex = searchDataPiece.length();
                                     }
-                                    searchDataPiece = searchDataPiece.substring(beginIndex, endIndex); 
+                                    searchDataPiece = searchDataPiece.substring(beginIndex, endIndex) + (full ? "" : "...");
                                     stringsFound.put(searchDataPiece, new HighLightMarker(hlIndex, hlIndex + sc.getSearchExpression().length()));
                                     matchesFound.put(entry.getKey(), stringsFound);
                                 }

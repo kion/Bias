@@ -17,7 +17,6 @@ import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketAddress;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
@@ -86,8 +85,6 @@ public class BackEnd {
 	private static BackEnd instance;
     
     private static String password;
-    
-    private static URL repositoryBaseURL;
     
     private static SocketAddress proxyAddr;
     
@@ -1466,13 +1463,6 @@ public class BackEnd {
             }
         }
         return ids;
-    }
-    
-    public URL getRepositoryBaseURL() throws Exception {
-        if (repositoryBaseURL == null) {
-            repositoryBaseURL = new URL(Constants.REPOSITORY_BASE_URL);
-        }
-        return repositoryBaseURL;
     }
     
     public static Proxy getProxy(Proxy.Type proxyType) {

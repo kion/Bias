@@ -52,6 +52,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
+import javax.swing.text.Highlighter;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
@@ -255,6 +256,10 @@ public class HTMLEditorPanel extends JPanel {
             // ignore, shouldn't happen ever
         }
         return text;
+    }
+    
+    public Highlighter getHighlighter() {
+        return getJTextPane().getHighlighter();
     }
     
     private String filePathToImageSrc(File file) {

@@ -4,6 +4,8 @@
 package bias.extension.FilePack;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -17,9 +19,11 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -32,12 +36,13 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.RowFilter;
-import javax.swing.SortOrder;
 import javax.swing.RowSorter.SortKey;
+import javax.swing.SortOrder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
@@ -68,6 +73,7 @@ public class FilePack extends EntryExtension {
     private static final ImageIcon ICON_VIEW = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "view.png"));
     private static final ImageIcon ICON_APPLY = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "apply.png"));
     private static final ImageIcon ICON_SAVE = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "save.png"));
+    private static final ImageIcon ICON_CLEAR_FILTER = new ImageIcon(CommonUtils.getResourceURL(FilePack.class, "clear-filter.png"));
     
     private static final int MAX_SORT_KEYS_NUMBER = 3;
     
@@ -75,6 +81,46 @@ public class FilePack extends EntryExtension {
     private static final String PROPERTY_SORT_ORDER = "SORT_BY_ORDER";
     private static final String PROPERTY_SELECTED_ROW = "SELECTED_ROW";
     private static final String PROPERTY_COLUMNS_WIDTHS = "COLUMNS_WIDTHS";
+    
+    @SuppressWarnings("serial")
+    private class TableSearchRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component tableCellRendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            boolean hl = false;
+            if (!Validator.isNullOrBlank(searchExpression)) {
+                String text = value.toString();
+                if (!Validator.isNullOrBlank(text)) {
+                    if (searchPattern != null) {
+                        Matcher matcher = searchPattern.matcher(text);
+                        hl = matcher.find();
+                    } else {
+                        int index = -1;
+                        if (isSearchCaseSensitive) {
+                            index = text.indexOf(searchExpression);
+                        } else {
+                            index = text.toLowerCase().indexOf(searchExpression.toLowerCase());
+                        }
+                        hl = index != -1;
+                    }
+                }
+            }
+            if (hl) {
+                setBackground(Color.YELLOW);
+                setForeground(Color.BLACK);
+            } else {
+                setBackground(null);
+                setForeground(null);
+            }
+            return tableCellRendererComponent;
+        }
+    }
+
+    private String searchExpression;
+
+    private boolean isSearchCaseSensitive;
+    
+    private Pattern searchPattern;
 
     private int[] sortByColumn = new int[MAX_SORT_KEYS_NUMBER];
     
@@ -92,6 +138,7 @@ public class FilePack extends EntryExtension {
     
     private TableRowSorter<TableModel> sorter;
     
+    private JTextField filterText;
 	private JToolBar jToolBar1;
 	private JButton jButton2;
 	private JPanel jPanel1;
@@ -211,6 +258,30 @@ public class FilePack extends EntryExtension {
         }
         return searchData;
     }
+
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#highlightSearchResults(java.lang.String, boolean, boolean)
+     */
+    @Override
+    public void highlightSearchResults(String searchExpression, boolean isCaseSensitive, boolean isRegularExpression) throws Throwable {
+        this.searchExpression = searchExpression;
+        this.isSearchCaseSensitive = isCaseSensitive;
+        if (isRegularExpression) {
+            searchPattern = Pattern.compile(searchExpression);
+        }
+        jTable1.repaint();
+        filterText.setText(searchExpression);
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#clearSearchResultsHighlight()
+     */
+    @Override
+    public void clearSearchResultsHighlight() throws Throwable {
+        searchExpression = null;
+        searchPattern = null;
+        jTable1.repaint();
+    }
     
 	private void initGUI() throws Throwable {
 		try {
@@ -297,6 +368,7 @@ public class FilePack extends EntryExtension {
 							jTable1 = new JTable();
 							jScrollPane1.setViewportView(jTable1);
 							jTable1.setModel(jTable1Model);
+							jTable1.setDefaultRenderer(Object.class, new TableSearchRenderer());
 
 					        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
                             model.addColumn("File");
@@ -333,14 +405,23 @@ public class FilePack extends EntryExtension {
 				            });
 				            jTable1.setRowSorter(sorter);
 			                JPanel topPanel = new JPanel(new BorderLayout());
-			                topPanel.add(new JLabel("Filter:"), BorderLayout.CENTER);
-			                final JTextField filterText = new JTextField();
+			                topPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
+			                filterText = new JTextField();
 			                filterText.addCaretListener(new CaretListener(){
 			                    public void caretUpdate(CaretEvent e) {
 			                        sorter.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText().replaceAll("\\s+", ".*")));
 			                    }
 			                });
-			                topPanel.add(filterText, BorderLayout.SOUTH);
+			                topPanel.add(filterText, BorderLayout.CENTER);
+			                JButton clearFilterBtn = new JButton(ICON_CLEAR_FILTER);
+			                clearFilterBtn.addActionListener(new ActionListener() {
+			                    @Override
+			                    public void actionPerformed(ActionEvent e) {
+			                        filterText.setText("");
+			                        sorter.setRowFilter(null);
+			                    }
+			                });
+			                topPanel.add(clearFilterBtn, BorderLayout.EAST);
 	                        jPanel1.add(topPanel, BorderLayout.NORTH);
 
 						}

@@ -271,6 +271,8 @@ public class FrontEnd extends JFrame {
     
     private static SimpleDateFormat dateFormat;
     
+    private static Runnable onBottomPanelCloseHandler;
+    
     private TabMoveListener tabMoveListener = new TabMoveListener();
     
     private int opt;
@@ -671,11 +673,11 @@ public class FrontEnd extends JFrame {
             preInit();
             activateSkin();
             instance = new FrontEnd();
-            Preferences.getInstance().init();
-            instance.applyPreferences(true);
             initTools();
             initTransferrers();
             registerMainWindowComponentListeners();
+            Preferences.getInstance().init();
+            instance.applyPreferences(true);
         }
         return instance;
     }
@@ -772,9 +774,6 @@ public class FrontEnd extends JFrame {
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK + InputEvent.ALT_DOWN_MASK), exitAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(exitAction.getValue(Action.NAME), exitAction);
         
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), fullScreenAction.getValue(Action.NAME));
-        getRootPane().getActionMap().put(fullScreenAction.getValue(Action.NAME), fullScreenAction);
-        
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_DOWN_MASK), backAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(backAction.getValue(Action.NAME), backAction);
         
@@ -786,6 +785,12 @@ public class FrontEnd extends JFrame {
         
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.ALT_DOWN_MASK), forwardToLastAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(forwardToLastAction.getValue(Action.NAME), forwardToLastAction);
+
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0), fullScreenAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(fullScreenAction.getValue(Action.NAME), fullScreenAction);
+        
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), escapeAction.getValue(Action.NAME));
+        getRootPane().getActionMap().put(escapeAction.getValue(Action.NAME), escapeAction);
         
     }
     
@@ -1200,6 +1205,7 @@ public class FrontEnd extends JFrame {
                     tool.setSettings(BackEnd.getInstance().loadAddOnSettings(fullExtName, PackType.EXTENSION));
                     tool.setData(BackEnd.getInstance().getToolData(fullExtName));
                     instance.representTool(tool);
+                    tool.bindHotkeys(instance.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW), instance.getRootPane().getActionMap());
                     tools.put(tool.getClass(), tool);
                 } catch (Throwable t) {
                     displayErrorMessage(
@@ -2104,6 +2110,10 @@ public class FrontEnd extends JFrame {
                 private static final long serialVersionUID = 1L;
                 public void actionPerformed(ActionEvent e) {
                     getJPanel2().setVisible(false);
+                    if (onBottomPanelCloseHandler != null) {
+                        onBottomPanelCloseHandler.run();
+                        onBottomPanelCloseHandler = null;
+                    }
                 }
             });
             bottomPanelCloseButton .setIcon(ICON_CLOSE);
@@ -2113,8 +2123,16 @@ public class FrontEnd extends JFrame {
     }
 
     public static void displayBottomPanel(JLabel title, JPanel content) {
+        displayBottomPanel(title, content, null);
+    }
+    
+    public static void displayBottomPanel(JLabel title, JPanel content, Runnable onCloseHandler) {
         if (instance != null) {
-            int dl = instance.getJPanel2().isVisible() ? instance.getJSplitPane().getDividerLocation() : instance.getHeight()/5*3;
+            if (onBottomPanelCloseHandler != null) {
+                onBottomPanelCloseHandler.run();
+                onBottomPanelCloseHandler = null;
+            }
+            int dl = instance.getJPanel2().isVisible() ? instance.getJSplitPane().getDividerLocation() : instance.getJSplitPane().getHeight()/5*4;
             instance.getJPanel2().setVisible(false);
             instance.getJPanel2().removeAll();
             instance.getJPanel3().setVisible(false);
@@ -2126,12 +2144,18 @@ public class FrontEnd extends JFrame {
             instance.getJPanel2().add(new JScrollPane(content), BorderLayout.CENTER);
             instance.getJPanel2().setVisible(true);
             instance.getJSplitPane().setDividerLocation(dl);
+            instance.getRootPane().requestFocusInWindow();
+            onBottomPanelCloseHandler = onCloseHandler;
         }
     }
     
     public static void hideBottomPanel() {
         if (instance != null) {
             instance.getJPanel2().setVisible(false);
+            if (onBottomPanelCloseHandler != null) {
+                onBottomPanelCloseHandler.run();
+                onBottomPanelCloseHandler = null;
+            }
         }
     }
     
@@ -4617,6 +4641,19 @@ public class FrontEnd extends JFrame {
             switchToFullScreenMode();
         }
     }
+    
+    private EscapeAction escapeAction = new EscapeAction();
+    private class EscapeAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        
+        public EscapeAction() {
+            putValue(Action.NAME, "escape");
+        }
+
+        public void actionPerformed(ActionEvent evt) {
+            hideBottomPanel();
+        }
+    };
 
     private CloseAction closeAction = new CloseAction();
     private class CloseAction extends AbstractAction {
@@ -5625,17 +5662,17 @@ public class FrontEnd extends JFrame {
                             try {
                                 Pack pack = getAvailableOnlinePackages().get(addOnName);
                                 String fileName = pack.getName() + Constants.PATH_SEPARATOR + LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX;
-                                URL addOnURL = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
+                                URL addOnURL = new URL(Constants.REPOSITORY_BASE_URL + fileName + "?timestamp=" + new Date().getTime());
                                 try {
                                     // try to load addon-info file for preferred locale first...
-                                    loadAndDisplayPackageDetails(new URL(BackEnd.getInstance().getRepositoryBaseURL() + pack.getName() + Constants.PATH_SEPARATOR), addOnURL, pack);
+                                    loadAndDisplayPackageDetails(new URL(Constants.REPOSITORY_BASE_URL + pack.getName() + Constants.PATH_SEPARATOR), addOnURL, pack);
                                 } catch (Throwable t) {
                                     // ... if failed, try to load it for default locale
                                     fileName = pack.getName() + Constants.PATH_SEPARATOR + 
                                                     Constants.DEFAULT_LOCALE + Constants.ADDON_INFO_FILENAME_SUFFIX;
-                                    addOnURL = new URL(BackEnd.getInstance().getRepositoryBaseURL() + fileName);
+                                    addOnURL = new URL(Constants.REPOSITORY_BASE_URL + fileName + "?timestamp=" + new Date().getTime());
                                     try {
-                                        loadAndDisplayPackageDetails(new URL(BackEnd.getInstance().getRepositoryBaseURL() + pack.getName() + Constants.PATH_SEPARATOR), addOnURL, pack);
+                                        loadAndDisplayPackageDetails(new URL(Constants.REPOSITORY_BASE_URL + pack.getName() + Constants.PATH_SEPARATOR), addOnURL, pack);
                                     } catch (Throwable t2) {
                                         displayErrorMessage(getMessage("error.message.pack.details.page.load.failure"), t2);
                                     }
@@ -6020,8 +6057,8 @@ public class FrontEnd extends JFrame {
                 @Override
                 public boolean isCellEditable(int rowIndex, int mColIndex) {
                     return mColIndex == 0 
-                                    && (!getValueAt(rowIndex, 1).equals(PackType.LIBRARY.value()) 
-                                    || getValueAt(rowIndex, 7).equals(Constants.ADDON_STATUS.Update)) ? true : false;
+                                && (!PackType.LIBRARY.value().equals(getValueAt(rowIndex, 1)) 
+                                    || Constants.ADDON_STATUS.Update.equals(getValueAt(rowIndex, 7))) ? true : false;
                 }
                 @Override
                 public Class<?> getColumnClass(int columnIndex) {
@@ -6212,7 +6249,7 @@ public class FrontEnd extends JFrame {
             while (getOnlineModel().getRowCount() > 0) {
                 getOnlineModel().removeRow(0);
             }
-            URL addonsListURL = new URL(BackEnd.getInstance().getRepositoryBaseURL().toString() + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME + "?timestamp=" + new Date().getTime());
+            URL addonsListURL = new URL(Constants.REPOSITORY_BASE_URL + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME + "?timestamp=" + new Date().getTime());
             final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
             Downloader d = Downloader.createSingleFileDownloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
             displayProcessNotification(getMessage("info.message.refreshing.online.packages.list"), true);
@@ -6281,13 +6318,10 @@ public class FrontEnd extends JFrame {
                 if (idx != -1) {
                     if ((Boolean) getOnlineModel().getValueAt(idx, 0)) {
                         Pack pack = getAvailableOnlinePackages().get((String) getOnlineModel().getValueAt(idx, 2));
+                        URL url = Validator.isNullOrBlank(pack.getUrl()) 
+                                ? new URL(Constants.REPOSITORY_BASE_URL + pack.getName() + Constants.PATH_SEPARATOR + pack.getName() + Constants.JAR_FILE_SUFFIX + "?timestamp=" + new Date().getTime())
+                                : new URL(pack.getUrl());
                         String fileName = pack.getName() + (pack.getVersion() != null ? Constants.VALUES_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
-                        URL url;
-                        if (!Validator.isNullOrBlank(pack.getUrl())) {
-                            url = new URL(pack.getUrl());
-                        } else {
-                            url = new URL(BackEnd.getInstance().getRepositoryBaseURL() + pack.getName() + Constants.PATH_SEPARATOR + fileName);
-                        }
                         File file = new File(Constants.TMP_DIR, fileName);
                         urlFileMap.put(url, file);
                         urlPackageMap.put(url, pack);
@@ -6299,13 +6333,10 @@ public class FrontEnd extends JFrame {
             for (int i = 0; i < getOnlineModel().getRowCount(); i++) {
                 if ((Boolean) getOnlineModel().getValueAt(i, 0) && !depIndexes.contains(i)) {
                     Pack pack = getAvailableOnlinePackages().get((String) getOnlineModel().getValueAt(i, 2));
+                    URL url = Validator.isNullOrBlank(pack.getUrl()) 
+                            ? new URL(Constants.REPOSITORY_BASE_URL + pack.getName() + Constants.PATH_SEPARATOR + pack.getName() + Constants.JAR_FILE_SUFFIX + "?timestamp=" + new Date().getTime())
+                            : new URL(pack.getUrl());
                     String fileName = pack.getName() + (pack.getVersion() != null ? Constants.VALUES_SEPARATOR + pack.getVersion() : Constants.EMPTY_STR) + Constants.JAR_FILE_SUFFIX;
-                    URL url;
-                    if (!Validator.isNullOrBlank(pack.getUrl())) {
-                        url = new URL(pack.getUrl());
-                    } else {
-                        url = new URL(BackEnd.getInstance().getRepositoryBaseURL() + pack.getName() + Constants.PATH_SEPARATOR + fileName);
-                    }
                     File file = new File(Constants.TMP_DIR, fileName);
                     urlFileMap.put(url, file);
                     urlPackageMap.put(url, pack);
@@ -6675,7 +6706,7 @@ public class FrontEnd extends JFrame {
         if (detailsPane == null) {
             detailsTextPane = new JTextPane();
             detailsTextPane.setEditable(false);
-            detailsTextPane.setEditorKit(new CustomHTMLEditorKit());
+            detailsTextPane.setEditorKit(new CustomHTMLEditorKit(CommonUtils.loadStyleSheet("helpInfo.css")));
             detailsTextPane.addHyperlinkListener(new HyperlinkListener() {
                 public void hyperlinkUpdate(HyperlinkEvent e) {
                     if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
@@ -6741,10 +6772,21 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             JPanel p = new JPanel(new BorderLayout());
+            String content = getMessage("help.info");
+            String toolsContent = "";
+            for (ToolExtension tool : tools.values()) {
+                String toolContent = tool.getHelpInfo();
+                if (toolContent != null) {
+                    toolsContent += toolContent;
+                }
+            }
+            if (!Validator.isNullOrBlank(toolsContent)) {
+                content += toolsContent;
+            }
             p.add(getDetailsPane(
             		"<html>" +
             		"<body>" +
-            			getMessage("help.info") +
+            			content +
             		"</body>" +
             		"</html>"
             		), 

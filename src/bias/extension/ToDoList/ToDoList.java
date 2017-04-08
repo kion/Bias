@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.ImageIcon;
@@ -39,18 +41,22 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
-import javax.swing.SortOrder;
 import javax.swing.RowSorter.SortKey;
+import javax.swing.SortOrder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
+import javax.swing.text.Highlighter.HighlightPainter;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
@@ -58,6 +64,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import com.sun.org.apache.xml.internal.serialize.OutputFormat;
+import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
 import bias.Constants;
 import bias.core.Attachment;
@@ -68,9 +77,6 @@ import bias.gui.FrontEnd;
 import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
-
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
 
 /**
  * @author kion
@@ -83,6 +89,7 @@ public class ToDoList extends EntryExtension {
     
     private static final ImageIcon ICON_ADD = new ImageIcon(CommonUtils.getResourceURL(ToDoList.class, "add.png"));
     private static final ImageIcon ICON_DELETE = new ImageIcon(CommonUtils.getResourceURL(ToDoList.class, "del.png"));
+    private static final ImageIcon ICON_CLEAR_FILTER = new ImageIcon(CommonUtils.getResourceURL(ToDoList.class, "clear-filter.png"));
 
     private static final String XML_ELEMENT_ROOT = "root";
     private static final String XML_ELEMENT_ENTRY = "entry";
@@ -109,12 +116,60 @@ public class ToDoList extends EntryExtension {
     
     private static final int MAX_SORT_KEYS_NUMBER = 4;
     
+    @SuppressWarnings("serial")
+    private class TableSearchRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component tableCellRendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            boolean hl = false;
+            if (!Validator.isNullOrBlank(searchExpression)) {
+                String text = value.toString();
+                if (!Validator.isNullOrBlank(text)) {
+                    if (searchPattern != null) {
+                        Matcher matcher = searchPattern.matcher(text);
+                        hl = matcher.find();
+                    } else {
+                        int index = -1;
+                        if (isSearchCaseSensitive) {
+                            index = text.indexOf(searchExpression);
+                        } else {
+                            index = text.toLowerCase().indexOf(searchExpression.toLowerCase());
+                        }
+                        hl = index != -1;
+                    }
+                }
+                if (column == 1) {
+                    DefaultTableModel model = (DefaultTableModel) table.getModel();
+                    UUID id = UUID.fromString((String) model.getValueAt(row, 0));
+                    HTMLEditorPanel panel = editorPanels.get(id);
+                    if (panel.getHighlighter().getHighlights().length > 0) {
+                        hl = true;
+                    }
+                }
+            }
+            if (hl) {
+                setBackground(Color.YELLOW);
+                setForeground(Color.BLACK);
+            } else {
+                setBackground(null);
+                setForeground(null);
+            }
+            return tableCellRendererComponent;
+        }
+    }
+    
     private static class ComboBoxEditor extends DefaultCellEditor {
         private static final long serialVersionUID = 1L;
         public ComboBoxEditor(String[] items) {
-            super(new JComboBox(items));
+            super(new JComboBox<>(items));
         }
     }
+    
+    private String searchExpression;
+
+    private boolean isSearchCaseSensitive;
+    
+    private Pattern searchPattern;
     
     private String dateTimeFormat = "yyyy-MM-dd HH:mm";
     
@@ -368,6 +423,7 @@ public class ToDoList extends EntryExtension {
                 };
                 todoEntriesTable = new JTable(model);
                 todoEntriesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                todoEntriesTable.setDefaultRenderer(Object.class, new TableSearchRenderer());
                 
                 model.addColumn("ID");
                 model.addColumn("Timestamp");
@@ -451,9 +507,18 @@ public class ToDoList extends EntryExtension {
                         sorter.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText().replaceAll("\\s+", ".*")));
                     }
                 });
+                JButton clearFilterBtn = new JButton(ICON_CLEAR_FILTER);
+                clearFilterBtn.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        filterText.setText("");
+                        sorter.setRowFilter(null);
+                    }
+                });
                 JPanel filterPanel = new JPanel(new BorderLayout());
                 filterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
                 filterPanel.add(filterText, BorderLayout.CENTER);
+                filterPanel.add(clearFilterBtn, BorderLayout.EAST);
                 mainPanel.add(filterPanel, BorderLayout.NORTH);
                 mainPanel.add(toolbar, BorderLayout.SOUTH);
                 this.setLayout(new BorderLayout());
@@ -472,8 +537,8 @@ public class ToDoList extends EntryExtension {
         buttAdd.setToolTipText("add entry");
         buttAdd.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
-                JComboBox priority = new JComboBox(priorities);
-                JComboBox status = new JComboBox(statuses);
+                JComboBox<String> priority = new JComboBox<>(priorities);
+                JComboBox<String> status = new JComboBox<>(statuses);
                 String title = JOptionPane.showInputDialog(
                         ToDoList.this, 
                         new Component[]{priority, status},
@@ -582,6 +647,60 @@ public class ToDoList extends EntryExtension {
             searchSnippets.add(entry.getStatus());
         }
         return searchSnippets;
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#highlightSearchResults(java.lang.String, boolean, boolean)
+     */
+    @Override
+    public void highlightSearchResults(String searchExpression, boolean isCaseSensitive, boolean isRegularExpression) throws Throwable {
+        this.searchExpression = searchExpression;
+        this.isSearchCaseSensitive = isCaseSensitive;
+        if (isRegularExpression) {
+            searchPattern = Pattern.compile(searchExpression);
+        }
+        for (HTMLEditorPanel panel : editorPanels.values()) {
+            Highlighter hl = panel.getHighlighter();
+            hl.removeAllHighlights();
+            String text = panel.getText();
+            if (!Validator.isNullOrBlank(text)) {
+                HighlightPainter hlPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+                if (searchPattern != null) {
+                    Matcher matcher = searchPattern.matcher(text);
+                    while (matcher.find()) {
+                        hl.addHighlight(matcher.start(), matcher.end(), hlPainter);
+                    }
+                } else {
+                    int index = -1;
+                    do {
+                        int fromIdx = index != -1 ? index + searchExpression.length() : 0;
+                        if (isCaseSensitive) {
+                            index = text.indexOf(searchExpression, fromIdx);
+                        } else {
+                            index = text.toLowerCase().indexOf(searchExpression.toLowerCase(), fromIdx);
+                        }
+                        if (index != -1) {
+                            hl.addHighlight(index, index + searchExpression.length(), hlPainter);
+                        }
+                    } while (index != -1);
+                }
+            }
+        }
+        todoEntriesTable.repaint();
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#clearSearchResultsHighlight()
+     */
+    @Override
+    public void clearSearchResultsHighlight() throws Throwable {
+        searchExpression = null;
+        searchPattern = null;
+        todoEntriesTable.repaint();
+        for (HTMLEditorPanel panel : editorPanels.values()) {
+            Highlighter hl = panel.getHighlighter();
+            hl.removeAllHighlights();
+        }
     }
 
     /* (non-Javadoc)

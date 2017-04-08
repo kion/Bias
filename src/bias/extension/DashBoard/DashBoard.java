@@ -289,6 +289,23 @@ public class DashBoard extends EntryExtension {
         }
         return searchData;
     }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#highlightSearchResults(java.lang.String, boolean, boolean)
+     */
+    @Override
+    public void highlightSearchResults(String searchExpression, boolean isCaseSensitive, boolean isRegularExpression) throws Throwable {
+        for (InfoSnippet snippet : getSnippets()) {
+            snippet.highlightSearchResults(searchExpression, isCaseSensitive, isRegularExpression);
+        }
+    }
+    
+    @Override
+    public void clearSearchResultsHighlight() throws Throwable {
+        for (InfoSnippet snippet : getSnippets()) {
+            snippet.clearSearchResultsHighlight();
+        }
+    }
 
     private JPanel getToolPanel() {
         if (toolPanel == null) {

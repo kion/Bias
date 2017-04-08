@@ -11,10 +11,11 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -25,13 +26,19 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.Map.Entry;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -39,10 +46,15 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.Timer;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
+import javax.swing.text.Highlighter.HighlightPainter;
 
 import bias.core.Recognizable;
 import bias.extension.EntryExtension;
@@ -168,18 +180,31 @@ public class SimpleSearch extends ToolExtension {
      */
     @Override
     public ToolRepresentation getRepresentation() {
-        JButton butt = new JButton(ICON);
-        butt.addActionListener(al);
-        return new ToolRepresentation(getButton(), null);
-    }
-    
-    private JButton getButton() {
         JButton button = new JButton(ICON);
-        button.addActionListener(al);
-        return button;
+        button.addActionListener(searchAction);
+        return new ToolRepresentation(button, null);
     }
     
-    private ActionListener al = new ActionListener(){
+    /* (non-Javadoc)
+     * @see bias.extension.ToolExtension#bindHotkeys(javax.swing.InputMap, javax.swing.ActionMap)
+     */
+    @Override
+    public void bindHotkeys(InputMap inputMap, ActionMap actionMap) {
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), searchAction.getValue(Action.NAME));
+        actionMap.put(searchAction.getValue(Action.NAME), searchAction);
+    }
+    
+    @Override
+    public String getHelpInfo() {
+        return getMessage("help.info");
+    }
+    
+    private SearchAction searchAction = new SearchAction();
+    private class SearchAction extends AbstractAction {
+        private static final long serialVersionUID = 1L;
+        public SearchAction(){
+            putValue(Action.NAME, "search");            
+        }
         public void actionPerformed(ActionEvent e) {
             try {
                 initSettings();
@@ -211,7 +236,7 @@ public class SimpleSearch extends ToolExtension {
                 final Map<String, Class<? extends EntryExtension>> types = ExtensionFactory.getAnnotatedEntryExtensionClasses();
                 
                 final JLabel filterClassL = new JLabel("search for entries of this type only:");
-                final JComboBox filterClassCB = new JComboBox();
+                final JComboBox<String> filterClassCB = new JComboBox<>();
                 filterClassCB.addItem("Any type");
                 final JPanel filterClassPanel = new JPanel(new BorderLayout());
                 filterClassPanel.add(filterClassL, BorderLayout.NORTH);
@@ -262,28 +287,52 @@ public class SimpleSearch extends ToolExtension {
                         }
                     }
                 });
-                Thread searchThread = new Thread(new Runnable(){
-                    public void run() {
-                        JLabel processLabel = new JLabel();
-                        try {
-                            int option = JOptionPane.showConfirmDialog(
-                                    FrontEnd.getActiveWindow(), 
-                                    new Component[]{
-                                        searchExpressionL,
-                                        searchExpressionTF,
-                                        caseSensitivePanel,
-                                        regularExpressionPanel,
-                                        filterClassPanel
-                                    }, 
-                                    "Search", 
-                                    JOptionPane.OK_CANCEL_OPTION);
-                            if (option == JOptionPane.OK_OPTION && !Validator.isNullOrBlank(searchExpressionTF.getText())) {
+                ActionListener al = new ActionListener(){
+                    public void actionPerformed(ActionEvent ae){
+                        searchExpressionTF.requestFocusInWindow();
+                        searchExpressionTF.selectAll();
+                    }
+                };
+                Timer timer = new Timer(100, al);
+                timer.setRepeats(false);
+                timer.start();
+                int option = JOptionPane.showConfirmDialog(
+                        FrontEnd.getActiveWindow(), 
+                        new Component[]{
+                            searchExpressionL,
+                            searchExpressionTF,
+                            caseSensitivePanel,
+                            regularExpressionPanel,
+                            filterClassPanel
+                        }, 
+                        "Search", 
+                        JOptionPane.OK_CANCEL_OPTION);
+                if (option == JOptionPane.OK_OPTION && !Validator.isNullOrBlank(searchExpressionTF.getText())) {
+                    Thread searchThread = new Thread(new Runnable(){
+                        public void run() {
+                            JLabel processLabel = new JLabel();
+                            try {
                                 JPanel entryPathItemsPanel = new JPanel();
                                 entryPathItemsPanel.setLayout(new BorderLayout());
-                                processLabel.setText("searching...");
+                                processLabel.setText(" Searching... ");
                                 entryPathItemsPanel.add(processLabel, BorderLayout.CENTER);
                                 JLabel title = new JLabel("Search results");
-                                FrontEnd.displayBottomPanel(title, entryPathItemsPanel);
+                                FrontEnd.displayBottomPanel(title, entryPathItemsPanel, new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            for (EntryExtension extension : FrontEnd.getEntryExtensions().values()) {
+                                                try {
+                                                    extension.clearSearchResultsHighlight();
+                                                } catch (Throwable t) {
+                                                    t.printStackTrace(System.err);
+                                                }
+                                            }
+                                        } catch (Throwable t) {
+                                            t.printStackTrace(System.err);
+                                        }
+                                    }
+                                });
 
                                 filterClass = types.get(filterClassCB.getSelectedItem());
                                 
@@ -293,19 +342,20 @@ public class SimpleSearch extends ToolExtension {
                                 lastSearchCriteria.setSearchExpression(searchExpressionTF.getText()); 
                                 lastSearchCriteria.setCaseSensitive(isCaseSensitiveCB.isSelected()); 
                                 lastSearchCriteria.setRegularExpression(isRegularExpressionCB.isSelected());                    
-                                SearchCriteria sc = new SearchCriteria(
+                                final SearchCriteria sc = new SearchCriteria(
                                         searchExpressionTF.getText(),
                                         isCaseSensitiveCB.isSelected(),
                                         isRegularExpressionCB.isSelected());
                                 Map<VisualEntryDescriptor, Map<String, HighLightMarker>> result = search(sc, filterClass);
                                 if (result.isEmpty()) {
-                                    title.setText("Search results :: 0 entries found");
-                                    processLabel.setText("No items matching search criteria.");
+                                    title.setText(" Search results :: no entries found");
+                                    processLabel.setText(" No items matching search criteria ");
                                 } else {
-                                    title.setText("Search results :: " + result.size() + " entries found");
+                                    title.setText("<html>&nbsp;Search results :: <strong>" + result.size() + "</strong> entr" + (result.size() > 1 ? "ies" : "y") + " found</html>");
                                     entryPathItemsPanel.setVisible(false);
                                     entryPathItemsPanel.removeAll();
-                                    entryPathItemsPanel.setLayout(new GridLayout(result.size(), 1));
+                                    BoxLayout layout = new BoxLayout(entryPathItemsPanel, BoxLayout.Y_AXIS);
+                                    entryPathItemsPanel.setLayout(layout);
                                     for (Entry<VisualEntryDescriptor, Map<String, HighLightMarker>> resultEntry : result.entrySet()) {
                                         final VisualEntryDescriptor ved = resultEntry.getKey();
                                         Collection<Recognizable> entryPath = ved.getEntryPath();
@@ -316,7 +366,15 @@ public class SimpleSearch extends ToolExtension {
                                             MouseListener ml = new MouseAdapter(){
                                                 @Override
                                                 public void mouseClicked(MouseEvent e) {
-                                                    FrontEnd.switchToVisualEntry(r.getId());                                        
+                                                    FrontEnd.switchToVisualEntry(r.getId());
+                                                    try {
+                                                        EntryExtension entry = FrontEnd.getEntryExtensions().get(r.getId());
+                                                        if (entry != null) {
+                                                            entry.highlightSearchResults(sc.getSearchExpression(), sc.isCaseSensitive(), sc.isRegularExpression());
+                                                        }
+                                                    } catch (Throwable t) {
+                                                        t.printStackTrace(System.err);
+                                                    }
                                                 }
                                             };
                                             if (r.getIcon() != null) {
@@ -330,7 +388,7 @@ public class SimpleSearch extends ToolExtension {
                                             entryPathItemLabel.addMouseListener(ml);
                                             entryPathItemPanel.add(entryPathItemLabel);
                                             if (it.hasNext()) {
-                                                entryPathItemPanel.add(new JLabel(">"));
+                                                entryPathItemPanel.add(new JLabel("<html> &raquo; </html>"));
                                             }
                                         }
                                         StringBuffer matchedSnippets = new StringBuffer();
@@ -345,9 +403,7 @@ public class SimpleSearch extends ToolExtension {
                                                 Integer endIndex = entry.getValue().getEndIndex();
                                                 if (beginIndex != null && endIndex != null) {
                                                     hlStr = str.substring(0, beginIndex);
-                                                    hlStr += "<font bgcolor=yellow>";
                                                     hlStr += str.substring(beginIndex, endIndex);
-                                                    hlStr += "</font>";
                                                     hlStr += str.substring(endIndex, str.length());
                                                 }
                                             }
@@ -360,7 +416,43 @@ public class SimpleSearch extends ToolExtension {
                                                 matchedSnippets.append(" :: ");
                                             }
                                         }
-                                        entryPathItemPanel.add(new JLabel("<html> &gt;&gt; <i>" + matchedSnippets.toString() + "</i></html>"));
+                                        
+                                        JTextField tf = new JTextField(matchedSnippets.toString());
+                                        tf.setBorder(null);
+                                        tf.setEditable(false);
+                                        tf.setSelectedTextColor(Color.LIGHT_GRAY);
+                                        
+                                        Highlighter hl = tf.getHighlighter();
+                                        hl.removeAllHighlights();
+                                        
+                                        String text = tf.getText();
+                                        if (!Validator.isNullOrBlank(text)) {
+                                            HighlightPainter hlPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+                                            Pattern pattern = sc.isRegularExpression() ? Pattern.compile(sc.getSearchExpression()) : null;
+                                            if (pattern != null) {
+                                                Matcher matcher = pattern.matcher(text);
+                                                while (matcher.find()) {
+                                                    hl.addHighlight(matcher.start(), matcher.end(), hlPainter);
+                                                }
+                                            } else {
+                                                int index = -1;
+                                                do {
+                                                    int fromIdx = index != -1 ? index + sc.getSearchExpression().length() : 0;
+                                                    if (sc.isCaseSensitive()) {
+                                                        index = text.indexOf(sc.getSearchExpression(), fromIdx);
+                                                    } else {
+                                                        index = text.toLowerCase().indexOf(sc.getSearchExpression().toLowerCase(), fromIdx);
+                                                    }
+                                                    if (index != -1) {
+                                                        hl.addHighlight(index, index + sc.getSearchExpression().length(), hlPainter);
+                                                    }
+                                                } while (index != -1);
+                                            }
+                                        }
+
+                                        entryPathItemPanel.add(new JLabel("<html>&rarr;</html>"));
+                                        entryPathItemPanel.add(tf);
+                                        
                                         JPanel p = new JPanel(new BorderLayout());
                                         p.add(entryPathItemPanel, BorderLayout.WEST);
                                         entryPathItemsPanel.add(p);
@@ -368,14 +460,14 @@ public class SimpleSearch extends ToolExtension {
                                     entryPathItemsPanel.setVisible(true);
                                 }
                                 System.gc();
+                            } catch (Throwable t) {
+                                processLabel.setText("<html><font color=red>Error while processing search!</font></html>");
+                                t.printStackTrace(System.err);
                             }
-                        } catch (Throwable t) {
-                            processLabel.setText("<html><font color=red>Error while processing search!</font></html>");
-                            t.printStackTrace(System.err);
                         }
-                    }
-                });
-                searchThread.start();
+                    });
+                    searchThread.start();
+                }
             } catch (Throwable t) {
                 FrontEnd.displayErrorMessage("Failed to perform search!", t);
             }

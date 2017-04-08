@@ -1,0 +1,1 @@
+help.info == <ul><li>Search - <i color="blue">{Ctrl+F}</i></li></ul>

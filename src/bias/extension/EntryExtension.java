@@ -146,4 +146,22 @@ public abstract class EntryExtension extends JComponent implements Extension {
         return null;
     }
 
+    /**
+     * Highlights search results, if any.
+     * Should be overridden to perform actual search results highlighting for certain extension's instance.
+     * Does nothing by default.
+     */
+    public void highlightSearchResults(String searchExpression, boolean isCaseSensitive, boolean isRegularExpression) throws Throwable {
+        // do nothing by default
+    }
+
+    /**
+     * Clears search results highlights, if any.
+     * Should be overridden to perform actual search results highlights clearance for certain extension's instance.
+     * Does nothing by default.
+     */
+    public void clearSearchResultsHighlight() throws Throwable {
+        // do nothing by default
+    }
+
 }

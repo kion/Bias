@@ -4,13 +4,19 @@
 package bias.extension.HTMLPage;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
+import javax.swing.text.Highlighter.HighlightPainter;
 
 import bias.core.Attachment;
 import bias.core.BackEnd;
@@ -83,6 +89,57 @@ public class HTMLPage extends EntryExtension {
         Collection<String> searchData = new ArrayList<String>();
         searchData.add(getHTMLEditorPanel().getText());
         return searchData;
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#highlightSearchResults(java.lang.String, boolean, boolean)
+     */
+    @Override
+    public void highlightSearchResults(String searchExpression, boolean isCaseSensitive, boolean isRegularExpression) throws Throwable {
+        Highlighter hl = getHTMLEditorPanel().getHighlighter();
+        hl.removeAllHighlights();
+        String text = getHTMLEditorPanel().getText();
+        if (!Validator.isNullOrBlank(text)) {
+            HighlightPainter hlPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+            boolean first = true;
+            Pattern pattern = isRegularExpression ? Pattern.compile(searchExpression) : null;
+            if (pattern != null) {
+                Matcher matcher = pattern.matcher(text);
+                while (matcher.find()) {
+                    hl.addHighlight(matcher.start(), matcher.end(), hlPainter);
+                    if (first) {
+                        getHTMLEditorPanel().scrollToTextPos(matcher.start());
+                        first = false;
+                    }
+                }
+            } else {
+                int index = -1;
+                do {
+                    int fromIdx = index != -1 ? index + searchExpression.length() : 0;
+                    if (isCaseSensitive) {
+                        index = text.indexOf(searchExpression, fromIdx);
+                    } else {
+                        index = text.toLowerCase().indexOf(searchExpression.toLowerCase(), fromIdx);
+                    }
+                    if (index != -1) {
+                        hl.addHighlight(index, index + searchExpression.length(), hlPainter);
+                        if (first) {
+                            getHTMLEditorPanel().scrollToTextPos(index);
+                            first = false;
+                        }
+                    }
+                } while (index != -1);
+            }
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#clearSearchResultsHighlight()
+     */
+    @Override
+    public void clearSearchResultsHighlight() throws Throwable {
+        Highlighter hl = getHTMLEditorPanel().getHighlighter();
+        hl.removeAllHighlights();
     }
     
     /**

@@ -57,6 +57,7 @@ public class Constants {
     public static final String USERNAME = System.getProperty("user.name");
     
     public static final String REPOSITORY_BASE_URL = "http://bias.sourceforge.net/repository/";
+    public static final String ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME = "repository.xml";
     
     public static final String HTML_PREFIX = "<html>";
     public static final String HTML_COLOR_NORMAL = "<font color=\"#000000\">";
@@ -118,7 +119,6 @@ public class Constants {
     public static final String PATH_PREFIX_PATTERN = "^.*/";
     public static final String PATH_SEPARATOR = "/";
 
-    public static final String ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME = "repository.xml";
     public static final String VALUES_SEPARATOR = "_";
     public static final String JAR_FILE_SUFFIX = ".jar";
     public static final String ZIP_FILE_SUFFIX = ".zip";

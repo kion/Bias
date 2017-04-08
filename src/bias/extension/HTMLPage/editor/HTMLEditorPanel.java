@@ -7,6 +7,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
@@ -52,6 +53,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
+import javax.swing.text.Highlighter;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
@@ -253,6 +255,15 @@ public class HTMLEditorPanel extends JPanel {
             // ignore, shouldn't happen ever
         }
         return text;
+    }
+    
+    public Highlighter getHighlighter() {
+        return getJTextPane().getHighlighter();
+    }
+    
+    public void scrollToTextPos(int pos) throws BadLocationException {
+        Rectangle viewRect = getJTextPane().modelToView(pos);
+        getJTextPane().scrollRectToVisible(viewRect);
     }
     
     private String filePathToImageSrc(File file) {

@@ -6,7 +6,6 @@ package bias.extension.DashBoard.snippet;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 import javax.swing.JInternalFrame;
@@ -96,6 +95,24 @@ public abstract class InfoSnippet extends JInternalFrame {
      */
     public Collection<String> getSearchData() {
         return null;
+    }
+
+    /**
+     * Highlights search results, if any.
+     * Should be overridden to perform actual search results highlighting for certain snippet-class instance.
+     * Does nothing by default.
+     */
+    public void highlightSearchResults(String searchExpression, boolean isCaseSensitive, boolean isRegularExpression) throws Throwable {
+        // do nothing by default
+    }
+
+    /**
+     * Clears search results highlights, if any.
+     * Should be overridden to perform actual search results highlights clearance for certain snippet-class instance.
+     * Does nothing by default.
+     */
+    public void clearSearchResultsHighlight() throws Throwable {
+        // do nothing by default
     }
     
     /**

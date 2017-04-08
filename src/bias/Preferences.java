@@ -190,12 +190,12 @@ public class Preferences {
 	public String username = Constants.USERNAME;
 
 	@Preference(title = "force.text.antialiasing.mode.title", description = "force.text.antialiasing.mode.description")
-	public boolean forceTextAntialiasingMode = false;
+	public boolean forceTextAntialiasingMode = true;
 
 	@Preference(title = "text.antialiasing.mode.title")
 	@PreferenceEnable(enabledByField = "forceTextAntialiasingMode", enabledByValue = "true")
 	@PreferenceChoice(providerClass = TextAntialiasingModeChoiceProvider.class)
-	public String customTextAntialiasingMode = TextAntialiasingModeChoiceProvider.choices.iterator().next();
+	public String customTextAntialiasingMode = "on";
 
 	@Preference(title = "preferred.datetime.format.preference.title")
 	@PreferenceValidation(validationClass = PreferredDateFormatValidator.class)

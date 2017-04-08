@@ -4,13 +4,17 @@
 package bias.extension.PlainText;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -26,7 +30,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Document;
+import javax.swing.text.Highlighter;
+import javax.swing.text.Highlighter.HighlightPainter;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLDocument;
@@ -94,7 +101,7 @@ public class PlainText extends EntryExtension {
     public byte[] configure(byte[] settings) throws Throwable {
         Properties newSettings = PropertiesUtils.deserializeProperties(settings);
         JLabel fsLb = new JLabel("Font size:");
-        JComboBox fsCb = new JComboBox();
+        JComboBox<String> fsCb = new JComboBox<>();
         for (Integer fs : FONT_SIZES) {
             fsCb.addItem("" + fs);
         }
@@ -174,6 +181,62 @@ public class PlainText extends EntryExtension {
     @Override
     public Collection<String> getSearchData() throws Throwable {
         Collection<String> searchData = new ArrayList<String>();
+        searchData.add(getText());
+        return searchData;
+    }
+
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#highlightSearchResults(java.lang.String, boolean, boolean)
+     */
+    @Override
+    public void highlightSearchResults(String searchExpression, boolean isCaseSensitive, boolean isRegularExpression) throws Throwable {
+        Highlighter hl = getJTextPane().getHighlighter();
+        hl.removeAllHighlights();
+        String text = getText();
+        if (!Validator.isNullOrBlank(text)) {
+            HighlightPainter hlPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+            boolean first = true;
+            Pattern pattern = isRegularExpression ? Pattern.compile(searchExpression) : null;
+            if (pattern != null) {
+                Matcher matcher = pattern.matcher(text);
+                while (matcher.find()) {
+                    hl.addHighlight(matcher.start(), matcher.end(), hlPainter);
+                    if (first) {
+                        scrollToTextPos(matcher.start());
+                        first = false;
+                    }
+                }
+            } else {
+                int index = -1;
+                do {
+                    int fromIdx = index != -1 ? index + searchExpression.length() : 0;
+                    if (isCaseSensitive) {
+                        index = text.indexOf(searchExpression, fromIdx);
+                    } else {
+                        index = text.toLowerCase().indexOf(searchExpression.toLowerCase(), fromIdx);
+                    }
+                    if (index != -1) {
+                        hl.addHighlight(index, index + searchExpression.length(), hlPainter);
+                        if (first) {
+                            scrollToTextPos(index);
+                            first = false;
+                        }
+                    }
+                } while (index != -1);
+            }
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#clearSearchResultsHighlight()
+     */
+    @Override
+    public void clearSearchResultsHighlight() throws Throwable {
+        Highlighter hl = getJTextPane().getHighlighter();
+        hl.removeAllHighlights();
+    }
+    
+    private String getText() {
         Document doc = getJTextPane().getDocument();
         String text = null;
         try {
@@ -181,10 +244,14 @@ public class PlainText extends EntryExtension {
         } catch (BadLocationException e) {
             // ignore, shouldn't happen ever
         }
-        searchData.add(text);
-        return searchData;
+        return text;
     }
-
+    
+    public void scrollToTextPos(int pos) throws BadLocationException {
+        Rectangle viewRect = getJTextPane().modelToView(pos);
+        getJTextPane().scrollRectToVisible(viewRect);
+    }
+    
     /**
      * This method initializes this
      * 

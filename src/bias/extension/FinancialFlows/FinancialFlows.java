@@ -6,6 +6,7 @@ package bias.extension.FinancialFlows;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Paint;
@@ -29,6 +30,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -82,6 +85,9 @@ import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.time.TimeSeriesDataItem;
 import org.jfree.ui.RectangleInsets;
 
+import com.toedter.calendar.JDateChooser;
+import com.toedter.calendar.JDateChooserCellEditor;
+
 import bias.extension.EntryExtension;
 import bias.extension.FinancialFlows.xmlb.Direction;
 import bias.extension.FinancialFlows.xmlb.ObjectFactory;
@@ -94,9 +100,6 @@ import bias.gui.FrontEnd;
 import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
-
-import com.toedter.calendar.JDateChooser;
-import com.toedter.calendar.JDateChooserCellEditor;
 
 /**
  * @author kion
@@ -112,6 +115,7 @@ public class FinancialFlows extends EntryExtension {
     private static final ImageIcon ICON_CHART2 = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "chart2.png"));
     private static final ImageIcon ICON_SINGLE = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "single.png"));
     private static final ImageIcon ICON_REGULAR = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "regular.png"));
+    private static final ImageIcon ICON_CLEAR_FILTER = new ImageIcon(CommonUtils.getResourceURL(FinancialFlows.class, "clear-filter.png"));
     
     private static enum DIRECTION {
         INCOME, OUTGO
@@ -160,6 +164,189 @@ public class FinancialFlows extends EntryExtension {
     private static Marshaller marshaller;
 
     private static ObjectFactory objFactory = new ObjectFactory();
+    
+    public class ComboBoxCellEditor extends JComboBox implements TableCellEditor {
+
+        private static final long serialVersionUID = 1L;
+
+        protected EventListenerList listenerList = new EventListenerList();
+
+        protected ChangeEvent changeEvent = new ChangeEvent(this);
+
+        public ComboBoxCellEditor() {
+            super();
+            addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent event) {
+                    fireEditingStopped();
+                }
+            });
+        }
+
+        public void addCellEditorListener(CellEditorListener listener) {
+            listenerList.add(CellEditorListener.class, listener);
+        }
+
+        public void removeCellEditorListener(CellEditorListener listener) {
+            listenerList.remove(CellEditorListener.class, listener);
+        }
+
+        protected void fireEditingStopped() {
+            CellEditorListener listener;
+            Object[] listeners = listenerList.getListenerList();
+            for (int i = 0; i < listeners.length; i++) {
+                if (listeners[i] == CellEditorListener.class) {
+                    listener = (CellEditorListener) listeners[i + 1];
+                    listener.editingStopped(changeEvent);
+                }
+            }
+        }
+
+        protected void fireEditingCanceled() {
+            CellEditorListener listener;
+            Object[] listeners = listenerList.getListenerList();
+            for (int i = 0; i < listeners.length; i++) {
+                if (listeners[i] == CellEditorListener.class) {
+                    listener = (CellEditorListener) listeners[i + 1];
+                    listener.editingCanceled(changeEvent);
+                }
+            }
+        }
+
+        public void cancelCellEditing() {
+            fireEditingCanceled();
+        }
+
+        public boolean stopCellEditing() {
+            fireEditingStopped();
+            return true;
+        }
+
+        public boolean isCellEditable(EventObject event) {
+            return true;
+        }
+
+        public boolean shouldSelectCell(EventObject event) {
+            return true;
+        }
+
+        public Object getCellEditorValue() {
+            return getSelectedItem();
+        }
+
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            row = table.getRowSorter().convertRowIndexToModel(row);
+            DIRECTION direction = (DIRECTION) table.getModel().getValueAt(row, COLUMN_DIRECTION_IDX);
+            if (direction == DIRECTION.INCOME) {
+                populateCombo(this, incomeTypes);
+            } else if (direction == DIRECTION.OUTGO) {
+                populateCombo(this, outgoTypes);
+            }
+            setSelectedItem(value);
+            setEditable(true);
+            return this;
+        }
+    }
+
+    private class CurrencyRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = 1L;
+
+        private final Color COLOR_INCOME = new Color(195, 255, 195);
+
+        private final Color COLOR_OUTGO = new Color(255, 195, 195);
+
+        public CurrencyRenderer() {
+            super();
+            setHorizontalAlignment(SwingConstants.RIGHT);
+        }
+
+        public void setValue(Object value) {
+            if ((value != null) && (value instanceof Number)) {
+                Number numberValue = (Number) value;
+                NumberFormat formatter = NumberFormat.getInstance();
+                value = (currency != null ? currency + " " : "") + formatter.format(numberValue.floatValue());
+            }
+            super.setValue(value);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row,
+                int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            row = table.getRowSorter().convertRowIndexToModel(row);
+            DIRECTION direction = (DIRECTION) table.getModel().getValueAt(row, COLUMN_DIRECTION_IDX);
+            if (direction == DIRECTION.INCOME) {
+                c.setBackground(COLOR_INCOME);
+            } else if (direction == DIRECTION.OUTGO) {
+                c.setBackground(COLOR_OUTGO);
+            }
+            boolean hl = false;
+            if (!Validator.isNullOrBlank(searchExpression)) {
+                String text = value.toString();
+                if (!Validator.isNullOrBlank(text)) {
+                    if (searchPattern != null) {
+                        Matcher matcher = searchPattern.matcher(text);
+                        hl = matcher.find();
+                    } else {
+                        int index = -1;
+                        if (isSearchCaseSensitive) {
+                            index = text.indexOf(searchExpression);
+                        } else {
+                            index = text.toLowerCase().indexOf(searchExpression.toLowerCase());
+                        }
+                        hl = index != -1;
+                    }
+                }
+            }
+            if (hl) {
+                setFont(c.getFont().deriveFont(Font.BOLD));
+            } else {
+                setFont(c.getFont().deriveFont(Font.PLAIN));
+            }
+            return c;
+        }
+
+    }
+
+    private class TableSearchRenderer extends DefaultTableCellRenderer {
+        private static final long serialVersionUID = 1L;
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component tableCellRendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            boolean hl = false;
+            if (!Validator.isNullOrBlank(searchExpression)) {
+                String text = value.toString();
+                if (!Validator.isNullOrBlank(text)) {
+                    if (searchPattern != null) {
+                        Matcher matcher = searchPattern.matcher(text);
+                        hl = matcher.find();
+                    } else {
+                        int index = -1;
+                        if (isSearchCaseSensitive) {
+                            index = text.indexOf(searchExpression);
+                        } else {
+                            index = text.toLowerCase().indexOf(searchExpression.toLowerCase());
+                        }
+                        hl = index != -1;
+                    }
+                }
+            }
+            if (hl) {
+                setBackground(Color.YELLOW);
+                setForeground(Color.BLACK);
+            } else {
+                setBackground(null);
+                setForeground(null);
+            }
+            return tableCellRendererComponent;
+        }
+    }
+    
+    private String searchExpression;
+
+    private boolean isSearchCaseSensitive;
+    
+    private Pattern searchPattern;
 
     private TableRowSorter<TableModel> singleSorter;
 
@@ -495,7 +682,6 @@ public class FinancialFlows extends EntryExtension {
 
     /*
      * (non-Javadoc)
-     * 
      * @see bias.extension.EntryExtension#getSearchData()
      */
     @Override
@@ -506,6 +692,32 @@ public class FinancialFlows extends EntryExtension {
         populateSearchData(searchData, getJTableSingle());
         populateSearchData(searchData, getJTableRegular());
         return searchData;
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#highlightSearchResults(java.lang.String, boolean, boolean)
+     */
+    @Override
+    public void highlightSearchResults(String searchExpression, boolean isCaseSensitive, boolean isRegularExpression) throws Throwable {
+        this.searchExpression = searchExpression;
+        this.isSearchCaseSensitive = isCaseSensitive;
+        if (isRegularExpression) {
+            searchPattern = Pattern.compile(searchExpression);
+        }
+        getJTableSingle().repaint();
+        getJTableRegular().repaint();
+        filterText.setText(searchExpression);
+    }
+    
+    /* (non-Javadoc)
+     * @see bias.extension.EntryExtension#clearSearchResultsHighlight()
+     */
+    @Override
+    public void clearSearchResultsHighlight() throws Throwable {
+        searchExpression = null;
+        searchPattern = null;
+        getJTableSingle().repaint();
+        getJTableRegular().repaint();
     }
     
     private void populateSearchData(Collection<String> searchData, JTable table) {
@@ -728,20 +940,29 @@ public class FinancialFlows extends EntryExtension {
                     }
                 }
                 {
+                    @SuppressWarnings("unchecked")
+                    final TableRowSorter<TableModel> sorterSingle = (TableRowSorter<TableModel>) getJTableSingle().getRowSorter();
                     jPanel1 = new JPanel();
                     jPanel1.setLayout(new BorderLayout());
                     this.add(jPanel1, BorderLayout.CENTER);
                     filterText = new JTextField();
                     filterText.addCaretListener(new CaretListener(){
-                        @SuppressWarnings("unchecked")
                         public void caretUpdate(CaretEvent e) {
-                            TableRowSorter<TableModel> sorterSingle = (TableRowSorter<TableModel>) getJTableSingle().getRowSorter();
                             sorterSingle.setRowFilter(RowFilter.regexFilter("(?i)" + filterText.getText().replaceAll("\\s+", ".*")));
+                        }
+                    });
+                    JButton clearFilterBtn = new JButton(ICON_CLEAR_FILTER);
+                    clearFilterBtn.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            filterText.setText("");
+                            sorterSingle.setRowFilter(null);
                         }
                     });
                     JPanel filterPanel = new JPanel(new BorderLayout());
                     filterPanel.add(new JLabel("Filter:"), BorderLayout.WEST);
                     filterPanel.add(filterText, BorderLayout.CENTER);
+                    filterPanel.add(clearFilterBtn, BorderLayout.EAST);
                     JPanel singleFlowPanel = new JPanel(new BorderLayout());
                     singleFlowPanel.add(filterPanel, BorderLayout.NORTH);
                     singleFlowPanel.add(new JScrollPane(getJTableSingle()), BorderLayout.CENTER);
@@ -872,6 +1093,7 @@ public class FinancialFlows extends EntryExtension {
         model.addColumn("Purpose");
         model.addColumn("Date");
         getJTableSingle().setModel(model);
+        getJTableSingle().setDefaultRenderer(Object.class, new TableSearchRenderer());
         getJTableSingle().setDefaultRenderer(Float.class, new CurrencyRenderer());
         getJTableSingle().getColumnModel().getColumn(COLUMN_DATE_IDX).setCellEditor(new JDateChooserCellEditor());
         getJTableSingle().getColumnModel().getColumn(COLUMN_TYPE_IDX).setCellEditor(new ComboBoxCellEditor());
@@ -916,6 +1138,7 @@ public class FinancialFlows extends EntryExtension {
         model.addColumn("Start date");
         model.addColumn("End date");
         getJTableRegular().setModel(model);
+        getJTableRegular().setDefaultRenderer(Object.class, new TableSearchRenderer());
         getJTableRegular().setDefaultRenderer(Float.class, new CurrencyRenderer());
         getJTableRegular().getColumnModel().getColumn(COLUMN_DATE_IDX).setCellEditor(new JDateChooserCellEditor());
         getJTableRegular().getColumnModel().getColumn(COLUMN_END_DATE_IDX).setCellEditor(new JDateChooserCellEditor());
@@ -950,126 +1173,6 @@ public class FinancialFlows extends EntryExtension {
             }
         });
         getJTableRegular().setRowSorter(regularSorter);
-    }
-
-    public class ComboBoxCellEditor extends JComboBox implements TableCellEditor {
-
-        private static final long serialVersionUID = 1L;
-
-        protected EventListenerList listenerList = new EventListenerList();
-
-        protected ChangeEvent changeEvent = new ChangeEvent(this);
-
-        public ComboBoxCellEditor() {
-            super();
-            addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent event) {
-                    fireEditingStopped();
-                }
-            });
-        }
-
-        public void addCellEditorListener(CellEditorListener listener) {
-            listenerList.add(CellEditorListener.class, listener);
-        }
-
-        public void removeCellEditorListener(CellEditorListener listener) {
-            listenerList.remove(CellEditorListener.class, listener);
-        }
-
-        protected void fireEditingStopped() {
-            CellEditorListener listener;
-            Object[] listeners = listenerList.getListenerList();
-            for (int i = 0; i < listeners.length; i++) {
-                if (listeners[i] == CellEditorListener.class) {
-                    listener = (CellEditorListener) listeners[i + 1];
-                    listener.editingStopped(changeEvent);
-                }
-            }
-        }
-
-        protected void fireEditingCanceled() {
-            CellEditorListener listener;
-            Object[] listeners = listenerList.getListenerList();
-            for (int i = 0; i < listeners.length; i++) {
-                if (listeners[i] == CellEditorListener.class) {
-                    listener = (CellEditorListener) listeners[i + 1];
-                    listener.editingCanceled(changeEvent);
-                }
-            }
-        }
-
-        public void cancelCellEditing() {
-            fireEditingCanceled();
-        }
-
-        public boolean stopCellEditing() {
-            fireEditingStopped();
-            return true;
-        }
-
-        public boolean isCellEditable(EventObject event) {
-            return true;
-        }
-
-        public boolean shouldSelectCell(EventObject event) {
-            return true;
-        }
-
-        public Object getCellEditorValue() {
-            return getSelectedItem();
-        }
-
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            row = table.getRowSorter().convertRowIndexToModel(row);
-            DIRECTION direction = (DIRECTION) table.getModel().getValueAt(row, COLUMN_DIRECTION_IDX);
-            if (direction == DIRECTION.INCOME) {
-                populateCombo(this, incomeTypes);
-            } else if (direction == DIRECTION.OUTGO) {
-                populateCombo(this, outgoTypes);
-            }
-            setSelectedItem(value);
-            setEditable(true);
-            return this;
-        }
-    }
-
-    private class CurrencyRenderer extends DefaultTableCellRenderer {
-
-        private static final long serialVersionUID = 1L;
-
-        private final Color COLOR_INCOME = new Color(195, 255, 195);
-
-        private final Color COLOR_OUTGO = new Color(255, 195, 195);
-
-        public CurrencyRenderer() {
-            super();
-            setHorizontalAlignment(SwingConstants.RIGHT);
-        }
-
-        public void setValue(Object value) {
-            if ((value != null) && (value instanceof Number)) {
-                Number numberValue = (Number) value;
-                NumberFormat formatter = NumberFormat.getInstance();
-                value = (currency != null ? currency + " " : "") + formatter.format(numberValue.floatValue());
-            }
-            super.setValue(value);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row,
-                int column) {
-            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            row = table.getRowSorter().convertRowIndexToModel(row);
-            DIRECTION direction = (DIRECTION) table.getModel().getValueAt(row, COLUMN_DIRECTION_IDX);
-            if (direction == DIRECTION.INCOME) {
-                c.setBackground(COLOR_INCOME);
-            } else if (direction == DIRECTION.OUTGO) {
-                c.setBackground(COLOR_OUTGO);
-            }
-            return c;
-        }
-
     }
 
     private void addRow(DIRECTION direction, String type, String purpose, Date date, Float amount) {
