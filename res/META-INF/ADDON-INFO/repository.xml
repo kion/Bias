@@ -10,19 +10,19 @@
 		<dependency type="Library" name="JCIFS" version="1.2.18"/>
 	</pack>
 	<pack type="Extension" name="HTMLPage" version="0.7.5" author="R. Kasianenko" description="WYSIWYG HTML page editor" file-size="199534" url="http://bias.sourceforge.net/downloads/htmlpage">
-		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+		<dependency type="AppCore" name="AppCore" version="1.1.0"/>
 	</pack>
 	<pack type="Extension" name="ToDoList" version="0.8.2" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="240588" url="http://bias.sourceforge.net/downloads/todolist">
-		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+		<dependency type="AppCore" name="AppCore" version="1.1.0"/>
 	</pack>
 	<pack type="Extension" name="Graffiti" version="0.2.4" author="R. Kasianenko" description="Basic paint editor" file-size="326916" url="http://bias.sourceforge.net/downloads/graffiti">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
 	<pack type="Extension" name="PlainText" version="0.9.3" author="R. Kasianenko" description="Simple plain text editor" file-size="182666" url="http://bias.sourceforge.net/downloads/plaintext">
-		<dependency type="AppCore" name="AppCore" version="1.0.3"/>
+		<dependency type="AppCore" name="AppCore" version="1.1.0"/>
 	</pack>
 	<pack type="Extension" name="FilePack" version="0.3.5" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="96433" url="http://bias.sourceforge.net/downloads/filepack">
-		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+		<dependency type="AppCore" name="AppCore" version="1.1.0"/>
 	</pack>
 	<pack type="Extension" name="MainEntry" version="0.3.5" author="R. Kasianenko" description="Keep certain entry as main" file-size="5116" url="http://bias.sourceforge.net/downloads/mainentry">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
@@ -31,19 +31,19 @@
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
 	<pack type="Extension" name="DashBoard" version="0.5.3" author="R. Kasianenko" description="Simple dashboard for chaotic info-snippets placement" file-size="179712" url="http://bias.sourceforge.net/downloads/dashboard">
-		<dependency type="AppCore" name="AppCore" version="1.0.3"/>
+		<dependency type="AppCore" name="AppCore" version="1.1.0"/>
 	</pack>
 	<pack type="Extension" name="Reminder" version="0.4.1" author="R. Kasianenko" description="Simple and easy to use reminder manager" file-size="293563" url="http://bias.sourceforge.net/downloads/reminder">
 		<dependency type="AppCore" name="AppCore" version="1.0.3"/>
 		<dependency type="Library" name="JCalendar" version="1.3.2"/>
 	</pack>
 	<pack type="Extension" name="FinancialFlows" version="0.3.8" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="289912" url="http://bias.sourceforge.net/downloads/financialflows">
-		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+		<dependency type="AppCore" name="AppCore" version="1.1.0"/>
 		<dependency type="Library" name="JFreeChart" version="1.0.13"/>
 		<dependency type="Library" name="JCalendar" version="1.3.2"/>
 	</pack>
 	<pack type="Extension" name="SimpleSearch" version="0.8.1" author="R. Kasianenko" description="Search through entries" file-size="166235" url="http://bias.sourceforge.net/downloads/simplesearch">
-		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
+		<dependency type="AppCore" name="AppCore" version="1.1.0"/>
 	</pack>
 	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="152492" url="http://bias.sourceforge.net/downloads/simplestats">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
