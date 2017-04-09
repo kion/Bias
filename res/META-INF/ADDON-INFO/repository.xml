@@ -1,109 +1,109 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <bias:repository xmlns:bias="http://bias.sourceforge.net">
-	<pack type="AppLauncher" name="AppLauncher" version="1.0.2" author="R. Kasianenko" description="Bias Application Launcher" file-size="48324" url="http://bias.sourceforge.net/repository/AppLauncher/bias.jar" />
-	<pack type="AppCore" name="AppCore" version="1.1.0" author="R. Kasianenko" description="Bias Application Core" file-size="442273" url="http://bias.sourceforge.net/repository/AppCore/appcore.jar" />
-	<pack type="Extension" name="FTPTransfer" version="0.1.2" author="R. Kasianenko" description="Import/Export through FTP" file-size="5620" url="http://bias.sourceforge.net/repository/FTPTransfer/FTPTransfer.jar">
+	<pack type="AppLauncher" name="AppLauncher" version="1.0.2" author="R. Kasianenko" description="Bias Application Launcher" file-size="48324" url="http://bias.sourceforge.net/downloads/applauncher" />
+	<pack type="AppCore" name="AppCore" version="1.1.0" author="R. Kasianenko" description="Bias Application Core" file-size="442273" url="http://bias.sourceforge.net/downloads/appcore" />
+	<pack type="Extension" name="FTPTransfer" version="0.1.2" author="R. Kasianenko" description="Import/Export through FTP" file-size="5620" url="http://bias.sourceforge.net/downloads/ftptransfer">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="SMBTransfer" version="0.1.1" author="R. Kasianenko" description="Import/Export through SMB (CIFS)" file-size="5487" url="http://bias.sourceforge.net/repository/SMBTransfer/SMBTransfer.jar">
+	<pack type="Extension" name="SMBTransfer" version="0.1.1" author="R. Kasianenko" description="Import/Export through SMB (CIFS)" file-size="5487" url="http://bias.sourceforge.net/downloads/smbtransfer">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="JCIFS" version="1.2.18"/>
 	</pack>
-	<pack type="Extension" name="HTMLPage" version="0.7.5" author="R. Kasianenko" description="WYSIWYG HTML page editor" file-size="199534" url="http://bias.sourceforge.net/repository/HTMLPage/HTMLPage.jar">
+	<pack type="Extension" name="HTMLPage" version="0.7.5" author="R. Kasianenko" description="WYSIWYG HTML page editor" file-size="199534" url="http://bias.sourceforge.net/downloads/htmlpage">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="ToDoList" version="0.8.2" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="240588" url="http://bias.sourceforge.net/repository/ToDoList/ToDoList.jar">
+	<pack type="Extension" name="ToDoList" version="0.8.2" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="240588" url="http://bias.sourceforge.net/downloads/todolist">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="Graffiti" version="0.2.4" author="R. Kasianenko" description="Basic paint editor" file-size="326916" url="http://bias.sourceforge.net/repository/Graffiti/Graffiti.jar">
+	<pack type="Extension" name="Graffiti" version="0.2.4" author="R. Kasianenko" description="Basic paint editor" file-size="326916" url="http://bias.sourceforge.net/downloads/graffiti">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="PlainText" version="0.9.3" author="R. Kasianenko" description="Simple plain text editor" file-size="182666" url="http://bias.sourceforge.net/repository/PlainText/PlainText.jar">
+	<pack type="Extension" name="PlainText" version="0.9.3" author="R. Kasianenko" description="Simple plain text editor" file-size="182666" url="http://bias.sourceforge.net/downloads/plaintext">
 		<dependency type="AppCore" name="AppCore" version="1.0.3"/>
 	</pack>
-	<pack type="Extension" name="FilePack" version="0.3.5" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="96433" url="http://bias.sourceforge.net/repository/FilePack/FilePack.jar">
+	<pack type="Extension" name="FilePack" version="0.3.5" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="96433" url="http://bias.sourceforge.net/downloads/filepack">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="MainEntry" version="0.3.5" author="R. Kasianenko" description="Keep certain entry as main" file-size="5116" url="http://bias.sourceforge.net/repository/MainEntry/MainEntry.jar">
+	<pack type="Extension" name="MainEntry" version="0.3.5" author="R. Kasianenko" description="Keep certain entry as main" file-size="5116" url="http://bias.sourceforge.net/downloads/mainentry">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="Synchronizer" version="0.2.7.2" author="R. Kasianenko" description="Schedule/Event-driven data synchronizer" file-size="64077" url="http://bias.sourceforge.net/repository/Synchronizer/Synchronizer.jar">
+	<pack type="Extension" name="Synchronizer" version="0.2.7.2" author="R. Kasianenko" description="Schedule/Event-driven data synchronizer" file-size="64077" url="http://bias.sourceforge.net/downloads/synchronizer">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="DashBoard" version="0.5.3" author="R. Kasianenko" description="Simple dashboard for chaotic info-snippets placement" file-size="179712" url="http://bias.sourceforge.net/repository/DashBoard/DashBoard.jar">
+	<pack type="Extension" name="DashBoard" version="0.5.3" author="R. Kasianenko" description="Simple dashboard for chaotic info-snippets placement" file-size="179712" url="http://bias.sourceforge.net/downloads/dashboard">
 		<dependency type="AppCore" name="AppCore" version="1.0.3"/>
 	</pack>
-	<pack type="Extension" name="Reminder" version="0.4.1" author="R. Kasianenko" description="Simple and easy to use reminder manager" file-size="293563" url="http://bias.sourceforge.net/repository/Reminder/Reminder.jar">
+	<pack type="Extension" name="Reminder" version="0.4.1" author="R. Kasianenko" description="Simple and easy to use reminder manager" file-size="293563" url="http://bias.sourceforge.net/downloads/reminder">
 		<dependency type="AppCore" name="AppCore" version="1.0.3"/>
 		<dependency type="Library" name="JCalendar" version="1.3.2"/>
 	</pack>
-	<pack type="Extension" name="FinancialFlows" version="0.3.8" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="289912" url="http://bias.sourceforge.net/repository/FinancialFlows/FinancialFlows.jar">
+	<pack type="Extension" name="FinancialFlows" version="0.3.8" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="289912" url="http://bias.sourceforge.net/downloads/financialflows">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="JFreeChart" version="1.0.13"/>
 		<dependency type="Library" name="JCalendar" version="1.3.2"/>
 	</pack>
-	<pack type="Extension" name="SimpleSearch" version="0.8.1" author="R. Kasianenko" description="Search through entries" file-size="166235" url="http://bias.sourceforge.net/repository/SimpleSearch/SimpleSearch.jar">
+	<pack type="Extension" name="SimpleSearch" version="0.8.1" author="R. Kasianenko" description="Search through entries" file-size="166235" url="http://bias.sourceforge.net/downloads/simplesearch">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="152492" url="http://bias.sourceforge.net/repository/SimpleStats/SimpleStats.jar">
+	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="152492" url="http://bias.sourceforge.net/downloads/simplestats">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Skin" file-size="102604" url="http://bias.sourceforge.net/repository/JGLooksSkin/JGLooksSkin.jar">
+	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Skin" file-size="102604" url="http://bias.sourceforge.net/downloads/jglooksskin">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="JGLooks"/>
 	</pack>
-	<pack type="Skin" name="JTattooSkin" version="0.3.1" author="R. Kasianenko" description="JTattoo Skin" file-size="120785" url="http://bias.sourceforge.net/repository/JTattooSkin/JTattooSkin.jar">
+	<pack type="Skin" name="JTattooSkin" version="0.3.1" author="R. Kasianenko" description="JTattoo Skin" file-size="120785" url="http://bias.sourceforge.net/downloads/jtattooskin">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="JTattooLAF"/>
 	</pack>
-	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNode Skin" file-size="100953" url="http://bias.sourceforge.net/repository/InfoNodeSkin/InfoNodeSkin.jar">
+	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNode Skin" file-size="100953" url="http://bias.sourceforge.net/downloads/infonodeskin">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="InfoNodeLF"/>
 	</pack>
-	<pack type="Skin" name="LipstikSkin" version="0.1.1" author="R. Kasianenko" description="Lipstik Skin" file-size="91663" url="http://bias.sourceforge.net/repository/LipstikSkin/LipstikSkin.jar">
+	<pack type="Skin" name="LipstikSkin" version="0.1.1" author="R. Kasianenko" description="Lipstik Skin" file-size="91663" url="http://bias.sourceforge.net/downloads/lipstikskin">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="LipstikLF"/>
 	</pack>
-	<pack type="Skin" name="LiquidSkin" version="0.1.1" author="R. Kasianenko" description="Liquid Skin" file-size="110760" url="http://bias.sourceforge.net/repository/LiquidSkin/LiquidSkin.jar">
+	<pack type="Skin" name="LiquidSkin" version="0.1.1" author="R. Kasianenko" description="Liquid Skin" file-size="110760" url="http://bias.sourceforge.net/downloads/liquidskin">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="LiquidLnF"/>
 	</pack>
-	<pack type="Skin" name="PgsSkin" version="0.1.1" author="R. Kasianenko" description="Pgs Skin" file-size="105568" url="http://bias.sourceforge.net/repository/PgsSkin/PgsSkin.jar">
+	<pack type="Skin" name="PgsSkin" version="0.1.1" author="R. Kasianenko" description="Pgs Skin" file-size="105568" url="http://bias.sourceforge.net/downloads/pgsskin">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="PgsLAF"/>
 	</pack>
-	<pack type="Skin" name="SquarenessSkin" version="0.1.1" author="R. Kasianenko" description="Squareness Skin" file-size="95814" url="http://bias.sourceforge.net/repository/SquarenessSkin/SquarenessSkin.jar">
+	<pack type="Skin" name="SquarenessSkin" version="0.1.1" author="R. Kasianenko" description="Squareness Skin" file-size="95814" url="http://bias.sourceforge.net/downloads/squarenessskin">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="Squareness"/>
 	</pack>
-	<pack type="Skin" name="SubstanceSkin" version="0.1.2" author="R. Kasianenko" description="Substance Skin" file-size="112562" url="http://bias.sourceforge.net/repository/SubstanceSkin/SubstanceSkin.jar">
+	<pack type="Skin" name="SubstanceSkin" version="0.1.2" author="R. Kasianenko" description="Substance Skin" file-size="112562" url="http://bias.sourceforge.net/downloads/substanceskin">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="Substance"/>
 	</pack>
-	<pack type="Skin" name="TinySkin" version="0.1.1" author="R. Kasianenko" description="Tiny Skin" file-size="97150" url="http://bias.sourceforge.net/repository/TinySkin/TinySkin.jar">
+	<pack type="Skin" name="TinySkin" version="0.1.1" author="R. Kasianenko" description="Tiny Skin" file-size="97150" url="http://bias.sourceforge.net/downloads/tinyskin">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="TinyLAF"/>
 	</pack>
-	<pack type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="147137" url="http://bias.sourceforge.net/repository/Bitcons/Bitcons.jar" />
-	<pack type="IconSet" name="MiniIcons" version="2.0" author="Timothy Groves" description="MiniIcons iconset (Grayscale)" file-size="59595" url="http://bias.sourceforge.net/repository/MiniIcons/MiniIcons.jar" />
-	<pack type="IconSet" name="TwoToneGray" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Gray)" file-size="26332" url="http://bias.sourceforge.net/repository/TwoToneGray/TwoToneGray.jar" />
-	<pack type="IconSet" name="TwoToneBiege" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Biege)" file-size="25463" url="http://bias.sourceforge.net/repository/TwoToneBiege/TwoToneBiege.jar" />
-	<pack type="IconSet" name="TwoToneRed" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Red)" file-size="25445" url="http://bias.sourceforge.net/repository/TwoToneRed/TwoToneRed.jar" />
-	<pack type="IconSet" name="TwoToneBlue" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Blue)" file-size="25633" url="http://bias.sourceforge.net/repository/TwoToneBlue/TwoToneBlue.jar" />
-	<pack type="IconSet" name="TwoToneGreen" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Green)" file-size="25640" url="http://bias.sourceforge.net/repository/TwoToneGreen/TwoToneGreen.jar" />
-	<pack type="Library" name="JFreeChart" version="1.0.13" author="Object Refinery Limited and Contributors" description="JFreeChart is a free 100% Java chart library that makes it easy for developers to display professional quality charts in their applications" file-size="1426819" url="http://bias.sourceforge.net/repository/JFreeChart/JFreeChart.jar">
+	<pack type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="147137" url="http://bias.sourceforge.net/downloads/bitcons" />
+	<pack type="IconSet" name="MiniIcons" version="2.0" author="Timothy Groves" description="MiniIcons iconset (Grayscale)" file-size="59595" url="http://bias.sourceforge.net/downloads/miniicons" />
+	<pack type="IconSet" name="TwoToneGray" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Gray)" file-size="26332" url="http://bias.sourceforge.net/downloads/twotonegray" />
+	<pack type="IconSet" name="TwoToneBiege" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Biege)" file-size="25463" url="http://bias.sourceforge.net/downloads/twotonebiege" />
+	<pack type="IconSet" name="TwoToneRed" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Red)" file-size="25445" url="http://bias.sourceforge.net/downloads/twotonered" />
+	<pack type="IconSet" name="TwoToneBlue" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Blue)" file-size="25633" url="http://bias.sourceforge.net/downloads/twotoneblue" />
+	<pack type="IconSet" name="TwoToneGreen" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Green)" file-size="25640" url="http://bias.sourceforge.net/downloads/twotonegreen" />
+	<pack type="Library" name="JFreeChart" version="1.0.13" author="Object Refinery Limited and Contributors" description="JFreeChart is a free 100% Java chart library that makes it easy for developers to display professional quality charts in their applications" file-size="1426819" url="http://bias.sourceforge.net/downloads/jfreechart">
 		<dependency type="Library" name="JCommon" version="1.0.16"/>
 	</pack>
-	<pack type="Library" name="JCommon" version="1.0.16" author="Object Refinery Limited and Contributors" description="The library contains the common classes, which provide some global utility functionality for both GUI and non-GUI applications" file-size="310341" url="http://bias.sourceforge.net/repository/JCommon/JCommon.jar" />
-	<pack type="Library" name="JCalendar" version="1.3.2" author="Kai Toedter" description="JCalendar is a Java date chooser bean for graphically picking a date" file-size="127023" url="http://bias.sourceforge.net/repository/JCalendar/JCalendar.jar" />
-	<pack type="Library" name="JCIFS" version="1.2.18" author="The JCIFS Project" description="Open Source client library that implements the CIFS/SMB networking protocol in 100% Java" file-size="363031" url="http://bias.sourceforge.net/repository/JCIFS/JCIFS.jar" />
-	<pack type="Library" name="JGLooks" version="2.1.4" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="407753" url="http://bias.sourceforge.net/repository/JGLooks/JGLooks.jar" />
-	<pack type="Library" name="JTattooLAF" version="1.2.10" author="Michael Hagen" description="Look-&amp;-Feel for Java/Swing applications" file-size="577393" url="http://bias.sourceforge.net/repository/JTattooLAF/JTattooLAF.jar" />
-	<pack type="Library" name="PgsLAF" version="1.0.1" author="pago" description="Look-&amp;-Feel for Java/Swing applications" file-size="196309" url="http://bias.sourceforge.net/repository/PgsLAF/PgsLAF.jar" />
-	<pack type="Library" name="Substance" version="4.3" author="Kirill Grouchnikov and contributors" description="Substance Look-&amp;-Feel Provider Library" file-size="1832699" url="http://bias.sourceforge.net/repository/Substance/Substance.jar" />
-	<pack type="Library" name="LipstikLF" version="1.0" author="Michal Buczko" description="Look-&amp;-Feel for Java/Swing applications" file-size="233699" url="http://bias.sourceforge.net/repository/LipstikLF/LipstikLF.jar" />
-	<pack type="Library" name="Squareness" version="2.3.0" author="Robert F. Beeger" description="Minimalistic and flat looking Look-&amp;-Feel for Java/Swing applications" file-size="136125" url="http://bias.sourceforge.net/repository/Squareness/Squareness.jar" />
-	<pack type="Library" name="TinyLAF" version="1.3.04" author="Hans Bickel" description="Look-&amp;-Feel for Java/Swing applications" file-size="584203" url="http://bias.sourceforge.net/repository/TinyLAF/TinyLAF.jar" />
-	<pack type="Library" name="LiquidLnF" version="2.9.1" author="evickroy" description="Look-&amp;-Feel for Java/Swing applications" file-size="374740" url="http://bias.sourceforge.net/repository/LiquidLnF/LiquidLnF.jar" />
-	<pack type="Library" name="InfoNodeLF" version="1.4.0" author="NNL Technology AB" description="Look-&amp;-Feel for Java/Swing applications" file-size="68147" url="http://bias.sourceforge.net/repository/InfoNodeLF/InfoNodeLF.jar" />
+	<pack type="Library" name="JCommon" version="1.0.16" author="Object Refinery Limited and Contributors" description="The library contains the common classes, which provide some global utility functionality for both GUI and non-GUI applications" file-size="310341" url="http://bias.sourceforge.net/downloads/jcommon" />
+	<pack type="Library" name="JCalendar" version="1.3.2" author="Kai Toedter" description="JCalendar is a Java date chooser bean for graphically picking a date" file-size="127023" url="http://bias.sourceforge.net/downloads/jcalendar" />
+	<pack type="Library" name="JCIFS" version="1.2.18" author="The JCIFS Project" description="Open Source client library that implements the CIFS/SMB networking protocol in 100% Java" file-size="363031" url="http://bias.sourceforge.net/downloads/jcifs" />
+	<pack type="Library" name="JGLooks" version="2.1.4" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="407753" url="http://bias.sourceforge.net/downloads/jglooks" />
+	<pack type="Library" name="JTattooLAF" version="1.2.10" author="Michael Hagen" description="Look-&amp;-Feel for Java/Swing applications" file-size="577393" url="http://bias.sourceforge.net/downloads/jtattoolaf" />
+	<pack type="Library" name="PgsLAF" version="1.0.1" author="pago" description="Look-&amp;-Feel for Java/Swing applications" file-size="196309" url="http://bias.sourceforge.net/downloads/pgslaf" />
+	<pack type="Library" name="Substance" version="4.3" author="Kirill Grouchnikov and contributors" description="Substance Look-&amp;-Feel Provider Library" file-size="1832699" url="http://bias.sourceforge.net/downloads/substance" />
+	<pack type="Library" name="LipstikLF" version="1.0" author="Michal Buczko" description="Look-&amp;-Feel for Java/Swing applications" file-size="233699" url="http://bias.sourceforge.net/downloads/lipstiklf" />
+	<pack type="Library" name="Squareness" version="2.3.0" author="Robert F. Beeger" description="Minimalistic and flat looking Look-&amp;-Feel for Java/Swing applications" file-size="136125" url="http://bias.sourceforge.net/downloads/squareness" />
+	<pack type="Library" name="TinyLAF" version="1.3.04" author="Hans Bickel" description="Look-&amp;-Feel for Java/Swing applications" file-size="584203" url="http://bias.sourceforge.net/downloads/tinylaf" />
+	<pack type="Library" name="LiquidLnF" version="2.9.1" author="evickroy" description="Look-&amp;-Feel for Java/Swing applications" file-size="374740" url="http://bias.sourceforge.net/downloads/liquidlnf" />
+	<pack type="Library" name="InfoNodeLF" version="1.4.0" author="NNL Technology AB" description="Look-&amp;-Feel for Java/Swing applications" file-size="68147" url="http://bias.sourceforge.net/downloads/infonodelf" />
 </bias:repository>
