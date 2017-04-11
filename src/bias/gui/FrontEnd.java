@@ -6807,7 +6807,7 @@ public class FrontEnd extends JFrame {
 
         public void actionPerformed(ActionEvent evt) {
             JLabel title1Label = new JLabel(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppCoreVersion() + " ]");
-            JLabel link1Label = new LinkLabel("http://bias.sf.net");
+            JLabel link1Label = new LinkLabel("https://kion.github.io/Bias");
             JLabel title2Label = new JLabel("© R. Kasianenko (kion)");
         	JLabel link2Label = new LinkLabel("http://kion.name");
             JOptionPane.showMessageDialog(
