@@ -1,0 +1,107 @@
+@font-face {
+  font-family: 'Play';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Play'), url(../fonts/Play.woff2) format('woff2'), url(../fonts/Play.woff) format('woff');
+}
+
+* {
+  font-family: Play;
+}
+
+#site-menu {
+  color: #555;
+  width: 80%;
+  margin: 18px auto;
+}
+
+#site-menu a {
+  color: #191970;
+  font-weight: bold;
+}
+
+#header #appname {
+  color: #8F0000;
+}
+
+#header h2 {
+  color: #333333;
+}
+
+#footer {
+  margin: 15px 0;
+}
+
+#footer div {
+  margin: 15px 0;
+}
+
+.content {
+  width: 80%;
+  margin: 0 auto;
+  text-align: center;
+  font-size: 1.25em;
+}
+
+.content a {
+  color: #8F0000;
+  text-decoration: none;
+}
+
+.descr {
+  margin-bottom: 15px;
+}
+
+.features, .tech-notes {
+  margin: 0 auto;
+  text-align: left;
+}
+
+.features strong {
+  color: #8F0000;
+}
+
+.changelog {
+  width: 500px;
+  margin: 15px auto;
+  text-align: left;
+}
+
+.changelog .app-version-header {
+  padding: 8px 0;
+  border-bottom: 1px dashed #999999;
+}
+
+.changelog .version {
+  font-weight: bold;
+  color: #8F0000;
+}
+
+.changelog .release-date {
+  font-style: italic;
+  color: #999999;
+  float: right;
+}
+
+.screen {
+  margin: 25px 0px;
+}
+
+.download {
+  color: #00008F;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.download a {
+  color: #8F0000;
+  text-decoration: none;
+}
+
+.copyright {
+  font-weight: bold;
+}
+
+#ohloh-badge {
+  margin: 15px 0px;
+}
