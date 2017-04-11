@@ -56,7 +56,7 @@ public class Constants {
     
     public static final String USERNAME = System.getProperty("user.name");
     
-    public static final String REPOSITORY_BASE_URL = "http://bias.sourceforge.net/repository/";
+    public static final String REPOSITORY_BASE_URL = "https://raw.githubusercontent.com/kion/Bias/master/res/META-INF/ADDON-INFO/";
     public static final String ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME = "repository.xml";
     
     public static final String HTML_PREFIX = "<html>";
