@@ -111,7 +111,7 @@
     <pack type="Library" name="JCommonJFree" version="1.0.16" author="Object Refinery Limited and Contributors" description="JFree utils from the outdated version of JCommon library" file-size="318276" url="https://github.com/kion/Bias/releases/download/v1.2.5/JCommonJFree.jar" />
 	<pack type="Library" name="JCalendar" version="1.4.0" author="Kai Toedter" description="JCalendar is a Java date chooser bean for graphically picking a date" file-size="127023" url="https://github.com/kion/Bias/releases/download/v1.2.5/JCalendar.jar" />
 	<pack type="Library" name="JCIFS" version="1.2.18" author="The JCIFS Project" description="Open Source client library that implements the CIFS/SMB networking protocol in 100% Java" file-size="363031" url="https://github.com/kion/Bias/releases/download/v1.2.5/JCIFS.jar" />
-    <pack type="Library" name="RSyntaxTextArea" version="3.0.0" author="bobbylight" description="A syntax highlighting, code folding text editor for Java Swing applications" file-size="1157029" url="https://github.com/kion/Bias/releases/download/v1.2.5/JCIFS.jar" />
+    <pack type="Library" name="RSyntaxTextArea" version="3.0.0" author="bobbylight" description="A syntax highlighting, code folding text editor for Java Swing applications" file-size="1157029" url="https://github.com/kion/Bias/releases/download/v1.2.5/RSyntaxTextArea.jar" />
 	<pack type="Library" name="JGLooks" version="2.7.0" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="407753" url="https://github.com/kion/Bias/releases/download/v1.2.5/JGLooks.jar">
         <dependency type="Library" name="JCommon" version="1.8.1"/>
 	</pack>
