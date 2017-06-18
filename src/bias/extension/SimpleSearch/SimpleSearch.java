@@ -46,16 +46,21 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.Timer;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 import javax.swing.text.Highlighter.HighlightPainter;
+import javax.swing.text.html.HTMLEditorKit;
 
+import bias.Constants;
 import bias.core.Recognizable;
 import bias.extension.EntryExtension;
 import bias.extension.ExtensionFactory;
@@ -65,6 +70,8 @@ import bias.extension.SimpleSearch.SearchEngine.HighLightMarker;
 import bias.gui.FrontEnd;
 import bias.gui.VisualEntryDescriptor;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
+import bias.gui.editor.CustomHTMLEditorKit;
+import bias.utils.AppManager;
 import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
@@ -76,6 +83,32 @@ import bias.utils.Validator;
 public class SimpleSearch extends ToolExtension {
 
     private static final ImageIcon ICON = new ImageIcon(CommonUtils.getResourceURL(SimpleSearch.class, "icon.png"));
+    
+    private static final Color MATCH_HIGHLIGHT_COLOR = new Color(255, 255, 230);
+
+    private static final HTMLEditorKit SEARCH_RESULTS_EDITOR_KIT = 
+        FrontEnd.isDefaultHTMLEditorKitRequired() 
+            ? new HTMLEditorKit() 
+            : new CustomHTMLEditorKit();
+            
+    private static final HyperlinkListener SEARCH_RESULTS_LINK_LISTENER = new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+            if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
+                if (e.getDescription().startsWith(Constants.ENTRY_PROTOCOL_PREFIX)) {
+                    String idStr = e.getDescription().substring(Constants.ENTRY_PROTOCOL_PREFIX.length());
+                    FrontEnd.switchToVisualEntry(UUID.fromString(idStr));
+                } else {
+                    try {
+                        AppManager.getInstance().handleAddress(e.getDescription());
+                    } catch (Exception ex) {
+                        FrontEnd.displayErrorMessage(ex);
+                    }
+                }
+            }
+        }
+    };
+    
+    private static final Pattern URL_PATTERN = Pattern.compile("(?i)(?<!(\"))(http[s]{0,1}://)(www\\.){0,1}([-a-zA-Z0-9+&@#/%?=~_|!:,\\.;$]*[-a-zA-Z0-9+&@#/%=~_|])");
     
     private static final String PROP_SEARCH_EXPRESSION = "SEARCH_EXPRESSION";
     private static final String PROP_IS_CASE_SENSITIVE = "IS_CASE_SENSITIVE";
@@ -181,6 +214,7 @@ public class SimpleSearch extends ToolExtension {
     @Override
     public ToolRepresentation getRepresentation() {
         JButton button = new JButton(ICON);
+        button.setToolTipText(getMessage("btn.tooltip"));
         button.addActionListener(searchAction);
         return new ToolRepresentation(button, null);
     }
@@ -191,6 +225,9 @@ public class SimpleSearch extends ToolExtension {
     @Override
     public void bindHotkeys(InputMap inputMap, ActionMap actionMap) {
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK), searchAction.getValue(Action.NAME));
+        if (CommonUtils.isMac()) {
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.META_DOWN_MASK), searchAction.getValue(Action.NAME));
+        }
         actionMap.put(searchAction.getValue(Action.NAME), searchAction);
     }
     
@@ -383,7 +420,7 @@ public class SimpleSearch extends ToolExtension {
                                                 entryPathItemIcon.addMouseListener(ml);
                                                 entryPathItemPanel.add(entryPathItemIcon);
                                             }
-                                            JLabel entryPathItemLabel = new JLabel("<html><u><font color=blue>" + r.getCaption() + "</font></u></html>");
+                                            JLabel entryPathItemLabel = new JLabel("<html><u><font color='#589df6'>" + r.getCaption() + "</font></u></html>");
                                             entryPathItemLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                                             entryPathItemLabel.addMouseListener(ml);
                                             entryPathItemPanel.add(entryPathItemLabel);
@@ -417,17 +454,38 @@ public class SimpleSearch extends ToolExtension {
                                             }
                                         }
                                         
-                                        JTextField tf = new JTextField(matchedSnippets.toString());
-                                        tf.setBorder(null);
-                                        tf.setEditable(false);
-                                        tf.setSelectedTextColor(Color.LIGHT_GRAY);
+                                        JTextPane searchResultTextPane = new JTextPane();
+                                        searchResultTextPane.setEditorKit(SEARCH_RESULTS_EDITOR_KIT);
+                                        searchResultTextPane.addHyperlinkListener(SEARCH_RESULTS_LINK_LISTENER);
+                                        searchResultTextPane.setBorder(null);
+                                        searchResultTextPane.setEditable(false);
+                                        searchResultTextPane.setBackground(entryPathItemsPanel.getBackground());
+                                        searchResultTextPane.setSelectionColor(Color.WHITE);
+                                        searchResultTextPane.setSelectedTextColor(Color.DARK_GRAY);
                                         
-                                        Highlighter hl = tf.getHighlighter();
+                                        String text = matchedSnippets.toString().replaceAll("\n", " ");
+
+                                        Matcher m = URL_PATTERN.matcher(text);
+                                        
+                                        StringBuffer sb = new StringBuffer();
+                                        while (m.find()) {
+                                            String ref = m.group(4);
+                                            if (m.group(2) != null) {
+                                                ref = m.group(2).concat(ref);
+                                            }
+                                            m.appendReplacement(sb, "<a href=\"" + ref + "\">" + ref + "</a>");
+                                        }
+                                        m.appendTail(sb);
+                                        
+                                        searchResultTextPane.setText(sb.toString());
+                                        
+                                        Highlighter hl = searchResultTextPane.getHighlighter();
                                         hl.removeAllHighlights();
                                         
-                                        String text = tf.getText();
+                                        text = searchResultTextPane.getDocument().getText(0, searchResultTextPane.getDocument().getLength());
+                                        
                                         if (!Validator.isNullOrBlank(text)) {
-                                            HighlightPainter hlPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+                                            HighlightPainter hlPainter = new DefaultHighlighter.DefaultHighlightPainter(MATCH_HIGHLIGHT_COLOR);
                                             Pattern pattern = sc.isRegularExpression() ? Pattern.compile(sc.getSearchExpression()) : null;
                                             if (pattern != null) {
                                                 Matcher matcher = pattern.matcher(text);
@@ -451,7 +509,7 @@ public class SimpleSearch extends ToolExtension {
                                         }
 
                                         entryPathItemPanel.add(new JLabel("<html>&rarr;</html>"));
-                                        entryPathItemPanel.add(tf);
+                                        entryPathItemPanel.add(searchResultTextPane);
                                         
                                         JPanel p = new JPanel(new BorderLayout());
                                         p.add(entryPathItemPanel, BorderLayout.WEST);

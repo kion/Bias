@@ -77,23 +77,23 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
+import com.toedter.calendar.JDateChooser;
+
 import bias.Constants;
 import bias.core.Attachment;
 import bias.core.BackEnd;
 import bias.extension.ToolExtension;
 import bias.extension.ToolRepresentation;
-import bias.extension.Reminder.editor.HTMLEditorPanel;
 import bias.extension.Reminder.xmlb.Entries;
 import bias.extension.Reminder.xmlb.Entry;
 import bias.extension.Reminder.xmlb.ObjectFactory;
-import bias.gui.CustomHTMLEditorKit;
 import bias.gui.FrontEnd;
+import bias.gui.editor.CustomHTMLEditorKit;
+import bias.gui.editor.HTMLEditorPanel;
 import bias.utils.AppManager;
 import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
-
-import com.toedter.calendar.JDateChooser;
 
 /**
  * @author kion
@@ -285,29 +285,31 @@ public class Reminder extends ToolExtension {
         }
         if (splitPane.getBottomComponent() != null) {
             HTMLEditorPanel htmlEditorPanel = ((HTMLEditorPanel) splitPane.getBottomComponent());
-            JScrollPane sc = ((JScrollPane) htmlEditorPanel.getComponent(0));
-            JScrollBar sb = sc.getVerticalScrollBar();
-            if (sb != null) {
-                String val = props.getProperty(PROPERTY_SCROLLBAR_VERT);
-                if (val != null) {
-                    sb.setVisibleAmount(0);
-                    sb.setValue(sb.getMaximum());
-                    sb.setValue(Integer.valueOf(val));
-                }
-            }
-            sb = sc.getHorizontalScrollBar();
-            if (sb != null) {
-                String val = props.getProperty(PROPERTY_SCROLLBAR_HORIZ);
-                if (val != null) {
-                    sb.setVisibleAmount(0);
-                    sb.setValue(sb.getMaximum());
-                    sb.setValue(Integer.valueOf(val));
-                }
-            }
             String caretPos = props.getProperty(PROPERTY_CARET_POSITION);
             if (!Validator.isNullOrBlank(caretPos)) {
                 htmlEditorPanel.setCaretPosition(Integer.valueOf(caretPos));
             }
+            SwingUtilities.invokeLater(() -> {
+                JScrollPane sc = ((JScrollPane) htmlEditorPanel.getComponent(0));
+                JScrollBar sb = sc.getVerticalScrollBar();
+                if (sb != null) {
+                    String val = props.getProperty(PROPERTY_SCROLLBAR_VERT);
+                    if (val != null) {
+                        sb.setVisibleAmount(0);
+                        sb.setValue(sb.getMaximum());
+                        sb.setValue(Integer.valueOf(val));
+                    }
+                }
+                sb = sc.getHorizontalScrollBar();
+                if (sb != null) {
+                    String val = props.getProperty(PROPERTY_SCROLLBAR_HORIZ);
+                    if (val != null) {
+                        sb.setVisibleAmount(0);
+                        sb.setValue(sb.getMaximum());
+                        sb.setValue(Integer.valueOf(val));
+                    }
+                }
+            });
         }
     }
     

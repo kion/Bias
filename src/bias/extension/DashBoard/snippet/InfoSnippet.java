@@ -3,13 +3,15 @@
  */
 package bias.extension.DashBoard.snippet;
 
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.util.Collection;
 import java.util.UUID;
 
 import javax.swing.JInternalFrame;
-import javax.swing.border.EtchedBorder;
+import javax.swing.UIManager;
+import javax.swing.border.LineBorder;
 
 /**
  * @author kion
@@ -36,7 +38,16 @@ public abstract class InfoSnippet extends JInternalFrame {
         this.content = content;
         this.settings = settings;
         setContentPane(getRepresentation());
-        setBorder(new EtchedBorder(EtchedBorder.RAISED));
+        // ==================================================
+        // to ensure snippet frame is easy to resize, 
+        // add "invisible" (i.e. same color 
+        // as panel background) line border
+        // ==================================================
+        Color color = UIManager.getColor("Panel.background");
+        if (color != null) {
+            setBorder(new LineBorder(color, 1, true));
+        }
+        // ==================================================
     }
     
 	public UUID getDataEntryID() {

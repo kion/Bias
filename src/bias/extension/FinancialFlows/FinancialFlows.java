@@ -6,6 +6,7 @@ package bias.extension.FinancialFlows;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Image;
@@ -280,6 +281,7 @@ public class FinancialFlows extends EntryExtension {
             } else if (direction == DIRECTION.OUTGO) {
                 c.setBackground(COLOR_OUTGO);
             }
+            c.setForeground(Color.BLACK);
             boolean hl = false;
             if (!Validator.isNullOrBlank(searchExpression)) {
                 String text = value.toString();
@@ -737,7 +739,6 @@ public class FinancialFlows extends EntryExtension {
                     jToolBar1 = new JToolBar();
                     jToolBar1.setFloatable(false);
                     this.add(jToolBar1, BorderLayout.SOUTH);
-                    jToolBar1.setPreferredSize(new java.awt.Dimension(743, 26));
                     {
                         jButton1 = new JButton();
                         jToolBar1.add(jButton1);
@@ -828,10 +829,11 @@ public class FinancialFlows extends EntryExtension {
                                 try {
                                     DefaultPieDataset dataset = new DefaultPieDataset();
                                     populatePieDataset(DIRECTION.INCOME, dataset);
-                                    Image image = buildPieChart("Income Chart", dataset);
+                                    String title = "Income Chart";
+                                    Image image = buildPieChart(title, dataset);
                                     JLabel label = new JLabel();
                                     label.setIcon(new ImageIcon(image));
-                                    JOptionPane.showMessageDialog(FinancialFlows.this, new JScrollPane(label));
+                                    displayDialog(new JScrollPane(label), title);
                                 } catch (Exception e) {
                                     FrontEnd.displayErrorMessage(e);
                                 }
@@ -848,10 +850,11 @@ public class FinancialFlows extends EntryExtension {
                                 try {
                                     DefaultPieDataset dataset = new DefaultPieDataset();
                                     populatePieDataset(DIRECTION.OUTGO, dataset);
-                                    Image image = buildPieChart("Outgo Chart", dataset);
+                                    String title = "Outgo Chart";
+                                    Image image = buildPieChart(title, dataset);
                                     JLabel label = new JLabel();
                                     label.setIcon(new ImageIcon(image));
-                                    JOptionPane.showMessageDialog(FinancialFlows.this, new JScrollPane(label));
+                                    displayDialog(new JScrollPane(label), title);
                                 } catch (Exception e) {
                                     FrontEnd.displayErrorMessage(e);
                                 }
@@ -882,7 +885,9 @@ public class FinancialFlows extends EntryExtension {
                                     DefaultPieDataset dataset = new DefaultPieDataset();
                                     dataset.setValue("Income", income);
                                     dataset.setValue("Outgo", outgo);
-                                    Image image = buildPieChart("Income/Outgo Chart", dataset);
+                                    
+                                    String title = "Income/Outgo Chart";
+                                    Image image = buildPieChart(title, dataset);
                                     JLabel label = new JLabel();
                                     label.setIcon(new ImageIcon(image));
                                     
@@ -892,7 +897,7 @@ public class FinancialFlows extends EntryExtension {
                                             new JLabel("Balance: " + balance)
                                     };
                                     
-                                    JOptionPane.showMessageDialog(FinancialFlows.this, cmp);
+                                    displayDialog(cmp, title);                          
                                 } catch (Exception e) {
                                     FrontEnd.displayErrorMessage(e);
                                 }
@@ -928,10 +933,11 @@ public class FinancialFlows extends EntryExtension {
                                     populateTimeSeries(getJTableRegular(), incomeSeries, outgoSeries, typeFilter, true);
                                     dataset.addSeries(incomeSeries);
                                     dataset.addSeries(outgoSeries);
-                                    Image image = buildTimeSeriesChart("Income/Outgo Time Chart", "Amount", dataset);
+                                    String title = "Income/Outgo Time Chart";
+                                    Image image = buildTimeSeriesChart(title, "Amount", dataset);
                                     JLabel label = new JLabel();
                                     label.setIcon(new ImageIcon(image));
-                                    JOptionPane.showMessageDialog(FinancialFlows.this, new JScrollPane(label));
+                                    displayDialog(new JScrollPane(label), title);
                                 } catch (Exception e) {
                                     FrontEnd.displayErrorMessage(e);
                                 }
@@ -981,6 +987,15 @@ public class FinancialFlows extends EntryExtension {
         }
     }
 
+    private int displayDialog(Object message, String title) {
+        JOptionPane op = new JOptionPane(message, JOptionPane.PLAIN_MESSAGE);
+        final Dialog d = op.createDialog(FrontEnd.getActiveWindow(), title);
+        d.setLocation(FrontEnd.getActiveWindow().getLocation());
+        d.setSize(FrontEnd.getActiveWindow().getSize());
+        d.setVisible(true);
+        return (Integer) op.getValue();
+    }
+    
     private void initTablesCells() {
         initTableCells(getJTableSingle());
         initTableCells(getJTableRegular());
@@ -1095,7 +1110,13 @@ public class FinancialFlows extends EntryExtension {
         getJTableSingle().setModel(model);
         getJTableSingle().setDefaultRenderer(Object.class, new TableSearchRenderer());
         getJTableSingle().setDefaultRenderer(Float.class, new CurrencyRenderer());
-        getJTableSingle().getColumnModel().getColumn(COLUMN_DATE_IDX).setCellEditor(new JDateChooserCellEditor());
+        if ("javax.swing.JTable.GenericEditor".equals(getJTableSingle().getDefaultEditor(Date.class).getClass().getCanonicalName())) {
+            // use JCalendar date chooser as cell editor 
+            // only if Swing Look-n-Feel doesn't provide 
+            // custom cell editor for Date values
+            // (i.e. if generic JTable editor is being used)
+            getJTableSingle().getColumnModel().getColumn(COLUMN_DATE_IDX).setCellEditor(new JDateChooserCellEditor());
+        }
         getJTableSingle().getColumnModel().getColumn(COLUMN_TYPE_IDX).setCellEditor(new ComboBoxCellEditor());
         getJTableSingle().getColumnModel().removeColumn(getJTableSingle().getColumnModel().getColumn(COLUMN_DIRECTION_IDX));
         singleSorter = new TableRowSorter<TableModel>(model);
@@ -1140,8 +1161,14 @@ public class FinancialFlows extends EntryExtension {
         getJTableRegular().setModel(model);
         getJTableRegular().setDefaultRenderer(Object.class, new TableSearchRenderer());
         getJTableRegular().setDefaultRenderer(Float.class, new CurrencyRenderer());
-        getJTableRegular().getColumnModel().getColumn(COLUMN_DATE_IDX).setCellEditor(new JDateChooserCellEditor());
-        getJTableRegular().getColumnModel().getColumn(COLUMN_END_DATE_IDX).setCellEditor(new JDateChooserCellEditor());
+        if ("javax.swing.JTable.GenericEditor".equals(getJTableRegular().getDefaultEditor(Date.class).getClass().getCanonicalName())) {
+            // use JCalendar date chooser as cell editor 
+            // only if Swing Look-n-Feel doesn't provide 
+            // custom cell editor for Date values
+            // (i.e. if generic JTable editor is being used)
+            getJTableRegular().getColumnModel().getColumn(COLUMN_DATE_IDX).setCellEditor(new JDateChooserCellEditor());
+            getJTableRegular().getColumnModel().getColumn(COLUMN_END_DATE_IDX).setCellEditor(new JDateChooserCellEditor());
+        }
         getJTableRegular().getColumnModel().getColumn(COLUMN_TYPE_IDX).setCellEditor(new ComboBoxCellEditor());
         getJTableRegular().getColumnModel().removeColumn(getJTableRegular().getColumnModel().getColumn(COLUMN_DIRECTION_IDX));
         regularSorter = new TableRowSorter<TableModel>(model);
@@ -1378,8 +1405,8 @@ public class FinancialFlows extends EntryExtension {
         PiePlot3D plot = (PiePlot3D) chart.getPlot();
         plot.setLabelGenerator(new StandardPieSectionLabelGenerator("{0} {1}"));
         
-        int w = FrontEnd.getMainWindowSize().width/10*8;
-        int h = w/5*3;
+        int w = FrontEnd.getMainWindowSize().width - 24;
+        int h = FrontEnd.getMainWindowSize().height/100*98;
         BufferedImage image = chart.createBufferedImage(w, h);
         return image;
     }
@@ -1412,8 +1439,8 @@ public class FinancialFlows extends EntryExtension {
         DateAxis axis = (DateAxis) plot.getDomainAxis();
         axis.setDateFormatOverride(new SimpleDateFormat("MMM-yyyy"));
 
-        int w = FrontEnd.getMainWindowSize().width/10*8;
-        int h = w/5*3;
+        int w = FrontEnd.getMainWindowSize().width - 24;
+        int h = FrontEnd.getMainWindowSize().height/100*98;
         BufferedImage image = chart.createBufferedImage(w, h);
         return image;
     }

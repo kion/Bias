@@ -43,6 +43,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
+import javax.swing.SwingUtilities;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ListSelectionEvent;
@@ -72,8 +73,8 @@ import bias.Constants;
 import bias.core.Attachment;
 import bias.core.BackEnd;
 import bias.extension.EntryExtension;
-import bias.extension.ToDoList.editor.HTMLEditorPanel;
 import bias.gui.FrontEnd;
+import bias.gui.editor.HTMLEditorPanel;
 import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
@@ -229,29 +230,31 @@ public class ToDoList extends EntryExtension {
         }
         if (splitPane.getBottomComponent() != null) {
             HTMLEditorPanel htmlEditorPanel = ((HTMLEditorPanel) splitPane.getBottomComponent());
-            JScrollPane sc = ((JScrollPane) htmlEditorPanel.getComponent(0));
-            JScrollBar sb = sc.getVerticalScrollBar();
-            if (sb != null) {
-                String val = props.getProperty(PROPERTY_SCROLLBAR_VERT);
-                if (val != null) {
-                    sb.setVisibleAmount(0);
-                    sb.setValue(sb.getMaximum());
-                    sb.setValue(Integer.valueOf(val));
-                }
-            }
-            sb = sc.getHorizontalScrollBar();
-            if (sb != null) {
-                String val = props.getProperty(PROPERTY_SCROLLBAR_HORIZ);
-                if (val != null) {
-                    sb.setVisibleAmount(0);
-                    sb.setValue(sb.getMaximum());
-                    sb.setValue(Integer.valueOf(val));
-                }
-            }
             String caretPos = props.getProperty(PROPERTY_CARET_POSITION);
             if (!Validator.isNullOrBlank(caretPos)) {
                 htmlEditorPanel.setCaretPosition(Integer.valueOf(caretPos));
             }
+            SwingUtilities.invokeLater(() -> {
+                JScrollPane sc = ((JScrollPane) htmlEditorPanel.getComponent(0));
+                JScrollBar sb = sc.getVerticalScrollBar();
+                if (sb != null) {
+                    String val = props.getProperty(PROPERTY_SCROLLBAR_VERT);
+                    if (val != null) {
+                        sb.setVisibleAmount(0);
+                        sb.setValue(sb.getMaximum());
+                        sb.setValue(Integer.valueOf(val));
+                    }
+                }
+                sb = sc.getHorizontalScrollBar();
+                if (sb != null) {
+                    String val = props.getProperty(PROPERTY_SCROLLBAR_HORIZ);
+                    if (val != null) {
+                        sb.setVisibleAmount(0);
+                        sb.setValue(sb.getMaximum());
+                        sb.setValue(Integer.valueOf(val));
+                    }
+                }
+            });
         }
     }
     
@@ -698,8 +701,7 @@ public class ToDoList extends EntryExtension {
         searchPattern = null;
         todoEntriesTable.repaint();
         for (HTMLEditorPanel panel : editorPanels.values()) {
-            Highlighter hl = panel.getHighlighter();
-            hl.removeAllHighlights();
+            panel.getHighlighter().removeAllHighlights();
         }
     }
 

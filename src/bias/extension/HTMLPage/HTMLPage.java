@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 import javax.swing.text.Highlighter.HighlightPainter;
@@ -21,7 +22,7 @@ import javax.swing.text.Highlighter.HighlightPainter;
 import bias.core.Attachment;
 import bias.core.BackEnd;
 import bias.extension.EntryExtension;
-import bias.extension.HTMLPage.editor.HTMLEditorPanel;
+import bias.gui.editor.HTMLEditorPanel;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
 
@@ -138,8 +139,7 @@ public class HTMLPage extends EntryExtension {
      */
     @Override
     public void clearSearchResultsHighlight() throws Throwable {
-        Highlighter hl = getHTMLEditorPanel().getHighlighter();
-        hl.removeAllHighlights();
+        getHTMLEditorPanel().getHighlighter().removeAllHighlights();
     }
     
     /**
@@ -151,29 +151,31 @@ public class HTMLPage extends EntryExtension {
         Properties props = PropertiesUtils.deserializeProperties(getSettings());
         this.setLayout(new BorderLayout());
         this.add(getHTMLEditorPanel(), BorderLayout.CENTER);
-        JScrollPane sc = ((JScrollPane) getHTMLEditorPanel().getComponent(0));
-        JScrollBar sb = sc.getVerticalScrollBar();
-        if (sb != null) {
-            String val = props.getProperty(PROPERTY_SCROLLBAR_VERT);
-            if (val != null) {
-                sb.setVisibleAmount(0);
-                sb.setValue(sb.getMaximum());
-                sb.setValue(Integer.valueOf(val));
-            }
-        }
-        sb = sc.getHorizontalScrollBar();
-        if (sb != null) {
-            String val = props.getProperty(PROPERTY_SCROLLBAR_HORIZ);
-            if (val != null) {
-                sb.setVisibleAmount(0);
-                sb.setValue(sb.getMaximum());
-                sb.setValue(Integer.valueOf(val));
-            }
-        }
         String caretPos = props.getProperty(PROPERTY_CARET_POSITION);
         if (!Validator.isNullOrBlank(caretPos)) {
             getHTMLEditorPanel().setCaretPosition(Integer.valueOf(caretPos));
         }
+        SwingUtilities.invokeLater(() -> {
+            JScrollPane sc = ((JScrollPane) getHTMLEditorPanel().getComponent(0));
+            JScrollBar sb = sc.getVerticalScrollBar();
+            if (sb != null) {
+                String val = props.getProperty(PROPERTY_SCROLLBAR_VERT);
+                if (val != null) {
+                    sb.setVisibleAmount(0);
+                    sb.setValue(sb.getMaximum());
+                    sb.setValue(Integer.valueOf(val));
+                }
+            }
+            sb = sc.getHorizontalScrollBar();
+            if (sb != null) {
+                String val = props.getProperty(PROPERTY_SCROLLBAR_HORIZ);
+                if (val != null) {
+                    sb.setVisibleAmount(0);
+                    sb.setValue(sb.getMaximum());
+                    sb.setValue(Integer.valueOf(val));
+                }
+            }
+        });
     }
 
     private HTMLEditorPanel getHTMLEditorPanel() {

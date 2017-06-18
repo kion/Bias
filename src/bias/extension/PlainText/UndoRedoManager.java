@@ -17,6 +17,8 @@ import javax.swing.undo.CompoundEdit;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
+import bias.utils.CommonUtils;
+
 /**
  * @author kion
  */
@@ -149,13 +151,47 @@ public class UndoRedoManager extends UndoManager implements DocumentListener {
          */
         public void keyReleased(java.awt.event.KeyEvent e) {
             if (editor.isEditable()) {
-                if (e.getModifiers() == KeyEvent.CTRL_MASK && e.getKeyCode() == KeyEvent.VK_Z) {
-                    if (canUndo()) {
-                        undo();
+                if (CommonUtils.isMac()) {
+                    // ===============================================================
+                    // The following fixes potential issues with undo/redo shortcuts
+                    // on OS X b/c 3rd-party Look-&-Feel implementation might not 
+                    // support the OS X's native keyboard shortcuts
+                    // ===============================================================
+                    if (e.getKeyCode() == KeyEvent.VK_Z) {
+                        if (e.isMetaDown()) {
+                            if (e.isShiftDown()) {
+                                if (canRedo()) {
+                                    redo();
+                                }
+                            } else {
+                                if (canUndo()) {
+                                    undo();
+                                }
+                            }
+                        }
+                    } else if (e.getKeyCode() == KeyEvent.VK_Y && e.isMetaDown()) {
+                        if (canRedo()) {
+                            redo();
+                        }
                     }
-                } else if (e.getModifiers() == KeyEvent.CTRL_MASK && e.getKeyCode() == KeyEvent.VK_Y) {
-                    if (canRedo()) {
-                        redo();
+                    // ===============================================================
+                } else {
+                    if (e.getKeyCode() == KeyEvent.VK_Z) {
+                        if (e.isControlDown()) {
+                            if (e.isShiftDown()) {
+                                if (canRedo()) {
+                                    redo();
+                                }
+                            } else {
+                                if (canUndo()) {
+                                    undo();
+                                }
+                            }
+                        }
+                    } else if (e.getKeyCode() == KeyEvent.VK_Y && e.isControlDown()) {
+                        if (canRedo()) {
+                            redo();
+                        }
                     }
                 }
             }

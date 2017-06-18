@@ -72,6 +72,7 @@ import javax.swing.Action;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -102,6 +103,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -118,6 +120,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -159,6 +162,8 @@ import bias.event.BeforeExitEventListener;
 import bias.event.BeforeSaveEventListener;
 import bias.event.EventListener;
 import bias.event.ExitEvent;
+import bias.event.HideAppWindowEvent;
+import bias.event.HideAppWindowEventListener;
 import bias.event.SaveEvent;
 import bias.event.StartUpEvent;
 import bias.event.StartUpEventListener;
@@ -174,6 +179,7 @@ import bias.extension.ToolRepresentation;
 import bias.extension.TransferExtension;
 import bias.extension.TransferProgressListener;
 import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
+import bias.gui.editor.CustomHTMLEditorKit;
 import bias.i18n.I18nService;
 import bias.skin.GUIIcons;
 import bias.skin.Skin;
@@ -210,8 +216,8 @@ public class FrontEnd extends JFrame {
      */
     private static final ImageIcon ICON_APP = new ImageIcon(FrontEnd.class.getResource("/bias/res/app_icon.png"));
 
-    private static final ImageIcon ICON_LOGO = new ImageIcon(FrontEnd.class.getResource("/bias/res/app_logo.png"));
-    
+    private static final ImageIcon ICON_APP_SMALL = new ImageIcon(FrontEnd.class.getResource("/bias/res/app_icon_small.png"));
+
     private static final ImageIcon ICON_CLOSE = new ImageIcon(FrontEnd.class.getResource("/bias/res/close.png"));
 
     private static final ImageIcon ICON_PROCESS = new ImageIcon(FrontEnd.class.getResource("/bias/res/process.gif"));
@@ -250,6 +256,8 @@ public class FrontEnd extends JFrame {
     private static Properties config;
     
     private static String activeSkin = null;
+    
+    private static boolean defaultHTMLEditorKitRequired = false;
     
     private static Map<String, DataEntry> dataEntries = new HashMap<String, DataEntry>();
 
@@ -494,7 +502,7 @@ public class FrontEnd extends JFrame {
         }
         addEventListener(beforeSaveEventListeners, l);
     }
-    public static void removeBeforeSaveEventListener(StartUpEventListener l) {
+    public static void removeBeforeSaveEventListener(BeforeSaveEventListener l) {
         removeEventListener(beforeSaveEventListeners, l);
     }
     private static void fireBeforeSaveEvent(SaveEvent e) {
@@ -516,7 +524,7 @@ public class FrontEnd extends JFrame {
         }
         addEventListener(afterSaveEventListeners, l);
     }
-    public static void removeAfterSaveEventListener(StartUpEventListener l) {
+    public static void removeAfterSaveEventListener(AfterSaveEventListener l) {
         removeEventListener(afterSaveEventListeners, l);
     }
     private static void fireAfterSaveEvent(SaveEvent e) {
@@ -538,7 +546,7 @@ public class FrontEnd extends JFrame {
         }
         addEventListener(beforeExitEventListeners, l);
     }
-    public static void removeBeforeExitEventListener(StartUpEventListener l) {
+    public static void removeBeforeExitEventListener(BeforeExitEventListener l) {
         removeEventListener(beforeExitEventListeners, l);
     }
     private static void fireBeforeExitEvent(ExitEvent e) {
@@ -548,6 +556,28 @@ public class FrontEnd extends JFrame {
                     l.onEvent(e);
                 } catch (Throwable t) {
                     displayErrorMessage("before exit event listener '" + l.getClass().getSimpleName() + "' failed!", t);
+                }
+            }
+        }
+    }
+
+    private static Map<Class<? extends HideAppWindowEventListener>, HideAppWindowEventListener> hideAppWindowEventListeners;
+    public static void addHideAppWindowEventListener(HideAppWindowEventListener l) {
+        if (hideAppWindowEventListeners == null) {
+            hideAppWindowEventListeners = new HashMap<Class<? extends HideAppWindowEventListener>, HideAppWindowEventListener>();
+        }
+        addEventListener(hideAppWindowEventListeners, l);
+    }
+    public static void removeHideAppWindowEventListener(HideAppWindowEventListener l) {
+        removeEventListener(hideAppWindowEventListeners, l);
+    }
+    private static void fireHideAppWindowEvent(HideAppWindowEvent e) {
+        if (hideAppWindowEventListeners != null) {
+            for (HideAppWindowEventListener l : hideAppWindowEventListeners.values()) {
+                try {
+                    l.onEvent(e);
+                } catch (Throwable t) {
+                    displayErrorMessage("hide app window event listener '" + l.getClass().getSimpleName() + "' failed!", t);
                 }
             }
         }
@@ -601,7 +631,7 @@ public class FrontEnd extends JFrame {
      */
     private void initialize() {
         try {
-            this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+            this.setDefaultCloseOperation(HIDE_ON_CLOSE);
             this.setMinimumSize(new Dimension(640, 480));
             this.setTitle(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppCoreVersion() + " ]");
             this.setIconImage(ICON_APP.getImage());
@@ -619,6 +649,7 @@ public class FrontEnd extends JFrame {
                         if (Preferences.getInstance().remainInSysTrayOnWindowClose) {
                             showSysTrayIcon();
                             if (sysTrayIconVisible) {
+                                fireHideAppWindowEvent(new HideAppWindowEvent());
                                 instance.setVisible(false);
                             }
                             System.gc();
@@ -631,6 +662,12 @@ public class FrontEnd extends JFrame {
                 }
                 
             });
+            
+            try {
+                OSXDockHandler.handle(this);
+            } catch (Throwable cause) {
+                // ignore OS X specific functionality on other platforms
+            }
             
         	if (new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_LAUNCHER_FILE_NAME).exists()) {
         		Splash.hideSplash();
@@ -754,25 +791,40 @@ public class FrontEnd extends JFrame {
     private void bindHotKeys() {
         
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK), saveAction.getValue(Action.NAME));
+        if (CommonUtils.isMac()) {
+            getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.META_DOWN_MASK), saveAction.getValue(Action.NAME));
+        }
         getRootPane().getActionMap().put(saveAction.getValue(Action.NAME), saveAction);
         
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK), importAction.getValue(Action.NAME));
+        if (CommonUtils.isMac()) {
+            getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.META_DOWN_MASK), importAction.getValue(Action.NAME));
+        }
         getRootPane().getActionMap().put(importAction.getValue(Action.NAME), importAction);
         
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK), exportAction.getValue(Action.NAME));
+        if (CommonUtils.isMac()) {
+            getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.META_DOWN_MASK), exportAction.getValue(Action.NAME));
+        }
         getRootPane().getActionMap().put(exportAction.getValue(Action.NAME), exportAction);
         
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK), preferencesAction.getValue(Action.NAME));
+        if (CommonUtils.isMac()) {
+            getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.META_DOWN_MASK), preferencesAction.getValue(Action.NAME));
+        }
         getRootPane().getActionMap().put(preferencesAction.getValue(Action.NAME), preferencesAction);
         
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.CTRL_DOWN_MASK), manageAddOnsAction.getValue(Action.NAME));
+        if (CommonUtils.isMac()) {
+            getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.META_DOWN_MASK), manageAddOnsAction.getValue(Action.NAME));
+        }
         getRootPane().getActionMap().put(manageAddOnsAction.getValue(Action.NAME), manageAddOnsAction);
         
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK), closeAction.getValue(Action.NAME));
+        if (CommonUtils.isMac()) {
+            getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.META_DOWN_MASK), closeAction.getValue(Action.NAME));
+        }
         getRootPane().getActionMap().put(closeAction.getValue(Action.NAME), closeAction);
-        
-        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_DOWN_MASK + InputEvent.ALT_DOWN_MASK), exitAction.getValue(Action.NAME));
-        getRootPane().getActionMap().put(exitAction.getValue(Action.NAME), exitAction);
         
         getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_DOWN_MASK), backAction.getValue(Action.NAME));
         getRootPane().getActionMap().put(backAction.getValue(Action.NAME), backAction);
@@ -805,7 +857,7 @@ public class FrontEnd extends JFrame {
             try {
                 // initialize tray icon
                 if (trayIcon == null) {
-                    trayIcon = new TrayIcon(ICON_APP.getImage(), getMessage("app.title"));
+                    trayIcon = new TrayIcon(ICON_APP_SMALL.getImage(), getMessage("app.title"));
                     trayIcon.setImageAutoSize(true);
                     trayIcon.addMouseListener(new MouseAdapter(){
                         @Override
@@ -975,6 +1027,10 @@ public class FrontEnd extends JFrame {
         return false;
     }
     
+    public static boolean isDefaultHTMLEditorKitRequired() {
+        return defaultHTMLEditorKitRequired;
+    }
+    
     @SuppressWarnings("unchecked")
     private static void activateSkin() {
         String skin = config.getProperty(Constants.PROPERTY_SKIN);
@@ -987,12 +1043,38 @@ public class FrontEnd extends JFrame {
             Skin skinInstance = skinClass.newInstance();
             byte[] skinSettings = BackEnd.getInstance().loadAddOnSettings(skinFullClassName, PackType.SKIN);
             skinInstance.activate(skinSettings);
+            JFrame.setDefaultLookAndFeelDecorated(false);
+            defaultHTMLEditorKitRequired = skinInstance.isDefaultHTMLEditorKitRequired();
             // use control icons defined by Skin if available
             if (skinInstance.getUIIcons() != null) {
                 guiIcons = skinInstance.getUIIcons();
             }
             if (activeSkin == null) {
                 activeSkin = skin;
+            }
+            if (CommonUtils.isMac()) {
+                // ===============================================================
+                // The following fixes potential issues with clipboard shortcuts
+                // on OS X b/c 3rd-party Look-&-Feel implementation might not 
+                // support the OS X's native keyboard shortcuts
+                // ===============================================================
+                String[] textCmps = { "TextField", "TextArea", "TextPane", "EditorPane" };
+                for (String textCmp : textCmps) {
+                    InputMap im = (InputMap) UIManager.get(textCmp + ".focusInputMap");
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.META_DOWN_MASK), DefaultEditorKit.copyAction);
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, KeyEvent.META_DOWN_MASK), DefaultEditorKit.pasteAction);
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, KeyEvent.META_DOWN_MASK), DefaultEditorKit.cutAction);
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.META_DOWN_MASK), DefaultEditorKit.selectAllAction);
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.META_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), DefaultEditorKit.selectionBeginLineAction);
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.META_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), DefaultEditorKit.selectionEndLineAction);
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.ALT_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), DefaultEditorKit.selectionPreviousWordAction);
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.ALT_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK), DefaultEditorKit.selectionNextWordAction);
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.META_DOWN_MASK), DefaultEditorKit.beginLineAction);
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.META_DOWN_MASK), DefaultEditorKit.endLineAction);
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, KeyEvent.ALT_DOWN_MASK), DefaultEditorKit.previousWordAction);
+                    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.ALT_DOWN_MASK), DefaultEditorKit.nextWordAction);
+                }
+                // ===============================================================
             }
         } catch (Throwable t) {
             activeSkin = DEFAULT_SKIN;
@@ -3459,7 +3541,7 @@ public class FrontEnd extends JFrame {
         
         public ImportAction() {
             putValue(Action.NAME, "import");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("data.import").concat(" {Ctrl+I}"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("data.import").concat(" {⌘/Ctrl+I}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconImport());
         }
         
@@ -3923,7 +4005,7 @@ public class FrontEnd extends JFrame {
         
         public ExportAction() {
             putValue(Action.NAME, "export");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("data.export").concat(" {Ctrl+E}"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("data.export").concat(" {⌘/Ctrl+E}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconExport());
         }
 
@@ -4589,7 +4671,7 @@ public class FrontEnd extends JFrame {
         
         public SaveAction() {
             putValue(Action.NAME, "save");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("save").concat(" {Ctrl+S}"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("save").concat(" {⌘/Ctrl+S}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconSave());
         }
 
@@ -4675,7 +4757,7 @@ public class FrontEnd extends JFrame {
         
         public ExitAction() {
             putValue(Action.NAME, "exit");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("exit").concat(" {Ctrl+Alt+Q}"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("exit"));
             putValue(Action.SMALL_ICON, guiIcons.getIconExit());
         }
 
@@ -4766,7 +4848,7 @@ public class FrontEnd extends JFrame {
         
         public PreferencesAction() {
             putValue(Action.NAME, "preferences");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("preferences").concat(" {Ctrl+P}"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("preferences").concat(" {⌘/Ctrl+P}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconPreferences());
         }
 
@@ -4997,7 +5079,7 @@ public class FrontEnd extends JFrame {
         
         public ManageAddOnsAction() {
             putValue(Action.NAME, "manageAddOns");
-            putValue(Action.SHORT_DESCRIPTION, getMessage("manage.addons").concat(" {Ctrl+M}"));
+            putValue(Action.SHORT_DESCRIPTION, getMessage("manage.addons").concat(" {⌘/Ctrl+M}"));
             putValue(Action.SMALL_ICON, guiIcons.getIconAddOns());
         }
 
@@ -6686,7 +6768,7 @@ public class FrontEnd extends JFrame {
         d.setLocation(getActiveWindow().getLocation());
         d.setSize(getActiveWindow().getSize());
         d.setVisible(true);
-        return (Integer) op.getValue();
+        return op.getValue() != null ? (Integer) op.getValue() : JOptionPane.CLOSED_OPTION;
     }
     
     private int findDataRowIndex(DefaultTableModel model, int colIdx, String data) {
@@ -6808,7 +6890,7 @@ public class FrontEnd extends JFrame {
         public void actionPerformed(ActionEvent evt) {
             JLabel title1Label = new JLabel(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppCoreVersion() + " ]");
             JLabel link1Label = new LinkLabel("https://kion.github.io/Bias");
-            JLabel title2Label = new JLabel("© R. Kasianenko (kion)");
+            JLabel title2Label = new JLabel("© Roman (Kion) Kasianenko");
         	JLabel link2Label = new LinkLabel("http://kion.name");
             JOptionPane.showMessageDialog(
                     FrontEnd.this, 
@@ -6818,7 +6900,7 @@ public class FrontEnd extends JFrame {
                             },
                     getMessage("about.bias") + "...",
                     JOptionPane.PLAIN_MESSAGE,
-                    ICON_LOGO);
+                    ICON_APP);
         }
     }
 

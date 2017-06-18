@@ -8,6 +8,7 @@
      author: kion                                                                
      ====================================================================== -->
 <project name="Bias" default="BuildAndRunApp">
+	
 	<description>
     	Bias OpenSource Versatile Information Manager Project
     </description>
@@ -33,32 +34,17 @@
           target: BuildApp              
          ================================= -->
 	<target name="BuildApp" description="Bias JAR">
-		<delete>
-			<fileset dir="build">
-				<include name="bias.jar" />
-				<include name="appcore.jar" />
-			</fileset>
-		</delete>
-		<jar basedir="bin" destfile="build/bias.jar" includes="bias/Launcher** bias/Splash** bias/utils/FSUtils** bias/core/AddOnInfo** bias/core/pack/** bias/res/load.gif">
-			<manifest>
-				<attribute name="Main-Class" value="bias.Launcher" />
-				<attribute name="AppLauncher-Version" value="${AppLauncher_Version}" />
-			</manifest>
-		</jar>
-		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/skin/DefaultSkin/*.* bias/res/*.* bias/utils/** bias/i18n/**" excludes="bias/Launcher** bias/res/load.gif">
-			<manifest>
-				<attribute name="AppCore-Version" value="${AppCore_Version}" />
-			</manifest>
-		</jar>	
+		<antcall target="Build_AppLauncher_Package" />
+		<antcall target="Build_AppCore_Package" />
 	</target>
 
 	<!-- ================================= 
           target: Build_AppLauncher_Package
          ================================= -->
 	<target name="Build_AppLauncher_Package" description="AppLauncher Package">
-		<jar basedir="bin" destfile="build/bias.jar" includes="bias/Launcher** bias/Splash** bias/utils/FSUtils** bias/core/AddOnInfo** bias/core/pack/** bias/res/load.gif">
+		<jar basedir="bin" destfile="build/bias.jar" includes="bias/Bias** bias/Splash** bias/utils/FSUtils** bias/core/AddOnInfo** bias/core/pack/** bias/res/load.gif bias/res/app_icon.png bias/res/app_icon_small.png">
 			<manifest>
-				<attribute name="Main-Class" value="bias.Launcher" />
+				<attribute name="Main-Class" value="bias.Bias" />
 				<attribute name="AppLauncher-Version" value="${AppLauncher_Version}" />
 			</manifest>
 		</jar>	
@@ -68,7 +54,12 @@
           target: Build_AppCore_Package
          ================================= -->
 	<target name="Build_AppCore_Package" description="AppCore Package">
-		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/skin/DefaultSkin/*.* bias/res/*.* bias/utils/** bias/i18n/**" excludes="bias/Launcher** bias/res/load.gif">
+		<copy todir="bin/bias/gui">
+			<fileset dir="build/osx/classes">
+			    <include name="OSXDockHandler**"/>
+			</fileset>
+		</copy>
+		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/skin/DefaultSkin/*.* bias/res/** bias/utils/** bias/i18n/**" excludes="bias/Bias** bias/res/load.gif">
 			<manifest>
 				<attribute name="AppCore-Version" value="${AppCore_Version}" />
 			</manifest>
@@ -110,6 +101,24 @@
 		</jar>
 	</target>
 
+	<!-- ================================= 
+          target: Build_Extension_CodeSnippets
+         ================================= -->
+	<target name="Build_Extension_CodeSnippets" description="CodeSnippets Add-On">
+		<delete dir="build" includes="CodeSnippets*.jar" />
+		<jar basedir="bin" destfile="build/CodeSnippets.jar" includes="bias/extension/CodeSnippets/** bias/res/CodeSnippets/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/CodeSnippets/**" />
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="CodeSnippets" />
+				<attribute name="Bias-Add-On-Type" value="Extension" />
+				<attribute name="Bias-Add-On-Version" value="${CodeSnippets_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Code Snippets" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${CodeSnippets_Dependencies}" />
+			</manifest>
+		</jar>
+	</target>
+	
 	<!-- ================================= 
           target: Build_Extension_FilePack
          ================================= -->
@@ -478,5 +487,40 @@
 		</jar>
 	</target>
 
+	<!-- ================================= 
+          target: Build_Skin_DarculaSkin             
+         ================================= -->
+	<target name="Build_Skin_DarculaSkin" description="Darcula Skin">
+		<delete dir="build" includes="DarculaSkin*.jar" />
+		<jar basedir="bin" destfile="build/DarculaSkin.jar" includes="bias/skin/DarculaSkin/** bias/res/DarculaSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/DarculaSkin/**" />
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="DarculaSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${DarculaSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="Darcula Skin" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${DarculaSkin_Dependencies}" />
+			</manifest>
+		</jar>
+	</target>
+	
+	<!-- ================================= 
+          target: Build_Skin_WebLaFSkin             
+         ================================= -->
+	<target name="Build_Skin_WebLaFSkin" description="WebLaF Skin">
+		<delete dir="build" includes="WebLaFSkin*.jar" />
+		<jar basedir="bin" destfile="build/WebLaFSkin.jar" includes="bias/skin/WebLaFSkin/** bias/res/WebLaFSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/WebLaFSkin/**" />
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="WebLaFSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${WebLaFSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="WebLaF Skin" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${WebLaFSkin_Dependencies}" />
+			</manifest>
+		</jar>
+	</target>
+	
 </project>
-

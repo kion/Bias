@@ -293,7 +293,6 @@ public class FilePack extends EntryExtension {
 					jToolBar1 = new JToolBar();
 					jToolBar1.setFloatable(false);
 					this.add(jToolBar1, BorderLayout.SOUTH);
-					jToolBar1.setPreferredSize(new java.awt.Dimension(743, 26));
 					{
 						jButton1 = new JButton();
 						jToolBar1.add(jButton1);

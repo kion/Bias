@@ -22,7 +22,7 @@ public class Constants {
         EXPORT
     }
     
-    public static final File ROOT_DIR = Launcher.getRootDir();
+    public static final File ROOT_DIR = Bias.getRootDir();
     public static final File ADDONS_DIR = new File(ROOT_DIR, "addons");
     private static final String DIRNAME_ADDON_INFO = "ADDON-INFO";
     public static final File ADDON_INFO_DIR = new File(ADDONS_DIR, DIRNAME_ADDON_INFO);

@@ -27,6 +27,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.AttributeSet;
@@ -40,9 +41,10 @@ import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
+import bias.Constants;
 import bias.extension.DashBoard.DashBoard;
-import bias.extension.DashBoard.editor.UndoRedoManager;
 import bias.gui.FrontEnd;
+import bias.gui.editor.UndoRedoManager;
 import bias.utils.CommonUtils;
 import bias.utils.PropertiesUtils;
 import bias.utils.Validator;
@@ -71,6 +73,8 @@ public class TextSnippet extends InfoSnippet {
     
     private static final String PROPERTY_CARET_POSITION = "CARET_POSITION";
 
+    private static final String HTML_STYLES_PATTERN = "(?i)(?s)<style.*</style>";
+
     private int currentFontSize = DEFAULT_FONT_SIZE;
 
     private boolean contentChanged = false;
@@ -96,28 +100,26 @@ public class TextSnippet extends InfoSnippet {
         this.setLayout(new BorderLayout());
         if (getContent() != null) {
             content = getContent();
-            getJTextPane().setText(new String(content));
+            String code = new String(content);
+            // ===============================================================
+            // some skins might provide (and rely on) styling 
+            // for default HTMLEditorKit, in which case custom styles 
+            // that could have been added to the document earlier, 
+            // would break that styling; 
+            // thus, need to remove custom styles for such skins;
+            // NOTE: this would not turn into problem after switching to 
+            // another skin / CustomHTMLEditorKit, as styles needed 
+            // by the latter would get automatically re-added to document upon 
+            // first attempt to initialize it using CustomHTMLEditorKit
+            // ===============================================================
+            if (FrontEnd.isDefaultHTMLEditorKitRequired()) {
+                code = code.replaceAll(HTML_STYLES_PATTERN, Constants.EMPTY_STR);
+            }
+            // ===============================================================
+            getJTextPane().setText(code);
         }
         settings = PropertiesUtils.deserializeProperties(getSettings());
         applySettings();
-        JScrollBar sb = getJScrollPane().getVerticalScrollBar();
-        if (sb != null) {
-            String val = settings.getProperty(PROPERTY_SCROLLBAR_VERT);
-            if (val != null) {
-                sb.setVisibleAmount(0);
-                sb.setValue(sb.getMaximum());
-                sb.setValue(Integer.valueOf(val));
-            }
-        }
-        sb = getJScrollPane().getHorizontalScrollBar();
-        if (sb != null) {
-            String val = settings.getProperty(PROPERTY_SCROLLBAR_HORIZ);
-            if (val != null) {
-                sb.setVisibleAmount(0);
-                sb.setValue(sb.getMaximum());
-                sb.setValue(Integer.valueOf(val));
-            }
-        }
         String caretPos = settings.getProperty(PROPERTY_CARET_POSITION);
         if (!Validator.isNullOrBlank(caretPos)) {
             try {
@@ -126,6 +128,26 @@ public class TextSnippet extends InfoSnippet {
                 // ignore incorrect caret positioning
             }
         }
+        SwingUtilities.invokeLater(() -> {
+            JScrollBar sb = getJScrollPane().getVerticalScrollBar();
+            if (sb != null) {
+                String val = settings.getProperty(PROPERTY_SCROLLBAR_VERT);
+                if (val != null) {
+                    sb.setVisibleAmount(0);
+                    sb.setValue(sb.getMaximum());
+                    sb.setValue(Integer.valueOf(val));
+                }
+            }
+            sb = getJScrollPane().getHorizontalScrollBar();
+            if (sb != null) {
+                String val = settings.getProperty(PROPERTY_SCROLLBAR_HORIZ);
+                if (val != null) {
+                    sb.setVisibleAmount(0);
+                    sb.setValue(sb.getMaximum());
+                    sb.setValue(Integer.valueOf(val));
+                }
+            }
+        });
         getJTextPane().getDocument().addUndoableEditListener(new UndoRedoManager(jTextPane));
         getJTextPane().getDocument().addDocumentListener(new DocumentListener(){
             public void changedUpdate(DocumentEvent e) {
@@ -169,21 +191,23 @@ public class TextSnippet extends InfoSnippet {
         if (jTextPane == null) {
             jTextPane = new JTextPane();
             jTextPane.setEditorKit(new HTMLEditorKit());
-            HTMLDocument doc = new HTMLDocument() {
-                private static final long serialVersionUID = 1L;
-                @Override
-                public Font getFont(AttributeSet attr) {
-                    Object family = attr.getAttribute(StyleConstants.FontFamily);
-                    Object size = attr.getAttribute(StyleConstants.FontSize);
-                    if (family == null && size == null) {
-                        return new Font("SansSerif", Font.PLAIN, currentFontSize);
+            if (!FrontEnd.isDefaultHTMLEditorKitRequired()) {
+                HTMLDocument doc = new HTMLDocument() {
+                    private static final long serialVersionUID = 1L;
+                    @Override
+                    public Font getFont(AttributeSet attr) {
+                        Object family = attr.getAttribute(StyleConstants.FontFamily);
+                        Object size = attr.getAttribute(StyleConstants.FontSize);
+                        if (family == null && size == null) {
+                            return new Font("SansSerif", Font.PLAIN, currentFontSize);
+                        }
+                        return super.getFont(attr);
                     }
-                    return super.getFont(attr);
-                }
-            };
-            doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
-            doc.setPreservesUnknownTags(false);
-            jTextPane.setStyledDocument(doc);
+                };
+                doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
+                doc.setPreservesUnknownTags(false);
+                jTextPane.setStyledDocument(doc);
+            }
             jTextPane.setEditable(false);
         }
         return jTextPane;
@@ -394,8 +418,7 @@ public class TextSnippet extends InfoSnippet {
      */
     @Override
     public void clearSearchResultsHighlight() throws Throwable {
-        Highlighter hl = getJTextPane().getHighlighter();
-        hl.removeAllHighlights();
+        getJTextPane().getHighlighter().removeAllHighlights();
     }
     
     private String getText() {
@@ -449,7 +472,7 @@ public class TextSnippet extends InfoSnippet {
      */
     @Override
     public Dimension getMinimumSize() {
-        return new Dimension(150, 100);
+        return new Dimension(240, 120);
     }
 
 }

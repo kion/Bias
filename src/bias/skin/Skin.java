@@ -51,11 +51,27 @@ public abstract class Skin implements AddOn {
      * Defines icons of controls.
      * Should be overridden to return control icons for concrete Skin.
      * By default returns null (no custom icons).
-
+     *
      * @return ControlIcons structure
      */
     public GUIIcons getUIIcons() {
         return null;
+    }
+    
+    
+    /**
+     * Defines whether default HTML Editor Kit is required by skin.
+     * 
+     * IMPORTANT: built-in CustomHTMLEditorKit is meant to be used 
+     * by components providing rich-text editing capabilities; 
+     * however, some skins might provide (and rely on) styling for default HTMLEditorKit, 
+     * in which case they should indicate so by overriding this method to return true, 
+     * which would disable CustomHTMLEditorKit usage (as it may break skin styling otherwise).
+     *
+     * @return false by default
+     */
+    public boolean isDefaultHTMLEditorKitRequired() {
+        return false;
     }
 
 }

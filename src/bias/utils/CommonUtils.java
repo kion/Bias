@@ -18,6 +18,12 @@ import bias.extension.Extension;
  * @author kion
  */
 public class CommonUtils {
+    
+    private static Boolean isLinux;
+
+    private static Boolean isMac;
+
+    private static Boolean isWindows;
 
     public static String getFailureDetails(Throwable t) {
         StringBuffer msg = new StringBuffer();
@@ -28,6 +34,10 @@ public class CommonUtils {
             t = t.getCause();
         }
         return msg.toString();
+    }
+
+    public static URL getResourceURL(String resourceName) {
+        return CommonUtils.class.getResource("/bias/res/" + resourceName);
     }
 
     public static URL getResourceURL(Class<? extends Extension> extensionClass, String resourceName) {
@@ -54,6 +64,32 @@ public class CommonUtils {
             t.printStackTrace(System.err);
         }
         return styles;
+    }
+    
+    public static boolean isLinux() {
+        if (isLinux == null) {
+            isLinux = osNameMatches("Linux");
+        }
+        return isLinux;
+    }
+    
+    public static boolean isMac() {
+        if (isMac == null) {
+            isMac = osNameMatches("Mac");
+        }
+        return isMac;
+    }
+    
+    public static boolean isWindows() {
+        if (isWindows == null) {
+            isWindows = osNameMatches("Windows");
+        }
+        return isWindows;
+    }
+    
+    private static boolean osNameMatches(String osId) {
+        String osName = System.getProperty("os.name");
+        return osName != null && osName.contains(osId);
     }
 
 }

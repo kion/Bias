@@ -16,7 +16,7 @@ import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 import javax.swing.text.Highlighter.HighlightPainter;
 
-import bias.extension.DashBoard.editor.HTMLEditorPanel;
+import bias.gui.editor.HTMLEditorPanel;
 import bias.utils.Validator;
 
 /**
@@ -41,7 +41,7 @@ public class HTMLSnippet extends InfoSnippet {
 
     public HTMLEditorPanel getEditorPanel() {
         if (editorPanel == null) {
-            editorPanel = new HTMLEditorPanel(getDataEntryID(), new String(getContent()));
+            editorPanel = new HTMLEditorPanel(getDataEntryID(), new String(getContent()), true);
         }
         return editorPanel;
     }
@@ -110,8 +110,7 @@ public class HTMLSnippet extends InfoSnippet {
      */
     @Override
     public void clearSearchResultsHighlight() throws Throwable {
-        Highlighter hl = getEditorPanel().getHighlighter();
-        hl.removeAllHighlights();
+        getEditorPanel().getHighlighter().removeAllHighlights();
     }
     
     /* (non-Javadoc)
@@ -119,7 +118,7 @@ public class HTMLSnippet extends InfoSnippet {
      */
     @Override
     public Dimension getMinimumSize() {
-        return new Dimension(290, 120);
+        return new Dimension(310, 120);
     }
 
 }

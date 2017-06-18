@@ -335,6 +335,9 @@ public class DashBoard extends EntryExtension {
     private JButton getConfigButton() {
         if (configButt == null) {
             configButt = new JButton(FrontEnd.getGUIIcons().getIconConfigureEntry());
+            configButt.setPreferredSize(new Dimension(32, 32));
+            configButt.setMinimumSize(new Dimension(32, 32));
+            configButt.setMaximumSize(new Dimension(32, 32));
             configButt.setText(Constants.EMPTY_STR);
             configButt.setToolTipText("Configure snippet");
             configButt.addActionListener(new ActionListener() {
@@ -356,7 +359,10 @@ public class DashBoard extends EntryExtension {
     private JComboBox getAddComboBox() {
         if (addCB == null) {
             addCB = new JComboBox();
-            addCB.addItem("Add...");
+            addCB.setPreferredSize(new Dimension(100, 32));
+            addCB.setMinimumSize(new Dimension(100, 32));
+            addCB.setMaximumSize(new Dimension(100, 32));
+            addCB.addItem(" + ");
             for (FrameType ft : FrameType.values()) {
                 addCB.addItem(ft.value());
             }
@@ -579,9 +585,9 @@ public class DashBoard extends EntryExtension {
             f.setName(frame.getType().value());
             f.setTitle(frame.getTitle());
         	final JToggleButton b = new JToggleButton();
-        	b.setPreferredSize(new Dimension(28, 28));
-        	b.setMinimumSize(new Dimension(28, 28));
-        	b.setMaximumSize(new Dimension(28, 28));
+        	b.setPreferredSize(new Dimension(32, 32));
+        	b.setMinimumSize(new Dimension(32, 32));
+        	b.setMaximumSize(new Dimension(32, 32));
         	b.setName(frame.getId());
         	if (!Validator.isNullOrBlank(frame.getTitle())) {
         		b.setToolTipText(frame.getTitle());

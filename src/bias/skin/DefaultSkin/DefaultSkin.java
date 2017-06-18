@@ -4,13 +4,15 @@
 package bias.skin.DefaultSkin;
 
 import java.awt.Component;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
-import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.UIManager.LookAndFeelInfo;
 
 import bias.gui.FrontEnd;
 import bias.skin.Skin;
@@ -22,89 +24,56 @@ import bias.utils.PropertiesUtils;
 
 public class DefaultSkin extends Skin {
 
-    private static final String PROPERTY_USE_OS_NATIVE_LAF = "UseOSNativeLAF";
-
-    private static final String PROPERTY_USE_NIMBUS_LAF = "UseNimbusLAF";
+    public static String DEFAULT_LAF;
     
-    private static final String NIMBUS_LAF_CLASS = "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel";
+    public static final String PROPERTY_LAF = "LookAndFeel";
+
+    public static final Map<String, String> SUPPORTED_LAFS = getSupportedLAFs();
     
-    private static final boolean isNimbusLAFAvailable = isNimbusLAFAvailable();
-
-	private static boolean isNimbusLAFAvailable() {
-		try {
-			Class.forName(NIMBUS_LAF_CLASS);
-			return true;
-		} catch (ClassNotFoundException e) {
-			return false;
-		}
-	}
-
+    public static Map<String, String> getSupportedLAFs() {
+        Map<String, String> lafs = new HashMap<>();
+        for (LookAndFeelInfo lafInfo : UIManager.getInstalledLookAndFeels()) {
+            if (UIManager.getCrossPlatformLookAndFeelClassName().equals(lafInfo.getClassName())) {
+                DEFAULT_LAF = lafInfo.getName();
+            }
+            lafs.put(lafInfo.getName(), lafInfo.getClassName());
+        }
+        return lafs;
+    };
+	
 	@Override
-	public void activate(byte[] settings) throws Throwable {
-        Properties config = PropertiesUtils.deserializeProperties(settings);
-        boolean useOSNativeLAF = Boolean.valueOf(config.getProperty(PROPERTY_USE_OS_NATIVE_LAF));
-        boolean useNimbusLAF = Boolean.valueOf(config.getProperty(PROPERTY_USE_NIMBUS_LAF));
-        if (useOSNativeLAF) {
-        	try { // try to set system look-&-feel
-    			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    		} catch (Throwable cause) {
-    			// ignore, default cross-platform look-&-feel will be used automatically 
-    		}
-        } else if (useNimbusLAF && isNimbusLAFAvailable) {
-        	try { // try to set Nimbus look-&-feel
-    			UIManager.setLookAndFeel(NIMBUS_LAF_CLASS);
-    		} catch (Throwable cause) {
-    			// ignore, default cross-platform look-&-feel will be used automatically 
-    		}
-        } else {
-        	try { // try to set cross-platform look-&-feel
-    			UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-    		} catch (Throwable cause) {
-    			// ignore
-    		}
+	public void activate(byte[] configBytes) throws Throwable {
+        Properties settings = PropertiesUtils.deserializeProperties(configBytes);
+        String laf = settings.getProperty(PROPERTY_LAF);
+        if (laf == null || !SUPPORTED_LAFS.containsKey(laf)) {
+            laf = DEFAULT_LAF;
+        }
+        try {
+            UIManager.setLookAndFeel(SUPPORTED_LAFS.get(laf));
+        } catch (Throwable cause) {
+            cause.printStackTrace(System.err);
+            // ignore, default cross-platform look-&-feel will be used 
         }
 	}
 	
 	@Override
-	public byte[] configure(byte[] settings) throws Throwable {
-        Properties newSettings = PropertiesUtils.deserializeProperties(settings);
-        Component[] cmps = new Component[isNimbusLAFAvailable ? 2 : 1];
-        final JCheckBox cb = new JCheckBox(getMessage("use.os.native.laf"));
-        cb.setSelected(Boolean.valueOf(newSettings.getProperty(PROPERTY_USE_OS_NATIVE_LAF)));
-        cmps[0] = cb;
-        final JCheckBox cb2;
-        if (isNimbusLAFAvailable) {
-            cb2 = new JCheckBox(getMessage("use.nimbus.laf"));
-            cb2.setSelected(Boolean.valueOf(newSettings.getProperty(PROPERTY_USE_NIMBUS_LAF)));
-            cmps[1] = cb2;
-            cb.addChangeListener(new ChangeListener() {
-    			@Override
-    			public void stateChanged(ChangeEvent e) {
-    				if (cb.isSelected()) {
-    					cb2.setSelected(false);
-    				}
-    			}
-    		});
-            cb2.addChangeListener(new ChangeListener() {
-    			@Override
-    			public void stateChanged(ChangeEvent e) {
-    				if (cb2.isSelected()) {
-    					cb.setSelected(false);
-    				}
-    			}
-    		});
-        } else {
-        	cb2 = null;
+	public byte[] configure(byte[] configBytes) throws Throwable {
+        Properties settings = PropertiesUtils.deserializeProperties(configBytes);
+        JLabel labelLAF = new JLabel("Look & Feel:");
+        JComboBox<String> cbLAF = new JComboBox<>();
+        for (String laf : SUPPORTED_LAFS.keySet()) {
+            cbLAF.addItem(laf);
         }
+        cbLAF.setSelectedItem(settings.getProperty(PROPERTY_LAF, DEFAULT_LAF));
+        Component[] cmps = new Component[]{ labelLAF, cbLAF };
         
         JOptionPane.showMessageDialog(
                 FrontEnd.getActiveWindow(), 
                 cmps, 
                 "Default Skin Settings", 
                 JOptionPane.INFORMATION_MESSAGE);
-        newSettings.setProperty(PROPERTY_USE_OS_NATIVE_LAF, "" + cb.isSelected());
-    	newSettings.setProperty(PROPERTY_USE_NIMBUS_LAF, "" + (isNimbusLAFAvailable && cb2.isSelected()));
-        return PropertiesUtils.serializeProperties(newSettings);
+        settings.setProperty(PROPERTY_LAF, "" + cbLAF.getSelectedItem());
+        return PropertiesUtils.serializeProperties(settings);
 	}
 	
 }

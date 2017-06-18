@@ -17,20 +17,24 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
-import bias.gui.FrontEnd;
-import bias.skin.Skin;
-import bias.utils.PropertiesUtils;
-
 import com.jtattoo.plaf.AbstractLookAndFeel;
 import com.jtattoo.plaf.acryl.AcrylLookAndFeel;
 import com.jtattoo.plaf.aero.AeroLookAndFeel;
 import com.jtattoo.plaf.aluminium.AluminiumLookAndFeel;
+import com.jtattoo.plaf.bernstein.BernsteinLookAndFeel;
 import com.jtattoo.plaf.fast.FastLookAndFeel;
+import com.jtattoo.plaf.graphite.GraphiteLookAndFeel;
 import com.jtattoo.plaf.hifi.HiFiLookAndFeel;
 import com.jtattoo.plaf.luna.LunaLookAndFeel;
+import com.jtattoo.plaf.mcwin.McWinLookAndFeel;
 import com.jtattoo.plaf.mint.MintLookAndFeel;
 import com.jtattoo.plaf.noire.NoireLookAndFeel;
 import com.jtattoo.plaf.smart.SmartLookAndFeel;
+import com.jtattoo.plaf.texture.TextureLookAndFeel;
+
+import bias.gui.FrontEnd;
+import bias.skin.Skin;
+import bias.utils.PropertiesUtils;
 
 /**
  * @author kion
@@ -41,15 +45,19 @@ public class JTattooSkin extends Skin {
     private static final String PROPERTY_THEME = "Theme";
 
     private static enum LAF {
-        Aluminium,
-        Aero,
-        Luna,
-        Mint,
         Acryl,
+        Aero,
+        Aluminium,
+        Bernstein,
+        Fast,
+        Graphite,
         HiFi,
+        Luna,
+        McWin,
+        Mint,
         Noire,
         Smart,
-        Fast
+        Texture
     };
     
     private static final String DEFAULT_THEME = "Small-Font";
@@ -126,46 +134,62 @@ public class JTattooSkin extends Skin {
         if (lafName != null) {
             LAF l = LAF.valueOf(lafName);
             switch(l) {
-            case Aluminium:
-                laf = new AluminiumLookAndFeel();
-                AluminiumLookAndFeel.setTheme(themeName);
+            case Acryl:
+                laf = new AcrylLookAndFeel();
+                AcrylLookAndFeel.setTheme(themeName);
                 break;
             case Aero:
                 laf = new AeroLookAndFeel();
                 AeroLookAndFeel.setTheme(themeName);
                 break;
-            case HiFi:
-                laf = new HiFiLookAndFeel();
-                HiFiLookAndFeel.setTheme(themeName);
+            case Aluminium:
+                laf = new AluminiumLookAndFeel();
+                AluminiumLookAndFeel.setTheme(themeName);
                 break;
-            case Noire:
-                laf = new NoireLookAndFeel();
-                NoireLookAndFeel.setTheme(themeName);
-                break;
-            case Acryl:
-                laf = new AcrylLookAndFeel();
-                AcrylLookAndFeel.setTheme(themeName);
-                break;
-            case Luna:
-                laf = new LunaLookAndFeel();
-                LunaLookAndFeel.setTheme(themeName);
-                break;
-            case Mint:
-                laf = new MintLookAndFeel();
-                MintLookAndFeel.setTheme(themeName);
-                break;
-            case Smart:
-                laf = new SmartLookAndFeel();
-                SmartLookAndFeel.setTheme(themeName);
+            case Bernstein:
+                laf = new BernsteinLookAndFeel();
+                BernsteinLookAndFeel.setTheme(themeName);
                 break;
             case Fast:
                 laf = new FastLookAndFeel();
                 FastLookAndFeel.setTheme(themeName);
                 break;
+            case Graphite:
+                laf = new GraphiteLookAndFeel();
+                GraphiteLookAndFeel.setTheme(themeName);
+                break;
+            case HiFi:
+                laf = new HiFiLookAndFeel();
+                HiFiLookAndFeel.setTheme(themeName);
+                break;
+            case Luna:
+                laf = new LunaLookAndFeel();
+                LunaLookAndFeel.setTheme(themeName);
+                break;
+            case McWin:
+                laf = new McWinLookAndFeel();
+                McWinLookAndFeel.setTheme(themeName);
+                break;
+            case Mint:
+                laf = new MintLookAndFeel();
+                MintLookAndFeel.setTheme(themeName);
+                break;
+            case Noire:
+                laf = new NoireLookAndFeel();
+                NoireLookAndFeel.setTheme(themeName);
+                break;
+            case Smart:
+                laf = new SmartLookAndFeel();
+                SmartLookAndFeel.setTheme(themeName);
+                break;
+            case Texture:
+                laf = new TextureLookAndFeel();
+                TextureLookAndFeel.setTheme(themeName);
+                break;
             }
         } else {
-            laf = new AluminiumLookAndFeel();
-            AluminiumLookAndFeel.setTheme(themeName);
+            laf = new TextureLookAndFeel();
+            TextureLookAndFeel.setTheme(themeName);
         }
         UIManager.setLookAndFeel(laf);
     }
@@ -179,7 +203,7 @@ public class JTattooSkin extends Skin {
         Collection<Component> components = new LinkedList<Component>();
         JLabel lTh = new JLabel(PROPERTY_LAF);
         components.add(lTh);
-        final JComboBox cb = new JComboBox();
+        final JComboBox<LAF> cb = new JComboBox<>();
         for (LAF l : LAF.values()) {
             cb.addItem(l);
         }
@@ -194,7 +218,7 @@ public class JTattooSkin extends Skin {
         components.add(cb);
         JLabel fl = new JLabel(PROPERTY_THEME);
         components.add(fl);
-        final JComboBox tcb = new JComboBox();
+        final JComboBox<String> tcb = new JComboBox<>();
         for (String theme : SHARED_THEMES) {
             tcb.addItem(theme);
         }
@@ -235,5 +259,5 @@ public class JTattooSkin extends Skin {
         newSettings.setProperty(PROPERTY_THEME, (String) tcb.getSelectedItem());
         return PropertiesUtils.serializeProperties(newSettings);
     }
-
+    
 }
