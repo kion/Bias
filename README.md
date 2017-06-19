@@ -2,7 +2,7 @@ Bias :: Versatile Information Manager / Organizer
 
 ☛ https://kion.github.io/Bias
 
-====================================
+![](https://kion.github.io/Bias/images/bias.png) 
 
 * open source — project code is available to everyone interested, meaning independent developers can get involved into add-ons development process
 
@@ -18,34 +18,37 @@ Bias :: Versatile Information Manager / Organizer
 
 * usable — Bias is designed to be as comfortable to work with as possible: when application is started, its state (saved upon previous session shutdown) is restored: size and position of the window on the screen, last active data entry, etc.
 
-====================================
+***
 
-**Download/Install**
+**DOWNLOAD / INSTALL**
 
 * If you're running Ubuntu, it's recommended to install Bias via PPA-repository using the following command:
 
 ```
 sudo add-apt-repository ppa:ki0n/desktop-apps && sudo apt-get update && sudo apt-get install bias
 ```
-* Otherwise, use one of the download options below.
+* Otherwise, use one of the download options below:
 
-&rarr; [DEB](https://github.com/kion/Bias/releases/download/v1.2.5/bias.deb) (Debian based Linux distros, e.g. Ubuntu)
+	* [DEB](https://github.com/kion/Bias/releases/download/v1.2.5/bias.deb) (Debian based Linux distros, e.g. Ubuntu)
 
-&rarr; [DMG](https://github.com/kion/Bias/releases/download/v1.2.5/bias.dmg) (Mac OS X)
+	* [DMG](https://github.com/kion/Bias/releases/download/v1.2.5/bias.dmg) (Mac OS X)
 
-&rarr; [APP.ZIP](https://github.com/kion/Bias/releases/download/v1.2.5/bias.app.zip) (Mac OS X)
+	* [APP.ZIP](https://github.com/kion/Bias/releases/download/v1.2.5/bias.app.zip) (Mac OS X)
 
-&rarr; [ZIP](https://github.com/kion/Bias/releases/download/v1.2.5/bias.zip) (Cross-Platform: Linux, Mac OS X, Windows, etc.)
+	* [ZIP](https://github.com/kion/Bias/releases/download/v1.2.5/bias.zip) (Cross-Platform: Linux, Mac OS X, Windows, etc.)
 
-NOTE: You must have Java installed to run Bias.
+_NOTE: You must have Java installed to run Bias.
 If you don't have it installed yet, you can download it from here: http://www.java.com/download
-(Installing from DEB or PPA resolves dependencies automatically though ;))
+(Installing from DEB or PPA resolves dependencies automatically though ;))_
 
-====================================
+
+***
 
 Bias is Free and Open Source software (distributed under the GNU General Public License).
-Source code is hosted on GitHub: https://github.com/kion/Bias
+Source code is hosted on GitHub &rarr; https://github.com/kion/Bias
 
-Need support or have suggestions? Get in touch with me on Twitter: http://twitter.com/kion ;)
+***
+
+Follow Bias author on Twitter &rarr; [@kion](http://twitter.com/kion)
 
 © http://kion.name
