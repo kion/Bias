@@ -2,7 +2,7 @@ Bias :: Versatile Information Manager / Organizer
 
 ☛ https://kion.github.io/Bias
 
-![](https://kion.github.io/Bias/images/bias.png) 
+![Bias screenshot](https://kion.github.io/Bias/images/bias.png)
 
 * open source — project code is available to everyone interested, meaning independent developers can get involved into add-ons development process
 
