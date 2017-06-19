@@ -30,8 +30,11 @@ sudo add-apt-repository ppa:ki0n/desktop-apps && sudo apt-get update && sudo apt
 * Otherwise, use one of the download options below.
 
 &rarr; [DEB](https://github.com/kion/Bias/releases/download/v1.2.5/bias.deb) (Debian based Linux distros, e.g. Ubuntu)
+
 &rarr; [DMG](https://github.com/kion/Bias/releases/download/v1.2.5/bias.dmg) (Mac OS X)
+
 &rarr; [APP.ZIP](https://github.com/kion/Bias/releases/download/v1.2.5/bias.app.zip) (Mac OS X)
+
 &rarr; [ZIP](https://github.com/kion/Bias/releases/download/v1.2.5/bias.zip) (Cross-Platform: Linux, Mac OS X, Windows, etc.)
 
 NOTE: You must have Java installed to run Bias.
