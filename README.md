@@ -24,22 +24,19 @@ Bias :: Versatile Information Manager / Organizer
 
 * If you're running Ubuntu, it's recommended to install Bias via PPA-repository using the following command:
 
-*sudo add-apt-repository ppa:ki0n/desktop-apps && sudo apt-get update && sudo apt-get install bias*
-
+```
+sudo add-apt-repository ppa:ki0n/desktop-apps && sudo apt-get update && sudo apt-get install bias
+```
 * Otherwise, use one of the download options below.
 
-* DEB (Debian based Linux distros, e.g. Ubuntu):
-  https://github.com/kion/Bias/releases/download/v1.2.5/bias.deb
-* DMG (Mac OS X):
-  https://github.com/kion/Bias/releases/download/v1.2.5/bias.dmg
-* APP.ZIP (Mac OS X):
-  https://github.com/kion/Bias/releases/download/v1.2.5/bias.app.zip
-* ZIP (Cross-Platform: Linux, Mac OS X, Windows, etc.):
-  https://github.com/kion/Bias/releases/download/v1.2.5/bias.zip
+&rarr; [DEB](https://github.com/kion/Bias/releases/download/v1.2.5/bias.deb) (Debian based Linux distros, e.g. Ubuntu)
+&rarr; [DMG](https://github.com/kion/Bias/releases/download/v1.2.5/bias.dmg) (Mac OS X)
+&rarr; [APP.ZIP](https://github.com/kion/Bias/releases/download/v1.2.5/bias.app.zip) (Mac OS X)
+&rarr; [ZIP](https://github.com/kion/Bias/releases/download/v1.2.5/bias.zip) (Cross-Platform: Linux, Mac OS X, Windows, etc.)
 
-_NOTE: You must have Java installed to run Bias.
+NOTE: You must have Java installed to run Bias.
 If you don't have it installed yet, you can download it from here: http://www.java.com/download
-(Installing from DEB or PPA resolves dependencies automatically though ;))_
+(Installing from DEB or PPA resolves dependencies automatically though ;))
 
 ====================================
 
