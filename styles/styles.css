@@ -20,8 +20,14 @@
   font-weight: bold;
 }
 
+#header #logo {
+  vertical-align: middle;
+}
+
 #header #appname {
+  font-size: 3em;
   color: #8F0000;
+  vertical-align: middle;
 }
 
 #header h2 {
@@ -89,14 +95,24 @@
   margin: 25px 0px;
 }
 
-.download {
-  color: #00008F;
+.download-header, .download-options {
   font-size: 1.5em;
+}
+
+.download-header {
+  color: #00008F;
   font-weight: bold;
 }
 
-.download a {
+.download-options {
+  text-align: left;
+  width: 78%;
+  margin: 0 auto;
+}
+
+.download-options a {
   color: #8F0000;
+  font-weight: bold;
   text-decoration: none;
 }
 
