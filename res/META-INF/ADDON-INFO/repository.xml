@@ -52,7 +52,7 @@
 	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="152897" url="https://github.com/kion/Bias/releases/download/v1.2.5/SimpleStats.jar">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-    <pack type="Skin" name="DarculaSkin" version="0.3.1" author="R. Kasianenko" description="Darcula Skin" file-size="86093" url="https://github.com/kion/Bias/releases/download/v1.2.5/DarculaSkin.jar">
+    <pack type="Skin" name="DarculaSkin" version="0.1.1" author="R. Kasianenko" description="Darcula Skin" file-size="86093" url="https://github.com/kion/Bias/releases/download/v1.2.5/DarculaSkin.jar">
         <dependency type="AppCore" name="AppCore" version="1.2.5"/>
         <dependency type="Library" name="Darcula" version="1.0.0" />
     </pack>
