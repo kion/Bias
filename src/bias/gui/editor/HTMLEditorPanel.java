@@ -75,7 +75,6 @@ import bias.gui.FrontEnd;
 import bias.gui.ImageFileChooser;
 import bias.gui.VisualEntryDescriptor;
 import bias.utils.AppManager;
-import bias.utils.CommonUtils;
 import bias.utils.FSUtils;
 import bias.utils.Validator;
 
@@ -86,27 +85,27 @@ public class HTMLEditorPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     
-    private static final ImageIcon ICON_ENTRY_LINK = new ImageIcon(CommonUtils.getResourceURL("editor/entry_link.png"));
+    private static final ImageIcon ICON_ENTRY_LINK = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/editor/entry_link.png"));
 
-    private static final ImageIcon ICON_URL_LINK = new ImageIcon(CommonUtils.getResourceURL("editor/url_link.png"));
+    private static final ImageIcon ICON_URL_LINK = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/editor/url_link.png"));
 
-    private static final ImageIcon ICON_CHECKBOX = new ImageIcon(CommonUtils.getResourceURL("editor/checkbox.png"));
+    private static final ImageIcon ICON_CHECKBOX = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/editor/checkbox.png"));
 
-    private static final ImageIcon ICON_IMAGE = new ImageIcon(CommonUtils.getResourceURL("editor/image.png"));
+    private static final ImageIcon ICON_IMAGE = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/editor/image.png"));
 
-    private static final ImageIcon ICON_COLOR = new ImageIcon(CommonUtils.getResourceURL("editor/color.png"));
+    private static final ImageIcon ICON_COLOR = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/editor/color.png"));
 
-    private static final ImageIcon ICON_TEXT_UNDERLINE = new ImageIcon(CommonUtils.getResourceURL("editor/text_underlined.png"));
+    private static final ImageIcon ICON_TEXT_UNDERLINE = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/editor/text_underlined.png"));
 
-    private static final ImageIcon ICON_TEXT_ITALIC = new ImageIcon(CommonUtils.getResourceURL("editor/text_italic.png"));
+    private static final ImageIcon ICON_TEXT_ITALIC = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/editor/text_italic.png"));
 
-    private static final ImageIcon ICON_TEXT_BOLD = new ImageIcon(CommonUtils.getResourceURL("editor/text_bold.png"));
+    private static final ImageIcon ICON_TEXT_BOLD = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/editor/text_bold.png"));
 
-    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(CommonUtils.getResourceURL("editor/switch_mode.png"));
+    private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/editor/switch_mode.png"));
 
-    private static final ImageIcon ICON_SAVE = new ImageIcon(CommonUtils.getResourceURL("editor/save.png"));
+    private static final ImageIcon ICON_SAVE = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/editor/save.png"));
 
-    private static final ImageIcon ICON_EDIT_CODE = new ImageIcon(CommonUtils.getResourceURL("editor/edit_code.png"));
+    private static final ImageIcon ICON_EDIT_CODE = new ImageIcon(HTMLEditorPanel.class.getResource("/bias/res/editor/edit_code.png"));
 
     private static final String HTML_PAGE_FILE_NAME_PATTERN = "(?i).+\\.(htm|html)$";
 

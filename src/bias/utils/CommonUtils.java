@@ -36,24 +36,16 @@ public class CommonUtils {
         return msg.toString();
     }
 
-    public static URL getResourceURL(String resourceName) {
-        return CommonUtils.class.getResource("/bias/res/" + resourceName);
-    }
-
     public static URL getResourceURL(Class<? extends Extension> extensionClass, String resourceName) {
-        return CommonUtils.class.getResource("/bias/res/" + extensionClass.getSimpleName() + "/" + resourceName);
+        return extensionClass.getResource("/bias/res/" + extensionClass.getSimpleName() + "/" + resourceName);
     }
 
     public static InputStream getResourceAsStream(Class<? extends Extension> extensionClass, String resourceName) {
-        return CommonUtils.class.getResourceAsStream("/bias/res/" + extensionClass.getSimpleName() + "/" + resourceName);
+        return extensionClass.getResourceAsStream("/bias/res/" + extensionClass.getSimpleName() + "/" + resourceName);
     }
     
-    public static final StyleSheet loadStyleSheet(String resourceName) {
-        return loadStyleSheet(null, resourceName);
-    }
-    
-    public static final StyleSheet loadStyleSheet(Class<? extends Extension> extensionClass, String resourceName) {
-        InputStream is = CommonUtils.class.getResourceAsStream("/bias/res/" + (extensionClass != null ? extensionClass.getSimpleName() + "/" : "") + resourceName);
+    public static final StyleSheet loadStyleSheet(Class<?> cls, String resourceName) {
+        InputStream is = cls.getResourceAsStream("/bias/res/" + resourceName);
         StyleSheet styles = new StyleSheet();
         try {
             Reader r = new BufferedReader(new InputStreamReader(is, "ISO-8859-1"));

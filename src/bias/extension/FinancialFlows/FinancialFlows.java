@@ -400,7 +400,7 @@ public class FinancialFlows extends EntryExtension {
 
     private static JAXBContext getContext() throws JAXBException {
         if (context == null) {
-            context = JAXBContext.newInstance(ObjectFactory.class.getPackage().getName());
+            context = JAXBContext.newInstance(ObjectFactory.class.getPackage().getName(), ObjectFactory.class.getClassLoader());
         }
         return context;
     }

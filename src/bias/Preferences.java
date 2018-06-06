@@ -3,21 +3,6 @@
  */
 package bias;
 
-import java.io.StringWriter;
-import java.lang.reflect.Field;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collection;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import bias.annotation.Preference;
 import bias.annotation.PreferenceChoice;
 import bias.annotation.PreferenceEnable;
@@ -26,9 +11,23 @@ import bias.core.BackEnd;
 import bias.gui.FrontEnd;
 import bias.i18n.I18nService;
 import bias.utils.Validator;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author kion
@@ -115,10 +114,12 @@ public class Preferences {
 				}
 			}
 		}
-		OutputFormat of = new OutputFormat();
+		Transformer transformer = TransformerFactory.newInstance().newTransformer();
 		StringWriter sw = new StringWriter();
-		new XMLSerializer(sw, of).serialize(prefs);
-		return sw.getBuffer().toString().getBytes();
+		StreamResult result = new StreamResult(sw);
+		DOMSource source = new DOMSource(prefs);
+		transformer.transform(source, result);
+		return result.getWriter().toString().getBytes();
 	}
 
 	/* VALIDATION CLASSES SECTION */

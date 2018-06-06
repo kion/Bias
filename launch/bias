@@ -1,0 +1,41 @@
+#!/bin/bash
+
+function updateapp {
+	cp /opt/bias/release-notes.txt $HOME/bias
+	cp /opt/bias/bias.sh $HOME/bias
+	cp /opt/bias/appcore.jar $HOME/bias
+	cp /opt/bias/bias.jar $HOME/bias
+	rm -rf $HOME/bias/lib
+	cp -r /opt/bias/lib $HOME/bias/lib
+	rm -rf $HOME/bias/addons/ADDON-INFO
+	cp -r /opt/bias/addons/ADDON-INFO $HOME/bias/addons/ADDON-INFO
+	for addon in /opt/bias/addons/*.jar
+	do
+		fbase=${addon##*/}
+		fname=${fbase##*.%.*}
+		if [ -e "$HOME/bias/addons/$fname" ]; then
+			cp $addon "$HOME/bias/addons/update_$fname"
+		fi
+	done
+}
+
+if [ ! -d "$HOME/bias" ]; then
+	cp -r /opt/bias $HOME
+else
+	if [ ! -e "$HOME/bias/release-notes.txt" ]; then
+		updateapp
+	else
+		CURR_RN_FSIZE=$(stat -c%s "$HOME/bias/release-notes.txt")
+		LAST_RN_FSIZE=$(stat -c%s "/opt/bias/release-notes.txt")
+		if [ "$CURR_RN_FSIZE" != "$LAST_RN_FSIZE" ]; then
+			updateapp
+		fi
+	fi
+fi
+
+BIAS_LAUNCH_SCRIPT="$HOME/bias/bias.sh"
+if [ -f $BIAS_LAUNCH_SCRIPT ]; then
+    ($BIAS_LAUNCH_SCRIPT $*)
+else
+    cd $HOME/bias && java -jar bias.jar $*
+fi

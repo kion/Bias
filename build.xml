@@ -18,33 +18,71 @@
          ================================= -->
 	<property file="build.properties" />
 
-	<!-- ================================= 
+	<!-- =================================
+          target: Compile
+         ================================= -->
+	<target name="Compile">
+		<delete dir="bin/bias" />
+		<javac srcdir="src"
+			   destdir="bin"
+			   debug="on"
+			   source="11">
+			<classpath>
+				<fileset dir="lib" includes="**/*.jar"/>
+			</classpath>
+		</javac>
+		<copydir src="src/bias/res" dest="bin/bias/res" />
+		<copydir src="src/bias/i18n" dest="bin/bias/i18n" />
+	</target>
+
+	<!-- =================================
           target: RunApp              
          ================================= -->
 	<target name="RunApp">
-		<exec dir="build" command="java -jar bias.jar" />
+		<exec dir="build/app" executable="/bin/bash">
+			<arg value="bias.sh"/>
+		</exec>
 	</target>
 
-	<!-- ================================= 
+	<!-- =================================
+          target: DebugApp
+         ================================= -->
+	<target name="DebugApp">
+		<exec dir="build/app" executable="/bin/bash">
+			<arg value="bias-debug.sh"/>
+		</exec>
+	</target>
+
+	<!-- =================================
           target: BuildAndRunApp              
          ================================= -->
 	<target name="BuildAndRunApp" depends="BuildApp,RunApp" />
 
-	<!-- ================================= 
+	<!-- =================================
+          target: BuildAndDebugApp
+         ================================= -->
+	<target name="BuildAndDebugApp" depends="BuildApp,DebugApp" />
+
+	<!-- =================================
           target: BuildApp              
          ================================= -->
-	<target name="BuildApp" description="Bias JAR">
+	<target name="BuildApp" description="Bias JAR" depends="Compile">
 		<antcall target="Build_AppLauncher_Package" />
 		<antcall target="Build_AppCore_Package" />
+		<delete dir="build/app/lib" />
+		<copy todir="build/app/lib">
+			<fileset dir="lib" includes="javax.activation*.jar" />
+			<fileset dir="lib" includes="jaxb*.jar" />
+		</copy>
 	</target>
 
 	<!-- ================================= 
           target: Build_AppLauncher_Package
          ================================= -->
 	<target name="Build_AppLauncher_Package" description="AppLauncher Package">
-		<jar basedir="bin" destfile="build/bias.jar" includes="bias/Bias** bias/Splash** bias/utils/FSUtils** bias/core/AddOnInfo** bias/core/pack/** bias/res/load.gif bias/res/app_icon.png bias/res/app_icon_small.png">
+		<jar basedir="bin" destfile="build/app/bias.jar" includes="bias/Bias** bias/Splash** bias/utils/Downloader** bias/utils/NetUtils** bias/utils/FSUtils** bias/utils/ArchUtils** bias/utils/CommonUtils** bias/core/AddOnInfo** bias/core/pack/** bias/res/load.gif bias/res/app_icon.png bias/res/app_icon_small.png">
 			<manifest>
-				<attribute name="Main-Class" value="bias.Bias" />
+                <attribute name="Main-Class" value="bias.Bias" />
 				<attribute name="AppLauncher-Version" value="${AppLauncher_Version}" />
 			</manifest>
 		</jar>	
@@ -54,12 +92,7 @@
           target: Build_AppCore_Package
          ================================= -->
 	<target name="Build_AppCore_Package" description="AppCore Package">
-		<copy todir="bin/bias/gui">
-			<fileset dir="build/osx/classes">
-			    <include name="OSXDockHandler**"/>
-			</fileset>
-		</copy>
-		<jar basedir="bin" destfile="build/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/skin/DefaultSkin/*.* bias/res/** bias/utils/** bias/i18n/**" excludes="bias/Bias** bias/res/load.gif">
+		<jar basedir="bin" destfile="build/app/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/skin/DefaultSkin/*.* bias/res/*.* bias/res/editor/*.* bias/utils/** bias/i18n/**" excludes="bias/Bias** bias/res/load.gif">
 			<manifest>
 				<attribute name="AppCore-Version" value="${AppCore_Version}" />
 			</manifest>
@@ -71,7 +104,7 @@
          ================================= -->
 	<target name="Build_Extension_FTPTransfer" description="FTPTransfer Add-On">
 		<delete dir="build" includes="FTPTransfer*.jar" />
-		<jar basedir="bin" destfile="build/FTPTransfer.jar" includes="bias/extension/FTPTransfer/**">
+		<jar basedir="bin" destfile="build/app/addons/FTPTransfer.ext.jar" includes="bias/extension/FTPTransfer/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/FTPTransfer/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="FTPTransfer" />
@@ -88,7 +121,7 @@
          ================================= -->
 	<target name="Build_Extension_SMBTransfer" description="SMBTransfer Add-On">
 		<delete dir="build" includes="SMBTransfer*.jar" />
-		<jar basedir="bin" destfile="build/SMBTransfer.jar" includes="bias/extension/SMBTransfer/**">
+		<jar basedir="bin" destfile="build/app/addons/SMBTransfer.ext.jar" includes="bias/extension/SMBTransfer/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/SMBTransfer/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SMBTransfer" />
@@ -106,7 +139,7 @@
          ================================= -->
 	<target name="Build_Extension_CodeSnippets" description="CodeSnippets Add-On">
 		<delete dir="build" includes="CodeSnippets*.jar" />
-		<jar basedir="bin" destfile="build/CodeSnippets.jar" includes="bias/extension/CodeSnippets/** bias/res/CodeSnippets/**">
+		<jar basedir="bin" destfile="build/app/addons/CodeSnippets.ext.jar" includes="bias/extension/CodeSnippets/** bias/res/CodeSnippets/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/CodeSnippets/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="CodeSnippets" />
@@ -124,7 +157,7 @@
          ================================= -->
 	<target name="Build_Extension_FilePack" description="FilePack Add-On">
 		<delete dir="build" includes="FilePack*.jar" />
-		<jar basedir="bin" destfile="build/FilePack.jar" includes="bias/extension/FilePack/** bias/res/FilePack/**">
+		<jar basedir="bin" destfile="build/app/addons/FilePack.ext.jar" includes="bias/extension/FilePack/** bias/res/FilePack/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/FilePack/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="FilePack" />
@@ -141,7 +174,7 @@
          ================================= -->
 	<target name="Build_Extension_FinancialFlows" description="FinancialFlows Add-On">
 		<delete dir="build" includes="FinancialFlows*.jar" />
-		<jar basedir="bin" destfile="build/FinancialFlows.jar" includes="bias/extension/FinancialFlows/** bias/res/FinancialFlows/**">
+		<jar basedir="bin" destfile="build/app/addons/FinancialFlows.ext.jar" includes="bias/extension/FinancialFlows/** bias/res/FinancialFlows/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/FinancialFlows/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="FinancialFlows" />
@@ -159,7 +192,7 @@
          ================================= -->
 	<target name="Build_Extension_Graffiti" description="Graffiti Add-On">
 		<delete dir="build" includes="Graffiti*.jar" />
-		<jar basedir="bin" destfile="build/Graffiti.jar" includes="bias/extension/Graffiti/** bias/res/Graffiti/**">
+		<jar basedir="bin" destfile="build/app/addons/Graffiti.ext.jar" includes="bias/extension/Graffiti/** bias/res/Graffiti/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/Graffiti/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="Graffiti" />
@@ -176,7 +209,7 @@
          ================================= -->
 	<target name="Build_Extension_HTMLPage" description="HTMLPage Add-On">
 		<delete dir="build" includes="HTMLPage*.jar" />
-		<jar basedir="bin" destfile="build/HTMLPage.jar" includes="bias/extension/HTMLPage/** bias/res/HTMLPage/**">
+		<jar basedir="bin" destfile="build/app/addons/HTMLPage.ext.jar" includes="bias/extension/HTMLPage/** bias/res/HTMLPage/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/HTMLPage/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="HTMLPage" />
@@ -193,7 +226,7 @@
          ================================= -->
 	<target name="Build_Extension_PlainText" description="PlainText Add-On">
 		<delete dir="build" includes="PlainText*.jar" />
-		<jar basedir="bin" destfile="build/PlainText.jar" includes="bias/extension/PlainText/** bias/res/PlainText/**">
+		<jar basedir="bin" destfile="build/app/addons/PlainText.ext.jar" includes="bias/extension/PlainText/** bias/res/PlainText/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/PlainText/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="PlainText" />
@@ -210,7 +243,7 @@
          ================================= -->
 	<target name="Build_Extension_ToDoList" description="ToDoList Add-On">
 		<delete dir="build" includes="ToDoList*.jar" />
-		<jar basedir="bin" destfile="build/ToDoList.jar" includes="bias/extension/ToDoList/** bias/res/ToDoList/**">
+		<jar basedir="bin" destfile="build/app/addons/ToDoList.ext.jar" includes="bias/extension/ToDoList/** bias/res/ToDoList/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/ToDoList/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="ToDoList" />
@@ -227,7 +260,7 @@
          ================================= -->
 	<target name="Build_Extension_SimpleSearch" description="SimpleSearch Add-On">
 		<delete dir="build" includes="SimpleSearch*.jar" />
-		<jar basedir="bin" destfile="build/SimpleSearch.jar" includes="bias/extension/SimpleSearch/** bias/res/SimpleSearch/**">
+		<jar basedir="bin" destfile="build/app/addons/SimpleSearch.ext.jar" includes="bias/extension/SimpleSearch/** bias/res/SimpleSearch/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/SimpleSearch/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SimpleSearch" />
@@ -244,7 +277,7 @@
          ================================= -->
 	<target name="Build_Extension_SimpleStats" description="SimpleStats Add-On">
 		<delete dir="build" includes="SimpleStats*.jar" />
-		<jar basedir="bin" destfile="build/SimpleStats.jar" includes="bias/extension/SimpleStats/** bias/res/SimpleStats/**">
+		<jar basedir="bin" destfile="build/app/addons/SimpleStats.ext.jar" includes="bias/extension/SimpleStats/** bias/res/SimpleStats/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/SimpleStats/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SimpleStats" />
@@ -261,7 +294,7 @@
          ================================= -->
 	<target name="Build_Extension_MainEntry" description="MainEntry Add-On">
 		<delete dir="build" includes="MainEntry*.jar" />
-		<jar basedir="bin" destfile="build/MainEntry.jar" includes="bias/extension/MainEntry/** bias/res/MainEntry/** bias/i18n/MainEntry/**">
+		<jar basedir="bin" destfile="build/app/addons/MainEntry.ext.jar" includes="bias/extension/MainEntry/** bias/res/MainEntry/** bias/i18n/MainEntry/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/MainEntry/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="MainEntry" />
@@ -278,7 +311,7 @@
          ================================= -->
 	<target name="Build_Extension_Synchronizer" description="Synchronizer Add-On">
 		<delete dir="build" includes="Synchronizer*.jar" />
-		<jar basedir="bin" destfile="build/Synchronizer.jar" includes="bias/extension/Synchronizer/** bias/res/Synchronizer/**">
+		<jar basedir="bin" destfile="build/app/addons/Synchronizer.ext.jar" includes="bias/extension/Synchronizer/** bias/res/Synchronizer/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/Synchronizer/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="Synchronizer" />
@@ -295,7 +328,7 @@
          ================================= -->
 	<target name="Build_Extension_DashBoard" description="DashBoard Add-On">
 		<delete dir="build" includes="DashBoard*.jar" />
-		<jar basedir="bin" destfile="build/DashBoard.jar" includes="bias/extension/DashBoard/** bias/res/DashBoard/**">
+		<jar basedir="bin" destfile="build/app/addons/DashBoard.ext.jar" includes="bias/extension/DashBoard/** bias/res/DashBoard/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/DashBoard/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="DashBoard" />
@@ -312,7 +345,7 @@
          ================================= -->
 	<target name="Build_Extension_Reminder" description="Reminder Add-On">
 		<delete dir="build" includes="Reminder*.jar" />
-		<jar basedir="bin" destfile="build/Reminder.jar" includes="bias/extension/Reminder/** bias/res/Reminder/** bias/i18n/Reminder/**">
+		<jar basedir="bin" destfile="build/app/addons/Reminder.ext.jar" includes="bias/extension/Reminder/** bias/res/Reminder/** bias/i18n/Reminder/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/Reminder/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="Reminder" />
@@ -330,7 +363,7 @@
          ================================= -->
 	<target name="Build_Skin_JGLooksSkin" description="JGoodies Looks Skin">
 		<delete dir="build" includes="JGLooksSkin*.jar" />
-		<jar basedir="bin" destfile="build/JGLooksSkin.jar" includes="bias/skin/JGLooksSkin/** bias/res/JGLooksSkin/**">
+		<jar basedir="bin" destfile="build/app/addons/JGLooksSkin.skin.jar" includes="bias/skin/JGLooksSkin/** bias/res/JGLooksSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/JGLooksSkin/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="JGLooksSkin" />
@@ -348,7 +381,7 @@
          ================================= -->
 	<target name="Build_Skin_PgsSkin" description="Pgs Skin">
 		<delete dir="build" includes="PgsSkin*.jar" />
-		<jar basedir="bin" destfile="build/PgsSkin.jar" includes="bias/skin/PgsSkin/** bias/res/PgsSkin/**">
+		<jar basedir="bin" destfile="build/app/addons/PgsSkin.skin.jar" includes="bias/skin/PgsSkin/** bias/res/PgsSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/PgsSkin/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="PgsSkin" />
@@ -366,7 +399,7 @@
          ================================= -->
 	<target name="Build_Skin_LipstikSkin" description="Lipstik Skin">
 		<delete dir="build" includes="LipstikSkin*.jar" />
-		<jar basedir="bin" destfile="build/LipstikSkin.jar" includes="bias/skin/LipstikSkin/** bias/res/LipstikSkin/**">
+		<jar basedir="bin" destfile="build/app/addons/LipstikSkin.skin.jar" includes="bias/skin/LipstikSkin/** bias/res/LipstikSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/LipstikSkin/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="LipstikSkin" />
@@ -384,7 +417,7 @@
          ================================= -->
 	<target name="Build_Skin_SquarenessSkin" description="Squareness Skin">
 		<delete dir="build" includes="SquarenessSkin*.jar" />
-		<jar basedir="bin" destfile="build/SquarenessSkin.jar" includes="bias/skin/SquarenessSkin/** bias/res/SquarenessSkin/**">
+		<jar basedir="bin" destfile="build/app/addons/SquarenessSkin.skin.jar" includes="bias/skin/SquarenessSkin/** bias/res/SquarenessSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/SquarenessSkin/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SquarenessSkin" />
@@ -402,7 +435,7 @@
          ================================= -->
 	<target name="Build_Skin_TinySkin" description="Tiny Skin">
 		<delete dir="build" includes="TinySkin*.jar" />
-		<jar basedir="bin" destfile="build/TinySkin.jar" includes="bias/skin/TinySkin/** bias/res/TinySkin/**">
+		<jar basedir="bin" destfile="build/app/addons/TinySkin.skin.jar" includes="bias/skin/TinySkin/** bias/res/TinySkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/TinySkin/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="TinySkin" />
@@ -420,7 +453,7 @@
          ================================= -->
 	<target name="Build_Skin_LiquidSkin" description="Liquid Skin">
 		<delete dir="build" includes="LiquidSkin*.jar" />
-		<jar basedir="bin" destfile="build/LiquidSkin.jar" includes="bias/skin/LiquidSkin/** bias/res/LiquidSkin/**">
+		<jar basedir="bin" destfile="build/app/addons/LiquidSkin.skin.jar" includes="bias/skin/LiquidSkin/** bias/res/LiquidSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/LiquidSkin/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="LiquidSkin" />
@@ -438,7 +471,7 @@
          ================================= -->
 	<target name="Build_Skin_InfoNodeSkin" description="InfoNode Skin">
 		<delete dir="build" includes="InfoNodeSkin*.jar" />
-		<jar basedir="bin" destfile="build/InfoNodeSkin.jar" includes="bias/skin/InfoNodeSkin/** bias/res/InfoNodeSkin/**">
+		<jar basedir="bin" destfile="build/app/addons/InfoNodeSkin.skin.jar" includes="bias/skin/InfoNodeSkin/** bias/res/InfoNodeSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/InfoNodeSkin/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="InfoNodeSkin" />
@@ -456,7 +489,7 @@
          ================================= -->
 	<target name="Build_Skin_SubstanceSkin" description="Substance Skin">
 		<delete dir="build" includes="SubstanceSkin*.jar" />
-		<jar basedir="bin" destfile="build/SubstanceSkin.jar" includes="bias/skin/SubstanceSkin/** bias/res/SubstanceSkin/**">
+		<jar basedir="bin" destfile="build/app/addons/SubstanceSkin.skin.jar" includes="bias/skin/SubstanceSkin/** bias/res/SubstanceSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/SubstanceSkin/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="SubstanceSkin" />
@@ -474,7 +507,7 @@
          ================================= -->
 	<target name="Build_Skin_JTattooSkin" description="JTattoo Skin">
 		<delete dir="build" includes="JTattooSkin*.jar" />
-		<jar basedir="bin" destfile="build/JTattooSkin.jar" includes="bias/skin/JTattooSkin/** bias/res/JTattooSkin/**">
+		<jar basedir="bin" destfile="build/app/addons/JTattooSkin.skin.jar" includes="bias/skin/JTattooSkin/** bias/res/JTattooSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/JTattooSkin/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="JTattooSkin" />
@@ -492,7 +525,7 @@
          ================================= -->
 	<target name="Build_Skin_DarculaSkin" description="Darcula Skin">
 		<delete dir="build" includes="DarculaSkin*.jar" />
-		<jar basedir="bin" destfile="build/DarculaSkin.jar" includes="bias/skin/DarculaSkin/** bias/res/DarculaSkin/**">
+		<jar basedir="bin" destfile="build/app/addons/DarculaSkin.skin.jar" includes="bias/skin/DarculaSkin/** bias/res/DarculaSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/DarculaSkin/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="DarculaSkin" />
@@ -510,7 +543,7 @@
          ================================= -->
 	<target name="Build_Skin_WebLaFSkin" description="WebLaF Skin">
 		<delete dir="build" includes="WebLaFSkin*.jar" />
-		<jar basedir="bin" destfile="build/WebLaFSkin.jar" includes="bias/skin/WebLaFSkin/** bias/res/WebLaFSkin/**">
+		<jar basedir="bin" destfile="build/app/addons/WebLaFSkin.skin.jar" includes="bias/skin/WebLaFSkin/** bias/res/WebLaFSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/WebLaFSkin/**" />
 			<manifest>
 				<attribute name="Bias-Add-On-Name" value="WebLaFSkin" />

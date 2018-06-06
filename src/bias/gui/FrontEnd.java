@@ -3,36 +3,44 @@
  */
 package bias.gui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.ComponentOrientation;
-import java.awt.Cursor;
-import java.awt.Dialog;
+import bias.Constants;
+import bias.Constants.ADDON_STATUS;
+import bias.Constants.TRANSFER_TYPE;
+import bias.Preferences;
+import bias.Preferences.PreferenceChoiceProvider;
+import bias.Preferences.PreferenceValidator;
+import bias.Splash;
+import bias.annotation.*;
+import bias.core.*;
+import bias.core.pack.*;
+import bias.event.EventListener;
+import bias.event.*;
+import bias.extension.*;
+import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
+import bias.gui.editor.CustomHTMLEditorKit;
+import bias.i18n.I18nService;
+import bias.skin.GUIIcons;
+import bias.skin.Skin;
+import bias.utils.*;
+import bias.utils.Downloader.DownloadListener;
+
+import javax.swing.Timer;
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+import javax.swing.event.*;
+import javax.swing.table.*;
+import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.tree.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.awt.*;
 import java.awt.Dialog.ModalityType;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridLayout;
-import java.awt.SystemTray;
-import java.awt.TrayIcon;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.InputEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.desktop.AppReopenedListener;
+import java.awt.desktop.QuitResponse;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
@@ -43,156 +51,13 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Stack;
-import java.util.UUID;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.DefaultListModel;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JSpinner;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.JTextPane;
-import javax.swing.JToolBar;
-import javax.swing.JTree;
-import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
-import javax.swing.RowFilter;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.UIManager;
-import javax.swing.border.LineBorder;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
-import javax.swing.text.DefaultEditorKit;
-import javax.swing.text.JTextComponent;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
-import bias.Constants;
-import bias.Constants.ADDON_STATUS;
-import bias.Constants.TRANSFER_TYPE;
-import bias.Preferences;
-import bias.Preferences.PreferenceChoiceProvider;
-import bias.Preferences.PreferenceValidator;
-import bias.Splash;
-import bias.annotation.Preference;
-import bias.annotation.PreferenceChoice;
-import bias.annotation.PreferenceEnable;
-import bias.annotation.PreferenceProtect;
-import bias.annotation.PreferenceValidation;
-import bias.core.AddOnInfo;
-import bias.core.BackEnd;
-import bias.core.DataCategory;
-import bias.core.DataEntry;
-import bias.core.ExportConfiguration;
-import bias.core.ImportConfiguration;
-import bias.core.Recognizable;
-import bias.core.ToolData;
-import bias.core.TransferData;
-import bias.core.pack.Dependency;
-import bias.core.pack.ObjectFactory;
-import bias.core.pack.Pack;
-import bias.core.pack.PackType;
-import bias.core.pack.Repository;
-import bias.event.AfterSaveEventListener;
-import bias.event.BeforeExitEventListener;
-import bias.event.BeforeSaveEventListener;
-import bias.event.EventListener;
-import bias.event.ExitEvent;
-import bias.event.HideAppWindowEvent;
-import bias.event.HideAppWindowEventListener;
-import bias.event.SaveEvent;
-import bias.event.StartUpEvent;
-import bias.event.StartUpEventListener;
-import bias.event.TransferEvent;
-import bias.event.TransferEventListener;
-import bias.extension.EntryExtension;
-import bias.extension.Extension;
-import bias.extension.ExtensionFactory;
-import bias.extension.MissingExtensionInformer;
-import bias.extension.ObservableTransferExtension;
-import bias.extension.ToolExtension;
-import bias.extension.ToolRepresentation;
-import bias.extension.TransferExtension;
-import bias.extension.TransferProgressListener;
-import bias.gui.VisualEntryDescriptor.ENTRY_TYPE;
-import bias.gui.editor.CustomHTMLEditorKit;
-import bias.i18n.I18nService;
-import bias.skin.GUIIcons;
-import bias.skin.Skin;
-import bias.utils.AppManager;
-import bias.utils.ArchUtils;
-import bias.utils.CommonUtils;
-import bias.utils.Downloader;
-import bias.utils.Downloader.DownloadListener;
-import bias.utils.FSUtils;
-import bias.utils.FormatUtils;
-import bias.utils.PropertiesUtils;
-import bias.utils.Validator;
-import bias.utils.VersionComparator;
+import java.util.concurrent.*;
 
 
 /**
@@ -442,7 +307,7 @@ public class FrontEnd extends JFrame {
 
     private static Unmarshaller getUnmarshaller() throws JAXBException {
         if (unmarshaller == null) {
-            unmarshaller = JAXBContext.newInstance(ObjectFactory.class.getPackage().getName()).createUnmarshaller();
+            unmarshaller = JAXBContext.newInstance(ObjectFactory.class.getPackage().getName(), ObjectFactory.class.getClassLoader()).createUnmarshaller();
         }
         return unmarshaller;
     }
@@ -631,7 +496,7 @@ public class FrontEnd extends JFrame {
      */
     private void initialize() {
         try {
-            this.setDefaultCloseOperation(HIDE_ON_CLOSE);
+            this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
             this.setMinimumSize(new Dimension(640, 480));
             this.setTitle(getMessage("app.title") + " [ " + getMessage("version") + Constants.BLANK_STR + BackEnd.getInstance().getAppCoreVersion() + " ]");
             this.setIconImage(ICON_APP.getImage());
@@ -642,7 +507,6 @@ public class FrontEnd extends JFrame {
             applyGlobalSettings();
 
             this.addWindowListener(new WindowAdapter() {
-            	
                 @Override
                 public void windowClosing(WindowEvent e) {
                     try {
@@ -660,15 +524,12 @@ public class FrontEnd extends JFrame {
                         displayErrorMessage(t);
                     }
                 }
-                
             });
-            
-            try {
-                OSXDockHandler.handle(this);
-            } catch (Throwable cause) {
-                // ignore OS X specific functionality on other platforms
+
+            if (Desktop.getDesktop().isSupported(Desktop.Action.APP_EVENT_REOPENED)) {
+                Desktop.getDesktop().addAppEventListener((AppReopenedListener) evt -> this.setVisible(true));
             }
-            
+
         	if (new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_LAUNCHER_FILE_NAME).exists()) {
         		Splash.hideSplash();
                 JOptionPane.showMessageDialog(
@@ -704,7 +565,7 @@ public class FrontEnd extends JFrame {
         }
         fireStartUpEvent(new StartUpEvent(!instance.isVisible()));
     }
-    
+
     private static FrontEnd initInstance() {
         if (instance == null) {
             preInit();
@@ -866,8 +727,10 @@ public class FrontEnd extends JFrame {
                                 hideSysTrayIcon();
                             }
                             instance.setVisible(!instance.isVisible());
-                            if (!instance.isVisible()) {
-                            	System.gc();
+                            if (instance.isVisible()) {
+                                instance.requestFocusInWindow();
+                            } else {
+                                System.gc();
                             }
                         }
                     });
@@ -1031,7 +894,6 @@ public class FrontEnd extends JFrame {
         return defaultHTMLEditorKitRequired;
     }
     
-    @SuppressWarnings("unchecked")
     private static void activateSkin() {
         String skin = config.getProperty(Constants.PROPERTY_SKIN);
         if (skin == null) {
@@ -1039,8 +901,8 @@ public class FrontEnd extends JFrame {
         }
         try {
             String skinFullClassName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin + Constants.PACKAGE_PATH_SEPARATOR + skin;
-            Class<Skin> skinClass = (Class<Skin>) Class.forName(skinFullClassName);
-            Skin skinInstance = skinClass.newInstance();
+            Class<Skin> skinClass = ClassLoaderUtil.loadAddOnClass(skinFullClassName);
+            Skin skinInstance = skinClass.getDeclaredConstructor().newInstance();
             byte[] skinSettings = BackEnd.getInstance().loadAddOnSettings(skinFullClassName, PackType.SKIN);
             skinInstance.activate(skinSettings);
             JFrame.setDefaultLookAndFeelDecorated(false);
@@ -1123,8 +985,8 @@ public class FrontEnd extends JFrame {
     private boolean configureSkin(String skin) throws Throwable {
         boolean skinChanged = false;
         if (skin != null) {
-            Class<Skin> skinClass = (Class<Skin>) Class.forName(skin);
-            Skin skinInstance = skinClass.newInstance();
+            Class<Skin> skinClass = ClassLoaderUtil.loadAddOnClass(skin);
+            Skin skinInstance = skinClass.getDeclaredConstructor().newInstance();
             byte[] skinSettings = BackEnd.getInstance().loadAddOnSettings(skin, PackType.SKIN);
             byte[] settings = skinInstance.configure(skinSettings);
             // store if differs from stored version
@@ -1141,7 +1003,7 @@ public class FrontEnd extends JFrame {
         if (extension != null) {
             String extName = extension.replaceFirst(Constants.PACKAGE_PREFIX_PATTERN, Constants.EMPTY_STR);
             try {
-                Class<? extends Extension> extensionClass = (Class<? extends Extension>) Class.forName(extension);
+                Class<? extends Extension> extensionClass = ClassLoaderUtil.loadAddOnClass(extName, PackType.EXTENSION);
                 Extension extensionInstance = null;
                 byte[] extSettings = BackEnd.getInstance().loadAddOnSettings(extension, PackType.EXTENSION);
                 byte[] settings = null;
@@ -3219,11 +3081,11 @@ public class FrontEnd extends JFrame {
                     displayErrorMessage(Constants.HTML_PREFIX + getMessage("password.confirmation.failure") + Constants.HTML_SUFFIX);
                 } else {
                     try {
-                        BackEnd.setPassword(currPass, newPass);
+                        BackEnd.getInstance().setPassword(currPass, newPass);
                         displayMessage(getMessage("change.password.success"));
                         displayStatusBarMessage(getMessage("password.changed"));
-                    } catch (Exception ex) {
-                        displayErrorMessage(Constants.HTML_PREFIX + getMessage("change.password.failure") + "<br/>" + ex.getMessage() + Constants.HTML_SUFFIX, ex);
+                    } catch (Throwable cause) {
+                        displayErrorMessage(Constants.HTML_PREFIX + getMessage("change.password.failure") + "<br/>" + cause.getMessage() + Constants.HTML_SUFFIX, cause);
                     }
                 }
             }
@@ -4501,11 +4363,11 @@ public class FrontEnd extends JFrame {
     }
     
     @SuppressWarnings("unchecked")
-    private void selectDescenantEntries(DefaultMutableTreeNode node, Collection<UUID> selectedEntries) {
+    private void selectDescenantEntries(TreeNode node, Collection<UUID> selectedEntries) {
         if (node.getChildCount() != 0) {
-            Enumeration<DefaultMutableTreeNode> childs = node.children();
+            Enumeration<? extends TreeNode> childs = node.children();
             while (childs.hasMoreElements()) {
-                DefaultMutableTreeNode childNode = childs.nextElement();
+                TreeNode childNode = childs.nextElement();
                 Recognizable childEntry = nodeEntries.get(childNode);
                 if (childEntry != null) {
                     selectedEntries.add(childEntry.getId());
@@ -4594,13 +4456,12 @@ public class FrontEnd extends JFrame {
         }
     }
     
-    @SuppressWarnings("unchecked")
-    private void expandTreeNodes(JTree tree, DefaultMutableTreeNode node) {
+    private void expandTreeNodes(JTree tree, TreeNode node) {
         if (node.getChildCount() != 0) {
-            tree.expandPath(new TreePath(node.getPath()));
-            Enumeration<DefaultMutableTreeNode> e = node.children();
+            tree.expandPath(new TreePath(node));
+            Enumeration<? extends TreeNode> e = node.children();
             while (e.hasMoreElements()) {
-                DefaultMutableTreeNode n = e.nextElement();
+                TreeNode n = e.nextElement();
                 expandTreeNodes(tree, n);
             }
         }
@@ -4881,7 +4742,7 @@ public class FrontEnd extends JFrame {
                                     prefControl = new JComboBox();
                                     PreferenceChoice choiceAnn = field.getAnnotation(PreferenceChoice.class);
                                     ((JComboBox) prefControl).setEditable(choiceAnn.isEditable());
-                                    PreferenceChoiceProvider choiceProvider = choiceAnn.providerClass().newInstance();
+                                    PreferenceChoiceProvider choiceProvider = choiceAnn.providerClass().getDeclaredConstructor().newInstance();
                                     for (String choice : choiceProvider.getPreferenceChoices()) {
                                         ((JComboBox) prefControl).addItem(choice);
                                     }
@@ -4894,7 +4755,7 @@ public class FrontEnd extends JFrame {
                                 PreferenceValidation prefValAnn = field.getAnnotation(PreferenceValidation.class);
                                 if (prefValAnn != null) {
                                     // TODO [P3] optimization: there should be only one instance of certain validation class
-                                    final PreferenceValidator<String> validator = (PreferenceValidator<String>) prefValAnn.validationClass().newInstance();
+                                    final PreferenceValidator<String> validator = (PreferenceValidator<String>) prefValAnn.validationClass().getDeclaredConstructor().newInstance();
                                     final JTextComponent textControl = ((JTextComponent) prefControl);
                                     final Color normal = textControl.getForeground();
                                     textControl.addCaretListener(new CaretListener(){
@@ -5163,12 +5024,10 @@ public class FrontEnd extends JFrame {
                 if (statuses != null && statuses.get(skin) != null) {
                     status = statuses.get(skin);
                 } else {
-                    String fullSkinName = Constants.SKIN_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + skin.getName() 
-                                            + Constants.PACKAGE_PATH_SEPARATOR + skin.getName();
                     // skin class load test
-                    Class<Skin> skinClass = (Class<Skin>) Class.forName(fullSkinName);
+                    Class<Skin> skinClass = ClassLoaderUtil.loadAddOnClass(skin.getName(), PackType.SKIN);
                     // skin instantiation test
-                    skinClass.newInstance();
+                    skinClass.getDeclaredConstructor().newInstance();
                     status = Constants.ADDON_STATUS.Loaded;
                 }
             } catch (Throwable t) {
@@ -6333,7 +6192,7 @@ public class FrontEnd extends JFrame {
             }
             URL addonsListURL = new URL(Constants.REPOSITORY_BASE_URL + Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME + "?timestamp=" + new Date().getTime());
             final File file = new File(Constants.TMP_DIR, Constants.ONLINE_REPOSITORY_DESCRIPTOR_FILE_NAME);
-            Downloader d = Downloader.createSingleFileDownloader(addonsListURL, file, Preferences.getInstance().preferredTimeOut);
+            Downloader d = Downloader.createSingleFileDownloader(addonsListURL, file, BackEnd.getProxy(Proxy.Type.HTTP), Preferences.getInstance().preferredTimeOut);
             displayProcessNotification(getMessage("info.message.refreshing.online.packages.list"), true);
             d.setDownloadListener(new DownloadListener(){
                 @Override
@@ -6427,7 +6286,7 @@ public class FrontEnd extends JFrame {
             }
             final Long totalSize = new Long(tSize);
             if (!urlFileMap.isEmpty()) {
-                Downloader d = Downloader.createMultipleFilesDownloader(urlFileMap, Preferences.getInstance().preferredTimeOut);
+                Downloader d = Downloader.createMultipleFilesDownloader(urlFileMap, BackEnd.getProxy(Proxy.Type.HTTP), Preferences.getInstance().preferredTimeOut);
                 displayProcessNotification(getMessage("info.message.downloading.and.installing.packages"), true);
                 d.setDownloadListener(new DownloadListener(){
                     private StringBuffer sb = new StringBuffer();
@@ -6788,7 +6647,7 @@ public class FrontEnd extends JFrame {
         if (detailsPane == null) {
             detailsTextPane = new JTextPane();
             detailsTextPane.setEditable(false);
-            detailsTextPane.setEditorKit(new CustomHTMLEditorKit(CommonUtils.loadStyleSheet("helpInfo.css")));
+            detailsTextPane.setEditorKit(new CustomHTMLEditorKit(CommonUtils.loadStyleSheet(FrontEnd.class, "helpInfo.css")));
             detailsTextPane.addHyperlinkListener(new HyperlinkListener() {
                 public void hyperlinkUpdate(HyperlinkEvent e) {
                     if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {

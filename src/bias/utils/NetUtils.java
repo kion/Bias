@@ -10,8 +10,6 @@ import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
 
-import bias.core.BackEnd;
-
 /**
  * @author kion
  */
@@ -23,8 +21,8 @@ public class NetUtils {
         // hidden default constructor
     }
     
-    public static URLConnection openConnection(URL url, int timeout) throws IOException {
-        URLConnection conn = url.openConnection(BackEnd.getProxy(Proxy.Type.HTTP));
+    public static URLConnection openConnection(URL url, Proxy proxy, int timeout) throws IOException {
+        URLConnection conn = proxy != null ? url.openConnection(proxy) : url.openConnection();
         conn.setConnectTimeout(timeout * 1000);
         conn.setReadTimeout(timeout * 1000);
         conn.addRequestProperty("User-Agent", USER_AGENT);

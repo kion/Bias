@@ -108,9 +108,10 @@ public class Constants {
     public static final String DEFAULT_ENCODING = "UTF-8";
     
     public static final String DIGEST_ALGORITHM = "MD5";
-    public static final String CIPHER_ALGORITHM = "PBEWithMD5AndDES";
-    
-    public static final byte[] CIPHER_SALT = "kn+kv=lv".getBytes();
+    public static final String PROPERTY_CIPHER_ALGORITHM = "CIPHER_ALGORITHM";
+    public static final String CIPHER_ALGORITHM_AES_CBC_PKCS5_PADDING = "AES/CBC/PKCS5Padding";
+    public static final String CIPHER_ALGORITHM_PBE_MD5_DES = "PBEWithMD5AndDES";
+    public static final byte[] CIPHER_ALGORITHM_PBE_MD5_DES_SALT = "kn+kv=lv".getBytes();
     
     public static final String EMPTY_STR = "";
     public static final String BLANK_STR = " ";
@@ -147,6 +148,7 @@ public class Constants {
     public static final String DATA_FILE_SUFFIX = ".data";
     public static final String TOOL_DATA_FILE_SUFFIX = ".tooldata";
     public static final String FILE_SUFFIX_PATTERN = "\\..*$";
+    public static final String CLASS_FILE_SUFFIX = ".class";
     public static final String EXTENSION_JAR_FILE_SUFFIX = ".ext.jar";
     public static final String SKIN_JAR_FILE_SUFFIX = ".skin.jar";
     public static final String LIB_JAR_FILE_SUFFIX = ".lib.jar";

@@ -15,6 +15,7 @@ import bias.core.AddOnInfo;
 import bias.core.BackEnd;
 import bias.core.DataEntry;
 import bias.core.pack.PackType;
+import bias.utils.ClassLoaderUtil;
 
 /**
  * @author kion
@@ -70,11 +71,8 @@ public class ExtensionFactory {
         return (TransferExtension) newExtension(clazz, null, null, settings);
     }
     
-    @SuppressWarnings("unchecked")
     public static EntryExtension newEntryExtension(DataEntry dataEntry) throws Throwable {
-        String type = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR 
-                        + dataEntry.getType() + Constants.PACKAGE_PATH_SEPARATOR + dataEntry.getType();
-        Class<EntryExtension> entryClass = (Class<EntryExtension>) Class.forName(type);
+        Class<EntryExtension> entryClass = ClassLoaderUtil.loadAddOnClass(dataEntry.getType(), PackType.EXTENSION);
         EntryExtension extension = (EntryExtension) newExtension(entryClass, dataEntry.getId(), dataEntry.getData(), dataEntry.getSettings());
         return extension;
     }
@@ -91,9 +89,7 @@ public class ExtensionFactory {
             for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
                     if (statuses == null || statuses.get(extension) == null) { // skip new installed/imported extensions
-                        String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
-                                                + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
-                        Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
+                        Class<? extends Extension> extClass = ClassLoaderUtil.loadAddOnClass(extension.getName(), PackType.EXTENSION);
                         if (EntryExtension.class.isAssignableFrom(extClass)) {
                             // extension instantiation test
                             newEntryExtension(extClass);
@@ -122,11 +118,11 @@ public class ExtensionFactory {
             for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
                     if (statuses == null || statuses.get(extension) == null) { // skip new installed/imported extensions
-                        String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
-                                                + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
-                        Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
+                        Class<Extension> extClass = ClassLoaderUtil.loadAddOnClass(extension.getName(), PackType.EXTENSION);
                         if (ToolExtension.class.isAssignableFrom(extClass)) {
                             // extension instantiation test
+                            String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
+                                                    + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
                             ToolExtension ext = newToolExtension(extClass, BackEnd.getInstance().getToolID(fullExtName), BackEnd.getInstance().getToolData(fullExtName));
                             // extension is ok, add it to the list
                             String annotationStr = extension.getName() + (extension.getDescription() != null ? " [" + extension.getDescription() + "]" : Constants.EMPTY_STR);
@@ -157,9 +153,7 @@ public class ExtensionFactory {
             for (AddOnInfo extension : BackEnd.getInstance().getAddOns(PackType.EXTENSION)) {
                 try {
                     if (statuses == null || statuses.get(extension) == null) { // skip new installed/imported extensions
-                        String fullExtName = Constants.EXTENSION_PACKAGE_NAME + Constants.PACKAGE_PATH_SEPARATOR + extension.getName() 
-                                                + Constants.PACKAGE_PATH_SEPARATOR + extension.getName();
-                        Class<Extension> extClass = (Class<Extension>) Class.forName(fullExtName);
+                        Class<Extension> extClass = ClassLoaderUtil.loadAddOnClass(extension.getName(), PackType.EXTENSION);
                         if (TransferExtension.class.isAssignableFrom(extClass)) {
                             // extension instantiation test
                             ext = newTransferExtension(extClass);

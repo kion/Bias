@@ -3,12 +3,8 @@
  */
 package bias.utils;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Iterator;
@@ -33,18 +29,19 @@ public class Downloader {
     private static AtomicInteger totalActiveDownloadsCount = new AtomicInteger(0);
     private static volatile boolean cancelAll = false;
     private boolean cancel = false;
+    private boolean hasFailures = false;
     private DownloadListener listener;
     private Thread thread = null;
-    
-    public static Downloader createSingleFileDownloader(final URL url, final File file, final int timeout) {
-        return new Downloader(url, file, timeout);
+
+    public static Downloader createSingleFileDownloader(final URL url, final File file, Proxy proxy, final int timeout) {
+        return new Downloader(url, file, proxy, timeout);
     }
 
-    public static Downloader createMultipleFilesDownloader(final Map<URL, File> urlFileMap, final int timeout) {
-        return new Downloader(urlFileMap, timeout);
+    public static Downloader createMultipleFilesDownloader(final Map<URL, File> urlFileMap, Proxy proxy, final int timeout) {
+        return new Downloader(urlFileMap, proxy, timeout);
     }
     
-    private Downloader(final URL url, final File file, final int timeout) {
+    private Downloader(final URL url, final File file, Proxy proxy, final int timeout) {
         thread = new Thread(new Runnable(){
             public void run() {
                 if (listener != null) {
@@ -58,7 +55,7 @@ public class Downloader {
                 InputStream  in = null;
                 Throwable failure = null;
                 try {
-                    URLConnection conn = NetUtils.openConnection(url, timeout);
+                    URLConnection conn = NetUtils.openConnection(url, proxy, timeout);
                     in = conn.getInputStream();
                     if (!file.exists()) {
                         file.createNewFile();
@@ -75,6 +72,7 @@ public class Downloader {
                         }
                     }
                 } catch (Throwable t) {
+                    hasFailures = true;
                     failure = t;
                 } finally {
                     try {
@@ -102,7 +100,7 @@ public class Downloader {
         });
     }
     
-    private Downloader(final Map<URL, File> urlFileMap, final int timeout) {
+    private Downloader(final Map<URL, File> urlFileMap, Proxy proxy, final int timeout) {
         thread = new Thread(new Runnable(){
             public void run() {
                 incrementTotalActiveDownloadsCount();
@@ -125,7 +123,7 @@ public class Downloader {
                     InputStream  in = null;
                     Throwable failure = null;
                     try {
-                        URLConnection conn = NetUtils.openConnection(url, timeout);
+                        URLConnection conn = NetUtils.openConnection(url, proxy, timeout);
                         in = conn.getInputStream();
                         if (!file.exists()) {
                             file.createNewFile();
@@ -186,7 +184,7 @@ public class Downloader {
             thread.start();
         }
     }
-    
+
     public void cancel() {
         cancel = true;
     }
@@ -196,7 +194,11 @@ public class Downloader {
             cancelAll = true;
         }
     }
-    
+
+    public boolean hasFailures() {
+        return hasFailures;
+    }
+
     private static void incrementTotalActiveDownloadsCount() {
         totalActiveDownloadsCount.incrementAndGet();
     }

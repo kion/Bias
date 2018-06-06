@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Bias
+Comment=Versatile Information Manager / Organizer
+Exec=/usr/bin/bias
+Icon=/usr/share/icons/bias/app-icon.png
+Terminal=false
+Type=Application
+Categories=Utility;
+StartupNotify=true

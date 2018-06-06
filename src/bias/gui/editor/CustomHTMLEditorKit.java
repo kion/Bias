@@ -16,7 +16,7 @@ import bias.utils.CommonUtils;
 public class CustomHTMLEditorKit extends HTMLEditorKit {
     private static final long serialVersionUID = 1L;
     
-    private static final StyleSheet DEFAULT_CSS = CommonUtils.loadStyleSheet("editor/styles.css");
+    private static final StyleSheet DEFAULT_CSS = CommonUtils.loadStyleSheet(CustomHTMLEditorKit.class, "editor/styles.css");
 
     private StyleSheet customCSS;
 

@@ -15,7 +15,7 @@ public class App {
     
     public static void launch(String password) throws Throwable {
         // pass password to back-end
-        BackEnd.setPassword(null, password);
+        BackEnd.getInstance().setPassword(password);
         // display front-end
         SwingUtilities.invokeLater(() -> {
             FrontEnd.startup();

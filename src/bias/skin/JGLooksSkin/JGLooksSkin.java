@@ -16,11 +16,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
-import bias.gui.FrontEnd;
-import bias.skin.Skin;
-import bias.skin.GUIIcons;
-import bias.utils.PropertiesUtils;
-
 import com.jgoodies.looks.FontPolicies;
 import com.jgoodies.looks.FontPolicy;
 import com.jgoodies.looks.FontSet;
@@ -47,6 +42,11 @@ import com.jgoodies.looks.plastic.theme.SkyKrupp;
 import com.jgoodies.looks.plastic.theme.SkyPink;
 import com.jgoodies.looks.plastic.theme.SkyRed;
 import com.jgoodies.looks.plastic.theme.SkyYellow;
+
+import bias.gui.FrontEnd;
+import bias.skin.GUIIcons;
+import bias.skin.Skin;
+import bias.utils.PropertiesUtils;
 
 /**
  * @author kion
@@ -171,7 +171,7 @@ public class JGLooksSkin extends Skin {
         if (themeName != null) {
             for (Class<?> themeClass : THEMES) {
                 if (themeClass.getSimpleName().equals(themeName)) {
-                    theme = (PlasticTheme) themeClass.newInstance();
+                    theme = (PlasticTheme) themeClass.getDeclaredConstructor().newInstance();
                 }
             }
         }

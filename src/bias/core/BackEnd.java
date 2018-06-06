@@ -3,59 +3,6 @@
  */
 package bias.core;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.SocketAddress;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-import java.util.jar.Manifest;
-
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
-import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
-
 import bias.Constants;
 import bias.Constants.ADDON_STATUS;
 import bias.Constants.TRANSFER_TYPE;
@@ -66,12 +13,33 @@ import bias.core.pack.PackType;
 import bias.extension.ExtensionFactory;
 import bias.extension.ToolExtension;
 import bias.extension.TransferExtension;
-import bias.utils.ArchUtils;
-import bias.utils.FSUtils;
-import bias.utils.FormatUtils;
-import bias.utils.PropertiesUtils;
-import bias.utils.Validator;
-import bias.utils.VersionComparator;
+import bias.utils.*;
+import org.w3c.dom.*;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.net.*;
+import java.security.MessageDigest;
+import java.security.spec.KeySpec;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 /**
  * @author kion
@@ -248,16 +216,7 @@ public class BackEnd {
     };
     
     private BackEnd() {
-        try {
-            CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, password);
-            CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, password);
-        } catch (Exception e) {
-            System.err.println(
-                    "Encryption/decryption ciphers initialization failed!" + Constants.NEW_LINE +
-                    "This is most likely some system environment related problem." + Constants.NEW_LINE +
-                    "Bias can not proceed further... :(");
-            System.exit(1);
-        }
+        // hidden default constructor
 	}
 	
 	public static BackEnd getInstance() {
@@ -267,37 +226,97 @@ public class BackEnd {
 		return instance;
 	}
 	
-	public static void setPassword(String currentPassword, String newPassword) throws Exception {
-        if ((password != null ? currentPassword != null : currentPassword == null) && newPassword != null) {
-            if ((password == null && currentPassword == null) || currentPassword.equals(password)) {
-                password = newPassword;
-                // changing encryption cipher
-                CIPHER_ENCRYPT = initCipher(Cipher.ENCRYPT_MODE, password);
-                if (currentPassword != null) {
-                    reencryptData();
-                    reencryptAttachments();
-                    reencryptSettings();
-                }
-                // now decryption cipher can be changed as well
-                CIPHER_DECRYPT = initCipher(Cipher.DECRYPT_MODE, password);
-                if (instance != null) {
-                    // need to store data now to fully apply new password
-                    instance.store();
-                }
+    public void setPassword(String password) throws Throwable {
+        try {
+            BackEnd.password = password;
+            Properties cfg = new Properties();
+            loadConfig(Constants.GLOBAL_CONFIG_FILE, cfg);
+            String cipherAlgorithm = cfg.getProperty(Constants.PROPERTY_CIPHER_ALGORITHM);
+            if (Constants.DATA_DIR.list().length > 0 && cipherAlgorithm == null) {
+                // if user data exists and no algorithm is defined in config,
+                // it means app is using the legacy/outdated one;
+                // in this case, need to re-encrypt everything using newer, more secure algorithm
+                // - this can be triggered by initializing the decrypt cipher using legacy algorithm, 
+                // and then force-setting the current password, which will re-encrypt everything 
+                // and then re-initialize both encryption and decryption ciphers with the new algorithm
+                CIPHER_DECRYPT = initCipher(Constants.CIPHER_ALGORITHM_PBE_MD5_DES, Cipher.DECRYPT_MODE, password);
+                setPassword(password, password);
             } else {
-                throw new Exception("Current password is wrong!");
+                CIPHER_ENCRYPT = initCipher(Constants.CIPHER_ALGORITHM_AES_CBC_PKCS5_PADDING, Cipher.ENCRYPT_MODE, password);
+                CIPHER_DECRYPT = initCipher(Constants.CIPHER_ALGORITHM_AES_CBC_PKCS5_PADDING, Cipher.DECRYPT_MODE, password);
             }
+            if (cipherAlgorithm == null) {
+                // update config to specify new algorithm to be used in the future app runs
+                loadConfig(Constants.GLOBAL_CONFIG_FILE, config);
+                config.setProperty(Constants.PROPERTY_CIPHER_ALGORITHM, Constants.CIPHER_ALGORITHM_AES_CBC_PKCS5_PADDING);
+                storeConfig(config, Constants.GLOBAL_CONFIG_FILE);
+            }
+        } catch (Exception e) {
+            System.err.println(
+                    "Encryption/decryption ciphers initialization failed!" + Constants.NEW_LINE +
+                    "This is most likely some system environment related problem." + Constants.NEW_LINE +
+                    "Bias can not proceed further... :(");
+            e.printStackTrace(System.err);
+            System.exit(1);
         }
     }
     
-    private static Cipher initCipher(int mode, String password) throws Exception {
+	public void setPassword(String currentPassword, String newPassword) throws Throwable {
+        if (currentPassword.equals(password)) {
+            password = newPassword;
+            if (data == null) {
+                load();
+            }
+            // changing encryption cipher
+            CIPHER_ENCRYPT = initCipher(Constants.CIPHER_ALGORITHM_AES_CBC_PKCS5_PADDING, Cipher.ENCRYPT_MODE, password);
+            reencryptData();
+            reencryptAttachments();
+            reencryptSettings();
+            // now decryption cipher can be changed as well
+            CIPHER_DECRYPT = initCipher(Constants.CIPHER_ALGORITHM_AES_CBC_PKCS5_PADDING, Cipher.DECRYPT_MODE, password);
+            // need to store data now to fully apply new password
+            store();
+        } else {
+            throw new Exception("Current password is wrong!");
+        }
+    }
+    
+    private static Cipher initCipher(String cipherAlgorithm, int mode, String password) throws Exception {
+        Cipher cipher = null;
         password = URLEncoder.encode(password, Constants.DEFAULT_ENCODING);
-        PBEParameterSpec paramSpec = new PBEParameterSpec(Constants.CIPHER_SALT, 20);
-        PBEKeySpec keySpec = new PBEKeySpec(password != null ? password.toCharArray() : new char[]{});
-        SecretKeyFactory kf = SecretKeyFactory.getInstance(Constants.CIPHER_ALGORITHM);
-        SecretKey key = kf.generateSecret(keySpec);
-        Cipher cipher = Cipher.getInstance(Constants.CIPHER_ALGORITHM);
-        cipher.init(mode, key, paramSpec);
+        if (Constants.CIPHER_ALGORITHM_PBE_MD5_DES.equals(cipherAlgorithm)) {
+            // generate key (based on password and salt)
+            KeySpec keySpec = new PBEKeySpec(password != null ? password.toCharArray() : new char[]{});
+            SecretKeyFactory kf = SecretKeyFactory.getInstance(Constants.CIPHER_ALGORITHM_PBE_MD5_DES);
+            SecretKey key = kf.generateSecret(keySpec);
+            
+            // param spec
+            PBEParameterSpec paramSpec = new PBEParameterSpec(Constants.CIPHER_ALGORITHM_PBE_MD5_DES_SALT, 20);
+            
+            // init cipher
+            cipher = Cipher.getInstance(Constants.CIPHER_ALGORITHM_PBE_MD5_DES);
+            cipher.init(mode, key, paramSpec);
+        } else if (Constants.CIPHER_ALGORITHM_AES_CBC_PKCS5_PADDING.equals(cipherAlgorithm)) {
+            // generate salt and initialization vector based on the password hash
+            MessageDigest md = MessageDigest.getInstance(Constants.DIGEST_ALGORITHM);
+            md.update(password.getBytes());
+            String hash = FormatUtils.formatBytesAsHexString(md.digest());
+            byte[] salt = hash.substring(0, 16).getBytes();
+            byte[] iv = hash.substring(16, 32).getBytes();
+            
+            // derive key (from password and salt)
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            KeySpec keyspec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
+            SecretKey tmp = factory.generateSecret(keyspec);
+            SecretKey key = new SecretKeySpec(tmp.getEncoded(), "AES");
+            
+            // param spec
+            IvParameterSpec paramSpec = new IvParameterSpec(iv);
+            
+            // init cipher
+            cipher = Cipher.getInstance(Constants.CIPHER_ALGORITHM_AES_CBC_PKCS5_PADDING);
+            cipher.init(mode, key, paramSpec);
+        }
         return cipher;
     }
 
@@ -339,10 +358,10 @@ public class BackEnd {
                 toolsData.put(tool, new ToolData(id, decryptedData));
             }
         }
-        // preferences file
-        loadPreferences();
         // global config file
         loadConfig(Constants.GLOBAL_CONFIG_FILE, config);
+        // preferences file
+        loadPreferences();
         // metadata file
         File metadataFile = new File(Constants.DATA_DIR, Constants.METADATA_FILE_NAME);
         if (metadataFile.exists()) {
@@ -512,7 +531,7 @@ public class BackEnd {
             File importDir, 
             Collection<UUID> existingIDs, 
             ImportConfiguration config) throws Throwable {
-        Cipher cipher = initCipher(Cipher.DECRYPT_MODE, config.getPassword());
+        Cipher cipher = initCipher(Constants.CIPHER_ALGORITHM_AES_CBC_PKCS5_PADDING, Cipher.DECRYPT_MODE, config.getPassword());
         Map<String,DataEntry> importedIdentifiedData = new LinkedHashMap<String, DataEntry>();
         Document metadata = null;
         byte[] data = null;
@@ -728,7 +747,7 @@ public class BackEnd {
         }
     }
     
-    private void loadConfig(String configFileName, Properties props) throws Exception {
+    private static void loadConfig(String configFileName, Properties props) throws Exception {
         File configFile = new File(Constants.CONFIG_DIR, configFileName);
         if (configFile.exists()) {
             byte[] data = FSUtils.readFile(configFile);
@@ -736,6 +755,10 @@ public class BackEnd {
             props.load(bais);
             bais.close();
         }
+    }
+    
+    private static void storeConfig(Properties configProps, String configFileName) throws Exception {
+        configProps.store(new FileOutputStream(new File(Constants.CONFIG_DIR, configFileName)), null);
     }
 
     private DataCategory parseMetadata(Document metadata, Map<String, DataEntry> identifiedData, Collection<UUID> existingIDs, boolean overwrite) throws Exception {
@@ -837,7 +860,7 @@ public class BackEnd {
     public TransferData exportData(
             DataCategory data,
             ExportConfiguration config) throws Throwable {
-        Cipher cipher = initCipher(Cipher.ENCRYPT_MODE, config.getPassword());
+        Cipher cipher = initCipher(Constants.CIPHER_ALGORITHM_AES_CBC_PKCS5_PADDING, Cipher.ENCRYPT_MODE, config.getPassword());
         String exportID = UUID.randomUUID().toString();
         File exportDir = new File(Constants.TMP_DIR, exportID);
         FSUtils.delete(exportDir);
@@ -1056,7 +1079,7 @@ public class BackEnd {
         // icons
         storeIconsList();
         // global config file
-        config.store(new FileOutputStream(new File(Constants.CONFIG_DIR, Constants.GLOBAL_CONFIG_FILE)), null);
+        storeConfig(config, Constants.GLOBAL_CONFIG_FILE);
         // preferences file
         storePreferences();
     }
@@ -1392,9 +1415,11 @@ public class BackEnd {
     }
     
     private void storeMetadata(Document metadata, File file, Cipher cipher) throws Exception {
-        OutputFormat of = new OutputFormat();
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
         StringWriter sw = new StringWriter();
-        new XMLSerializer(sw, of).serialize(metadata);
+        StreamResult result = new StreamResult(sw);
+        DOMSource source = new DOMSource(metadata);
+        transformer.transform(source, result);
         byte[] encryptedData = useCipher(cipher, sw.getBuffer().toString().getBytes());
         FSUtils.writeFile(file, encryptedData);
     }
