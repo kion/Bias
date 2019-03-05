@@ -139,7 +139,6 @@ confirmation.delete.message == Are you sure you want to delete active entry?
 confirmation.uninstall.title == Uninstall confirmation
 confirmation.uninstall.message == Are you sure you want to uninstall selected add-ons?
 confirmation.disable.note == Note: this dialog can be disabled via preferences option<br/>
-info.message.launcher.updated == Important! Bias launcher has been updated.<br/>Though, such update can not be applied automatically.<br/>To apply it, you have to:<ul><li>close Bias application</li><li>open <i>$</i> directory</li><li>rename <i>update_bias.jar</i> file to <i>bias.jar</i> (overwriting old <i>bias.jar</i> file)</li><li>start Bias again</li></ul>
 info.message.auto.update.complete == Automatic update complete
 auto.update.disable.note == Note: automatic update can be disabled<br/>via preferences option 'Enable automatic update'
 auto.update.adjust.interval.note == Note:update interval can be adjusted via preferences option 'Automatic update interval'

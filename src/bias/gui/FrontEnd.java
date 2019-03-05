@@ -39,7 +39,6 @@ import javax.xml.bind.Unmarshaller;
 import java.awt.*;
 import java.awt.Dialog.ModalityType;
 import java.awt.desktop.AppReopenedListener;
-import java.awt.desktop.QuitResponse;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -532,12 +531,6 @@ public class FrontEnd extends JFrame {
 
         	if (new File(Constants.ROOT_DIR, Constants.UPDATE_FILE_PREFIX + Constants.APP_LAUNCHER_FILE_NAME).exists()) {
         		Splash.hideSplash();
-                JOptionPane.showMessageDialog(
-                        getActiveWindow(), 
-                        new JLabel(
-                                Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_INFO + 
-                                getMessage("info.message.launcher.updated", Constants.ROOT_DIR.toString()) + 
-                                Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX));
         	}
         	
         	Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -6290,7 +6283,6 @@ public class FrontEnd extends JFrame {
                 displayProcessNotification(getMessage("info.message.downloading.and.installing.packages"), true);
                 d.setDownloadListener(new DownloadListener(){
                     private StringBuffer sb = new StringBuffer();
-                    boolean launcherUpdated = false;
                     boolean success = true;
                     @Override
                     public void onStart(URL url, File file) {
@@ -6358,7 +6350,6 @@ public class FrontEnd extends JFrame {
                             } else if (pack.getType() == PackType.APP_LAUNCHER) {
                                 BackEnd.getInstance().installAppLauncherUpdate(file, pack.getVersion());
                                 sb.append("<li>" + Constants.HTML_COLOR_HIGHLIGHT_OK + getMessage("success.message.package.downloaded.and.installed", getMessage(pack.getType().value().toLowerCase()), pack.getName(), pack.getVersion()) + Constants.HTML_COLOR_SUFFIX + "</li>");
-                                launcherUpdated = true;
                             } else {
                                 AddOnInfo installedAddOn = BackEnd.getInstance().installAddOn(file, pack.getType());
                                 ADDON_STATUS status = BackEnd.getInstance().getNewAddOns(pack.getType()).get(installedAddOn);
@@ -6391,14 +6382,6 @@ public class FrontEnd extends JFrame {
                             JOptionPane.showMessageDialog(
                                     getActiveWindow(), 
                                     new JScrollPane(new JLabel(Constants.HTML_PREFIX + "<ul>" + sb.toString() + "</ul>" + Constants.HTML_SUFFIX)));
-                            if (launcherUpdated) {
-                                JOptionPane.showMessageDialog(
-                                        getActiveWindow(), 
-                                        new JLabel(
-                                                Constants.HTML_PREFIX + Constants.HTML_COLOR_HIGHLIGHT_INFO + 
-                                                getMessage("info.message.launcher.updated", Constants.ROOT_DIR.toString()) + 
-                                                Constants.HTML_COLOR_SUFFIX + Constants.HTML_SUFFIX));
-                            }
                             if (success && onFinishAction != null) {
                                 onFinishAction.run();
                             }
