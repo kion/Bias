@@ -7,7 +7,6 @@ import bias.utils.*;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
-import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 import java.awt.*;
 import java.awt.desktop.QuitStrategy;
 import java.awt.event.WindowAdapter;
@@ -82,7 +81,6 @@ public class Bias {
 
     public static void main(String[] args) throws Throwable {
         Security.setProperty("crypto.policy", "unlimited");
-        UIManager.setLookAndFeel(new NimbusLookAndFeel());
         if (Taskbar.isTaskbarSupported() && Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE)) {
             Taskbar.getTaskbar().setIconImage(APP_ICON);
         }
