@@ -25,7 +25,7 @@ Bias :: Versatile Information Manager / Organizer
 * If you're running Ubuntu, it's recommended to install Bias via PPA-repository using the following command:
 
 ```
-sudo add-apt-repository ppa:ki0n/desktop-apps && sudo apt-get update && sudo apt-get install bias
+sudo add-apt-repository ppa:ki0n/software && sudo apt-get update && sudo apt-get install bias
 ```
 * Otherwise, use one of the download options below:
 
