@@ -44,6 +44,7 @@ import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
@@ -77,6 +78,8 @@ public class CodeSnippets extends EntryExtension {
     private static final ImageIcon ICON_ADD = new ImageIcon(CommonUtils.getResourceURL(CodeSnippets.class, "add-snippet.png"));
     private static final ImageIcon ICON_RENAME = new ImageIcon(CommonUtils.getResourceURL(CodeSnippets.class, "rename-snippet.png"));
     private static final ImageIcon ICON_DELETE = new ImageIcon(CommonUtils.getResourceURL(CodeSnippets.class, "delete-snippet.png"));
+    private static final ImageIcon ICON_MOVE_UP = new ImageIcon(CommonUtils.getResourceURL(CodeSnippets.class, "move-up.png"));
+    private static final ImageIcon ICON_MOVE_DOWN = new ImageIcon(CommonUtils.getResourceURL(CodeSnippets.class, "move-down.png"));
     private static final ImageIcon ICON_SWITCH_MODE = new ImageIcon(CommonUtils.getResourceURL(CodeSnippets.class, "switch-mode.png"));
     
     private static final Color FG_COLOR = new Color(41, 49, 52);
@@ -127,6 +130,7 @@ public class CodeSnippets extends EntryExtension {
         Map<String, Font> fonts = new LinkedHashMap<>();
         initFont(fonts, "Hack", "hack");
         initFont(fonts, "Inconsolata", "inconsolata");
+        initFont(fonts, "JetBrains Mono", "jetbrainsmono");
         initFont(fonts, "M+ 2m", "mplus-2m");
         initFont(fonts, "Roboto Mono", "roboto-mono");
         initFont(fonts, "SourceCode Pro", "sourcecode-pro");
@@ -504,6 +508,12 @@ public class CodeSnippets extends EntryExtension {
         JButton renameSnippetBtn = new JButton(ICON_RENAME);
         renameSnippetBtn.setToolTipText("rename snippet");
         toolbarManage.add(renameSnippetBtn);
+        JButton moveSnippetUpBtn = new JButton(ICON_MOVE_UP);
+        moveSnippetUpBtn.setToolTipText("move snippet up");
+        toolbarManage.add(moveSnippetUpBtn);
+        JButton moveSnippetDownBtn = new JButton(ICON_MOVE_DOWN);
+        moveSnippetDownBtn.setToolTipText("move snippet down");
+        toolbarManage.add(moveSnippetDownBtn);
         JButton delSnippetBtn = new JButton(ICON_DELETE);
         delSnippetBtn.setToolTipText("delete snippet");
         toolbarManage.add(delSnippetBtn);
@@ -560,7 +570,7 @@ public class CodeSnippets extends EntryExtension {
             for (String lang : LANGUAGES) {
                 langSelector.addItem(lang);
             }
-            langSelector.setSelectedItem(SyntaxConstants.SYNTAX_STYLE_JAVA);
+            langSelector.setSelectedItem(SyntaxConstants.SYNTAX_STYLE_NONE);
             JLabel nameLabel = new JLabel("Snippet Name:");
             String name = JOptionPane.showInputDialog(CodeSnippets.this, new Component[] { langLabel, langSelector, nameLabel });
             if (name != null && !"".equals(name.trim())) {
@@ -583,14 +593,56 @@ public class CodeSnippets extends EntryExtension {
                 if (JOptionPane.showConfirmDialog(CodeSnippets.this, 
                         "<html>Are you sure you want to delete <strong>" + name + "</strong> snippet?</html>", 
                         "Delete Snippet", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                    listModel.remove(selIdx);
-                    splitPane.setRightComponent(null);
-                    codeSnippets.remove(name);
-                    codeSnippetLangs.remove(name);
+                    doWithListSelectionListenersDisabled(() -> {
+                        listModel.remove(selIdx);
+                        list.clearSelection();
+                        splitPane.setRightComponent(null);
+                        descriptions.remove(name);
+                        codeSnippets.remove(name);
+                        codeSnippetLangs.remove(name);
+                    });
                 }
             }
         });
+        moveSnippetUpBtn.addActionListener($ -> {
+            int selIdx = list.getSelectedIndex();
+            if (selIdx != -1 && selIdx != 0) {
+                doWithListSelectionListenersDisabled(() -> {
+                    swapListItems(selIdx, selIdx - 1);
+                    list.setSelectedIndex(selIdx - 1);
+                    list.ensureIndexIsVisible(selIdx - 1);
+                });
+            }
+        });
+        moveSnippetDownBtn.addActionListener($ -> {
+            int selIdx = list.getSelectedIndex();
+            if (selIdx != -1 && selIdx != listModel.getSize() - 1) {
+                doWithListSelectionListenersDisabled(() -> {
+                    swapListItems(selIdx, selIdx + 1);
+                    list.setSelectedIndex(selIdx + 1);
+                    list.ensureIndexIsVisible(selIdx + 1);
+                });
+            }
+        });
         return toolbarPane;
+    }
+
+    private void swapListItems(int item1, int item2) {
+        String item1El = listModel.getElementAt(item1);
+        String item2El = listModel.getElementAt(item2);
+        listModel.set(item1, item2El);
+        listModel.set(item2, item1El);
+    }
+
+    private void doWithListSelectionListenersDisabled(Runnable runnable) {
+        ListSelectionListener[] selectionListeners = list.getListSelectionListeners();
+        for (ListSelectionListener listener : selectionListeners) {
+            list.removeListSelectionListener(listener);
+        }
+        runnable.run();
+        for (ListSelectionListener listener : selectionListeners) {
+            list.addListSelectionListener(listener);
+        }
     }
     
     private JList<String> createCodeSnippetList() {
