@@ -5,5 +5,5 @@
 // Generated on: 2010.09.10 at 02:48:26 AM EEST 
 //
 
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://bias.sourceforge.net")
+@jakarta.xml.bind.annotation.XmlSchema(namespace = "http://bias.sourceforge.net")
 package bias.extension.Reminder.xmlb;

@@ -5,5 +5,5 @@
 // Generated on: 2008.02.01 at 07:57:56 PM GMT 
 //
 
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://bias.sourceforge.net")
+@jakarta.xml.bind.annotation.XmlSchema(namespace = "http://bias.sourceforge.net")
 package bias.extension.FinancialFlows.xmlb;

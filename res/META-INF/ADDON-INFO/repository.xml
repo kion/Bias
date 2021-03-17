@@ -1,131 +1,136 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <bias:repository xmlns:bias="http://bias.sourceforge.net">
-	<pack type="AppLauncher" name="AppLauncher" version="1.1.1" author="R. Kasianenko" description="Bias Application Launcher" file-size="84847" url="https://github.com/kion/Bias/releases/download/v1.5.0/bias.jar" />
-	<pack type="AppCore" name="AppCore" version="1.5.1" author="R. Kasianenko" description="Bias Application Core" file-size="509349" url="https://github.com/kion/Bias/releases/download/v1.5.0/appcore.jar">
-		<dependency type="AppLauncher" name="AppLauncher" version="1.1.0"/>
+	<pack type="AppLauncher" name="AppLauncher" version="1.1.3" author="R. Kasianenko" description="Bias Application Launcher" file-size="84864" url="https://github.com/kion/Bias/releases/latest/download/bias.jar" />
+	<pack type="AppCore" name="AppCore" version="1.5.3" author="R. Kasianenko" description="Bias Application Core" file-size="508862" url="https://github.com/kion/Bias/releases/latest/download/appcore.jar">
+		<dependency type="AppLauncher" name="AppLauncher" version="1.1.3"/>
 	</pack>
-	<pack type="Extension" name="FTPTransfer" version="0.1.2" author="R. Kasianenko" description="Import/Export through FTP" file-size="5623" url="https://github.com/kion/Bias/releases/download/v1.5.0/FTPTransfer.jar">
+	<pack type="Extension" name="FTPTransfer" version="0.1.2" author="R. Kasianenko" description="Import/Export through FTP" file-size="5627" url="https://github.com/kion/Bias/releases/latest/download/FTPTransfer.jar">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="SMBTransfer" version="0.1.1" author="R. Kasianenko" description="Import/Export through SMB (CIFS)" file-size="5862" url="https://github.com/kion/Bias/releases/download/v1.5.0/SMBTransfer.jar">
+	<pack type="Extension" name="SMBTransfer" version="0.1.1" author="R. Kasianenko" description="Import/Export through SMB (CIFS)" file-size="5880" url="https://github.com/kion/Bias/releases/latest/download/SMBTransfer.jar">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 		<dependency type="Library" name="JCIFS" version="1.2.18"/>
 	</pack>
-    <pack type="Extension" name="CodeSnippets" version="0.1.5" author="R. Kasianenko" description="Code Snippets" file-size="1296958" url="https://github.com/kion/Bias/releases/download/v1.5.0/CodeSnippets.jar">
-        <dependency type="AppCore" name="AppCore" version="1.5.0"/>
-        <dependency type="Library" name="RSyntaxTextArea" version="2.6.1"/>
+    <pack type="Extension" name="CodeSnippets" version="0.1.7" author="R. Kasianenko" description="Code Snippets" file-size="1296978" url="https://github.com/kion/Bias/releases/latest/download/CodeSnippets.jar">
+        <dependency type="AppCore" name="AppCore" version="1.5.3"/>
+        <dependency type="Library" name="RSyntaxTextArea" version="3.1.2"/>
     </pack>
-	<pack type="Extension" name="HTMLPage" version="0.7.8" author="R. Kasianenko" description="WYSIWYG HTML page editor" file-size="143155" url="https://github.com/kion/Bias/releases/download/v1.5.0/HTMLPage.jar">
+	<pack type="Extension" name="HTMLPage" version="0.7.8" author="R. Kasianenko" description="WYSIWYG HTML page editor" file-size="143156" url="https://github.com/kion/Bias/releases/latest/download/HTMLPage.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 	</pack>
-	<pack type="Extension" name="ToDoList" version="0.8.3.1" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="184248" url="https://github.com/kion/Bias/releases/download/v1.5.0/ToDoList.jar">
+	<pack type="Extension" name="ToDoList" version="0.8.3.1" author="R. Kasianenko" description="List of organized ToDo-entries" file-size="184250" url="https://github.com/kion/Bias/releases/latest/download/ToDoList.jar">
 		<dependency type="AppCore" name="AppCore" version="1.5.0"/>
 	</pack>
-	<pack type="Extension" name="Graffiti" version="0.2.4" author="R. Kasianenko" description="Basic paint editor" file-size="326802" url="https://github.com/kion/Bias/releases/download/v1.5.0/Graffiti.jar">
+	<pack type="Extension" name="Graffiti" version="0.2.4" author="R. Kasianenko" description="Basic paint editor" file-size="326802" url="https://github.com/kion/Bias/releases/latest/download/Graffiti.jar">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="PlainText" version="0.9.4" author="R. Kasianenko" description="Simple plain text editor" file-size="182820" url="https://github.com/kion/Bias/releases/download/v1.5.0/PlainText.jar">
+	<pack type="Extension" name="PlainText" version="0.9.4" author="R. Kasianenko" description="Simple plain text editor" file-size="182823" url="https://github.com/kion/Bias/releases/latest/download/PlainText.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 	</pack>
-	<pack type="Extension" name="FilePack" version="0.3.6" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="96206" url="https://github.com/kion/Bias/releases/download/v1.5.0/FilePack.jar">
+	<pack type="Extension" name="FilePack" version="0.3.6" author="R. Kasianenko" description="Bunches of files organized in separate packs" file-size="96208" url="https://github.com/kion/Bias/releases/latest/download/FilePack.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 	</pack>
-	<pack type="Extension" name="MainEntry" version="0.4.1" author="R. Kasianenko" description="Keep certain entry as main" file-size="6122" url="https://github.com/kion/Bias/releases/download/v1.5.0/MainEntry.jar">
+	<pack type="Extension" name="MainEntry" version="0.4.1" author="R. Kasianenko" description="Keep certain entry as main" file-size="6123" url="https://github.com/kion/Bias/releases/latest/download/MainEntry.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 	</pack>
-	<pack type="Extension" name="Synchronizer" version="0.2.7.2" author="R. Kasianenko" description="Schedule/Event-driven data synchronizer" file-size="64740" url="https://github.com/kion/Bias/releases/download/v1.5.0/Synchronizer.jar">
+	<pack type="Extension" name="Synchronizer" version="0.2.7.2" author="R. Kasianenko" description="Schedule/Event-driven data synchronizer" file-size="64742" url="https://github.com/kion/Bias/releases/latest/download/Synchronizer.jar">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-	<pack type="Extension" name="DashBoard" version="0.5.8.1" author="R. Kasianenko" description="Simple dashboard for natural info-snippets placement" file-size="124128" url="https://github.com/kion/Bias/releases/download/v1.5.0/DashBoard.jar">
-		<dependency type="AppCore" name="AppCore" version="1.5.0"/>
+	<pack type="Extension" name="DashBoard" version="0.5.8.3" author="R. Kasianenko" description="Simple dashboard for natural info-snippets placement" file-size="124149" url="https://github.com/kion/Bias/releases/latest/download/DashBoard.jar">
+		<dependency type="AppCore" name="AppCore" version="1.5.3"/>
 	</pack>
-	<pack type="Extension" name="Reminder" version="0.4.2.1" author="R. Kasianenko" description="Simple and easy to use reminder manager" file-size="236761" url="https://github.com/kion/Bias/releases/download/v1.5.0/Reminder.jar">
-		<dependency type="AppCore" name="AppCore" version="1.5.0"/>
+	<pack type="Extension" name="Reminder" version="0.4.2.3" author="R. Kasianenko" description="Simple and easy to use reminder manager" file-size="236772" url="https://github.com/kion/Bias/releases/latest/download/Reminder.jar">
+		<dependency type="AppCore" name="AppCore" version="1.5.3"/>
 		<dependency type="Library" name="JCalendar" version="1.4"/>
 	</pack>
-	<pack type="Extension" name="FinancialFlows" version="0.3.9.1" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="289409" url="https://github.com/kion/Bias/releases/download/v1.5.0/FinancialFlows.jar">
-		<dependency type="AppCore" name="AppCore" version="1.5.0"/>
+	<pack type="Extension" name="FinancialFlows" version="0.3.9.3" author="R. Kasianenko" description="Financial flows management &amp; statistics" file-size="289442" url="https://github.com/kion/Bias/releases/latest/download/FinancialFlows.jar">
+		<dependency type="AppCore" name="AppCore" version="1.5.3"/>
 		<dependency type="Library" name="JFreeChart" version="1.0.19"/>
 		<dependency type="Library" name="JCalendar" version="1.4"/>
 	</pack>
-	<pack type="Extension" name="SimpleSearch" version="0.8.5" author="R. Kasianenko" description="Search through entries" file-size="168540" url="https://github.com/kion/Bias/releases/download/v1.5.0/SimpleSearch.jar">
+	<pack type="Extension" name="SimpleSearch" version="0.8.5" author="R. Kasianenko" description="Search through entries" file-size="168539" url="https://github.com/kion/Bias/releases/latest/download/SimpleSearch.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 	</pack>
-	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="152738" url="https://github.com/kion/Bias/releases/download/v1.5.0/SimpleStats.jar">
+	<pack type="Extension" name="SimpleStats" version="0.3.9" author="R. Kasianenko" description="Bias application statistics tool" file-size="152739" url="https://github.com/kion/Bias/releases/latest/download/SimpleStats.jar">
 		<dependency type="AppCore" name="AppCore" version="1.0.0"/>
 	</pack>
-    <pack type="Skin" name="DarculaSkin" version="0.1.1" author="R. Kasianenko" description="Darcula Skin" file-size="69166" url="https://github.com/kion/Bias/releases/download/v1.5.0/DarculaSkin.jar">
+    <pack type="Skin" name="DarculaSkin" version="0.1.1" author="R. Kasianenko" description="Darcula Skin" file-size="69166" url="https://github.com/kion/Bias/releases/latest/download/DarculaSkin.jar">
         <dependency type="AppCore" name="AppCore" version="1.2.5"/>
         <dependency type="Library" name="Darcula" version="1.0.0" />
     </pack>
-	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Skin" file-size="102701" url="https://github.com/kion/Bias/releases/download/v1.5.0/JGLooksSkin.jar">
+	<pack type="Skin" name="JGLooksSkin" version="0.3.1" author="R. Kasianenko" description="JGoodies Looks Skin" file-size="102701" url="https://github.com/kion/Bias/releases/latest/download/JGLooksSkin.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 		<dependency type="Library" name="JGLooks" version="2.7.0" />
 	</pack>
-	<pack type="Skin" name="JTattooSkin" version="0.3.3" author="R. Kasianenko" description="JTattoo Skin" file-size="121555" url="https://github.com/kion/Bias/releases/download/v1.5.0/JTattooSkin.jar">
+	<pack type="Skin" name="JTattooSkin" version="0.3.3" author="R. Kasianenko" description="JTattoo Skin" file-size="121556" url="https://github.com/kion/Bias/releases/latest/download/JTattooSkin.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 		<dependency type="Library" name="JTattooLAF" version="1.6.11" />
 	</pack>
-	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNode Skin" file-size="100963" url="https://github.com/kion/Bias/releases/download/v1.5.0/InfoNodeSkin.jar">
+	<pack type="Skin" name="InfoNodeSkin" version="0.1.1" author="R. Kasianenko" description="InfoNode Skin" file-size="100963" url="https://github.com/kion/Bias/releases/latest/download/InfoNodeSkin.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 		<dependency type="Library" name="InfoNodeLF" version="1.6.1" />
 	</pack>
-	<pack type="Skin" name="LipstikSkin" version="0.1.1" author="R. Kasianenko" description="Lipstik Skin" file-size="91668" url="https://github.com/kion/Bias/releases/download/v1.5.0/LipstikSkin.jar">
+	<pack type="Skin" name="LipstikSkin" version="0.1.1" author="R. Kasianenko" description="Lipstik Skin" file-size="91673" url="https://github.com/kion/Bias/releases/latest/download/LipstikSkin.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 		<dependency type="Library" name="LipstikLF" version="1.1.0" />
 	</pack>
-	<pack type="Skin" name="LiquidSkin" version="0.1.1" author="R. Kasianenko" description="Liquid Skin" file-size="110766" url="https://github.com/kion/Bias/releases/download/v1.5.0/LiquidSkin.jar">
+	<pack type="Skin" name="LiquidSkin" version="0.1.1" author="R. Kasianenko" description="Liquid Skin" file-size="110766" url="https://github.com/kion/Bias/releases/latest/download/LiquidSkin.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 		<dependency type="Library" name="LiquidLnF"/>
 	</pack>
-	<pack type="Skin" name="PgsSkin" version="0.3.1" author="R. Kasianenko" description="Pgs Skin" file-size="106981" url="https://github.com/kion/Bias/releases/download/v1.5.0/PgsSkin.jar">
+	<pack type="Skin" name="PgsSkin" version="0.3.1" author="R. Kasianenko" description="Pgs Skin" file-size="106983" url="https://github.com/kion/Bias/releases/latest/download/PgsSkin.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 		<dependency type="Library" name="PgsLAF" version="1.1.2" />
 	</pack>
-	<pack type="Skin" name="SquarenessSkin" version="0.1.1" author="R. Kasianenko" description="Squareness Skin" file-size="95817" url="https://github.com/kion/Bias/releases/download/v1.5.0/SquarenessSkin.jar">
+	<pack type="Skin" name="SquarenessSkin" version="0.1.1" author="R. Kasianenko" description="Squareness Skin" file-size="95817" url="https://github.com/kion/Bias/releases/latest/download/SquarenessSkin.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 		<dependency type="Library" name="Squareness"/>
 	</pack>
-	<pack type="Skin" name="SubstanceSkin" version="0.1.2" author="R. Kasianenko" description="Substance Skin" file-size="112564" url="https://github.com/kion/Bias/releases/download/v1.5.0/SubstanceSkin.jar">
+	<pack type="Skin" name="SubstanceSkin" version="0.1.2" author="R. Kasianenko" description="Substance Skin" file-size="112569" url="https://github.com/kion/Bias/releases/latest/download/SubstanceSkin.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 		<dependency type="Library" name="Substance"/>
 	</pack>
-	<pack type="Skin" name="TinySkin" version="0.3.1" author="R. Kasianenko" description="Tiny Skin" file-size="98902" url="https://github.com/kion/Bias/releases/download/v1.5.0/TinySkin.jar">
+	<pack type="Skin" name="TinySkin" version="0.3.1" author="R. Kasianenko" description="Tiny Skin" file-size="98902" url="https://github.com/kion/Bias/releases/latest/download/TinySkin.jar">
 		<dependency type="AppCore" name="AppCore" version="1.2.5"/>
 		<dependency type="Library" name="TinyLAF" version="1.4.0" />
 	</pack>
-    <pack type="Skin" name="WebLaFSkin" version="0.1.1" author="R. Kasianenko" description="WebLaF Skin" file-size="72270" url="https://github.com/kion/Bias/releases/download/v1.5.0/WebLaFSkin.jar">
+    <pack type="Skin" name="WebLaFSkin" version="0.1.1" author="R. Kasianenko" description="WebLaF Skin" file-size="72262" url="https://github.com/kion/Bias/releases/latest/download/WebLaFSkin.jar">
         <dependency type="AppCore" name="AppCore" version="1.2.5"/>
         <dependency type="Library" name="WebLaF" version="1.29" />
     </pack>
-	<pack type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="147137" url="https://github.com/kion/Bias/releases/download/v1.5.0/Bitcons.jar" />
-	<pack type="IconSet" name="MiniIcons" version="2.0" author="Timothy Groves" description="MiniIcons iconset (Grayscale)" file-size="59595" url="https://github.com/kion/Bias/releases/download/v1.5.0/MiniIcons.jar" />
-	<pack type="IconSet" name="TwoToneGray" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Gray)" file-size="26332" url="https://github.com/kion/Bias/releases/download/v1.5.0/TwoToneGray.jar" />
-	<pack type="IconSet" name="TwoToneBiege" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Biege)" file-size="25463" url="https://github.com/kion/Bias/releases/download/v1.5.0/TwoToneBiege.jar" />
-	<pack type="IconSet" name="TwoToneRed" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Red)" file-size="25445" url="https://github.com/kion/Bias/releases/download/v1.5.0/TwoToneRed.jar" />
-	<pack type="IconSet" name="TwoToneBlue" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Blue)" file-size="25633" url="https://github.com/kion/Bias/releases/download/v1.5.0/TwoToneBlue.jar" />
-	<pack type="IconSet" name="TwoToneGreen" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Green)" file-size="25640" url="https://github.com/kion/Bias/releases/download/v1.5.0/TwoToneGreen.jar" />
-	<pack type="Library" name="JFreeChart" version="1.0.19" author="Object Refinery Limited and Contributors" description="JFreeChart is a free 100% Java chart library that makes it easy for developers to display professional quality charts in their applications" file-size="1426819" url="https://github.com/kion/Bias/releases/download/v1.5.0/JFreeChart.jar">
+	<pack type="Skin" name="FlatLaFSkin" version="0.1.1" author="R. Kasianenko" description="FlatLaF Skin" file-size="50793" url="https://github.com/kion/Bias/releases/latest/download/FlatLaFSkin.jar">
+		<dependency type="AppCore" name="AppCore" version="1.5.3"/>
+		<dependency type="Library" name="FlatLaF" version="1.0" />
+	</pack>
+	<pack type="IconSet" name="Bitcons" version="1.0" author="P.J. Onori" description="Bitcons IconSet (Red &amp; Grayscale)" file-size="147137" url="https://github.com/kion/Bias/releases/latest/download/Bitcons.jar" />
+	<pack type="IconSet" name="MiniIcons" version="2.0" author="Timothy Groves" description="MiniIcons iconset (Grayscale)" file-size="59595" url="https://github.com/kion/Bias/releases/latest/download/MiniIcons.jar" />
+	<pack type="IconSet" name="TwoToneGray" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Gray)" file-size="26332" url="https://github.com/kion/Bias/releases/latest/download/TwoToneGray.jar" />
+	<pack type="IconSet" name="TwoToneBiege" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Biege)" file-size="25463" url="https://github.com/kion/Bias/releases/latest/download/TwoToneBiege.jar" />
+	<pack type="IconSet" name="TwoToneRed" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Red)" file-size="25445" url="https://github.com/kion/Bias/releases/latest/download/TwoToneRed.jar" />
+	<pack type="IconSet" name="TwoToneBlue" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Blue)" file-size="25633" url="https://github.com/kion/Bias/releases/latest/download/TwoToneBlue.jar" />
+	<pack type="IconSet" name="TwoToneGreen" version="1.0" author="Paul Jarvis" description="TwoTone iconset (Green)" file-size="25640" url="https://github.com/kion/Bias/releases/latest/download/TwoToneGreen.jar" />
+	<pack type="Library" name="JFreeChart" version="1.0.19" author="Object Refinery Limited and Contributors" description="JFreeChart is a free 100% Java chart library that makes it easy for developers to display professional quality charts in their applications" file-size="1426819" url="https://github.com/kion/Bias/releases/latest/download/JFreeChart.jar">
 		<dependency type="Library" name="JCommonJFree" version="1.0.16"/>
 	</pack>
-    <pack type="Library" name="Darcula" version="1.0.0" author="Konstantin Bulenkov" description="Darcula is a Look-n-Feel for Java desktop application and a theme for code editors" file-size="361511" url="https://github.com/kion/Bias/releases/download/v1.5.0/Darcula.jar" />
-	<pack type="Library" name="JCommon" version="1.8.1" author="Object Refinery Limited and Contributors" description="The library contains the common classes, which provide some global utility functionality for both GUI and non-GUI applications" file-size="39537" url="https://github.com/kion/Bias/releases/download/v1.5.0/JCommon.jar" />
-    <pack type="Library" name="JCommonJFree" version="1.0.16" author="Object Refinery Limited and Contributors" description="JFree utils from the outdated version of JCommon library" file-size="318276" url="https://github.com/kion/Bias/releases/download/v1.5.0/JCommonJFree.jar" />
-	<pack type="Library" name="JCalendar" version="1.4" author="Kai Toedter" description="JCalendar is a Java date chooser bean for graphically picking a date" file-size="127023" url="https://github.com/kion/Bias/releases/download/v1.5.0/JCalendar.jar" />
-	<pack type="Library" name="JCIFS" version="1.2.18" author="The JCIFS Project" description="Open Source client library that implements the CIFS/SMB networking protocol in 100% Java" file-size="363031" url="https://github.com/kion/Bias/releases/download/v1.5.0/JCIFS.jar" />
-    <pack type="Library" name="RSyntaxTextArea" version="3.0.0" author="bobbylight" description="A syntax highlighting, code folding text editor for Java Swing applications" file-size="1157029" url="https://github.com/kion/Bias/releases/download/v1.5.0/RSyntaxTextArea.jar" />
-	<pack type="Library" name="JGLooks" version="2.7.0" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="407753" url="https://github.com/kion/Bias/releases/download/v1.5.0/JGLooks.jar">
+    <pack type="Library" name="Darcula" version="1.0.0" author="Konstantin Bulenkov" description="Darcula is a Look-n-Feel for Java desktop application and a theme for code editors" file-size="361511" url="https://github.com/kion/Bias/releases/latest/download/Darcula.jar" />
+	<pack type="Library" name="JCommon" version="1.8.1" author="Object Refinery Limited and Contributors" description="The library contains the common classes, which provide some global utility functionality for both GUI and non-GUI applications" file-size="39537" url="https://github.com/kion/Bias/releases/latest/download/JCommon.jar" />
+    <pack type="Library" name="JCommonJFree" version="1.0.16" author="Object Refinery Limited and Contributors" description="JFree utils from the outdated version of JCommon library" file-size="318276" url="https://github.com/kion/Bias/releases/latest/download/JCommonJFree.jar" />
+	<pack type="Library" name="JCalendar" version="1.4" author="Kai Toedter" description="JCalendar is a Java date chooser bean for graphically picking a date" file-size="127023" url="https://github.com/kion/Bias/releases/latest/download/JCalendar.jar" />
+	<pack type="Library" name="JCIFS" version="1.2.18" author="The JCIFS Project" description="Open Source client library that implements the CIFS/SMB networking protocol in 100% Java" file-size="363031" url="https://github.com/kion/Bias/releases/latest/download/JCIFS.jar" />
+    <pack type="Library" name="RSyntaxTextArea" version="3.0.0" author="bobbylight" description="A syntax highlighting, code folding text editor for Java Swing applications" file-size="1157029" url="https://github.com/kion/Bias/releases/latest/download/RSyntaxTextArea.jar" />
+	<pack type="Library" name="JGLooks" version="2.7.0" author="JGoodies" description="Multi-platform Look-&amp;-Feel for Java/Swing applications" file-size="407753" url="https://github.com/kion/Bias/releases/latest/download/JGLooks.jar">
         <dependency type="Library" name="JCommon" version="1.8.1"/>
 	</pack>
-	<pack type="Library" name="JTattooLAF" version="1.6.11" author="Michael Hagen" description="Look-&amp;-Feel for Java/Swing applications" file-size="577393" url="https://github.com/kion/Bias/releases/download/v1.5.0/JTattooLAF.jar" />
-	<pack type="Library" name="PgsLAF" version="1.1.2" author="pago" description="Look-&amp;-Feel for Java/Swing applications" file-size="196309" url="https://github.com/kion/Bias/releases/download/v1.5.0/PgsLAF.jar" />
-	<pack type="Library" name="Substance" version="4.3" author="Kirill Grouchnikov and contributors" description="Substance Look-&amp;-Feel Provider Library" file-size="1832699" url="https://github.com/kion/Bias/releases/download/v1.5.0/Substance.jar" />
-	<pack type="Library" name="LipstikLF" version="1.1.0" author="Michal Buczko" description="Look-&amp;-Feel for Java/Swing applications" file-size="231227" url="https://github.com/kion/Bias/releases/download/v1.5.0/LipstikLF.jar" />
-	<pack type="Library" name="Squareness" version="2.3.0" author="Robert F. Beeger" description="Minimalistic and flat looking Look-&amp;-Feel for Java/Swing applications" file-size="136125" url="https://github.com/kion/Bias/releases/download/v1.5.0/Squareness.jar" />
-	<pack type="Library" name="TinyLAF" version="1.4.0" author="Hans Bickel" description="Look-&amp;-Feel for Java/Swing applications" file-size="584203" url="https://github.com/kion/Bias/releases/download/v1.5.0/TinyLAF.jar" />
-	<pack type="Library" name="LiquidLnF" version="2.9.1" author="evickroy" description="Look-&amp;-Feel for Java/Swing applications" file-size="374740" url="https://github.com/kion/Bias/releases/download/v1.5.0/LiquidLnF.jar" />
-	<pack type="Library" name="InfoNodeLF" version="1.6.1" author="NNL Technology AB" description="Look-&amp;-Feel for Java/Swing applications" file-size="68147" url="https://github.com/kion/Bias/releases/download/v1.5.0/InfoNodeLF.jar" />
-    <pack type="Library" name="WebLaF" version="1.29" author="Mikle Garin" description="Java Look and Feel for cross-platform Swing applications" file-size="4664202" url="https://github.com/kion/Bias/releases/download/v1.5.0/WebLaF.jar">
+	<pack type="Library" name="JTattooLAF" version="1.6.11" author="Michael Hagen" description="Look-&amp;-Feel for Java/Swing applications" file-size="577393" url="https://github.com/kion/Bias/releases/latest/download/JTattooLAF.jar" />
+	<pack type="Library" name="PgsLAF" version="1.1.2" author="pago" description="Look-&amp;-Feel for Java/Swing applications" file-size="196309" url="https://github.com/kion/Bias/releases/latest/download/PgsLAF.jar" />
+	<pack type="Library" name="Substance" version="4.3" author="Kirill Grouchnikov and contributors" description="Substance Look-&amp;-Feel Provider Library" file-size="1832699" url="https://github.com/kion/Bias/releases/latest/download/Substance.jar" />
+	<pack type="Library" name="LipstikLF" version="1.1.0" author="Michal Buczko" description="Look-&amp;-Feel for Java/Swing applications" file-size="231227" url="https://github.com/kion/Bias/releases/latest/download/LipstikLF.jar" />
+	<pack type="Library" name="Squareness" version="2.3.0" author="Robert F. Beeger" description="Minimalistic and flat looking Look-&amp;-Feel for Java/Swing applications" file-size="136125" url="https://github.com/kion/Bias/releases/latest/download/Squareness.jar" />
+	<pack type="Library" name="TinyLAF" version="1.4.0" author="Hans Bickel" description="Look-&amp;-Feel for Java/Swing applications" file-size="584203" url="https://github.com/kion/Bias/releases/latest/download/TinyLAF.jar" />
+	<pack type="Library" name="LiquidLnF" version="2.9.1" author="evickroy" description="Look-&amp;-Feel for Java/Swing applications" file-size="374740" url="https://github.com/kion/Bias/releases/latest/download/LiquidLnF.jar" />
+	<pack type="Library" name="InfoNodeLF" version="1.6.1" author="NNL Technology AB" description="Look-&amp;-Feel for Java/Swing applications" file-size="68147" url="https://github.com/kion/Bias/releases/latest/download/InfoNodeLF.jar" />
+    <pack type="Library" name="WebLaF" version="1.29" author="Mikle Garin" description="Java Look and Feel for cross-platform Swing applications" file-size="4664202" url="https://github.com/kion/Bias/releases/latest/download/WebLaF.jar">
         <dependency type="Library" name="RSyntaxTextArea" version="2.6.1"/>
     </pack>
+	<pack type="Library" name="FlatLaF" version="1.0" author="FormDev Software GmbH" description="Modern open-source cross-platform Look and Feel for Java Swing desktop applications" file-size="498672" url="https://github.com/kion/Bias/releases/latest/download/FlatLaF.jar" />
 </bias:repository>

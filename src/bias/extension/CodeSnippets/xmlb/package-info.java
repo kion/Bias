@@ -5,5 +5,5 @@
 // Generated on: 2017.06.11 at 11:57:33 PM EDT 
 //
 
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://bias.sourceforge.net")
+@jakarta.xml.bind.annotation.XmlSchema(namespace = "http://bias.sourceforge.net")
 package bias.extension.CodeSnippets.xmlb;

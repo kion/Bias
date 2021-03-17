@@ -5,5 +5,5 @@
 // Generated on: 2008.04.29 at 08:21:45 PM EEST 
 //
 
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://bias.sourceforge.net")
+@jakarta.xml.bind.annotation.XmlSchema(namespace = "http://bias.sourceforge.net")
 package bias.core.pack;

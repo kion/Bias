@@ -71,7 +71,7 @@
 		<antcall target="Build_AppCore_Package" />
 		<delete dir="build/app/lib" />
 		<copy todir="build/app/lib">
-			<fileset dir="lib" includes="javax.activation*.jar" />
+			<fileset dir="lib" includes="jakarta*.jar" />
 			<fileset dir="lib" includes="jaxb*.jar" />
 		</copy>
 	</target>
@@ -80,6 +80,7 @@
           target: Build_AppLauncher_Package
          ================================= -->
 	<target name="Build_AppLauncher_Package" description="AppLauncher Package">
+		<delete dir="build/app" includes="bias.jar" />
 		<jar basedir="bin" destfile="build/app/bias.jar" includes="bias/Bias** bias/Splash** bias/utils/Downloader** bias/utils/NetUtils** bias/utils/FSUtils** bias/utils/ArchUtils** bias/utils/CommonUtils** bias/core/AddOnInfo** bias/core/pack/** bias/res/load.gif bias/res/app_icon.png bias/res/app_icon_small.png">
 			<manifest>
                 <attribute name="Main-Class" value="bias.Bias" />
@@ -92,6 +93,7 @@
           target: Build_AppCore_Package
          ================================= -->
 	<target name="Build_AppCore_Package" description="AppCore Package">
+		<delete dir="build/app" includes="appcore.jar" />
 		<jar basedir="bin" destfile="build/app/appcore.jar" includes="bias/*.* bias/annotation/** bias/core/** bias/event/** bias/extension/*.* bias/gui/** bias/skin/*.* bias/skin/DefaultSkin/*.* bias/res/*.* bias/res/editor/*.* bias/utils/** bias/i18n/**" excludes="bias/Bias** bias/res/load.gif">
 			<manifest>
 				<attribute name="AppCore-Version" value="${AppCore_Version}" />
@@ -103,7 +105,7 @@
           target: Build_Extension_FTPTransfer
          ================================= -->
 	<target name="Build_Extension_FTPTransfer" description="FTPTransfer Add-On">
-		<delete dir="build" includes="FTPTransfer*.jar" />
+		<delete dir="build/app/addons" includes="FTPTransfer*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/FTPTransfer.ext.jar" includes="bias/extension/FTPTransfer/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/FTPTransfer/**" />
 			<manifest>
@@ -120,7 +122,7 @@
           target: Build_Extension_SMBTransfer
          ================================= -->
 	<target name="Build_Extension_SMBTransfer" description="SMBTransfer Add-On">
-		<delete dir="build" includes="SMBTransfer*.jar" />
+		<delete dir="build/app/addons" includes="SMBTransfer*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/SMBTransfer.ext.jar" includes="bias/extension/SMBTransfer/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/SMBTransfer/**" />
 			<manifest>
@@ -138,7 +140,7 @@
           target: Build_Extension_CodeSnippets
          ================================= -->
 	<target name="Build_Extension_CodeSnippets" description="CodeSnippets Add-On">
-		<delete dir="build" includes="CodeSnippets*.jar" />
+		<delete dir="build/app/addons" includes="CodeSnippets*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/CodeSnippets.ext.jar" includes="bias/extension/CodeSnippets/** bias/res/CodeSnippets/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/CodeSnippets/**" />
 			<manifest>
@@ -156,7 +158,7 @@
           target: Build_Extension_FilePack
          ================================= -->
 	<target name="Build_Extension_FilePack" description="FilePack Add-On">
-		<delete dir="build" includes="FilePack*.jar" />
+		<delete dir="build/app/addons" includes="FilePack*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/FilePack.ext.jar" includes="bias/extension/FilePack/** bias/res/FilePack/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/FilePack/**" />
 			<manifest>
@@ -173,7 +175,7 @@
           target: Build_Extension_FinancialFlows
          ================================= -->
 	<target name="Build_Extension_FinancialFlows" description="FinancialFlows Add-On">
-		<delete dir="build" includes="FinancialFlows*.jar" />
+		<delete dir="build/app/addons" includes="FinancialFlows*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/FinancialFlows.ext.jar" includes="bias/extension/FinancialFlows/** bias/res/FinancialFlows/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/FinancialFlows/**" />
 			<manifest>
@@ -191,7 +193,7 @@
           target: Build_Extension_Graffiti              
          ================================= -->
 	<target name="Build_Extension_Graffiti" description="Graffiti Add-On">
-		<delete dir="build" includes="Graffiti*.jar" />
+		<delete dir="build/app/addons" includes="Graffiti*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/Graffiti.ext.jar" includes="bias/extension/Graffiti/** bias/res/Graffiti/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/Graffiti/**" />
 			<manifest>
@@ -208,7 +210,7 @@
           target: Build_Extension_HTMLPage              
          ================================= -->
 	<target name="Build_Extension_HTMLPage" description="HTMLPage Add-On">
-		<delete dir="build" includes="HTMLPage*.jar" />
+		<delete dir="build/app/addons" includes="HTMLPage*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/HTMLPage.ext.jar" includes="bias/extension/HTMLPage/** bias/res/HTMLPage/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/HTMLPage/**" />
 			<manifest>
@@ -225,7 +227,7 @@
           target: Build_Extension_PlainText
          ================================= -->
 	<target name="Build_Extension_PlainText" description="PlainText Add-On">
-		<delete dir="build" includes="PlainText*.jar" />
+		<delete dir="build/app/addons" includes="PlainText*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/PlainText.ext.jar" includes="bias/extension/PlainText/** bias/res/PlainText/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/PlainText/**" />
 			<manifest>
@@ -242,7 +244,7 @@
           target: Build_Extension_ToDoList
          ================================= -->
 	<target name="Build_Extension_ToDoList" description="ToDoList Add-On">
-		<delete dir="build" includes="ToDoList*.jar" />
+		<delete dir="build/app/addons" includes="ToDoList*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/ToDoList.ext.jar" includes="bias/extension/ToDoList/** bias/res/ToDoList/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/ToDoList/**" />
 			<manifest>
@@ -259,7 +261,7 @@
           target: Build_Extension_SimpleSearch
          ================================= -->
 	<target name="Build_Extension_SimpleSearch" description="SimpleSearch Add-On">
-		<delete dir="build" includes="SimpleSearch*.jar" />
+		<delete dir="build/app/addons" includes="SimpleSearch*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/SimpleSearch.ext.jar" includes="bias/extension/SimpleSearch/** bias/res/SimpleSearch/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/SimpleSearch/**" />
 			<manifest>
@@ -276,7 +278,7 @@
           target: Build_Extension_SimpleStats
          ================================= -->
 	<target name="Build_Extension_SimpleStats" description="SimpleStats Add-On">
-		<delete dir="build" includes="SimpleStats*.jar" />
+		<delete dir="build/app/addons" includes="SimpleStats*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/SimpleStats.ext.jar" includes="bias/extension/SimpleStats/** bias/res/SimpleStats/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/SimpleStats/**" />
 			<manifest>
@@ -293,7 +295,7 @@
           target: Build_Extension_MainEntry
          ================================= -->
 	<target name="Build_Extension_MainEntry" description="MainEntry Add-On">
-		<delete dir="build" includes="MainEntry*.jar" />
+		<delete dir="build/app/addons" includes="MainEntry*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/MainEntry.ext.jar" includes="bias/extension/MainEntry/** bias/res/MainEntry/** bias/i18n/MainEntry/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/MainEntry/**" />
 			<manifest>
@@ -310,7 +312,7 @@
           target: Build_Extension_Synchronizer
          ================================= -->
 	<target name="Build_Extension_Synchronizer" description="Synchronizer Add-On">
-		<delete dir="build" includes="Synchronizer*.jar" />
+		<delete dir="build/app/addons" includes="Synchronizer*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/Synchronizer.ext.jar" includes="bias/extension/Synchronizer/** bias/res/Synchronizer/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/Synchronizer/**" />
 			<manifest>
@@ -327,7 +329,7 @@
           target: Build_Extension_DashBoard
          ================================= -->
 	<target name="Build_Extension_DashBoard" description="DashBoard Add-On">
-		<delete dir="build" includes="DashBoard*.jar" />
+		<delete dir="build/app/addons" includes="DashBoard*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/DashBoard.ext.jar" includes="bias/extension/DashBoard/** bias/res/DashBoard/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/DashBoard/**" />
 			<manifest>
@@ -344,7 +346,7 @@
           target: Build_Extension_Reminder
          ================================= -->
 	<target name="Build_Extension_Reminder" description="Reminder Add-On">
-		<delete dir="build" includes="Reminder*.jar" />
+		<delete dir="build/app/addons" includes="Reminder*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/Reminder.ext.jar" includes="bias/extension/Reminder/** bias/res/Reminder/** bias/i18n/Reminder/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/Reminder/**" />
 			<manifest>
@@ -362,7 +364,7 @@
           target: Build_Skin_JGLooksSkin             
          ================================= -->
 	<target name="Build_Skin_JGLooksSkin" description="JGoodies Looks Skin">
-		<delete dir="build" includes="JGLooksSkin*.jar" />
+		<delete dir="build/app/addons" includes="JGLooksSkin*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/JGLooksSkin.skin.jar" includes="bias/skin/JGLooksSkin/** bias/res/JGLooksSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/JGLooksSkin/**" />
 			<manifest>
@@ -380,7 +382,7 @@
           target: Build_Skin_PgsSkin             
          ================================= -->
 	<target name="Build_Skin_PgsSkin" description="Pgs Skin">
-		<delete dir="build" includes="PgsSkin*.jar" />
+		<delete dir="build/app/addons" includes="PgsSkin*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/PgsSkin.skin.jar" includes="bias/skin/PgsSkin/** bias/res/PgsSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/PgsSkin/**" />
 			<manifest>
@@ -398,7 +400,7 @@
           target: Build_Skin_LipstikSkin             
          ================================= -->
 	<target name="Build_Skin_LipstikSkin" description="Lipstik Skin">
-		<delete dir="build" includes="LipstikSkin*.jar" />
+		<delete dir="build/app/addons" includes="LipstikSkin*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/LipstikSkin.skin.jar" includes="bias/skin/LipstikSkin/** bias/res/LipstikSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/LipstikSkin/**" />
 			<manifest>
@@ -416,7 +418,7 @@
           target: Build_Skin_SquarenessSkin             
          ================================= -->
 	<target name="Build_Skin_SquarenessSkin" description="Squareness Skin">
-		<delete dir="build" includes="SquarenessSkin*.jar" />
+		<delete dir="build/app/addons" includes="SquarenessSkin*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/SquarenessSkin.skin.jar" includes="bias/skin/SquarenessSkin/** bias/res/SquarenessSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/SquarenessSkin/**" />
 			<manifest>
@@ -434,7 +436,7 @@
           target: Build_Skin_TinySkin             
          ================================= -->
 	<target name="Build_Skin_TinySkin" description="Tiny Skin">
-		<delete dir="build" includes="TinySkin*.jar" />
+		<delete dir="build/app/addons" includes="TinySkin*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/TinySkin.skin.jar" includes="bias/skin/TinySkin/** bias/res/TinySkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/TinySkin/**" />
 			<manifest>
@@ -452,7 +454,7 @@
           target: Build_Skin_LiquidSkin             
          ================================= -->
 	<target name="Build_Skin_LiquidSkin" description="Liquid Skin">
-		<delete dir="build" includes="LiquidSkin*.jar" />
+		<delete dir="build/app/addons" includes="LiquidSkin*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/LiquidSkin.skin.jar" includes="bias/skin/LiquidSkin/** bias/res/LiquidSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/LiquidSkin/**" />
 			<manifest>
@@ -470,7 +472,7 @@
           target: Build_Skin_InfoNodeSkin             
          ================================= -->
 	<target name="Build_Skin_InfoNodeSkin" description="InfoNode Skin">
-		<delete dir="build" includes="InfoNodeSkin*.jar" />
+		<delete dir="build/app/addons" includes="InfoNodeSkin*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/InfoNodeSkin.skin.jar" includes="bias/skin/InfoNodeSkin/** bias/res/InfoNodeSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/InfoNodeSkin/**" />
 			<manifest>
@@ -488,7 +490,7 @@
           target: Build_Skin_SubstanceSkin             
          ================================= -->
 	<target name="Build_Skin_SubstanceSkin" description="Substance Skin">
-		<delete dir="build" includes="SubstanceSkin*.jar" />
+		<delete dir="build/app/addons" includes="SubstanceSkin*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/SubstanceSkin.skin.jar" includes="bias/skin/SubstanceSkin/** bias/res/SubstanceSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/SubstanceSkin/**" />
 			<manifest>
@@ -506,7 +508,7 @@
           target: Build_Skin_JTattooSkin             
          ================================= -->
 	<target name="Build_Skin_JTattooSkin" description="JTattoo Skin">
-		<delete dir="build" includes="JTattooSkin*.jar" />
+		<delete dir="build/app/addons" includes="JTattooSkin*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/JTattooSkin.skin.jar" includes="bias/skin/JTattooSkin/** bias/res/JTattooSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/JTattooSkin/**" />
 			<manifest>
@@ -524,7 +526,7 @@
           target: Build_Skin_DarculaSkin             
          ================================= -->
 	<target name="Build_Skin_DarculaSkin" description="Darcula Skin">
-		<delete dir="build" includes="DarculaSkin*.jar" />
+		<delete dir="build/app/addons" includes="DarculaSkin*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/DarculaSkin.skin.jar" includes="bias/skin/DarculaSkin/** bias/res/DarculaSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/DarculaSkin/**" />
 			<manifest>
@@ -542,7 +544,7 @@
           target: Build_Skin_WebLaFSkin             
          ================================= -->
 	<target name="Build_Skin_WebLaFSkin" description="WebLaF Skin">
-		<delete dir="build" includes="WebLaFSkin*.jar" />
+		<delete dir="build/app/addons" includes="WebLaFSkin*.jar" />
 		<jar basedir="bin" destfile="build/app/addons/WebLaFSkin.skin.jar" includes="bias/skin/WebLaFSkin/** bias/res/WebLaFSkin/**">
 			<fileset dir="res" includes="META-INF/ADDON-INFO/WebLaFSkin/**" />
 			<manifest>
@@ -555,5 +557,23 @@
 			</manifest>
 		</jar>
 	</target>
-	
+
+	<!-- =================================
+          target: Build_Skin_FlatLaFSkin
+         ================================= -->
+	<target name="Build_Skin_FlatLaFSkin" description="FlatLaF Skin">
+		<delete dir="build/app/addons" includes="FlatLaFSkin*.jar" />
+		<jar basedir="bin" destfile="build/app/addons/FlatLaFSkin.skin.jar" includes="bias/skin/FlatLaFSkin/** bias/res/FlatLaFSkin/**">
+			<fileset dir="res" includes="META-INF/ADDON-INFO/FlatLaFSkin/**" />
+			<manifest>
+				<attribute name="Bias-Add-On-Name" value="FlatLaFSkin" />
+				<attribute name="Bias-Add-On-Type" value="Skin" />
+				<attribute name="Bias-Add-On-Version" value="${FlatLaFSkin_Version}" />
+				<attribute name="Bias-Add-On-Description" value="FlatLaF Skin" />
+				<attribute name="Bias-Add-On-Author" value="R. Kasianenko" />
+				<attribute name="Bias-Add-On-Dependencies" value="${FlatLaFSkin_Dependencies}" />
+			</manifest>
+		</jar>
+	</target>
+
 </project>

@@ -5,5 +5,5 @@
 // Generated on: 2010.12.22 at 06:47:20 AM EET 
 //
 
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://bias.sourceforge.net")
+@jakarta.xml.bind.annotation.XmlSchema(namespace = "http://bias.sourceforge.net")
 package bias.extension.DashBoard.xmlb;

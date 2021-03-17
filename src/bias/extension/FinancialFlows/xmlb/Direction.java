@@ -8,8 +8,7 @@
 
 package bias.extension.FinancialFlows.xmlb;
 
-import javax.xml.bind.annotation.XmlEnum;
-
+import jakarta.xml.bind.annotation.XmlEnum;
 
 /**
  * <p>Java class for direction.
